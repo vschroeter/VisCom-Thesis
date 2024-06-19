@@ -2,48 +2,63 @@
 import createGraph, { Graph } from 'ngraph.graph';
 
 
+export interface ApiLink {
+    source: string;
+    target: string;
+    data?: object;
+}
 
+export interface ApiNode {
+    id: string;
+    data?: object;
+}
 
+export interface ApiGraph {
+    nodes: ApiNode[];
+    links: ApiLink[];
+    multigraph: boolean;
+    directed: boolean;
+}
 
-function parseGraphData(
-    { jsonString,
-        nodes = 'nodes',
-        links = 'links',
-        nodeID = 'id',
-        linkFrom = 'source',
-        linkTo = 'target',
-        nodeData = 'data',
-        linkData = 'data'
-    }: {
-        jsonString: string,
-        nodes?: string,
-        links?: string,
-        nodeID?: string,
-        linkFrom?: string,
-        linkTo?: string,
-        nodeData?: string,
-        linkData?: string
-    }
+export function parseGraphData(
+    jsonGraph: ApiGraph | string,
+    // { jsonString,
+    //     nodes = 'nodes',
+    //     links = 'links',
+    //     nodeID = 'id',
+    //     linkFrom = 'source',
+    //     linkTo = 'target',
+    //     nodeData = 'data',
+    //     linkData = 'data'
+    // }: {
+    //     jsonString: string,
+    //     nodes?: string,
+    //     links?: string,
+    //     nodeID?: string,
+    //     linkFrom?: string,
+    //     linkTo?: string,
+    //     nodeData?: string,
+    //     linkData?: string
+    // }
 ): Graph {
-
+    const data: ApiGraph = typeof jsonGraph === 'string' ? JSON.parse(jsonGraph) : jsonGraph;
     const graph = createGraph({ multigraph: true });
-    const data = JSON.parse(jsonString);
 
-    const dNodes = data[nodes] ?? [];
-    const dLinks = data[links] ?? [];
+    const dNodes = data.nodes ?? [];
+    const dLinks = data.links ?? [];
 
-    dNodes.forEach((node: any) => {
-        const dId = node[nodeID] ?? null;
-        const dData = node[nodeData] ?? null;
+    dNodes.forEach((node) => {
+        const dId = node.id ?? null;
+        const dData = node.data ?? null;
         if (dId === null) {
             throw new Error('nodeID not found in node' + JSON.stringify(node));
         }
         graph.addNode(dId, dData);
     });
-    dLinks.forEach((link: any) => {
-        const dFrom = link[linkFrom] ?? null;
-        const dTo = link[linkTo] ?? null;
-        const dData = link[linkData] ?? null;
+    dLinks.forEach((link) => {
+        const dFrom = link.source ?? null;
+        const dTo = link.target ?? null;
+        const dData = link.data ?? null;
         if (dFrom === null || dTo === null) {
             throw new Error('linkFrom or linkTo not found in link' + JSON.stringify(link));
         }

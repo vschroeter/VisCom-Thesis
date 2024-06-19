@@ -19,13 +19,15 @@ export interface ApiGeneratorMethods {
 }
 
 export class Param {
+    key: string;
     default: number | null;
     description: string;
     range: { min: number, max: number}
     type: 'int' | 'float';
     value: number
 
-    constructor(param: ApiParam) {
+    constructor(key: string, param: ApiParam) {
+        this.key = key;
         this.default = param.default;
         this.description = param.description;
         this.range = { min: param.range[0], max: param.range[1] };
@@ -45,7 +47,7 @@ export class Generator {
         this.params = new Map<string, Param>();
 
         for (const [key, param] of Object.entries(gen.params)) {
-            this.params.set(key, new Param(param));
+            this.params.set(key, new Param(key, param));
         }
     }
 

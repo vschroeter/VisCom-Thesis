@@ -64,12 +64,19 @@
 
         <!-- Button to generate the graph -->
 
+        <q-btn
+            :disable="selectedGenerator === null"   
+            label="Generate"
+            color="primary"
+            @click="fetchGeneratedGraph(selectedGenerator?.key)" />
+
     </div>
 </template>
 
 <script setup lang="ts">
 
 import { ApiGeneratorMethods, Generator, GeneratorMethods } from 'src/api/generatorApi';
+import { parseGraphData } from 'src/api/graphDataApi';
 import { computed, onMounted, onUpdated, reactive, ref, watch, type Ref } from 'vue'
 
 ////////////////////////////////////////////////////////////////////////////
@@ -138,9 +145,24 @@ function fetchGenerateMethods() {
 }
 
 
-function fetchGeneratedGraph(generatorId: string) {
+function fetchGeneratedGraph(generatorId?: string) {
+    if (generatorId === undefined) {
+        return
+    }
 
     const url = `${generatorApiUrl.value}/generate/${generatorId}`
+
+    const params = new URLSearchParams()
+    selectedGenerator.value?.paramList.forEach((param) => {
+        params.append(param.key, param.value.toString())
+    })
+
+    fetch(`${url}?${params.toString()}`)
+        .then(response => response.json())
+        .then((data) => {
+            const graph = parseGraphData(data)
+            console.log(data, graph)
+        })
 
 }
 
