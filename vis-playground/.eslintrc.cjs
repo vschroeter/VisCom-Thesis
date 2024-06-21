@@ -86,6 +86,9 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-explicit-any': 'warn',
 
+    // Deny "strings must use singlequote"  warning
+    quotes: ['off', 'double', { avoidEscape: true, allowTemplateLiterals: true }],
+
     // allow debugger during development only
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
   }

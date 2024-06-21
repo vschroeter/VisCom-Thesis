@@ -77,6 +77,8 @@
 
 import { ApiGeneratorMethods, Generator, GeneratorMethods } from 'src/api/generatorApi';
 import { parseGraphData } from 'src/api/graphDataApi';
+import { convertGraphToCommGraph } from 'src/graph/converter';
+import { useGraphStore } from 'src/stores/graph-store';
 import { computed, onMounted, onUpdated, reactive, ref, watch, type Ref } from 'vue'
 
 ////////////////////////////////////////////////////////////////////////////
@@ -84,6 +86,12 @@ import { computed, onMounted, onUpdated, reactive, ref, watch, type Ref } from '
 ////////////////////////////////////////////////////////////////////////////
 
 // const props = defineProps()
+
+////////////////////////////////////////////////////////////////////////////
+// Stores
+////////////////////////////////////////////////////////////////////////////
+
+const graphStore = useGraphStore()
 
 ////////////////////////////////////////////////////////////////////////////
 // Template Refs
@@ -161,7 +169,11 @@ function fetchGeneratedGraph(generatorId?: string) {
         .then(response => response.json())
         .then((data) => {
             const graph = parseGraphData(data)
-            console.log(data, graph)
+
+            const commGraph = convertGraphToCommGraph(graph)
+
+            console.log(data, graph, commGraph)
+            graphStore.setGraph(commGraph)
         })
 
 }

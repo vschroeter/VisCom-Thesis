@@ -1,8 +1,8 @@
 import { Graph } from "ngraph.graph";
-import { CommunicationChannel, CommunicationGraph, CommunicationNode, CommunicationTopic, MessageType } from "./graph";
+import { CommunicationChannel, CommunicationGraph, CommunicationNode, CommunicationTopic, MessageType } from "./commGraph";
 
 
-function convertGraphToCommGraph(graph: Graph): CommunicationGraph {
+export function convertGraphToCommGraph(graph: Graph): CommunicationGraph {
 
     const channels = [new CommunicationChannel("PubSub")] 
     const commNodes = new Array<CommunicationNode>()
@@ -18,15 +18,22 @@ function convertGraphToCommGraph(graph: Graph): CommunicationGraph {
         const toNode = commNodesMap.get(to) ?? new CommunicationNode(to)
         
         const channel = channels[0]
-        const topicOut = new CommunicationTopic((topicId++).toString(), channel, new MessageType("Message"), "outgoing");
-        const topicIn = new CommunicationTopic((topicId++).toString(), channel, new MessageType("Message"), "incoming");
+        const topicOut = new CommunicationTopic((topicId).toString(), channel, new MessageType("Message"), "outgoing");
+        const topicIn = new CommunicationTopic((topicId).toString(), channel, new MessageType("Message"), "incoming");
 
         fromNode.topics.push(topicOut)
         toNode.topics.push(topicIn)
 
         commNodesMap.set(from, fromNode)
         commNodesMap.set(to, toNode)
+
+
+        topicId++;
     });
+
+    commNodesMap.forEach((node) => {
+        commNodes.push(node)
+    })
     
     const commGraph = new CommunicationGraph(commNodes, channels)
     return commGraph
