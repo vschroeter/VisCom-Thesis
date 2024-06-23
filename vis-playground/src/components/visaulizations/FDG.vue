@@ -116,8 +116,7 @@ watch(() => graphStore.graph, (newVal) => {
     const simulation = d3.forceSimulation(data.layout.nodes)
         .force("charge", d3.forceManyBody().strength(-20)) // .strength(-50)
         .force("link", d3.forceLink(data.layout.links).strength(0.1))
-
-
+        
         // .force("chargeGrav", d3.forceManyBody().strength(250).distanceMin(300))
         // .force("chargeElec", d3.forceManyBody().strength(-5).distanceMax(100))
         // .force("collide", d3.forceCollide().radius(50).strength(0.2))
