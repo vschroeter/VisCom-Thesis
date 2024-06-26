@@ -8,22 +8,30 @@
           round
           icon="menu"
           aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
+          @click="toggleLeftDrawer" />
 
         <q-toolbar-title>
           Quasar App
         </q-toolbar-title>
 
         <div>Quasar v{{ $q.version }}</div>
+
+        <q-space />
+        <q-btn
+          flat
+          dense
+          round
+          icon="settings"
+          aria-label="Settings"
+          @click="toggleRightDrawer" />
+
       </q-toolbar>
     </q-header>
 
     <q-drawer
       v-model="leftDrawerOpen"
       show-if-above
-      bordered
-    >
+      bordered>
       <GeneratePanel></GeneratePanel>
       <!-- <q-list>
         <q-item-label
@@ -43,6 +51,15 @@
     <q-page-container>
       <router-view />
     </q-page-container>
+
+    <!-- Drawer for the right side -->
+    <q-drawer
+      v-model="rightDrawerOpen"
+      side="right"
+      bordered>
+      <SettingPanel></SettingPanel>
+    </q-drawer>
+
   </q-layout>
 </template>
 
@@ -50,6 +67,7 @@
 import { ref } from 'vue';
 import EssentialLink, { EssentialLinkProps } from 'components/EssentialLink.vue';
 import GeneratePanel from 'src/components/controlPanels/GeneratePanel.vue';
+import SettingPanel from 'src/components/controlPanels/SettingPanel.vue';
 
 defineOptions({
   name: 'MainLayout'
@@ -100,9 +118,15 @@ const linksList: EssentialLinkProps[] = [
   }
 ];
 
-const leftDrawerOpen = ref(false);
+const leftDrawerOpen = ref(true);
+const rightDrawerOpen = ref(true);
 
-function toggleLeftDrawer () {
+function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
+
+function toggleRightDrawer() {
+  rightDrawerOpen.value = !rightDrawerOpen.value;
+}
 </script>
+

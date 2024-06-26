@@ -29,10 +29,11 @@
             <div class="text-h6">{{ row.name }}</div>
           </div>
           <div class="row">
-            <q-card v-for="(item, idx) in row.visComponents" :key="idx" class="q-mb-md">
+            <q-card v-for="(item, idx) in row.visComponents" :key="idx" class="q-mb-md"
+              @click="store.currentSettings = item.settings">
               <q-card-section>
                 <div class="card-title">{{ item.name }}</div>
-                <component :is="item.component" />
+                <component :is="item.component" v-bind="item.props" />
               </q-card-section>
             </q-card>
 
@@ -63,25 +64,33 @@
 
 <script setup lang="ts">
 import FDG from 'src/components/visaulizations/FDG.vue';
-import { defineAsyncComponent, ref } from 'vue';
+import { useGraphStore } from 'src/stores/graph-store';
+import { FdgVisSettings, VisualizationSettings } from 'src/visualizations/visualizationSettings';
+import { defineAsyncComponent, markRaw, ref, watch } from 'vue';
 
 
-class VisSettings {
+const store = useGraphStore()
 
-}
+
 
 type VueComponent = any
 
 // Extending vue component
 class VisComponent<T = VueComponent> {
   name: string
-  settings: VisSettings
+  settings: VisualizationSettings<any>
   component: T
 
-  constructor(name: string, component: T, settings: VisSettings) {
+  constructor(name: string, component: T, settings: VisualizationSettings<any>) {
     this.name = name
     this.settings = settings
     this.component = component
+  }
+
+  get props() {
+    return {
+      settings: this.settings
+    }
   }
 }
 
@@ -92,15 +101,17 @@ class VisRow {
   constructor(name: string, visComponents: VisComponent[]) {
     this.name = name
     this.visComponents = visComponents
+
   }
 }
 
 const rows = ref<VisRow[]>([
   new VisRow("Force Directed Graphs", [
     // new VisComponent("FDG", FDG, new VisSettings())
-    new VisComponent("FDG", defineAsyncComponent(() => import('src/components/visaulizations/FDG.vue')), new VisSettings())
+    new VisComponent("FDG", markRaw(defineAsyncComponent(() => import('src/components/visaulizations/FDG.vue'))), new FdgVisSettings())
   ])
 ])
+
 
 
 </script>

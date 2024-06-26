@@ -83,8 +83,9 @@ module.exports = {
     // does not work with type definitions
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'off',
+    'vue/no-unused-vars': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
-    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-explicit-any': 'off',
 
     // Deny "strings must use singlequote"  warning
     quotes: ['off', 'double', { avoidEscape: true, allowTemplateLiterals: true }],
