@@ -65,7 +65,8 @@
 <script setup lang="ts">
 import FDG from 'src/components/visaulizations/FDG.vue';
 import { useGraphStore } from 'src/stores/graph-store';
-import { FdgVisSettings, VisualizationSettings } from 'src/visualizations/visualizationSettings';
+import { FdgVisSettings } from 'src/visaulizations/FDG/fdgSettings';
+import { VisualizationSettings } from 'src/visaulizations/visualizationSettings';
 import { defineAsyncComponent, markRaw, ref, watch } from 'vue';
 
 
@@ -108,7 +109,7 @@ class VisRow {
 const rows = ref<VisRow[]>([
   new VisRow("Force Directed Graphs", [
     // new VisComponent("FDG", FDG, new VisSettings())
-    new VisComponent("FDG", markRaw(defineAsyncComponent(() => import('src/components/visaulizations/FDG.vue'))), new FdgVisSettings())
+    new VisComponent("FDG", markRaw(defineAsyncComponent(() => import('src/visaulizations/FDG/FDG.vue'))), new FdgVisSettings())
   ])
 ])
 

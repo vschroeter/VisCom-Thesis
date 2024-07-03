@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 
 import { CommunicationGraph } from 'src/graph/commGraph'
-import { VisualizationSettings } from 'src/visualizations/visualizationSettings'
+import { VisualizationSettings } from 'src/visaulizations/visualizationSettings'
 
 // Store for the global communication graph
 export const useGraphStore = defineStore('graph', {

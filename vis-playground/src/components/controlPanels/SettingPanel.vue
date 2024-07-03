@@ -74,7 +74,7 @@
 
 import { QTableColumn } from 'quasar';
 import { useGraphStore } from 'src/stores/graph-store';
-import { VisualizationSettingParam, VisualizationSettings } from 'src/visualizations/visualizationSettings';
+import { VisualizationSettingParam } from 'src/visaulizations/visualizationSettings';
 import { computed, onMounted, onUpdated, ref, watch, type Ref } from 'vue'
 
 ////////////////////////////////////////////////////////////////////////////

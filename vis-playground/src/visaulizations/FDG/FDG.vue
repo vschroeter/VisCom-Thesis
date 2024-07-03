@@ -39,7 +39,7 @@ import { useGraphStore } from 'src/stores/graph-store';
 
 import * as d3 from 'd3'
 import { LayoutGraph, LayoutGraphLink, LayoutGraphNode } from 'src/graph/layoutGraph';
-import { FdgVisSettings } from 'src/visualizations/visualizationSettings';
+import { FdgVisSettings } from './fdgSettings';
 
 ////////////////////////////////////////////////////////////////////////////
 // Props
