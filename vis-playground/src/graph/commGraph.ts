@@ -2,6 +2,9 @@ import createGraph, { Graph } from "ngraph.graph";
 import { LayoutGraph, LayoutGraphLink, LayoutGraphNode } from "./layoutGraph";
 
 
+/**
+ * Class representing a message type for messages sent over a topic in a communication channel.
+ */
 export class MessageType {
     name: string
     definition: string | undefined
@@ -16,6 +19,11 @@ export class MessageType {
     }
 }
 
+/**
+ * The direction of a communication topic on a channel
+ * The topic can communicate data on the channel either in outgoing direction (thus, publishing data), 
+ * in incoming direction (thus, receiving data), or in both directions (thus, bidirectional communication).
+ */
 export type CommunicationDirection = "incoming" | "outgoing" | "bidirectional"
 export const CommunicationDirectionPendant = {
     incoming: "outgoing" as CommunicationDirection,
@@ -23,9 +31,19 @@ export const CommunicationDirectionPendant = {
     bidirectional: "bidirectional" as CommunicationDirection
 }
 
+
+/**
+ * Class representing a communication topic on a communication channel.
+ * Example:
+ * - Node `n1` has a topic `t1` that communicates on channel `PubSub` in `outgoing` direction (so it publishes data)
+ * - Node `n2` has a topic `t1` that communicates on channel `PubSub` in `incoming` direction (so it receives data)
+ */
 export class CommunicationTopic {
     /** The name of the topic */
     id: string;
+
+    /** The node that the topic belongs to */
+    nodeID: string;
 
     /** The channel of the topic */
     channel: CommunicationChannel;
@@ -36,54 +54,80 @@ export class CommunicationTopic {
     /** The direction of the topic */
     direction: CommunicationDirection;
 
-    constructor(id: string, channel: CommunicationChannel, messageType: MessageType, direction: CommunicationDirection) {
-        this.id = id;
+    /**
+     * Create a new communication topic
+     * @param nodeID The node that the topic belongs to
+     * @param topicId The name of the topic
+     * @param channel The channel of the topic
+     * @param messageType The type of the message
+     * @param direction The direction of the topic
+     */
+    constructor(nodeID: string, topicId: string, channel: CommunicationChannel, direction: CommunicationDirection, messageType: MessageType) {
+        this.nodeID = nodeID;
+        this.id = topicId;
         this.channel = channel;
         this.messageType = messageType;
         this.direction = direction;
     }
 }
 
-// export class ConnectedCommunicationNodes<NodeData> {
-//     channel: CommunicationChannel;
-//     outgoing: CommunicationNode<NodeData>[];
-//     incoming: CommunicationNode<NodeData>[];
-//     bidirectional: CommunicationNode<NodeData>[];
-//     all: CommunicationNode<NodeData>[];
 
-
-
+/**
+ * Class representing a node in a communication graph.
+ * A node can have multiple topics on different communication channels.
+*/
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export class CommunicationNode<NodeData = any> {
+    /** The id of the node */
     id: string;
+
+    /** The topics of the node */
     topics: CommunicationTopic[] = [];
 
+    /** Additional data of the node */
     data: NodeData | undefined;
 
+    /** The graph that the node belongs to */
     graph?: CommunicationGraph<NodeData>;
 
+    /**
+     * Create a new communication node
+     * @param id The id of the node
+     * @param data Additional data of the node
+     */
     constructor(id: string, data?: NodeData) {
         this.id = id;
         this.data = data;
     }
 
+    /**
+     * Get a list of connected nodes according to the direction and the channels.
+     * @param direction 
+     * @param channels 
+     * @returns 
+     */
     getConnectedNodes(direction: CommunicationDirection, channels?: string | string[] | CommunicationChannel[]): CommunicationNode<NodeData>[] {
         if (this.graph === undefined) {
             throw new Error("Graph not set")
         }
         return this.graph.getSuccesscorsAccordingToDirection(this, direction, channels)
     }
-
-
 }
 
+/**
+ * Class representing a communication channel.
+ * Your graph is defined by the channels, on which the nodes communicate via topics.
+ * A channel can be of different types, e.g. PubSub, ServiceCall, ActionCall, etc.
+ */
 export class CommunicationChannel {
     type: string;
 
-    // directed: boolean;
+    /**
+     * Create a new communication channel
+     * @param type The type of the channel
+     */
     constructor(type: string) {
         this.type = type;
-
     }
 
     toString() {
@@ -91,11 +135,25 @@ export class CommunicationChannel {
     }
 }
 
+
+/**
+ * Helper class representing a mapping of topics to nodes on a specific communication channel.
+ * The mapping is separated into incoming, outgoing, bidirectional, and all topics.
+ */
 export class TopicToNodeMap<NodeData> {
+    /** The channel for all topics in this mapping */
     channel: CommunicationChannel;
+
+    /** Mapping of topics to nodes in outgoing direction (thus, nodes publishing data on a topic on this channel) */
     outgoing: Map<string, CommunicationNode<NodeData>[]> = new Map<string, CommunicationNode<NodeData>[]>();
+
+    /** Mapping of topics to nodes in incoming directio (thus, nodes receiving data on a topic on this channel) */
     incoming: Map<string, CommunicationNode<NodeData>[]> = new Map<string, CommunicationNode<NodeData>[]>();
+
+    /** Mapping of topics to nodes in bidirectional direction (thus, nodes communicating data in both directions on a topic on this channel) */
     bidirectional: Map<string, CommunicationNode<NodeData>[]> = new Map<string, CommunicationNode<NodeData>[]>();
+
+    /** Mapping of all topics to nodes on this channel */
     all: Map<string, CommunicationNode<NodeData>[]> = new Map<string, CommunicationNode<NodeData>[]>();
 
     directions: {
@@ -107,21 +165,38 @@ export class TopicToNodeMap<NodeData> {
         }
 
 
+    /**
+     * Create a new mapping of topics to nodes on a specific communication channel.
+     * @param channel The channel for all topics in this mapping
+     */
     constructor(channel: CommunicationChannel) {
         this.channel = channel;
     }
 }
 
+
+/**
+ * Helper class representing the graphs on a communication channel.
+ */
 export class CommunicationChannelGraphs {
+    /** The channel for the graphs */
     channel: CommunicationChannel;
-    outgoing: Graph;
-    incoming: Graph;
-    bidirectional: Graph;
-    all: Graph;
 
-    directions: { [key in CommunicationDirection]: Graph; }
+    /** The graph representing the outgoing direction of the channel */
+    outgoing: Graph<any, ChannelGraphLinkData>;
+    /** The graph representing the incoming direction of the channel */
+    incoming: Graph<any, ChannelGraphLinkData>;
+    /** The graph representing the bidirectional direction of the channel */
+    bidirectional: Graph<any, ChannelGraphLinkData>;
+    /** The graph representing all directions of the channel */
+    all: Graph<any, ChannelGraphLinkData>;
 
+    directions: { [key in CommunicationDirection]: Graph<any, ChannelGraphLinkData>; }
 
+    /**
+     * Create a new set of graphs for a communication channel.
+     * @param channel The channel for the graphs
+     */
     constructor(channel: CommunicationChannel) {
         this.channel = channel;
         this.outgoing = createGraph({ multigraph: true });
@@ -136,18 +211,76 @@ export class CommunicationChannelGraphs {
         }
     }
 
-    addNode(nodeId: string, node: CommunicationNode) {
-        this.outgoing.addNode(nodeId, node);
-        this.incoming.addNode(nodeId, node);
-        this.bidirectional.addNode(nodeId, node);
-        this.all.addNode(nodeId, node);
+    /**
+     * Add a node to all graphs
+     * @param node The node to add
+     */
+    addNode(node: CommunicationNode) {
+        this.outgoing.addNode(node.id, node);
+        this.incoming.addNode(node.id, node);
+        this.bidirectional.addNode(node.id, node);
+        this.all.addNode(node.id, node);
     }
+}
+
+export class CommunicationLink {
+
+    /** The id of the source node */
+    fromId: string
+    /** The id of the target node */
+    toId: string
+
+    /** The channel of the communication */
+    channel: CommunicationChannel
+
+    /** The direction of the communication */
+    direction: CommunicationDirection
+
+    /** Reference to the communication graph to get the nodes */
+    private graph: CommunicationGraph
+
+    /**
+     * Create a new communication link
+     * @param fromId The id of the source node
+     * @param toId The id of the target node
+     * @param channel The channel of the communication
+     * @param direction The direction of the communication
+     * @param graph Reference to the communication graph
+     */
+    constructor(
+        fromId: string,
+        toId: string,
+        channel: CommunicationChannel,
+        direction: CommunicationDirection,
+        graph: CommunicationGraph
+    ) {
+        this.fromId = fromId
+        this.toId = toId
+        this.channel = channel
+        this.direction = direction
+        this.graph = graph
+    }
+
+    /** The source node of the link */
+    get fromNode(): CommunicationNode {
+        return this.graph.nodesById.get(this.fromId)!
+    }
+
+    /** The target node of the link */
+    get toNode(): CommunicationNode {
+        return this.graph.nodesById.get(this.toId)!
+    }
+
+
 }
 
 export class ChannelGraphLinkData {
     constructor(public topic: CommunicationTopic, public channel: CommunicationChannel) { }
 }
 
+/**
+ * Class representing a communication graph.
+ */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export class CommunicationGraph<NodeData = any> {
     /** Nodes of the graph*/
@@ -156,19 +289,13 @@ export class CommunicationGraph<NodeData = any> {
     /** Mapping node ids to nodes */
     nodesById: Map<string, CommunicationNode<NodeData>>;
 
-    /** Channels mapping type id to the object  */
+    /** Mapping channel type id to the CommunicationChannel object  */
     channelsByType: Map<string, CommunicationChannel>;
 
-    /**
-     * Map for <channelType, <topic, CommunicationNode[]>>
-     * e.g. <'Publisher', <'topic1', [node1, node2]>>
-     */
-    // channelMapsByType: Map<string, Map<string, CommunicationNode[]>>;
+    /** Mapping channel type id to the TopicToNodeMap object */
     topicToNodeMapsByChannelType: Map<string, TopicToNodeMap<NodeData>>;
 
-    /**
-     * Map for <channelType, Graph>
-     */
+    /** Mapping channel type id to the CommunicationChannelGraphs object */
     graphsByChannelType: Map<string, CommunicationChannelGraphs>
 
     /**
@@ -194,10 +321,14 @@ export class CommunicationGraph<NodeData = any> {
         // this.nodes.forEach((node) => {
         //     this.addNode(node);
         // });
-        this.addNode(nodes);
+        this.addNodes(nodes);
     }
 
-    addNode(nodes: CommunicationNode<NodeData> | CommunicationNode<NodeData>[]) {
+    /**
+     * Add a node / nodes to the communication graph.
+     * @param nodes The node / nodes to add
+     */
+    addNodes(nodes: CommunicationNode<NodeData> | CommunicationNode<NodeData>[]) {
         nodes = Array.isArray(nodes) ? nodes : [nodes];
         nodes.forEach((node) => {
             node.graph = this;
@@ -225,6 +356,9 @@ export class CommunicationGraph<NodeData = any> {
     // Getter and setter
     ////////////////////////////////////////////////////////////////////////////
 
+    /** 
+     * Get the channels of the communication graph
+     */
     get channels(): CommunicationChannel[] {
         return Array.from(this.channelsByType.values());
     }
@@ -245,7 +379,6 @@ export class CommunicationGraph<NodeData = any> {
                     new LayoutGraphLink(
                         nodes.get(link.fromId.valueOf() as string)!,
                         nodes.get(link.toId.valueOf() as string)!,
-                        link.data
                     )
                 )
             });
@@ -260,7 +393,7 @@ export class CommunicationGraph<NodeData = any> {
     // Internal helper methods
     ////////////////////////////////////////////////////////////////////////////
 
-    _checkIfChannelTypeExists(channelType: string) {
+    private _checkIfChannelTypeExists(channelType: string) {
         if (!this.channelsByType.has(channelType)) {
             throw new Error(`Channel type ${channelType} not found`);
         }
@@ -271,7 +404,7 @@ export class CommunicationGraph<NodeData = any> {
         return this.topicToNodeMapsByChannelType.get(channelType)!;
     }
 
-    _updateLinks() {
+    private _updateLinks() {
 
         // Init the graphs
         this.channels.forEach((channel) => {
@@ -283,7 +416,7 @@ export class CommunicationGraph<NodeData = any> {
             // Add the nodes to the graphs
             // Each node is part of each graph
             this.graphsByChannelType.forEach((graph) => {
-                graph.addNode(node.id, node);
+                graph.addNode(node);
             });
 
             // Add the links between the nodes
@@ -292,9 +425,8 @@ export class CommunicationGraph<NodeData = any> {
                 const graphs = this.graphsByChannelType.get(channelType)!;
                 const topicMap = this.getTopicToNodeMapByChannelType(channelType);
 
-
                 // Adding links to the graph representing the direction of the topic
-                const graph = graphs[topic.direction];
+                const graph: Graph<any, ChannelGraphLinkData> = graphs[topic.direction];
 
                 // To add the links from the current node to destination nodes,
                 // we get all nodes that have the pendant direction of the same topic
@@ -302,37 +434,37 @@ export class CommunicationGraph<NodeData = any> {
 
                 // For each destination node, add a link
                 directionTopicMap.forEach((destinationNode) => {
-                    graph.addLink(node.id, destinationNode.id);
+                    graph.addLink(node.id, destinationNode.id, new ChannelGraphLinkData(topic, topic.channel));
                 });
             });
 
         });
     }
 
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Successor and predeccessor methods
-    ////////////////////////////////////////////////////////////////////////////
-
-    getSuccesscorsAccordingToDirection(node: string | CommunicationNode<NodeData>, direction: CommunicationDirection, channels?: CommunicationChannel[] | string[] | string): CommunicationNode[] {
-        const successors: CommunicationNode<NodeData>[] = []
-        const addedNodes = new Set<string>()
-
-        let nodeID: string;
-        if (typeof node !== "string") {
-            nodeID = node.id
+    getNodeID(node: string | CommunicationNode<NodeData>) {
+        if (typeof node === "string") {
+            return node
         } else {
-            nodeID = node
+            return node.id
         }
+    }
 
-        let commChannels = new Array<CommunicationChannel>()
+    getNode(nodeID: string | CommunicationNode<NodeData>) {
+        if (typeof nodeID === "string") {
+            return this.nodesById.get(nodeID)
+        } else {
+            return nodeID
+        }
+    }
 
+    getChannels(channels?: CommunicationChannel[] | string[] | string): CommunicationChannel[] {
+        // If no channels are set, consider all channels
         if (channels === undefined) {
-            commChannels = this.channels
+            return this.channels
         } else if (typeof channels === "string") {
-            commChannels = [this.channelsByType.get(channels)!]
+            return [this.channelsByType.get(channels)!]
         } else if (Array.isArray(channels)) {
-            commChannels = channels.map((channel) => {
+            return channels.map((channel) => {
                 if (typeof channel === "string") {
                     return this.channelsByType.get(channel)!
                 } else {
@@ -340,10 +472,31 @@ export class CommunicationGraph<NodeData = any> {
                 }
             })
         }
+        return []
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Successor and predeccessor methods
+    ////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Get successors of a node on the given channel(s) according to the direction.
+     * @param node The starting node
+     * @param direction The direction of the communication topic
+     * @param channels The communicaiton channel(s) to consider. If not set, all channels are considered.
+     * @returns List of successor nodes
+     */
+    getSuccesscorsAccordingToDirection(node: string | CommunicationNode<NodeData>, direction: CommunicationDirection, channels?: CommunicationChannel[] | string[] | string): CommunicationNode[] {
+        const successors: CommunicationNode<NodeData>[] = []
+        const addedNodes = new Set<string>()
+
+        const nodeID = this.getNodeID(node);
+        let commChannels = this.getChannels(channels);
 
         commChannels.forEach((channel) => {
             this.graphsByChannelType.get(channel.type)!.directions[direction].forEachLinkedNode(nodeID, (linkedNode, link) => {
-                if (!this.hiddenTopics.some((regex) => { return link.data.topic.match(regex) })) {
+                if (!this.hiddenTopics.some((regex) => { return link.data.topic.id.match(regex) })) {
                     if (!addedNodes.has(linkedNode.id as string)) {
                         addedNodes.add(linkedNode.id as string)
                         successors.push(this.nodesById.get(linkedNode.id as string)!)
@@ -355,13 +508,76 @@ export class CommunicationGraph<NodeData = any> {
         return successors
     }
 
+
+    /**
+     * Get the successors of a node on the given channel(s) (thus, successor nodes that receive data from the given node).
+     * @param nodeID The starting node
+     * @param channels The communicaiton channel(s) to consider. If not set, all channels are considered.
+     * @returns List of successor nodes
+     */
     getSuccessors(nodeID: string | CommunicationNode<NodeData>, channels?: CommunicationChannel[] | string[]): CommunicationNode<NodeData>[] {
         return this.getSuccesscorsAccordingToDirection(nodeID, "outgoing", channels)
     }
 
+    /**
+     * Get the predecessors of a node on the given channel(s) (thus, predecessor nodes that send data to the given node).
+     * @param nodeID The starting node
+     * @param channels The communicaiton channel(s) to consider. If not set, all channels are considered.
+     * @returns List of predecessor nodes
+     */
     getPredecessors(nodeID: string | CommunicationNode<NodeData>, channels?: CommunicationChannel[] | string[]): CommunicationNode<NodeData>[] {
         return this.getSuccesscorsAccordingToDirection(nodeID, "incoming", channels)
     }
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Link methods
+    ////////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * Get the links of a node on the given channel(s) according to the direction.
+     * @param node The starting node
+     * @param direction The direction of the communication topic
+     * @param channels The communicaiton channel(s) to consider. If not set, all channels are considered.
+     * @returns List of links
+     */
+    getLinksAccordingToDirection(node: string | CommunicationNode<NodeData>, direction: CommunicationDirection, channels?: CommunicationChannel[] | string[] | string): CommunicationLink[] {
+        const links: CommunicationLink[] = []
+
+        const nodeID = this.getNodeID(node);
+        let commChannels = this.getChannels(channels);
+
+        commChannels.forEach((channel) => {
+            this.graphsByChannelType.get(channel.type)!.directions[direction].forEachLinkedNode(nodeID, (linkedNode, link) => {
+                if (!this.hiddenTopics.some((regex) => { return link.data.topic.id.match(regex) })) {
+                    links.push(new CommunicationLink(link.fromId as string, link.toId as string, channel, direction, this))
+                }
+            }, true)
+        })
+
+        return links
+    }
+
+    /**
+     * Get the links of a node on the given channel(s) (thus, links that receive data from the given node).
+     * @param nodeID The starting node
+     * @param channels The communicaiton channel(s) to consider. If not set, all channels are considered.
+     * @returns List of links
+     */
+    getOutgoingLinks(nodeID: string | CommunicationNode<NodeData>, channels?: CommunicationChannel[] | string[]): CommunicationLink[] {
+        return this.getLinksAccordingToDirection(nodeID, "outgoing", channels)
+    }
+
+    /**
+     * Get the links of a node on the given channel(s) (thus, links that send data to the given node).
+     * @param nodeID The starting node
+     * @param channels The communicaiton channel(s) to consider. If not set, all channels are considered.
+     * @returns List of links
+     */
+    getIncomingLinks(nodeID: string | CommunicationNode<NodeData>, channels?: CommunicationChannel[] | string[]): CommunicationLink[] {
+        return this.getLinksAccordingToDirection(nodeID, "incoming", channels)
+    }
+
 
 }
 

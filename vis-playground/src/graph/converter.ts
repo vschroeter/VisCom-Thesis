@@ -18,8 +18,8 @@ export function convertGraphToCommGraph(graph: Graph): CommunicationGraph {
         const toNode = commNodesMap.get(to) ?? new CommunicationNode(to)
         
         const channel = channels[0]
-        const topicOut = new CommunicationTopic((topicId).toString(), channel, new MessageType("Message"), "outgoing");
-        const topicIn = new CommunicationTopic((topicId).toString(), channel, new MessageType("Message"), "incoming");
+        const topicOut = new CommunicationTopic(fromNode.id.toString(), (topicId).toString(), channel, "outgoing", new MessageType("Message"));
+        const topicIn = new CommunicationTopic(fromNode.id.toString(), (topicId).toString(), channel, "incoming", new MessageType("Message"));
 
         fromNode.topics.push(topicOut)
         toNode.topics.push(topicIn)

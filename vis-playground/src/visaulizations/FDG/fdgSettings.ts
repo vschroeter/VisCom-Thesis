@@ -54,11 +54,13 @@ export class FdgVisSettings extends VisualizationSettings<FdgSettingParamMapping
                 new VisualizationSetting<FdgSettingParamMapping["forceLink"]>({
                     key: "forceLink",
                     optional: true,
+                    active: true,
                     method: d3.forceLink,
                     params: [
                         new VisualizationSettingParam({
                             key: "distance",
                             optional: true,
+                            active: true,
                             default: 30,
                         }),
                         new VisualizationSettingParam({

@@ -99,15 +99,19 @@ export class VisualizationSettingParam<T> {
         key,
         optional,
         default: defaultValue,
+        active = false,
     }: {
         key: string,
         optional: boolean,
         default: T,
+        active?: boolean,
     }) {
         this.key = key;
         this.optional = optional;
         if (!optional) {
             this.active = true;
+        } else {
+            this.active = active;
         }
         this.default = defaultValue;
         this._value = defaultValue;
@@ -115,7 +119,7 @@ export class VisualizationSettingParam<T> {
 
     get value(): T | undefined {
         if (this.active) return this._value;
-        
+
         return undefined;
     }
 
@@ -124,7 +128,6 @@ export class VisualizationSettingParam<T> {
     }
 
 }
-
 
 // const a = new FdgVisSettings();
 // a.getSetting('forceCenter').getParam('strength')
