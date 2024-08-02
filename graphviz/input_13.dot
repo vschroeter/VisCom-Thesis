@@ -1,0 +1,40 @@
+digraph G {
+    beautify=true
+
+    // Nodes
+    tts_pico;
+    equalizer;
+    sound_sink_pulse;
+    loudness_analyser;
+    respeaker;
+    asr_vosk;
+    dialog_session_manager;
+    sound_fx;
+    sample_player;
+    kwd_precise;
+    tts_guard;
+    resource_manager_master;
+    status_visualizer_led;
+
+    // Edges
+    tts_pico -> equalizer;
+    tts_pico -> dialog_session_manager;
+    equalizer -> sound_sink_pulse;
+    equalizer -> loudness_analyser;
+    loudness_analyser -> status_visualizer_led;
+    respeaker -> asr_vosk;
+    respeaker -> dialog_session_manager;
+    respeaker -> kw_precise;
+    respeaker -> status_visualizer_led;
+    asr_vosk -> dialog_session_manager;
+    dialog_session_manager -> sound_fx;
+    dialog_session_manager -> kwd_precise;
+    dialog_session_manager -> tts_guard;
+    dialog_session_manager -> status_visualizer_led;
+    dialog_session_manager -> asr_vosk;
+    sound_fx -> sample_player;
+    kwd_precise -> tts_guard;
+    tts_guard -> dialog_session_manager;
+    tts_guard -> resource_manager_master;
+    resource_manager_master -> tts_guard;
+}
