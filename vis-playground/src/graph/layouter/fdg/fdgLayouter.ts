@@ -17,12 +17,24 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
         super(graph2d, settings);
     }
 
-    layout() {
+    reset() {
+        this.graph2d.nodes.forEach(node => {
+            node.x = 0;
+            node.y = 0;
+            node.vx = 0;
+            node.vy = 0;
+            node.fx = null;
+            node.fy = null;
+        });
+
+        this.layout();
+    }
+
+    layout(is_update = false) {
         if (this.simulation) {
             console.log("Stopping simulation");
             this.simulation.stop();
         }
-        console.log("BEF", this.graph2d.nodes, this.graph2d.nodes[0]?.center);
 
         const simulation = d3.forceSimulation(this.graph2d.nodes).alpha(1) //.alphaTarget(0.3);
         simulation.stop();
@@ -66,10 +78,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
             ))
         }
 
-        simulation.alpha(1).restart();
-
-        console.log("AFT", this.graph2d.nodes, this.graph2d.nodes[0]?.center);
-
+        simulation.alpha(is_update ? 0.5 : 1).restart();
     }
 
     private addEventsToSimulation(simulation: d3.Simulation<AbstractNode2d, AbstractConnection2d>) {

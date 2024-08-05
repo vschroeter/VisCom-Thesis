@@ -22,6 +22,7 @@ export class ForceCenterSetting extends GraphLayouterSetting {
     strength = new GraphLayouterSettingParam<number>({
         key: "strength",
         optional: false,
+        active: true,
         defaultValue: 1,
     });
 
@@ -31,6 +32,7 @@ export class ForceCenterSetting extends GraphLayouterSetting {
             label: "Force Center",
             description: "Attracts nodes to the specified center.",
             optional: true,
+            active: true,
         });
     }
 }
@@ -65,12 +67,14 @@ export class ForceCollideSetting extends GraphLayouterSetting {
     radius = new GraphLayouterSettingParam<number>({
         key: "radius",
         optional: true,
+        active: true,
         defaultValue: 5,
     });
 
     strength = new GraphLayouterSettingParam<number>({
         key: "strength",
         optional: true,
+        active: true,
         defaultValue: 0.5,
     });
 
@@ -80,6 +84,7 @@ export class ForceCollideSetting extends GraphLayouterSetting {
             label: "Force Collide",
             description: "Prevents nodes from overlapping.",
             optional: true,
+            active: true,
         });
     }
 }

@@ -1,5 +1,7 @@
 <template>
     <div @click="onClickDiv">
+        <!-- Button to rerender visualization -->
+        <q-btn label="Reset" color="primary" size="x" flat @click="resetSimulation" />
         <svg ref="refSVG" width="300" height="300" :viewBox="viewBox" xmlns="http://www.w3.org/2000/svg">
             <g ref="refGRoot">
                 <g ref="refGLinks">
@@ -16,6 +18,7 @@
             </g>
 
         </svg>
+
     </div>
 </template>
 
@@ -123,8 +126,9 @@ onUpdated(() => {
 
 })
 
-function updateSimulation() {
-    console.log("Update simulation");
+function resetSimulation() {
+    console.log("Reset simulation");
+    layouter?.reset();
 }
 
 function onClickDiv() {
@@ -142,7 +146,7 @@ watch(commGraph, (newVal) => {
 
     watch(settings, (newVal) => {
         console.log("New settings", newVal);
-        layouter?.layout();
+        layouter?.layout(true);
 
         // updateSimulation();
         // layouter?.updateSettings(newVal);
