@@ -120,13 +120,16 @@ watch(() => graphStore.graph, (newVal) => {
     console.log("[FDG] New graph", newVal);
 
     const graph = graphStore.graph
-    const layout = graph.getLayoutGraph()
-    data.layout = layout
+    return;
 
-    console.log("New nodes and links", layout.nodes, layout.links)
+    // const layout = graph.getLayoutGraph();
+    // // const layout = graph.getLayoutGraph()
+    // data.layout = layout
+
+    // console.log("New nodes and links", layout.nodes, layout.links)
 
 
-    updateSimulation()
+    // updateSimulation()
 
 
     // const simulation = d3.forceSimulation(data.layout.nodes)
@@ -171,7 +174,7 @@ function updateSimulation() {
         // .force("center", d3.forceCenter())
         .on("tick", ticked)
         .stop()
-        ;    
+        ;
 
     // const forces = [];
 

@@ -31,10 +31,14 @@ export class CommunicationNode<NodeData = any> {
     this.data = data;
   }
 
+  ////////////////////////////////////////////////////////////////////////////
+  // Node methods
+  ////////////////////////////////////////////////////////////////////////////
+
   /**
    * Get a list of connected nodes according to the direction and the channels.
-   * @param direction
-   * @param channels
+   * @param direction The direction of the connections
+   * @param channels The channels of the connections
    * @returns
    */
   getConnectedNodes(
@@ -50,4 +54,59 @@ export class CommunicationNode<NodeData = any> {
       channels,
     );
   }
+
+  /**
+   * Get a list of successors of the node.
+   * @param channels The channels of the connections
+   * @returns The list of successors
+   */
+  getSuccessors(channels?: string | string[] | CommunicationChannel[]): CommunicationNode<NodeData>[] {
+    return this.getConnectedNodes("outgoing", channels);
+  }
+
+  /**
+   * Get a list of predecessors of the node.
+   * @param channels The channels of the connections
+   * @returns The list of predecessors
+   */
+  getPredecessors(channels?: string | string[] | CommunicationChannel[]): CommunicationNode<NodeData>[] {
+    return this.getConnectedNodes("incoming", channels);
+  }
+
+
+  ////////////////////////////////////////////////////////////////////////////
+  // Link methods
+  ////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Get a list of links according to the direction and the channels.
+   * @param direction The direction of the links
+   * @param channels The channels of the links
+   * @returns The list of links
+   */
+  getLinks(direction: CommunicationDirection, channels?: string | string[] | CommunicationChannel[]) {
+    if (this.graph === undefined) {
+      throw new Error('Graph not set');
+    }
+    return this.graph.getLinksAccordingToDirection(this, direction, channels);
+  }
+
+  /**
+   * Get a list of outgoing links of the node.
+   * @param channels The channels of the links
+   * @returns The list of outgoing links
+   */
+  getOutgoingLinks(channels?: string | string[] | CommunicationChannel[]) {
+    return this.getLinks("outgoing", channels);
+  }
+
+  /**
+   * Get a list of incoming links of the node.
+   * @param channels The channels of the links
+   * @returns The list of incoming links
+   */
+  getIncomingLinks(channels?: string | string[] | CommunicationChannel[]) {
+    return this.getLinks("incoming", channels);
+  }
+
 }

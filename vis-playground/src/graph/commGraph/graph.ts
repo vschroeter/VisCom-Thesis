@@ -195,33 +195,33 @@ export class CommunicationGraph<NodeData = any> {
     return Array.from(this.channelsByType.values());
   }
 
-  getLayoutGraph(): LayoutGraph {
-    const nodes: Map<string, LayoutGraphNode> = new Map<
-      string,
-      LayoutGraphNode
-    >();
-    for (const node of this.nodes) {
-      nodes.set(node.id, new LayoutGraphNode(node.id, node));
-    }
+  // getLayoutGraph(): LayoutGraph {
+  //   const nodes: Map<string, LayoutGraphNode> = new Map<
+  //     string,
+  //     LayoutGraphNode
+  //   >();
+  //   for (const node of this.nodes) {
+  //     nodes.set(node.id, new LayoutGraphNode(node.id, node));
+  //   }
 
-    const links: LayoutGraphLink[] = [];
-    console.log(this.channels, this.graphsByChannelType);
-    this.channels.forEach((channel) => {
-      this.graphsByChannelType
-        .get(channel.type)!
-        .outgoing.forEachLink((link) => {
-          links.push(
-            new LayoutGraphLink(
-              nodes.get(link.fromId.valueOf() as string)!,
-              nodes.get(link.toId.valueOf() as string)!,
-            ),
-          );
-        });
-    });
+  //   const links: LayoutGraphLink[] = [];
+  //   console.log(this.channels, this.graphsByChannelType);
+  //   this.channels.forEach((channel) => {
+  //     this.graphsByChannelType
+  //       .get(channel.type)!
+  //       .outgoing.forEachLink((link) => {
+  //         links.push(
+  //           new LayoutGraphLink(
+  //             nodes.get(link.fromId.valueOf() as string)!,
+  //             nodes.get(link.toId.valueOf() as string)!,
+  //           ),
+  //         );
+  //       });
+  //   });
 
-    const layout = new LayoutGraph(Array.from(nodes.values()), links);
-    return layout;
-  }
+  //   const layout = new LayoutGraph(Array.from(nodes.values()), links);
+  //   return layout;
+  // }
 
   ////////////////////////////////////////////////////////////////////////////
   // Internal helper methods
@@ -340,7 +340,7 @@ export class CommunicationGraph<NodeData = any> {
     const addedNodes = new Set<string>();
 
     const nodeID = this.getNodeID(node);
-    let commChannels = this.getChannels(channels);
+    const commChannels = this.getChannels(channels);
 
     commChannels.forEach((channel) => {
       this.graphsByChannelType
@@ -419,7 +419,7 @@ export class CommunicationGraph<NodeData = any> {
     const links: CommunicationLink[] = [];
 
     const nodeID = this.getNodeID(node);
-    let commChannels = this.getChannels(channels);
+    const commChannels = this.getChannels(channels);
 
     commChannels.forEach((channel) => {
       this.graphsByChannelType
@@ -474,5 +474,25 @@ export class CommunicationGraph<NodeData = any> {
     channels?: CommunicationChannel[] | string[],
   ): CommunicationLink[] {
     return this.getLinksAccordingToDirection(nodeID, 'incoming', channels);
+  }
+
+  /**
+   * Get all links of a node on the given channel(s).
+   * @param nodeID The starting node
+   * @param channels The communicaiton channel(s) to consider. If not set, all channels are considered.
+   * @returns List of links
+   */
+  getAllLinks(
+    channels?: CommunicationChannel[] | string[],
+  ): CommunicationLink[] {
+    const links: CommunicationLink[] = [];
+
+    const commChannels = this.getChannels(channels);
+
+    this.nodes.forEach((node) => {
+      links.push(...this.getOutgoingLinks(node.id, commChannels));
+    });
+
+    return links;
   }
 }

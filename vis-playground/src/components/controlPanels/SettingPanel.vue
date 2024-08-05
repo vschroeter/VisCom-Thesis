@@ -23,7 +23,7 @@
                                 :pagination="{ rowsPerPage: 0 }"
                                 :title="setting.key"
                                 :row-key="row => row.key"
-                                :rows="setting.params"
+                                :rows="setting.parameters"
                                 :columns="settingTableColumns">
 
                                 <!-- If the setting is optional, add a toggle at the top altering the setting.active flag -->
