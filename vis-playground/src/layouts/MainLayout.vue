@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="hHh LpR fFf">
     <q-header elevated>
       <q-toolbar>
         <q-btn
@@ -48,17 +48,20 @@
       </q-list> -->
     </q-drawer>
 
-    <q-page-container>
-      <router-view />
-    </q-page-container>
 
     <!-- Drawer for the right side -->
-    <q-drawer
+    <q-drawer show-if-above
       v-model="rightDrawerOpen"
       side="right"
       bordered>
       <SettingPanel></SettingPanel>
     </q-drawer>
+
+    <q-page-container>
+      <router-view />
+    </q-page-container>
+
+
 
   </q-layout>
 </template>
@@ -129,4 +132,3 @@ function toggleRightDrawer() {
   rightDrawerOpen.value = !rightDrawerOpen.value;
 }
 </script>
-

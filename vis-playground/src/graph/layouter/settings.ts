@@ -5,10 +5,14 @@ export class GraphLayouterSettings {
     /** Name of the settings under which they are stored. */
     name: string;
 
+    /** Layouter type of the settings */
+    type: string;
+
     [key: string]: any;
 
-    constructor(name?: string) {
-        this.name = name ?? "Settings"; 
+    constructor(type: string, name?: string) {
+        this.type = type;
+        this.name = name ?? ""; 
         this.id = GraphLayouterSettings.currentId++;
     }
 
@@ -21,6 +25,8 @@ export class GraphLayouterSettings {
     /** Load the settings from a json */
     loadFromJson(json: any) {
         // Iterate over the settings and load the values from the json
+        this.name = json.name;
+        // this.type = json.type ?? this.type;
         this.settings.forEach(setting => {
             if (json[setting.key]) {
                 setting.loadFromJson(json[setting.key]);
@@ -30,7 +36,8 @@ export class GraphLayouterSettings {
 
     getJson(): any {
         const json: any = {
-            id: this.id,
+            // id: this.id,
+            // type: this.type,
             name: this.name,
         };
 

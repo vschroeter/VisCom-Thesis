@@ -47,6 +47,31 @@ export class SettingsCollection {
         return this.mapIdToSettings.get(id);
     }
 
+    deleteSetting(id: number) {
+        console.log("Deleting settings", id);
+        const settings = this.mapIdToSettings.get(id);
+        if (!settings) {
+            console.warn("No settings found for id", id);
+            return;
+        }
+        console.log("Deleting settings", settings);
+
+        const settingsList = this.mapLayoutTypeToListOfSettings.get(settings.type);
+        if (!settingsList) {
+            console.warn("No settings list found for type", settings.type);
+            return;
+        }
+
+        const index = settingsList.indexOf(settings);
+        if (index === -1) {
+            console.warn("Setting not found in list", settings);
+            return;
+        }
+
+        settingsList.splice(index, 1);
+        this.mapIdToSettings.delete(id);
+    }
+
     addSetting(layouterType: string) {
 
         // Check, if there is a mapping for the layouter type
@@ -67,7 +92,7 @@ export class SettingsCollection {
             return;
         }
 
-        const settings = new layouter.settings("New setting");
+        const settings = new layouter.settings(layouterType);
         settingsList.push(settings);
         this.mapIdToSettings.set(settings.id, settings);
 
@@ -79,6 +104,11 @@ export class SettingsCollection {
     ////////////////////////////////////////////////////////////////////////////
 
     loadFromJson(json: SettingsCollectionJson) {
+
+        // Clear the current settings
+        this.mapLayoutTypeToListOfSettings.clear();
+        this.mapIdToSettings.clear();
+
         for (const layouterName in layouterMapping) {
             if (this.mapLayoutTypeToListOfSettings.get(layouterName) === undefined) {
                 this.mapLayoutTypeToListOfSettings.set(layouterName, []);
@@ -101,10 +131,10 @@ export class SettingsCollection {
 
             // Each enty in the settings list is a settings configuration
             for (const settingsJson of settingsListJson.settingsList) {
-                const settings = new layouter.settings(settingsJson.name);
+                const settings = new layouter.settings(layouterName);
                 settings.loadFromJson(settingsJson);
                 settingsList.push(settings);
-                this.mapIdToSettings.set(settingsJson.id, settings);
+                this.mapIdToSettings.set(settings.id, settings);
             }
         }
     }

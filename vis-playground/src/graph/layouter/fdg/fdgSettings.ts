@@ -97,8 +97,8 @@ export class FdgLayouterSettings extends GraphLayouterSettings {
     forceLink = new ForceLinkSetting();
     forceCollide = new ForceCollideSetting();
 
-    constructor() {
-        super("FDG Settings")
+    constructor(type: string, name?: string) {
+        super(type, name);
     }
 }
 

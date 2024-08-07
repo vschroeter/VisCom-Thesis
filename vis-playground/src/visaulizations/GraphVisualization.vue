@@ -1,10 +1,10 @@
 <template>
     <div @click="onClickDiv">
-        <q-card>
+        <q-card :class="isSelected ? 'bg-primary text-white' : ''">
             <q-card-section class="row items-start">
-                <div class="col q-mr-sm" :style="`inline-size: ${size - iconButtonDivWidth - 30}px; overflow-wrap: break-word;`">
-                    
-                    Header Title That Is Long and Should Wrap to Fit
+                <div :class="'col q-mr-sm '"
+                    :style="`inline-size: ${size - iconButtonDivWidth - 30}px; overflow-wrap: break-word;`">
+                    {{ settings?.name }}
                 </div>
                 <div ref="refDivIconButtons" class="col-auto">
                     <!-- Button to rerender visualization -->
@@ -18,23 +18,24 @@
             <q-card-section>
 
                 <div class="svgContainerDiv">
-                <svg ref="refSVG" :width="size" :height="size" :viewBox="viewBox" xmlns="http://www.w3.org/2000/svg">
-                    <g ref="refGRoot">
-                        <g ref="refGLinks">
+                    <svg ref="refSVG" :width="size" :height="size" :viewBox="viewBox"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <g ref="refGRoot">
+                            <g ref="refGLinks">
 
+                            </g>
+
+                            <g ref="refGNodes">
+
+                            </g>
+
+                            <g ref="refGLabels">
+
+                            </g>
                         </g>
 
-                        <g ref="refGNodes">
-
-                        </g>
-
-                        <g ref="refGLabels">
-
-                        </g>
-                    </g>
-
-                </svg>
-            </div>
+                    </svg>
+                </div>
             </q-card-section>
         </q-card>
 
@@ -43,20 +44,15 @@
 
 <script setup lang="ts">
 
-import { computed, onMounted, onUpdated, reactive, ref, toValue, watch, type Ref } from 'vue'
-import { Graph } from 'ngraph.graph';
+import { computed, onMounted, onUpdated, ref, toValue, watch } from 'vue'
 import { useGraphStore } from 'src/stores/graph-store';
 
 import * as d3 from 'd3'
 import { Graph2d } from 'src/graph/graphical/Graph2d';
 import { CommunicationGraph } from 'src/graph/commGraph';
-import { FdgLayouterSettings } from 'src/graph/layouter/fdg/fdgSettings';
-import { FdgLayouter } from 'src/graph/layouter/fdg/fdgLayouter';
-import { AbstractNode2d } from 'src/graph/graphical';
 import { layouterMapping } from 'src/graph/layouter/settingsCollection';
 import { GraphLayouter } from 'src/graph/layouter/layouter';
-// import { LayoutGraph, LayoutGraphLink, LayoutGraphNode } from 'src/graph/layoutGraph';
-// import { FdgVisSettings } from './fdgSettings';
+
 
 ////////////////////////////////////////////////////////////////////////////
 // Props
@@ -84,7 +80,6 @@ const commGraph = computed(() => graphStore.graph);
 
 let graph2d: Graph2d | null = null
 let layouter: GraphLayouter<any> | null = null
-// let settings: FdgLayouterSettings | null = null
 
 ////////////////////////////////////////////////////////////////////////////
 // Template Refs
@@ -123,6 +118,10 @@ const settings = computed(() => {
     return settingsCollection.getSettings(props.settingId)
 })
 
+const isSelected = computed(() => {
+    return props.settingId === graphStore.activeSettingId
+})
+
 ////////////////////////////////////////////////////////////////////////////
 // Helper functions
 ////////////////////////////////////////////////////////////////////////////
@@ -150,7 +149,7 @@ function layoutUpdated() {
 }
 
 function deleteItem() {
-    console.log("Delete item")
+    settingsCollection.deleteSetting(props.settingId)
 }
 ////////////////////////////////////////////////////////////////////////////
 // Lifecycle hooks
@@ -158,9 +157,6 @@ function deleteItem() {
 
 onMounted(() => {
     console.log("[VIS] Mounted"); //, props.settings);
-
-
-
 })
 
 onUpdated(() => {
@@ -172,16 +168,20 @@ function resetSimulation() {
     layouter?.reset();
 }
 
-function onClickDiv() {
+function onClickDiv(event: MouseEvent) {
     graphStore.currentSettings = settings.value ? settings.value : undefined;
+    graphStore.activeSettingId = props.settingId;
     console.log(graphStore.currentSettings);
+
+    // Stop propagation
+    event.stopPropagation();
 }
 
 watch(commGraph, (newVal) => {
     //updateSimulation();
     console.log("[GViz] Graph updated", commGraph.value, commGraph.value instanceof CommunicationGraph);
     if (!settings.value) {
-        console.error("No settings found");
+        console.error("No settings found for ", props.settingId, settingsCollection);
         return
     }
 
@@ -190,13 +190,10 @@ watch(commGraph, (newVal) => {
     graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
     layouter = new cls(graph2d, settings.value);
 
-
     watch(settings, (newVal) => {
-        console.log("New settings", newVal);
         layouter?.layout(true);
     }, { immediate: true, deep: true })
 
-    // console.log("Graph2d", graph2d);
 
     layouter.on('update', layoutUpdated)
     layouter.layout();
@@ -210,9 +207,13 @@ watch(commGraph, (newVal) => {
     border: 1px solid #00000025;
     /* width: 100%;
     border: 1px solid #000; */
-    /* border-radius: 5px;
-    padding: 5px;
-    margin: 5px; */
+    border-radius: 5px;
+    background-color: white;
+    /* padding: 5px; */
+    /* margin: 5px; */
 }
 
+/* .activeCard {
+    background-color: #00000010;
+} */
 </style>

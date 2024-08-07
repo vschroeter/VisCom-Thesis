@@ -190,7 +190,7 @@ onUpdated(() => {
 })
 
 watch(() => store.currentSettings, (newSettings) => {
-    console.log("New settings: ", newSettings)
+    // console.log("New settings: ", store.currentSettings)
 })
 
 

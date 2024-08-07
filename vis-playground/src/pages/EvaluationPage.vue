@@ -24,7 +24,7 @@
       </div>
     </div>
 
-    <div ref="refVisRootRow" class="row">
+    <div ref="refVisRootRow" class="row" @click="deselectSettings()">
       <div class="col">
         <div v-for="(mapping, layouterKey) in layouterMapping" :key="layouterKey" class="row q-ma-sm">
           <div class="col">
@@ -32,9 +32,10 @@
               <div class="text-h6">{{ mapping.label }}</div>
             </div>
             <div v-if="true" class="row q-mt-md">
-              <div class="col-auto q-mx-xs q-my-sm" v-for="setting in settingsCollection.mapLayoutTypeToListOfSettings.get(layouterKey)"
+              <div class="col-auto q-mx-xs q-my-sm"
+                v-for="setting in settingsCollection.mapLayoutTypeToListOfSettings.get(layouterKey)"
                 :key="setting.id">
-                <GraphVisualization :settingId="setting.id" :size="250" :layoutType="layouterKey"/>
+                <GraphVisualization :settingId="setting.id" :size="250" :layoutType="layouterKey" />
 
               </div>
 
@@ -54,33 +55,41 @@
       </div>
     </div>
 
-
+    <q-page-scroller position="bottom-right" :scroll-offset="150" :offset="[18, 18]">
+      <q-btn fab icon="keyboard_arrow_up" color="secondary" />
+    </q-page-scroller>
 
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { layouterMapping, SettingsCollection } from 'src/graph/layouter/settingsCollection';
+import { layouterMapping } from 'src/graph/layouter/settingsCollection';
 import { useGraphStore } from 'src/stores/graph-store';
 import GraphVisualization from 'src/visaulizations/GraphVisualization.vue';
-import { onMounted, reactive, ref } from 'vue';
-
+import { onMounted } from 'vue';
+import { watchDebounced } from '@vueuse/core'
 
 const store = useGraphStore();
 const settingsCollection = store.settingsCollection;
 
 onMounted(() => {
-  if (store.settingsCollection) {
+  if (store.settingsCollection) { 
     store.settingsCollection.loadFromJson(JSON.parse(store.layouterSettingsCollectionJson))
+    console.log('store.settingsCollection loaded', store.layouterSettingsCollectionJson);
     // console.log(store.settingsCollection)
     // console.log(store.settingsCollection.getJson())
   }
-
-
-
-
-
 })
+
+watchDebounced(store.settingsCollection, () => {
+  console.log('store.settingsCollection saved');
+  store.layouterSettingsCollectionJson = JSON.stringify(store.settingsCollection.getJson())
+}, { deep: true, debounce: 2000, maxWait: 15000 })
+
+function deselectSettings() {
+  store.activeSettingId = -1;
+  store.currentSettings = undefined;
+}
 
 </script>
 
