@@ -1,8 +1,12 @@
 <template>
     <div>
+        <div class="row" v-if="currentSettings">
+            <q-input borderless v-model="currentSettings.name" label="Visualization Name" />
+        </div>
         <!-- For each setting add a row -->
         <!-- <div v-for="setting in settingList" :key="setting.settingName"> -->
         <div v-for="setting in currentSettings?.settings" :key="setting.key">
+
             <div class="row">
                 <div class="col">
                     <div v-if="false" class="row">
@@ -54,9 +58,8 @@
                                         <q-input
                                             v-model="props.row.value"
                                             type="number"
-                                            dense 
-                                            borderless
-                                            />
+                                            dense
+                                            borderless />
                                     </q-td>
                                 </template>
                             </q-table>

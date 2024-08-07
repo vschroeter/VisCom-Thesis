@@ -1,4 +1,4 @@
-import { GraphLayouterSetting, GraphLayouterSettingParam, GraphLayouterSettings } from "../graphLayouter";
+import { GraphLayouterSetting, GraphLayouterSettingParam, GraphLayouterSettings } from "../settings";
 
 export class ForceManyBodySetting extends GraphLayouterSetting {
     strength = new GraphLayouterSettingParam<number>({
@@ -98,7 +98,7 @@ export class FdgLayouterSettings extends GraphLayouterSettings {
     forceCollide = new ForceCollideSetting();
 
     constructor() {
-        super()
+        super("FDG Settings")
     }
 }
 

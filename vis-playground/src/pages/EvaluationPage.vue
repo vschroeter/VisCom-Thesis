@@ -1,6 +1,8 @@
 <template>
   <!-- class="row items-center justify-evenly" -->
   <q-page>
+
+
     <!-- style="height: 100px;" -->
     <div v-if="false" class="row">
       <div class="col">
@@ -22,100 +24,63 @@
       </div>
     </div>
 
-    <div class="row">
+    <div ref="refVisRootRow" class="row">
       <div class="col">
-        <div v-for="row in rows" :key="row.name">
-          <div class="row">
-            <div class="text-h6">{{ row.name }}</div>
-          </div>
-          <div class="row">
-            
-            <!-- @click="store.currentSettings = item.settings" -->
-            <q-card v-for="(item, idx) in row.visComponents" :key="idx" class="q-mb-md" @click="console.log('CLICK card')">
-              <q-card-section>
-                <div class="card-title">{{ item.name }}</div>
-                <GraphVisualization />
-              </q-card-section>
-            </q-card>
+        <div v-for="(mapping, layouterKey) in layouterMapping" :key="layouterKey" class="row q-ma-sm">
+          <div class="col">
+            <div class="row">
+              <div class="text-h6">{{ mapping.label }}</div>
+            </div>
+            <div v-if="true" class="row q-mt-md">
+              <div class="col-auto q-mx-xs q-my-sm" v-for="setting in settingsCollection.mapLayoutTypeToListOfSettings.get(layouterKey)"
+                :key="setting.id">
+                <GraphVisualization :settingId="setting.id" :size="250" :layoutType="layouterKey"/>
 
-          </div>
+              </div>
 
-          <!-- <div v-for="visComponent in row.visComponents" :key="visComponent.name">
-                  <h6>{{ visComponent.name }}</h6>
-                  <component :is="visComponent.component" />
-                  </div> -->
+              <!-- At the end, add a large round + button to add a setting with this key  -->
+              <div class="col-auto q-mx-md self-center">
+                <q-btn
+                  round outline
+                  size="lg"
+                  icon="add"
+                  @click="settingsCollection.addSetting(layouterKey)" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <q-separator />
-      </div>
-      <div>
-
       </div>
     </div>
 
 
 
-
-
-    <!-- <FDG>
-
-    </FDG> -->
   </q-page>
 </template>
 
 <script setup lang="ts">
-import FDG from 'src/components/visaulizations/FDG.vue';
+import { layouterMapping, SettingsCollection } from 'src/graph/layouter/settingsCollection';
 import { useGraphStore } from 'src/stores/graph-store';
-import { FdgVisSettings } from 'src/visaulizations/FDG/fdgSettings';
 import GraphVisualization from 'src/visaulizations/GraphVisualization.vue';
-import { VisualizationSettings } from 'src/visaulizations/visualizationSettings';
-import { defineAsyncComponent, markRaw, ref, watch } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 
-const store = useGraphStore()
+const store = useGraphStore();
+const settingsCollection = store.settingsCollection;
 
-
-
-type VueComponent = any
-
-// Extending vue component
-class VisComponent { // <T = VueComponent>
-  name: string
-  // settings: VisualizationSettings<any>
-  // component: T
-
-  constructor(name: string) { // , settings: VisualizationSettings<any>) { //  component: T,
-    this.name = name
-    // this.settings = settings
-    // this.component = component
+onMounted(() => {
+  if (store.settingsCollection) {
+    store.settingsCollection.loadFromJson(JSON.parse(store.layouterSettingsCollectionJson))
+    // console.log(store.settingsCollection)
+    // console.log(store.settingsCollection.getJson())
   }
 
-  // get props() {
-  //   return {
-  //     settings: this.settings
-  //   }
-  // }
-}
-
-class VisRow {
-  name: string
-  visComponents: VisComponent[]
-
-  constructor(name: string, visComponents: VisComponent[]) {
-    this.name = name
-    this.visComponents = visComponents
-
-  }
-}
-
-const rows = ref<VisRow[]>([
-  new VisRow("Force Directed Graphs", [
-    // new VisComponent("FDG", markRaw(defineAsyncComponent(() => import('src/visaulizations/FDG/FDG.vue'))), new FdgVisSettings())
-    new VisComponent("FDG")
-  ])
-])
 
 
+
+
+})
 
 </script>
 

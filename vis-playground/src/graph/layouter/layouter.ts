@@ -1,0 +1,82 @@
+import { CommunicationGraph } from "../commGraph";
+import { AbstractConnection2d, AbstractNode2d } from "../graphical";
+import { Graph2d } from "../graphical/Graph2d";
+import { GraphLayouterSettings } from "./settings";
+
+export class GraphLayouter<T extends GraphLayouterSettings> {
+
+    settings: T;
+    commGraph: CommunicationGraph;
+    graph2d: Graph2d;
+
+    protected events: { [key: string]: ((this: GraphLayouter<any>) => void) } = {};
+
+    constructor(graph2d: Graph2d, settings: T) {
+        this.commGraph = graph2d.commGraph;
+        this.settings = settings;
+        this.graph2d = graph2d;
+    }
+
+    layout(isUpdate = false): void {
+        throw new Error("Method not implemented.");
+    }
+
+    reset() {
+        this.graph2d.nodes.forEach(node => {
+            node.x = 0;
+            node.y = 0;
+            node.vx = 0;
+            node.vy = 0;
+            node.fx = null;
+            node.fy = null;
+        });
+
+        this.layout();
+    }
+
+    protected emitEvent(type: "update" | "end") {
+        if (this.events[type]) {
+            this.events[type].call(this);
+        }
+    }
+
+    on(typenames: "update" | "end", listener: null | ((this: GraphLayouter<any>) => void)) {
+        if (listener == null) {
+            delete this.events[typenames];
+            return;
+        } else {
+            this.events[typenames] = listener;
+        }
+    }
+
+    updateNodes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
+        selection.selectAll('circle')
+            .data(this.graph2d?.nodes)
+            .join('circle')
+            .attr('cx', (d: AbstractNode2d) => d.x)
+            .attr('cy', (d: AbstractNode2d) => d.y)
+            .attr('r', 10)
+            .attr('fill', 'red')
+    }
+
+    updateLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
+        selection.selectAll('line')
+            .data(this.graph2d?.links)
+            .join('line')
+            .attr('x1', (d: AbstractConnection2d) => d.source.x)
+            .attr('y1', (d: AbstractConnection2d) => d.source.y)
+            .attr('x2', (d: AbstractConnection2d) => d.target.x)
+            .attr('y2', (d: AbstractConnection2d) => d.target.y)
+            .attr('stroke', 'black')
+    }
+
+    updateLabels(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
+        selection.selectAll('text')
+            .data(this.graph2d?.nodes)
+            .join('text')
+            .attr('x', (d: AbstractNode2d) => d.x + 10)
+            .attr('y', (d: AbstractNode2d) => d.y)
+            .text((d: AbstractNode2d) => d.data?.id ?? "")
+    }
+
+}

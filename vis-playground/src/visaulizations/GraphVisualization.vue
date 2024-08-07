@@ -1,23 +1,42 @@
 <template>
     <div @click="onClickDiv">
-        <!-- Button to rerender visualization -->
-        <q-btn label="Reset" color="primary" size="x" flat @click="resetSimulation" />
-        <svg ref="refSVG" width="300" height="300" :viewBox="viewBox" xmlns="http://www.w3.org/2000/svg">
-            <g ref="refGRoot">
-                <g ref="refGLinks">
+        <q-card>
+            <q-card-section class="row items-start">
+                <div class="col q-mr-sm" :style="`inline-size: ${size - iconButtonDivWidth - 30}px; overflow-wrap: break-word;`">
+                    
+                    Header Title That Is Long and Should Wrap to Fit
+                </div>
+                <div ref="refDivIconButtons" class="col-auto">
+                    <!-- Button to rerender visualization -->
+                    <q-btn size="sm" icon="refresh" flat round @click="resetSimulation" />
+                    <q-btn size="sm" icon="delete" flat round @click="deleteItem" />
+                </div>
+                <!-- <div class="text-h6">Graph Visualization</div>
+                <q-btn label="Reset" color="primary" size="x" flat @click="resetSimulation" /> -->
+            </q-card-section>
+            <q-separator inset />
+            <q-card-section>
 
-                </g>
+                <div class="svgContainerDiv">
+                <svg ref="refSVG" :width="size" :height="size" :viewBox="viewBox" xmlns="http://www.w3.org/2000/svg">
+                    <g ref="refGRoot">
+                        <g ref="refGLinks">
 
-                <g ref="refGNodes">
+                        </g>
 
-                </g>
+                        <g ref="refGNodes">
 
-                <g ref="refGLabels">
+                        </g>
 
-                </g>
-            </g>
+                        <g ref="refGLabels">
 
-        </svg>
+                        </g>
+                    </g>
+
+                </svg>
+            </div>
+            </q-card-section>
+        </q-card>
 
     </div>
 </template>
@@ -34,6 +53,8 @@ import { CommunicationGraph } from 'src/graph/commGraph';
 import { FdgLayouterSettings } from 'src/graph/layouter/fdg/fdgSettings';
 import { FdgLayouter } from 'src/graph/layouter/fdg/fdgLayouter';
 import { AbstractNode2d } from 'src/graph/graphical';
+import { layouterMapping } from 'src/graph/layouter/settingsCollection';
+import { GraphLayouter } from 'src/graph/layouter/layouter';
 // import { LayoutGraph, LayoutGraphLink, LayoutGraphNode } from 'src/graph/layoutGraph';
 // import { FdgVisSettings } from './fdgSettings';
 
@@ -41,10 +62,13 @@ import { AbstractNode2d } from 'src/graph/graphical';
 // Props
 ////////////////////////////////////////////////////////////////////////////
 
-// const props = withDefaults(defineProps<{
-//     graph: Graph,
-// }>(), {
-// })
+const props = withDefaults(defineProps<{
+    layoutType: string,
+    settingId: number,
+    size: number,
+}>(), {
+    size: 250
+})
 
 // const props = defineProps<{
 //     settings: FdgVisSettings,
@@ -54,12 +78,13 @@ import { AbstractNode2d } from 'src/graph/graphical';
 // Stores
 ////////////////////////////////////////////////////////////////////////////
 
-const graphStore = useGraphStore()
-const commGraph = computed(() => graphStore.graph)
+const graphStore = useGraphStore();
+const settingsCollection = graphStore.settingsCollection;
+const commGraph = computed(() => graphStore.graph);
 
 let graph2d: Graph2d | null = null
-let layouter: FdgLayouter | null = null
-let settings: FdgLayouterSettings | null = null
+let layouter: GraphLayouter<any> | null = null
+// let settings: FdgLayouterSettings | null = null
 
 ////////////////////////////////////////////////////////////////////////////
 // Template Refs
@@ -70,6 +95,8 @@ const refGRoot = ref<SVGGElement | null>(null)
 const refGLinks = ref<SVGGElement | null>(null)
 const refGNodes = ref<SVGGElement | null>(null)
 const refGLabels = ref<SVGGElement | null>(null)
+
+const refDivIconButtons = ref<HTMLDivElement | null>(null)
 
 ////////////////////////////////////////////////////////////////////////////
 // Refs and Computed values
@@ -85,11 +112,22 @@ const viewBox = computed(() => {
 })
 
 
+const iconButtonDivWidth = computed(() => {
+    if (refDivIconButtons.value === null) {
+        return 0
+    }
+    return refDivIconButtons.value.clientWidth
+})
+
+const settings = computed(() => {
+    return settingsCollection.getSettings(props.settingId)
+})
+
 ////////////////////////////////////////////////////////////////////////////
 // Helper functions
 ////////////////////////////////////////////////////////////////////////////
 
-function ticked() {
+function layoutUpdated() {
     // console.log("ticked")
     bBox.value = refGRoot.value?.getBBox() ?? null
     // console.log("Ticket in GViz", graph2d);
@@ -111,6 +149,9 @@ function ticked() {
     // emit('updated')
 }
 
+function deleteItem() {
+    console.log("Delete item")
+}
 ////////////////////////////////////////////////////////////////////////////
 // Lifecycle hooks
 ////////////////////////////////////////////////////////////////////////////
@@ -132,33 +173,46 @@ function resetSimulation() {
 }
 
 function onClickDiv() {
-    graphStore.currentSettings = settings ? settings : undefined;
+    graphStore.currentSettings = settings.value ? settings.value : undefined;
     console.log(graphStore.currentSettings);
 }
 
 watch(commGraph, (newVal) => {
     //updateSimulation();
     console.log("[GViz] Graph updated", commGraph.value, commGraph.value instanceof CommunicationGraph);
+    if (!settings.value) {
+        console.error("No settings found");
+        return
+    }
+
+    const cls = layouterMapping[props.layoutType].layouter;
+
     graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
-    settings = reactive(new FdgLayouterSettings()) as FdgLayouterSettings;
-    layouter = new FdgLayouter(graph2d, settings);
+    layouter = new cls(graph2d, settings.value);
 
 
     watch(settings, (newVal) => {
         console.log("New settings", newVal);
         layouter?.layout(true);
-
-        // updateSimulation();
-        // layouter?.updateSettings(newVal);
     }, { immediate: true, deep: true })
 
-    console.log("Graph2d", graph2d);
+    // console.log("Graph2d", graph2d);
 
-    layouter.on('tick', ticked)
+    layouter.on('update', layoutUpdated)
     layouter.layout();
 
 }, { immediate: true, deep: true })
 
 </script>
 
-<style scoped></style>
+<style scoped>
+.svgContainerDiv {
+    border: 1px solid #00000025;
+    /* width: 100%;
+    border: 1px solid #000; */
+    /* border-radius: 5px;
+    padding: 5px;
+    margin: 5px; */
+}
+
+</style>

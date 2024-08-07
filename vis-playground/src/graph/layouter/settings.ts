@@ -1,14 +1,45 @@
-import { CommunicationGraph } from "../commGraph";
-import { Graph2d } from "../graphical/Graph2d";
-
-
 export class GraphLayouterSettings {
-    constructor() { }
+    static currentId = 0;
+    readonly id: number;
+    
+    /** Name of the settings under which they are stored. */
+    name: string;
+
+    [key: string]: any;
+
+    constructor(name?: string) {
+        this.name = name ?? "Settings"; 
+        this.id = GraphLayouterSettings.currentId++;
+    }
 
     /** List of all settings */
     get settings(): GraphLayouterSetting[] {
         // Iterate over the keys of the object and return the values of the object that are instances or subclasses of GraphLayouterSetting
         return Object.values(this).filter((value) => value instanceof GraphLayouterSetting);
+    }
+
+    /** Load the settings from a json */
+    loadFromJson(json: any) {
+        // Iterate over the settings and load the values from the json
+        this.settings.forEach(setting => {
+            if (json[setting.key]) {
+                setting.loadFromJson(json[setting.key]);
+            }
+        });
+    }
+
+    getJson(): any {
+        const json: any = {
+            id: this.id,
+            name: this.name,
+        };
+
+        // Iterate over the settings and get the json representation of each setting
+        this.settings.forEach(setting => {
+            json[setting.key] = setting.getJson();
+        });
+
+        return json;
     }
 }
 
@@ -51,6 +82,29 @@ export class GraphLayouterSetting {
     get parameters(): GraphLayouterSettingParam<any>[] {
         return Object.values(this).filter((value) => value instanceof GraphLayouterSettingParam);
     }
+
+    loadFromJson(json: any) {
+        this.active = json.active;
+
+        this.parameters.forEach(param => {
+            if (json[param.key]) {
+                param.loadFromJson(json[param.key]);
+            }
+        });
+    }
+
+    getJson(): any {
+        const json: any = {
+            key: this.key,
+            active: this.active,
+        };
+
+        this.parameters.forEach(param => {
+            json[param.key] = param.getJson();
+        });
+
+        return json;
+    }
 }
 
 export class GraphLayouterSettingParam<T> { // 
@@ -89,7 +143,7 @@ export class GraphLayouterSettingParam<T> { //
         optional: boolean,
         defaultValue: T,
         active?: boolean,
-        }) {
+    }) {
         this.key = key;
         this.label = label || key;
         this.description = description;
@@ -109,20 +163,16 @@ export class GraphLayouterSettingParam<T> { //
         this._value = value;
     }
 
-}
-
-
-
-export class GraphLayouter<T extends GraphLayouterSettings> {
-
-    settings: T;
-    commGraph: CommunicationGraph;
-    graph2d: Graph2d;
-
-    constructor(graph2d: Graph2d, settings: T) {
-        this.commGraph = graph2d.commGraph;
-        this.settings = settings;
-        this.graph2d = graph2d;
+    loadFromJson(json: any) {
+        this.active = json.active;
+        this._value = json.value;
     }
 
+    getJson(): any {
+        return {
+            key: this.key,
+            active: this.active,
+            value: this._value,
+        }
+    }
 }
