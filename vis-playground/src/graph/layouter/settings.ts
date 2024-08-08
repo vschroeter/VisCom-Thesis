@@ -1,4 +1,5 @@
 import { AbstractConnection2d, AbstractNode2d } from "../graphical";
+import { Graph2d } from "../graphical/Graph2d";
 
 const evaluateExpression = (expression: string, context: Record<string, any>): any => {
     const keys = Object.keys(context);
@@ -61,6 +62,13 @@ export class GraphLayouterSettings {
 
         return json;
     }
+
+    getContext(graph2d: Graph2d): Record<string, any> {
+        return {
+            n: graph2d.nodes.length,
+            l: graph2d.links.length,
+        };
+    }
 }
 
 export class GraphLayouterSetting {
@@ -96,7 +104,7 @@ export class GraphLayouterSetting {
         this.label = label || key;
         this.description = description;
         this.optional = optional;
-        this.active = active;
+        this.active = optional ? active: true;
     }
 
     get parameters(): GraphLayouterSettingParam[] {
@@ -150,7 +158,13 @@ export class GraphLayouterSettingParam { //
     protected _textValue: string;
 
     /** Tooltip to display in the UI */
-    tooltip: string | string[] = ""
+    static tooltip: string | string[] = [
+        "You can use the following graph variables:",
+        "- n: Number of nodes",
+        "- l: Number of links",
+    ]
+
+    tooltip: string | string[] = GraphLayouterSettingParam.tooltip;
 
     constructor({
         key,
@@ -218,7 +232,7 @@ export class GraphLayouterSettingParam { //
 
 export class GraphLayouterSettingNodeParam extends GraphLayouterSettingParam {
 
-    tooltip: string[] = [
+    static tooltip: string[] = [...GraphLayouterSettingParam.tooltip,
         "You can use the following node params:",
         "- cs: Number of successors",
         "- cp: Number of predecessors",
@@ -228,8 +242,10 @@ export class GraphLayouterSettingNodeParam extends GraphLayouterSettingParam {
         "- cl: Number of links",
     ]
 
-    getValue(node?: AbstractNode2d): number | undefined {
-        let context: Record<string, any> = {
+    tooltip: string[] = GraphLayouterSettingNodeParam.tooltip;
+
+    getValue(node?: AbstractNode2d, context?: Record<string, any>): number | undefined {
+        let ctx: Record<string, any> = {
             cs: 1,
             cp: 1,
             cn: 1,
@@ -237,6 +253,9 @@ export class GraphLayouterSettingNodeParam extends GraphLayouterSettingParam {
             ci: 1,
             cl: 1,
         };
+
+        // Merge the context with the node context
+        ctx = { ...ctx, ...context };
 
         if (node) {
             const successors = node.data?.getSuccessors();
@@ -260,25 +279,29 @@ export class GraphLayouterSettingNodeParam extends GraphLayouterSettingParam {
                 cl,
             };
         }
-        return super.getValue(context);
+        return super.getValue(ctx);
     }
 }
 
 export class GraphLayouterSettingLinkParam extends GraphLayouterSettingParam {
 
-    tooltip: string[] = [
+    static tooltip: string[] = [...GraphLayouterSettingParam.tooltip,
         "You can use the following link params:",
         "- ct: Number of connections on the target node",
         "- cs: Number of connections on the source node",
         "- cd: Number of connections on both nodes (sum of degrees)",
     ]
 
-    getValue(node?: AbstractConnection2d): number | undefined {
-        let context: Record<string, any> = {
+    tooltip: string[] = GraphLayouterSettingLinkParam.tooltip;
+
+    getValue(node?: AbstractConnection2d, context?: Record<string, any>): number | undefined {
+        let ctx: Record<string, any> = {
             ct: 1,
             cs: 1,
             cd: 1
         };
+
+        ctx = { ...ctx, ...context };
 
         if (node) {
             const countTargetConnections = node.target.data?.getSuccessors()?.length ?? 1;
@@ -289,6 +312,6 @@ export class GraphLayouterSettingLinkParam extends GraphLayouterSettingParam {
                 cd: countSourceConnections + countTargetConnections
             };
         }
-        return super.getValue(context);
+        return super.getValue(ctx);
     }
 }

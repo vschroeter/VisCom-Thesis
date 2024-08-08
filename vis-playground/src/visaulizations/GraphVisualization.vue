@@ -128,7 +128,6 @@ const isSelected = computed(() => {
 
 function layoutUpdated() {
     // console.log("ticked")
-    bBox.value = refGRoot.value?.getBBox() ?? null
     // console.log("Ticket in GViz", graph2d);
 
     if (!graph2d || !layouter) {
@@ -145,6 +144,8 @@ function layoutUpdated() {
         .call(layouter.updateLabels.bind(layouter))
 
     // console.log("BBox", bBox.value, refGRoot.value)
+    bBox.value = refGRoot.value?.getBBox() ?? null
+
     // emit('updated')
 }
 
@@ -192,10 +193,11 @@ watch(commGraph, (newVal) => {
 
     watch(settings, (newVal) => {
         layouter?.layout(true);
-    }, { immediate: true, deep: true })
+    }, { immediate: false, deep: true })
 
 
     layouter.on('update', layoutUpdated)
+    layouter.on('end', layoutUpdated)
     layouter.layout();
 
 }, { immediate: true, deep: true })

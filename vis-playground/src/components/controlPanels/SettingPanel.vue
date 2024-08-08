@@ -10,7 +10,7 @@
             <div class="row">
                 <div class="col">
                     <div v-if="false" class="row">
-                        <div class="text-h6">{{ setting.key }}</div>
+                        <div class="text-h6">{{ setting.label || setting.key }}</div>
 
                     </div>
                     <!-- Param Row -->
@@ -25,19 +25,23 @@
                                 dense
                                 hide-pagination
                                 :pagination="{ rowsPerPage: 0 }"
-                                :title="setting.key"
+                                :title="setting.label || setting.key"
                                 :row-key="row => row.key"
                                 :rows="setting.parameters"
                                 :columns="settingTableColumns">
 
                                 <!-- If the setting is optional, add a toggle at the top altering the setting.active flag -->
                                 <template v-slot:top="props">
-                                    <div class="text-h6">{{ setting.key }}</div>
+                                    <div class="text-h6">{{ setting.label ?? setting.key }}</div>
                                     <q-space />
                                     <q-toggle
                                         v-model="setting.active"
                                         dense
                                         size="sm" />
+
+                                    <q-tooltip :delay="500" v-if="true || (setting.description?.length ?? 0) > 0">
+                                        {{ setting.description }}
+                                    </q-tooltip>
 
                                 </template>
 
@@ -64,8 +68,7 @@
                                     </q-td>
 
 
-                                    <q-tooltip :delay="500" v-if="props.row.tooltip.length > 0">
-
+                                    <q-tooltip :delay="500" v-if="true || (props.row.tooltip?.length ?? 0) > 0">
                                         <!-- If tooltip is a string, just display it -->
                                         <template v-if="typeof props.row.tooltip === 'string'">
                                             {{ props.row.tooltip }}

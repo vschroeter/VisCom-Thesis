@@ -1,6 +1,8 @@
 import { FdgLayouter } from "./fdg/fdgLayouter";
 import { FdgLayouterSettings } from "./fdg/fdgSettings";
 import { GraphLayouter } from "./layouter";
+import { RadialLayouter } from "./radial/radialLayouter";
+import { RadialLayouterSettings } from "./radial/radialSettings";
 import { GraphLayouterSettings } from "./settings";
 
 export const layouterMapping: Record<string, {label: string, layouter: typeof GraphLayouter<any>, settings: typeof GraphLayouterSettings }> = {
@@ -8,7 +10,12 @@ export const layouterMapping: Record<string, {label: string, layouter: typeof Gr
         label: "Force Directed Graphs",
         layouter: FdgLayouter,
         settings: FdgLayouterSettings,
-    }
+    },
+    "radial": {
+        label: "Radial Layouts",
+        layouter: RadialLayouter,
+        settings: RadialLayouterSettings,
+    },
 }
 
 export interface SettingParamJson {
