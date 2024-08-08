@@ -34,39 +34,37 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
         });
 
         if (this.settings.forceManyBody.active) {
-            // console.log("Adding force many body", this.settings.forceManyBody.strength.value);
-            simulation.force("charge", d3.forceManyBody().strength(
-                this.settings.forceManyBody.strength.value ?? -20)
+            // console.log("Adding force many body", this.settings.forceManyBody.strength.getValue());
+            simulation.force("charge", d3.forceManyBody<AbstractNode2d>().strength(d => 
+                this.settings.forceManyBody.strength.getValue(d) ?? -20)
             )
         }
 
         if (this.settings.forceLink.active) {
-            // console.log("Adding force link", this.settings.forceLink.distance.value, this.settings.forceLink.strength.value);
-            const strength = this.settings.forceLink.strength.value
-            const distance = this.settings.forceLink.distance.value
+            // console.log("Adding force link", this.settings.forceLink.distance.getValue(), this.settings.forceLink.strength.getValue());
             const force = d3.forceLink(this.graph2d.links)
-            if (strength) {
-                force.strength(strength)
+            if (this.settings.forceLink.strength.active) {
+                force.strength(d => this.settings.forceLink.strength.getValue(d) ?? 1)
             }
-            if (distance) {
-                force.distance(distance)
+            if (this.settings.forceLink.distance.active) {
+                force.distance(d => this.settings.forceLink.distance.getValue(d) ?? 30)
             }
             simulation.force("link", force)
         }
 
         if (this.settings.forceCenter.active) {
-            // console.log("Adding force center", this.settings.forceCenter.strength.value);
+            // console.log("Adding force center", this.settings.forceCenter.strength.getValue());
             simulation.force("center", d3.forceCenter().strength(
-                this.settings.forceCenter.strength.value ?? 1
+                this.settings.forceCenter.strength.getValue() ?? 1
             ))
         }
 
         if (this.settings.forceCollide.active) {
-            // console.log("Adding force collide", this.settings.forceCollide.radius.value, this.settings.forceCollide.strength.value);
-            simulation.force("collide", d3.forceCollide().radius(
-                this.settings.forceCollide.radius.value ?? 5
+            // console.log("Adding force collide", this.settings.forceCollide.radius.getValue(), this.settings.forceCollide.strength.getValue());
+            simulation.force("collide", d3.forceCollide<AbstractNode2d>().radius(
+                d => this.settings.forceCollide.radius.getValue(d) ?? 5
             ).strength(
-                this.settings.forceCollide.strength.value ?? 0.5
+                this.settings.forceCollide.strength.getValue() ?? 0.5
             ))
         }
 

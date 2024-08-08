@@ -1,7 +1,7 @@
-import { GraphLayouterSetting, GraphLayouterSettingParam, GraphLayouterSettings } from "../settings";
+import { GraphLayouterSetting, GraphLayouterSettingLinkParam, GraphLayouterSettingNodeParam, GraphLayouterSettingParam, GraphLayouterSettings } from "../settings";
 
 export class ForceManyBodySetting extends GraphLayouterSetting {
-    strength = new GraphLayouterSettingParam<number>({
+    strength = new GraphLayouterSettingNodeParam({
         key: "strength",
         optional: false,
         defaultValue: -20,
@@ -19,7 +19,7 @@ export class ForceManyBodySetting extends GraphLayouterSetting {
 }
 
 export class ForceCenterSetting extends GraphLayouterSetting {
-    strength = new GraphLayouterSettingParam<number>({
+    strength = new GraphLayouterSettingParam({
         key: "strength",
         optional: false,
         active: true,
@@ -38,14 +38,14 @@ export class ForceCenterSetting extends GraphLayouterSetting {
 }
 
 export class ForceLinkSetting extends GraphLayouterSetting {
-    distance = new GraphLayouterSettingParam<number>({
+    distance = new GraphLayouterSettingLinkParam({
         key: "distance",
         optional: true,
         active: true,
         defaultValue: 30,
     });
 
-    strength = new GraphLayouterSettingParam<number>({
+    strength = new GraphLayouterSettingLinkParam({
         key: "strength",
         optional: true,
         active: true,
@@ -64,14 +64,14 @@ export class ForceLinkSetting extends GraphLayouterSetting {
 }
 
 export class ForceCollideSetting extends GraphLayouterSetting {
-    radius = new GraphLayouterSettingParam<number>({
+    radius = new GraphLayouterSettingNodeParam({
         key: "radius",
         optional: true,
         active: true,
         defaultValue: 5,
     });
 
-    strength = new GraphLayouterSettingParam<number>({
+    strength = new GraphLayouterSettingParam({
         key: "strength",
         optional: true,
         active: true,

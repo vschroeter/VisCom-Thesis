@@ -56,12 +56,34 @@
                                 <template v-slot:body-cell-value="props">
                                     <q-td key="value" :props="props">
                                         <q-input
-                                            v-model="props.row.value"
-                                            type="number"
+                                            v-model="props.row.textValue"
+
                                             dense
                                             borderless />
+
                                     </q-td>
+
+
+                                    <q-tooltip :delay="500" v-if="props.row.tooltip.length > 0">
+
+                                        <!-- If tooltip is a string, just display it -->
+                                        <template v-if="typeof props.row.tooltip === 'string'">
+                                            {{ props.row.tooltip }}
+                                        </template>
+
+                                        <!-- If tooltip is an array, display a list of elements -->
+                                        <template v-else-if="Array.isArray(props.row.tooltip)">
+                                            <q-list dense>
+                                                <q-item v-for="i in props.row.tooltip.length" :key="i">
+                                                    <q-item-section>
+                                                        {{ props.row.tooltip[i - 1] }}
+                                                    </q-item-section>
+                                                </q-item>
+                                            </q-list>
+                                        </template>
+                                    </q-tooltip>
                                 </template>
+
                             </q-table>
                         </div>
 
