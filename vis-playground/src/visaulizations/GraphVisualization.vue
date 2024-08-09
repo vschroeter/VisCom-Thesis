@@ -1,15 +1,17 @@
 <template>
     <div @click="onClickDiv">
-        <q-card :class="isSelected ? 'bg-primary text-white' : ''">
-            <q-card-section class="row items-start">
+        <!-- :class="(isSelected ? 'bg-primary text-white' : '') + ('full-modal': isZoomed)"> -->
+        <q-card
+            :class="{ 'bg-primary': isSelected, 'text-white': isSelected, 'full-modal': isZoomed, 'card': true }">
+            <q-card-section class="row items-start q-py-xs items-center">
                 <div :class="'col q-mr-sm '"
                     :style="`inline-size: ${size - iconButtonDivWidth - 30}px; overflow-wrap: break-word;`">
                     {{ settings?.name }}
                 </div>
                 <div ref="refDivIconButtons" class="col-auto">
-                    <!-- Button to rerender visualization -->
+                    <q-btn size="sm" flat round icon="zoom_out_map" @click="toggleZoom" />
                     <q-btn size="sm" icon="refresh" flat round @click="resetSimulation" />
-                    <q-btn size="sm" icon="delete" flat round @click="deleteItem" />
+                    <q-btn v-if="!isZoomed" size="sm" icon="delete" flat round @click="deleteItem" />
                 </div>
                 <!-- <div class="text-h6">Graph Visualization</div>
                 <q-btn label="Reset" color="primary" size="x" flat @click="resetSimulation" /> -->
@@ -18,7 +20,7 @@
             <q-card-section>
 
                 <div class="svgContainerDiv">
-                    <svg ref="refSVG" :width="size" :height="size" :viewBox="viewBox"
+                    <svg ref="refSVG" :width="svgWidth" :height="svgHeight" :viewBox="viewBox"
                         xmlns="http://www.w3.org/2000/svg">
                         <g ref="refGRoot">
                             <g ref="refGLinks">
@@ -107,6 +109,14 @@ const viewBox = computed(() => {
 })
 
 
+const svgWidth = computed(() => {
+    return !isZoomed.value ? props.size : "90vw"
+})
+
+const svgHeight = computed(() => {
+    return !isZoomed.value ? props.size : "90vh"
+})
+
 const iconButtonDivWidth = computed(() => {
     if (refDivIconButtons.value === null) {
         return 0
@@ -127,13 +137,13 @@ const isSelected = computed(() => {
 ////////////////////////////////////////////////////////////////////////////
 
 function layoutUpdated() {
-    // console.log("ticked")
-    // console.log("Ticket in GViz", graph2d);
+    console.log("[GViz] Layout updated", layouter, graph2d);
 
     if (!graph2d || !layouter) {
         return
     }
 
+    console.log("Updating nodes and links");
     d3.select(refGNodes.value)
         .call(layouter.updateNodes.bind(layouter))
 
@@ -158,6 +168,33 @@ function deleteItem() {
 
 onMounted(() => {
     console.log("[VIS] Mounted"); //, props.settings);
+
+    watch(commGraph, (newVal) => {
+        //updateSimulation();
+        console.log("[GViz] Graph updated", commGraph.value, commGraph.value instanceof CommunicationGraph);
+        if (!settings.value) {
+            console.error("No settings found for ", props.settingId, settingsCollection);
+            return
+        }
+
+        const cls = layouterMapping[props.layoutType].layouter;
+
+        graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
+        layouter = new cls(graph2d, settings.value);
+
+        watch(settings, (newVal) => {
+            layouter?.layout(true);
+        }, { immediate: false, deep: true })
+
+
+        layouter.on('update', layoutUpdated)
+        layouter.on('end', layoutUpdated)
+        layouter.layout();
+
+
+
+    }, { immediate: true, deep: true })
+
 })
 
 onUpdated(() => {
@@ -178,29 +215,25 @@ function onClickDiv(event: MouseEvent) {
     event.stopPropagation();
 }
 
-watch(commGraph, (newVal) => {
-    //updateSimulation();
-    console.log("[GViz] Graph updated", commGraph.value, commGraph.value instanceof CommunicationGraph);
-    if (!settings.value) {
-        console.error("No settings found for ", props.settingId, settingsCollection);
-        return
-    }
 
-    const cls = layouterMapping[props.layoutType].layouter;
+const isZoomed = ref(false);
 
-    graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
-    layouter = new cls(graph2d, settings.value);
+const toggleZoom = () => {
+    isZoomed.value = !isZoomed.value;
+};
 
-    watch(settings, (newVal) => {
-        layouter?.layout(true);
-    }, { immediate: false, deep: true })
-
-
-    layouter.on('update', layoutUpdated)
-    layouter.on('end', layoutUpdated)
-    layouter.layout();
-
-}, { immediate: true, deep: true })
+const cardStyle = computed(() => {
+    return isZoomed.value
+        ? {
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100vw',
+            height: '100vh',
+            zIndex: 9999,
+        }
+        : {};
+});
 
 </script>
 
@@ -215,7 +248,22 @@ watch(commGraph, (newVal) => {
     /* margin: 5px; */
 }
 
-/* .activeCard {
-    background-color: #00000010;
-} */
+.card {
+}
+
+.full-modal {
+    /* transition: all 0.3s ease; */
+
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* top: 3vw;
+    left: 3vw;
+    width: 90vw;
+    height: 90vh; */
+    z-index: 9999;
+    background-color: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.5);
+}
 </style>
