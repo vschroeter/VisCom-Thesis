@@ -1,3 +1,5 @@
+import { ArcLayouter } from "./arc/arcLayouter";
+import { ArcLayouterSettings } from "./arc/arcSettings";
 import { FdgLayouter } from "./fdg/fdgLayouter";
 import { FdgLayouterSettings } from "./fdg/fdgSettings";
 import { GraphLayouter } from "./layouter";
@@ -16,6 +18,11 @@ export const layouterMapping: Record<string, {label: string, layouter: typeof Gr
         layouter: RadialLayouter,
         settings: RadialLayouterSettings,
     },
+    "arc": {
+        label: "Arc Layouts",
+        layouter: ArcLayouter,
+        settings: ArcLayouterSettings
+    }
 }
 
 export interface SettingParamJson {
