@@ -22,17 +22,21 @@
                 <div class="svgContainerDiv">
                     <svg ref="refSVG" :width="svgWidth" :height="svgHeight" :viewBox="viewBox"
                         xmlns="http://www.w3.org/2000/svg">
-                        <g ref="refGRoot">
-                            <g ref="refGLinks">
 
-                            </g>
+                        <g ref="refGZoom">
 
-                            <g ref="refGNodes">
+                            <g ref="refGRoot">
+                                <g ref="refGLinks">
 
-                            </g>
+                                </g>
 
-                            <g ref="refGLabels">
+                                <g ref="refGNodes">
 
+                                </g>
+
+                                <g ref="refGLabels">
+
+                                </g>
                             </g>
                         </g>
 
@@ -54,6 +58,7 @@ import { Graph2d } from 'src/graph/graphical/Graph2d';
 import { CommunicationGraph } from 'src/graph/commGraph';
 import { layouterMapping } from 'src/graph/layouter/settingsCollection';
 import { GraphLayouter } from 'src/graph/layouter/layouter';
+import { svgInteractiveRef } from './svgDirectives';
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -92,8 +97,9 @@ const refGRoot = ref<SVGGElement | null>(null)
 const refGLinks = ref<SVGGElement | null>(null)
 const refGNodes = ref<SVGGElement | null>(null)
 const refGLabels = ref<SVGGElement | null>(null)
-
 const refDivIconButtons = ref<HTMLDivElement | null>(null)
+const refGZoom = ref<SVGGElement | null>(null)
+const interactiveRef = svgInteractiveRef(refSVG, refGZoom, undefined, undefined)
 
 ////////////////////////////////////////////////////////////////////////////
 // Refs and Computed values
@@ -137,13 +143,13 @@ const isSelected = computed(() => {
 ////////////////////////////////////////////////////////////////////////////
 
 function layoutUpdated() {
-    console.log("[GViz] Layout updated", layouter, graph2d);
+    // console.log("[GViz] Layout updated", layouter, graph2d);
 
     if (!graph2d || !layouter) {
         return
     }
 
-    console.log("Updating nodes and links");
+    // console.log("Updating nodes and links");
     d3.select(refGNodes.value)
         .call(layouter.updateNodes.bind(layouter))
 
@@ -248,8 +254,7 @@ const cardStyle = computed(() => {
     /* margin: 5px; */
 }
 
-.card {
-}
+.card {}
 
 .full-modal {
     /* transition: all 0.3s ease; */
