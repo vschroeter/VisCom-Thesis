@@ -39,7 +39,7 @@
                                         dense
                                         size="sm" />
 
-                                    <q-tooltip :delay="500" v-if="true || (setting.description?.length ?? 0) > 0">
+                                    <q-tooltip :delay="1000" v-if="true || (setting.description?.length ?? 0) > 0">
                                         {{ setting.description }}
                                     </q-tooltip>
 
@@ -68,7 +68,7 @@
                                     </q-td>
 
 
-                                    <q-tooltip :delay="500" v-if="true || (props.row.tooltip?.length ?? 0) > 0">
+                                    <q-tooltip :delay="1000" v-if="true || (props.row.tooltip?.length ?? 0) > 0">
                                         <!-- If tooltip is a string, just display it -->
                                         <template v-if="typeof props.row.tooltip === 'string'">
                                             {{ props.row.tooltip }}
@@ -101,8 +101,8 @@
 <script setup lang="ts">
 
 import { QTableColumn } from 'quasar';
+import { GraphLayouterSettingParam } from 'src/graph/layouter/settings';
 import { useGraphStore } from 'src/stores/graph-store';
-import { VisualizationSettingParam } from 'src/visaulizations/visualizationSettings';
 import { computed, onMounted, onUpdated, ref, watch, type Ref } from 'vue'
 
 ////////////////////////////////////////////////////////////////////////////
@@ -151,7 +151,7 @@ const currentSettings = computed(() => store.currentSettings)
 
 
 
-const settingTableColumns: QTableColumn<VisualizationSettingParam<any>>[] = [
+const settingTableColumns: QTableColumn<GraphLayouterSettingParam>[] = [
     {
         name: 'activated',
         required: true,
@@ -173,29 +173,10 @@ const settingTableColumns: QTableColumn<VisualizationSettingParam<any>>[] = [
         required: true,
         label: 'Value',
         align: 'left',
-        field: 'value',
+        field: 'textValue',
         sortable: false
     },
 ];
-
-const selectedRows = ref<VisualizationSettingParam<any>[]>([])
-
-// const settingParamsMap = computed(() => {
-//     const params = new Map<string, Map<string, VisualizationSettingParam<any>>>()
-
-//     settingList.value.map((s) => {
-//         const paramMap = new Map<string, VisualizationSettingParam<any>>()
-
-//         s.setting.params.forEach((paramValue, paramKey) => {
-//             paramMap.set(paramKey, paramValue)
-//         })
-
-//         params.set(s.settingName, paramMap)
-//     })
-
-//     console.log("New setting params map: ", params)
-//     return params
-// })
 
 ////////////////////////////////////////////////////////////////////////////
 // Helper functions

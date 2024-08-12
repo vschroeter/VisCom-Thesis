@@ -18,7 +18,6 @@
             </q-card-section>
             <q-separator inset />
             <q-card-section>
-
                 <div class="svgContainerDiv">
                     <svg ref="refSVG" :width="svgWidth" :height="svgHeight" :viewBox="viewBox"
                         xmlns="http://www.w3.org/2000/svg">
@@ -43,6 +42,10 @@
                     </svg>
                 </div>
             </q-card-section>
+            <q-separator />
+            <q-card-section>
+                <MetricOverview :settingId="props.settingId" :width="size" :height="50"/>
+            </q-card-section>
         </q-card>
 
     </div>
@@ -59,6 +62,7 @@ import { CommunicationGraph } from 'src/graph/commGraph';
 import { layouterMapping } from 'src/graph/layouter/settingsCollection';
 import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
+import MetricOverview from './MetricOverview.vue';
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -83,10 +87,7 @@ const props = withDefaults(defineProps<{
 
 const graphStore = useGraphStore();
 const settingsCollection = graphStore.settingsCollection;
-const commGraph = computed(() => graphStore.graph);
-
-let graph2d: Graph2d | null = null
-let layouter: GraphLayouter<any> | null = null
+const metricsCollection = graphStore.metricsCollection;
 
 ////////////////////////////////////////////////////////////////////////////
 // Template Refs
@@ -105,6 +106,30 @@ const interactiveRef = svgInteractiveRef(refSVG, refGZoom, undefined, undefined)
 // Refs and Computed values
 ////////////////////////////////////////////////////////////////////////////
 
+
+///++++ Graph related stuff ++++//
+
+const commGraph = computed(() => graphStore.graph);
+
+let graph2d: Graph2d | null = null
+let layouter: GraphLayouter<any> | null = null
+
+///++++ Metric stuff ++++///
+
+
+
+///++++ Setting stuff ++++//
+
+const settings = computed(() => {
+    return settingsCollection.getSettings(props.settingId)
+})
+
+const isSelected = computed(() => {
+    return props.settingId === graphStore.activeSettingId
+})
+
+///++++ Bounding box of the main svg ++++//
+
 const bBox = ref<DOMRect | null>(null)
 
 const viewBox = computed(() => {
@@ -114,7 +139,6 @@ const viewBox = computed(() => {
     return `${bBox.value.x} ${bBox.value.y} ${bBox.value.width} ${bBox.value.height}`
 })
 
-
 const svgWidth = computed(() => {
     return !isZoomed.value ? props.size : "90vw"
 })
@@ -123,6 +147,9 @@ const svgHeight = computed(() => {
     return !isZoomed.value ? props.size : "90vh"
 })
 
+
+//++++ Layout stuff ++++//
+
 const iconButtonDivWidth = computed(() => {
     if (refDivIconButtons.value === null) {
         return 0
@@ -130,13 +157,7 @@ const iconButtonDivWidth = computed(() => {
     return refDivIconButtons.value.clientWidth
 })
 
-const settings = computed(() => {
-    return settingsCollection.getSettings(props.settingId)
-})
 
-const isSelected = computed(() => {
-    return props.settingId === graphStore.activeSettingId
-})
 
 ////////////////////////////////////////////////////////////////////////////
 // Helper functions
@@ -162,8 +183,22 @@ function layoutUpdated() {
     // console.log("BBox", bBox.value, refGRoot.value)
     bBox.value = refGRoot.value?.getBBox() ?? null
 
-    // emit('updated')
 }
+
+
+function layoutFinished() {
+    layoutUpdated();
+    
+    calcluateMetrics();
+}
+
+function calcluateMetrics() {
+    if (!graph2d) {
+        return
+    }
+    metricsCollection.calculateMetrics(props.settingId, graph2d);
+}
+
 
 function deleteItem() {
     settingsCollection.deleteSetting(props.settingId)
@@ -194,7 +229,7 @@ onMounted(() => {
 
 
         layouter.on('update', layoutUpdated)
-        layouter.on('end', layoutUpdated)
+        layouter.on('end', layoutFinished)
         layouter.layout();
 
 

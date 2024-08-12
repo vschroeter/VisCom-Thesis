@@ -81,4 +81,10 @@ export class AbstractConnection2d {
         return path
     }
 
+    get length(): number {
+        const tempPath = document.createElementNS("http://www.w3.org/2000/svg", "path")
+        tempPath.setAttribute("d", this.getSvgPath())
+        return tempPath.getTotalLength()
+    }
+
 }
