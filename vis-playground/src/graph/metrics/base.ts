@@ -1,17 +1,17 @@
 import { Graph2d } from "../graphical/Graph2d";
 
 import * as d3 from "d3";
-import { DisplayedMetricDescription } from "./collection";
+import { MetricDefinition } from "./collection";
 
  
 
 export class MetricCalculator {
 
-    static displayedMetrics: DisplayedMetricDescription[] = [
+    static displayedMetrics: MetricDefinition[] = [
         { key: "aspectRatio", optimum: "higherIsBetter", label: "Side Ratio", description: "The ratio of shorter side to longer side of the layout" },
     ];
 
-    getDisplayedMetrics(): DisplayedMetricDescription[] {
+    getMetricDefinitions(): MetricDefinition[] {
         return (this.constructor as typeof MetricCalculator).displayedMetrics;
     }
 

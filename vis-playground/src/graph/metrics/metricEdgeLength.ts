@@ -1,11 +1,11 @@
 import { Graph2d } from "../graphical/Graph2d";
 import { MetricCalculator } from "./base";
-import { DisplayedMetricDescription } from "./collection";
+import { MetricDefinition } from "./collection";
 
 export class EdgeLengthCalculator extends MetricCalculator {
 
-    static displayedMetrics: DisplayedMetricDescription[] = [
-        { key: "totalEdgeLength", optimum: "lowerIsBetter", label: "Total Edge Length", description: "The total length of all edges in the graph" },
+    static displayedMetrics: MetricDefinition[] = [
+        { key: "totalEdgeLength", optimum: "lowerIsBetter", label: "Total Edge Length", description: "The total length of all edges in the graph", normalizing: "byLongerLayoutSide" },
     ];
 
     /** The total length of all edges in the graph */
