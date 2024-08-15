@@ -67,12 +67,12 @@ export class MetricsCollection {
     /**
      * Calculate all metrics for the given graph of the given setting
      * @param settingId The setting id of the visualization
-     * @param graph The graph to calculate the metrics
+     * @param graph The graph to calculate the metrics. If undefined, the metrics are initialized with pending state
      */
-    calculateMetrics(settingId: number, graph: Graph2d) {
+    calculateMetrics(settingId: number, graph?: Graph2d | null) {
 
         // Calculate all absolute metrics for the given graph of the given setting 
-        const metricCalculators = MetricsCollection.metricsToCalculate.map(metric => new metric(graph));
+        const metricCalculators = graph ? MetricsCollection.metricsToCalculate.map(metric => new metric(graph)) : undefined;
 
         // Update the metrics of the visualization with the results
         const metricsResults = this.getMetricsResults(settingId);
@@ -100,6 +100,9 @@ export class MetricsResults {
     // Map from metric key to the metric result
     mapMetricKeyToResult: Map<string, MetricResult> = new Map();
 
+    // If the metrics are still pending
+    pending: boolean = true;
+
     /**
      * Emitter for events on the metrics results:
      * - "newMetrics": When there has been new metrics calculated
@@ -119,13 +122,24 @@ export class MetricsResults {
         this.collection = collection;
     }
 
-    // Updates the results of this visualization with the new metrics from the given calculators
-    update(calculators: MetricCalculator[]) {
+    /**
+     * Updates the results of this visualization with the new metrics from the given calculators
+     * @param calculators The calculators to get the metrics from. If undefined, the object is turned to pending state
+     */
+    update(calculators?: MetricCalculator[]) {
         // Clear the old results
         this.results.forEach(result => {
             result.emitter.off("relativeValueUpdated");
         });
         this.mapMetricKeyToResult.clear();
+
+        if (!calculators) {
+            this.pending = true;
+            this.emitter.emit("newMetrics");
+            return;
+        }
+
+        this.pending = false;
 
         // Add the new results
         calculators.forEach(calculator => {
@@ -227,8 +241,9 @@ export class MetricResult {
     // The key of the metric
     metricKey: string;
 
-    // Rank of the metric
+    // Place of the metric
     relativePlace: number = 0;
+    places: number = 0;
 
     // Normalized value of the metric
     normalizedValue: number = 0;
@@ -256,7 +271,13 @@ export class MetricResult {
 
     // Update the relative value of the metric
     updateRelative() {
-        const sortedResults = this.singleMetricResults.results.sort((a, b) => a.value - b.value);
+        let sortedResults: MetricResult[] = [];
+        if (this.definition.optimum === "higherIsBetter") {
+            sortedResults = this.singleMetricResults.results.sort((a, b) => b.value - a.value);
+        } else if (this.definition.optimum === "lowerIsBetter") {
+            sortedResults = this.singleMetricResults.results.sort((a, b) => a.value - b.value);
+        }
+        this.places = sortedResults.length;
         this.relativePlace = sortedResults.indexOf(this);
 
         let normalizedValue = this.value;
@@ -282,6 +303,7 @@ export class MetricResult {
         this.normalizedValue = normalizedValue;
 
         this.emitter.emit("relativeValueUpdated", true);
+        console.log("Updated relative value of metric", this.settingId, this.metricKey, this.normalizedValue, this.relativePlace, sortedResults.length);
     }
 
 }

@@ -192,11 +192,9 @@ function layoutFinished() {
     calcluateMetrics();
 }
 
-function calcluateMetrics() {
-    if (!graph2d) {
-        return
-    }
-    metricsCollection.calculateMetrics(props.settingId, graph2d);
+function calcluateMetrics(graph?: Graph2d | null) {
+    graph = graph === null ? undefined : graph2d;
+    metricsCollection.calculateMetrics(props.settingId, graph);
 }
 
 
@@ -220,6 +218,12 @@ onMounted(() => {
 
         const cls = layouterMapping[props.layoutType].layouter;
 
+        layouter?.on('update', null);
+        layouter?.on('end', null);
+        calcluateMetrics(null);
+        if (commGraph.value.nodes.length === 0) {
+            return
+        }
         graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
         layouter = new cls(graph2d, settings.value);
 

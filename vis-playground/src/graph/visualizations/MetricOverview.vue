@@ -1,16 +1,19 @@
 <template>
-    <div style="display: flex;" v-if="metricsResults">
-        <div v-for="metric in metricResultList" :key="metric.metricKey">
-            <!-- <q-spinner-box color="primary" v-if="metric.isUpdating">
+    <div v-if="metricsResults">
+        <q-spinner-box color="primary" v-if="metricsResults.pending">
 
-            </q-spinner-box> -->
-            <div v-if="true"
-                :style="{ width: '10px', height: '10px', backgroundColor: 'green', marginRight: '1px' }">
-                <q-tooltip>
-                    {{ metric.metricKey }}: {{ metric.normalizedValue?.toFixed(2) }} ({{ metric.value.toFixed(2) }})
-                </q-tooltip>
+        </q-spinner-box>
+        <div v-else style="display: flex;">
+            <div v-for="metric in metricResultList" :key="metric.metricKey">
+                <div v-if="true"
+                    :style="{ width: '10px', height: '10px', backgroundColor: 'green', marginRight: '1px' }">
+                    <q-tooltip>
+                        {{ metric.metricKey }}: {{ metric.normalizedValue?.toFixed(2) }} ({{ metric.value.toFixed(2) }}) - {{ metric.relativePlace + 1 }} / {{ metric.places }}
+                    </q-tooltip>
+                </div>
+                <!-- {{ metric.isUpdating }} -->
             </div>
-            <!-- {{ metric.isUpdating }} -->
+
         </div>
     </div>
 </template>
@@ -87,18 +90,21 @@ const isSelected = computed(() => {
 // Lifecycle hooks
 ////////////////////////////////////////////////////////////////////////////
 
-onMounted(() => {
-
+function updateMetrics() {
     metricsResults.value = metricsCollection.getMetricsResults(props.settingId)
-    metricsResults.value.emitter.on("newMetrics", () => {
-        metricResultList.value = metricsResults.value!.results;
-        console.log('new metrics', props.settingId, metricResultList.value)
-    })
+    console.log('update metrics', props.settingId, metricsResults.value.pending)
+    metricResultList.value = metricsResults.value!.results;
+}
 
-    metricsResults.value.emitter.on("metricsUpdated", () => {
-        console.log('updated relative metrics', props.settingId)
-        metricResultList.value = metricsResults.value!.results;
-    })
+function initMetrics() {
+    metricsResults.value = metricsCollection.getMetricsResults(props.settingId)
+    metricsResults.value.emitter.on("newMetrics", updateMetrics)
+    metricsResults.value.emitter.on("metricsUpdated", updateMetrics)
+    updateMetrics()
+}
+
+onMounted(() => {
+    initMetrics()
 })
 
 onUnmounted(() => {
@@ -106,7 +112,9 @@ onUnmounted(() => {
 })
 
 onUpdated(() => {
-
+    if (!metricsResults.value) {
+        initMetrics()
+    }
 })
 
 // watch(metrics, () => {
