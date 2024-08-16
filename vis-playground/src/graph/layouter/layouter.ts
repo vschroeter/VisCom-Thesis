@@ -74,12 +74,24 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     updateLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
-        selection.selectAll('path')
+
+        selection.selectAll('path.arrow')
             .data(this.graph2d?.links)
             .join('path')
+            .classed('arrow', true)
+            .attr('d', (d: AbstractConnection2d) => d.getArrowPath())
+            .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
+            .attr('fill', 'none')
+
+        selection.selectAll('path.link')
+            .data(this.graph2d?.links)
+            .join('path')
+            .classed('link', true)
             .attr('d', (d: AbstractConnection2d) => d.getSvgPath())
             .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
             .attr('fill', 'none')
+
+
     }
 
     updateLabels(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {

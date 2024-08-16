@@ -1,5 +1,6 @@
 import { CommunicationLink } from "../commGraph";
 import { AbstractNode2d } from "./AbstractNode2d";
+import { Anchor2d } from "./Anchor2d";
 import { EllipticArc } from "./EllipticArc";
 import { Point2D } from "./Point2d";
 
@@ -7,10 +8,48 @@ import * as d3 from "d3"
 
 export type CurveStyle = "linear" | "basis" | "natural" | d3.CurveFactory
 
+export class Arrow2D {
+
+    width: number = 10
+    height: number = 10
+    filled: boolean = false
+
+    static readonly normalPoints = [
+        new Point2D(1, -0.5),
+        new Point2D(0, 0),
+        new Point2D(1, 0.5),
+    ]
+
+    set size(size: number) {
+        this.width = size
+        this.height = size
+    }
+
+    getSvgPath(anchor: Anchor2d) {
+
+        const startPoint = anchor.anchorPoint
+        const direction = anchor.direction
+
+        const scaledPoints = Arrow2D.normalPoints.map(p => p.scale(this.width, this.height))
+        const rotatedPoints = scaledPoints.map(p => p.rotate(-direction.degBetween(), {x: 0, y: 0}))
+
+        const path = d3.line<Point2D>()
+            .x(d => d.x + startPoint.x)
+            .y(d => d.y + startPoint.y)
+            .curve(d3.curveLinear)
+        
+        return path(rotatedPoints)!;
+    }
+
+    // getAnchorPoint
+
+
+}
+
 export class AbstractConnection2d {
 
     /** The points that make up the connection */
-    points: (Point2D | EllipticArc)[] = []
+    points: (Point2D | EllipticArc | Anchor2d)[] = []
 
     /** The style of the curve */
     curveStyle: CurveStyle = "linear"
@@ -23,6 +62,13 @@ export class AbstractConnection2d {
     /** The target node of the connection */
     target: AbstractNode2d
 
+    /** The width of the stroke */
+    strokeWeight = 1
+
+    
+    arrow: Arrow2D = new Arrow2D()
+        
+    
     constructor(
         source: AbstractNode2d,
         target: AbstractNode2d,
@@ -44,6 +90,10 @@ export class AbstractConnection2d {
             return (this.points[0] as EllipticArc)._start ?? this.source.center
         }
 
+        if (this.points[0] instanceof Anchor2d) {
+            return (this.points[0] as Anchor2d).anchorPoint
+        }
+
         return this.points[0]
     }
 
@@ -58,6 +108,10 @@ export class AbstractConnection2d {
 
         if (lastPoint instanceof EllipticArc) {
             return lastPoint._end ?? this.target.center
+        }
+
+        if (lastPoint instanceof Anchor2d) {
+            return lastPoint.anchorPoint
         }
 
         return lastPoint
@@ -84,7 +138,7 @@ export class AbstractConnection2d {
             .y(d => d.y)
             .curve(this.curveFactory)
         
-        return (points: (Point2D | EllipticArc)[]) => {
+        return (points: (Point2D | EllipticArc | Anchor2d)[]) => {
             let path = ""
             let currentPoints: Point2D[] = []
             points.forEach((point, i) => {
@@ -94,8 +148,10 @@ export class AbstractConnection2d {
                         currentPoints = []
                     }
                     path += point.getSvgPath() + " "
-                } else {
+                } else if (point instanceof Point2D) {
                     currentPoints.push(point)
+                } else if (point instanceof Anchor2d) {
+                    currentPoints.push(point.anchorPoint)
                 }
             });
 
@@ -113,6 +169,15 @@ export class AbstractConnection2d {
         }
         const path = this.pathGenerator(points) ?? ""
         return path
+    }
+
+    getArrowPath(): string {
+        // return this.arrow.getSvgPath(this.target.getAnchor(this.source.center))
+        let targetAnchor = this.target.getAnchor(this.source.center);
+        if (this.points.length > 0 && this.points[this.points.length - 1] instanceof Anchor2d) {
+            targetAnchor = this.points[this.points.length - 1] as Anchor2d
+        }
+        return this.arrow.getSvgPath(targetAnchor)
     }
 
     get length(): number {

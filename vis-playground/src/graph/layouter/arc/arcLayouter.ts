@@ -1,7 +1,7 @@
 import { GraphLayouter } from "../layouter";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
-import { Point2D } from "src/graph/graphical";
+import { Point2D, Vector2D } from "src/graph/graphical";
 import { ArcLayouterSettings } from "./arcSettings";
 import { CommonSettings } from "../commonSettings";
 import { EllipticArc } from "src/graph/graphical/EllipticArc";
@@ -36,15 +36,26 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
             const distance = Math.abs(source.y - target.y);
             const xDelta = distance * 0.7;
 
+            const direction = source.y < target.y ? "down" : "up";
+            const anchorDirection = direction == "down" ? new Vector2D(1, 0) : new Vector2D(-1, 0);
+
+            const startAnchor = source.getAnchor(anchorDirection);
+            const endAnchor = target.getAnchor(anchorDirection);
+
+            const startPoint = startAnchor.anchorPoint.clone();
+            const endPoint = endAnchor.anchorPoint.clone();
+
             link.points = [
-                new Point2D(source.x, source.y),
+                // new Point2D(source.x, source.y),
+                startAnchor,
                 new EllipticArc()
                     .radius(xDelta / 2)
-                    .endPoint(new Point2D(target.x, target.y))
+                    .endPoint(endPoint)
+                    .direction(direction == "down" ? "clockwise" : "counter-clockwise")
                 ,
-                new Point2D(target.x, target.y)
+                endAnchor,
             ]
-            
+
         })
 
         console.log("Layouted arc layouter", nodes);
