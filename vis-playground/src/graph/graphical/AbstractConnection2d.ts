@@ -36,7 +36,8 @@ export class AbstractConnection2d {
     /** The start point of the connection (either the first defined point or the source node) */
     get startPoint(): Point2D {
         if (this.points.length == 0) {
-            return this.source.center
+            return this.source.getAnchor(this.target.center).anchorPoint;
+            // return this.source.center
         }
 
         if (this.points[0] instanceof EllipticArc) {
@@ -49,7 +50,8 @@ export class AbstractConnection2d {
     /** The end point of the connection (either the last defined point or the target node) */
     get endPoint(): Point2D {
         if (this.points.length == 0) {
-            return this.target.center
+            return this.target.getAnchor(this.source.center).anchorPoint;
+            // return this.target.center
         }
 
         const lastPoint = this.points[this.points.length - 1]
@@ -106,7 +108,8 @@ export class AbstractConnection2d {
     getSvgPath(): string {
         let points = this.points
         if (points.length == 0) {
-            points = [this.source.center, this.target.center]
+            // points = [this.source.center, this.target.center]
+            points = [this.startPoint, this.endPoint]
         }
         const path = this.pathGenerator(points) ?? ""
         return path

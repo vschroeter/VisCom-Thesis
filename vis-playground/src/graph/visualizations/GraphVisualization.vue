@@ -63,6 +63,8 @@ import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
 import MetricOverview from './MetricOverview.vue';
 import { CommonSettings } from '../layouter/commonSettings';
+import { EllipticArc } from '../graphical/EllipticArc';
+import { Point2D } from '../graphical';
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -206,6 +208,149 @@ function deleteItem() {
 ////////////////////////////////////////////////////////////////////////////
 
 onMounted(() => {
+
+    // const e = new EllipticArc(
+    //     new Point2D(120, 100),
+    //     new Point2D(130, 70),
+    //     50,
+    //     100,
+    //     // 0,
+    //     -145,
+    //     0,
+    //     1
+    // )
+
+    // d3.select(refGRoot.value)
+    //     .append("path")
+    //     .attr("d", e.getSvgPath())
+    //     .attr("fill", "none")
+    //     .attr("stroke", "black")
+    //     .attr("stroke-width", 2.5)
+
+    // // Little circles for start and end
+    // d3.select(refGRoot.value)
+    //     .append("circle")
+    //     .attr("cx", e._start!.x)
+    //     .attr("cy", e._start!.y)
+    //     .attr("r", 2)
+    //     .attr("fill", "none")
+    //     .attr("stroke", "red")
+
+    // d3.select(refGRoot.value)
+    //     .append("circle")
+    //     .attr("cx", e._end!.x)
+    //     .attr("cy", e._end!.y)
+    //     .attr("r", 2)
+    //     .attr("fill", "none")
+    //     .attr("stroke", "red")
+        
+
+    // const descr = e.getCenterParameters()!;
+    // console.log(descr);
+    // const c = descr.center;
+
+    // const globalLine1 = {
+    //     x0: c.x,
+    //     y0: c.y,
+    //     x1: c.x + 150 * Math.cos(descr.startAngleGlobal),
+    //     y1: c.y + 150 * Math.sin(descr.startAngleGlobal)
+    // }
+
+    // const globalLine2 = {
+    //     x0: c.x,
+    //     y0: c.y,
+    //     x1: c.x + 150 * Math.cos(descr.endAngleGlobal),
+    //     y1: c.y + 150 * Math.sin(descr.endAngleGlobal)
+    // }
+
+    // const localLine1 = {
+    //     x0: c.x,
+    //     y0: c.y,
+    //     x1: c.x + 150 * Math.cos(descr.startAngle),
+    //     y1: c.y + 150 * Math.sin(descr.startAngle)
+    // }
+
+    // const localLine2 = {
+    //     x0: c.x,
+    //     y0: c.y,
+    //     x1: c.x + 150 * Math.cos(descr.endAngle),
+    //     y1: c.y + 150 * Math.sin(descr.endAngle)
+    // }
+
+    // d3.select(refGRoot.value)
+    //     .append("circle")
+    //     .attr("cx", c.x)
+    //     .attr("cy", c.y)
+    //     .attr("r", 2)
+    //     .attr("fill", "none")
+    //     .attr("stroke", "red")
+
+    // // Lines for the radii
+    // d3.select(refGRoot.value)
+    //     .append("line")
+    //     .attr("x1", c.x)
+    //     .attr("y1", c.y)
+    //     .attr("x2", c.x + e._rx)
+    //     .attr("y2", c.y)
+    //     .attr("stroke", "blue")
+    //     .attr("transform", `rotate(${e._rotation} ${c.x} ${c.y})`)
+
+    // d3.select(refGRoot.value)
+    //     .append("line")
+    //     .attr("x1", c.x)
+    //     .attr("y1", c.y)
+    //     .attr("x2", c.x)
+    //     .attr("y2", c.y + e._ry)
+    //     .attr("stroke", "blue")
+    //     .attr("transform", `rotate(${e._rotation} ${c.x} ${c.y})`)
+
+    // d3.select(refGRoot.value)
+    //     .append("ellipse")
+    //     .attr("cx", c.x)
+    //     .attr("cy", c.y)
+    //     .attr("rx", e._rx)
+    //     .attr("ry", e._ry)
+    //     .attr("fill", "none")
+    //     .attr("stroke", "red")
+    //     .attr("stroke-dasharray", "5,5")
+    //     .attr("stroke-width", 0.5)
+    //     .attr("transform", `rotate(${e._rotation} ${c.x} ${c.y})`)
+
+    // d3.select(refGRoot.value)
+    //     .append("line")
+    //     .attr("x1", globalLine1.x0)
+    //     .attr("y1", globalLine1.y0)
+    //     .attr("x2", globalLine1.x1)
+    //     .attr("y2", globalLine1.y1)
+    //     .attr("stroke", "red")
+
+    // d3.select(refGRoot.value)
+    //     .append("line")
+    //     .attr("x1", globalLine2.x0)
+    //     .attr("y1", globalLine2.y0)
+    //     .attr("x2", globalLine2.x1)
+    //     .attr("y2", globalLine2.y1)
+    //     .attr("stroke", "red")
+
+    // d3.select(refGRoot.value)
+    //     .append("line")
+    //     .attr("x1", localLine1.x0)
+    //     .attr("y1", localLine1.y0)
+    //     .attr("x2", localLine1.x1)
+    //     .attr("y2", localLine1.y1)
+    //     .attr("stroke", "cyan")
+    //     .attr("transform", `rotate(${e._rotation} ${c.x} ${c.y})`)
+
+    // d3.select(refGRoot.value)
+    //     .append("line")
+    //     .attr("x1", localLine2.x0)
+    //     .attr("y1", localLine2.y0)
+    //     .attr("x2", localLine2.x1)
+    //     .attr("y2", localLine2.y1)
+    //     .attr("stroke", "cyan")
+    //     .attr("transform", `rotate(${e._rotation} ${c.x} ${c.y})`)
+
+
     console.log("[VIS] Mounted"); //, props.settings);
 
     watch(commGraph, (newVal) => {

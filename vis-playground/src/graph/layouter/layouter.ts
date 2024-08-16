@@ -58,7 +58,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .join('circle')
             .attr('cx', (d: AbstractNode2d) => d.x)
             .attr('cy', (d: AbstractNode2d) => d.y)
-            .attr('r', 10)
+            .attr('r', d => d.radius)
             .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
     }
 
