@@ -6,7 +6,7 @@
         <div v-else style="display: flex;">
             <div v-for="metric in metricResultList" :key="metric.metricKey">
                 <div v-if="true"
-                    :style="{ width: '10px', height: '10px', backgroundColor: metric.colorScale(metric.value), marginRight: '1px' }">
+                    :style="{ width: '10px', height: '10px', backgroundColor: metric.colorScale(metric.normalizedValue), marginRight: '1px', border: '1px solid black' }">
                     <q-tooltip>
                         {{ metric.metricKey }}: {{ metric.normalizedValue?.toFixed(2) }} ({{ metric.value.toFixed(2) }}) - {{ metric.relativePlace + 1 }} / {{ metric.places }}
                     </q-tooltip>
@@ -91,9 +91,9 @@ const isSelected = computed(() => {
 ////////////////////////////////////////////////////////////////////////////
 
 function updateMetrics() {
+    metricResultList.value = metricsResults.value!.results;
     metricsResults.value = metricsCollection.getMetricsResults(props.settingId)
     // console.log('update metrics', props.settingId, metricsResults.value.pending)
-    metricResultList.value = metricsResults.value!.results;
 }
 
 function initMetrics() {

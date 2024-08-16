@@ -232,6 +232,39 @@ export class SingleMetricResults {
         return d3.deviation(this.metricValues)!;
     }
 
+    ////////////////////////////////////////////////////////////
+    // Normalized values
+    ////////////////////////////////////////////////////////////
+
+    // The normalized values of the results
+    get normalizedValues(): number[] {
+        return this.results.map(result => result.normalizedValue);
+    }
+
+    // The minimum normalized value of the results
+    get minNormalized(): number {
+        return Math.min(...this.normalizedValues);
+    }
+
+    // The maximum normalized value of the results
+    get maxNormalized(): number {
+        return Math.max(...this.normalizedValues);
+    }
+
+    // The average normalized value of the results
+    get averageNormalized(): number {
+        return d3.mean(this.normalizedValues)!;
+    }
+
+    // The median normalized value of the results
+    get medianNormalized(): number {
+        return d3.median(this.normalizedValues)!;
+    }
+
+    // The standard deviation of the normalized values
+    get standardDeviationNormalized(): number {
+        return d3.deviation(this.normalizedValues)!;
+    }
 
 }
 
@@ -255,8 +288,8 @@ export class MetricResult {
     relativePlace: number = 0;
     places: number = 0;
 
-    // Normalized value of the metric
-    normalizedValue: number = 0;
+    // // Normalized value of the metric
+    // normalizedValue: number = 0;
 
     colorScale = d3.scaleSequential(d3.interpolateRdYlGn);
 
@@ -265,33 +298,8 @@ export class MetricResult {
         return this.calculator.getMetric(this.metricKey)
     }
 
-    // Reference to the single metric results of this metric
-    singleMetricResults: SingleMetricResults;
-
-    emitter = mitt<{
-        relativeValueUpdated: boolean
-    }>();
-
-    constructor(settingId: number, calculator: MetricCalculator, metricDefinition: MetricDefinition, singleMetricResults: SingleMetricResults) {
-        this.settingId = settingId;
-        this.calculator = calculator;
-        this.definition = metricDefinition;
-
-        this.metricKey = metricDefinition.key;
-        this.singleMetricResults = singleMetricResults;
-    }
-
-    // Update the relative value of the metric
-    updateRelative() {
-        let sortedResults: MetricResult[] = [];
-        if (this.definition.optimum === "higherIsBetter") {
-            sortedResults = this.singleMetricResults.results.sort((a, b) => b.value - a.value);
-        } else if (this.definition.optimum === "lowerIsBetter") {
-            sortedResults = this.singleMetricResults.results.sort((a, b) => a.value - b.value);
-        }
-        this.places = sortedResults.length;
-        this.relativePlace = sortedResults.indexOf(this);
-
+    // The normalized value of the metric according to the normalizing method defined in the metric definition
+    get normalizedValue(): number {
         let normalizedValue = this.value;
         const normalizing = this.definition.normalizing;
         const results = this.singleMetricResults;
@@ -312,18 +320,51 @@ export class MetricResult {
             normalizedValue = normalizedValue / (side);
         }
 
-        this.normalizedValue = normalizedValue;
+        return normalizedValue;
+    }
 
+    // Reference to the single metric results of this metric
+    singleMetricResults: SingleMetricResults;
+
+    emitter = mitt<{
+        relativeValueUpdated: boolean
+    }>();
+
+    constructor(settingId: number, calculator: MetricCalculator, metricDefinition: MetricDefinition, singleMetricResults: SingleMetricResults) {
+        this.settingId = settingId;
+        this.calculator = calculator;
+        this.definition = metricDefinition;
+
+        this.metricKey = metricDefinition.key;
+        this.singleMetricResults = singleMetricResults;
+    }
+
+
+
+    // Update the relative value of the metric
+    updateRelative() {
+        let sortedResults: MetricResult[] = [];
+        if (this.definition.optimum === "higherIsBetter") {
+            sortedResults = this.singleMetricResults.results.sort((a, b) => b.normalizedValue - a.normalizedValue);
+        } else if (this.definition.optimum === "lowerIsBetter") {
+            sortedResults = this.singleMetricResults.results.sort((a, b) => a.normalizedValue - b.normalizedValue);
+        }
+        this.places = sortedResults.length;
+        this.relativePlace = sortedResults.indexOf(this);
 
         // Adapt the color scale
-        const max = results.max;
-        const min = results.min;
+        const results = this.singleMetricResults;
+        const max = results.maxNormalized;
+        const min = results.minNormalized;
         const colorScale = this.colorScale;
+        let domain = [min, max];
         if (this.definition.optimum === "higherIsBetter") {
-            colorScale.domain([max, min]);
+            domain = [min, max];
         } else if (this.definition.optimum === "lowerIsBetter") {
-            colorScale.domain([min, max]);
+            domain = [max, min];
         }
+        // console.log(this.definition.key, domain);
+        colorScale.domain(domain);
 
         this.emitter.emit("relativeValueUpdated", true);
         // console.log("Updated relative value of metric", this.settingId, this.metricKey, this.normalizedValue, this.relativePlace, sortedResults.length);

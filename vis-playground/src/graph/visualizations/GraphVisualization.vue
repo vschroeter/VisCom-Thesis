@@ -143,11 +143,11 @@ const viewBox = computed(() => {
 })
 
 const svgWidth = computed(() => {
-    return !isZoomed.value ? props.size : "90vw"
+    return !isZoomed.value ? props.size : "80vw"
 })
 
 const svgHeight = computed(() => {
-    return !isZoomed.value ? props.size : "90vh"
+    return !isZoomed.value ? props.size : "80vh"
 })
 
 
@@ -209,6 +209,20 @@ function deleteItem() {
 ////////////////////////////////////////////////////////////////////////////
 
 onMounted(() => {
+
+    let nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([0, 10]);
+
+    d3.select(refGRoot.value)
+        .selectAll("circle")
+        .data(nums)
+        .enter()
+        .append("circle")
+        .attr("cx", (d, i) => 20 + i * 20)
+        .attr("cy", 20)
+        .attr("r", 10)
+        // .attr("fill", (d) => colorScale(d / 10))
+        .attr("fill", (d) => colorScale(d))
 
     // const e = new EllipticArc(
     //     new Point2D(120, 100),
