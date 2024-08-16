@@ -65,6 +65,7 @@ import MetricOverview from './MetricOverview.vue';
 import { CommonSettings } from '../layouter/commonSettings';
 import { EllipticArc } from '../graphical/EllipticArc';
 import { Point2D } from '../graphical';
+import { watchDebounced } from '@vueuse/core';
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -243,7 +244,7 @@ onMounted(() => {
     //     .attr("r", 2)
     //     .attr("fill", "none")
     //     .attr("stroke", "red")
-        
+
 
     // const descr = e.getCenterParameters()!;
     // console.log(descr);
@@ -372,18 +373,19 @@ onMounted(() => {
         graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
         layouter = new cls(graph2d, settings.value, settingsCollection.commonSettings as CommonSettings);
 
-        watch(settings, (newVal) => {
-            layouter?.layout(true);
-        }, { immediate: false, deep: true })
+        watchDebounced(settings, (newVal) => {
+            layouter?.updateLayout(true);
+        }, { debounce: 1000, immediate: false, deep: true })
 
         watch(settingsCollection.commonSettings, (newVal) => {
-            layouter?.layout(true);
+            // layouter?.updateLayout(true);
+            layouter?.updateGraphByCommongSettings();
+            layoutUpdated()
         }, { immediate: false, deep: true })
 
         layouter.on('update', layoutUpdated)
         layouter.on('end', layoutFinished)
-        layouter.layout();
-
+        layouter.updateLayout();
 
 
     }, { immediate: true, deep: true })

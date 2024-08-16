@@ -20,6 +20,17 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         this.commonSettings = commonSettings;
     }
 
+    updateGraphByCommongSettings() {
+        this.graph2d.nodes.forEach(node => {
+            node.radius = this.commonSettings.nodeSize.getValue(node) ?? 10;
+        });
+    }
+
+    updateLayout(isUpdate: boolean = false): void {
+        this.updateGraphByCommongSettings();
+        this.layout(isUpdate);
+    }
+
     layout(isUpdate = false): void {
         throw new Error("Method not implemented.");
     }
