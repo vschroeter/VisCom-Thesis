@@ -1,3 +1,4 @@
+import mitt from "mitt";
 import { ArcLayouter } from "./arc/arcLayouter";
 import { ArcLayouterSettings } from "./arc/arcSettings";
 import { FdgLayouter } from "./fdg/fdgLayouter";
@@ -6,8 +7,9 @@ import { GraphLayouter } from "./layouter";
 import { RadialLayouter } from "./radial/radialLayouter";
 import { RadialLayouterSettings } from "./radial/radialSettings";
 import { GraphLayouterSettings } from "./settings";
+import { CommonSettings } from "./commonSettings";
 
-export const layouterMapping: Record<string, {label: string, layouter: typeof GraphLayouter<any>, settings: typeof GraphLayouterSettings }> = {
+export const layouterMapping: Record<string, { label: string, layouter: typeof GraphLayouter<any>, settings: typeof GraphLayouterSettings }> = {
     "fdg": {
         label: "Force Directed Graphs",
         layouter: FdgLayouter,
@@ -44,6 +46,7 @@ export interface SettingsJson {
 }
 
 export interface SettingsCollectionJson {
+    commonSettings: SettingJson[];
     settings: {
         type: string
         settingsList: SettingsJson[];
@@ -54,6 +57,18 @@ export class SettingsCollection {
 
     mapLayoutTypeToListOfSettings: Map<string, GraphLayouterSettings[]> = new Map();
     mapIdToSettings: Map<number, GraphLayouterSettings> = new Map();
+
+    emitter = mitt<{
+        newSettings: { currentIds: number[] }
+    }>();
+
+
+    commonSettings: CommonSettings = new CommonSettings({
+        key: "commonSettings",
+        label: "Common Settings",
+        description: "Common settings for all layouters",
+        optional: true,
+    });
 
     constructor() { }
 
@@ -84,6 +99,8 @@ export class SettingsCollection {
 
         settingsList.splice(index, 1);
         this.mapIdToSettings.delete(id);
+
+        this.emitter.emit("newSettings", { currentIds: Array.from(this.mapIdToSettings.keys()) });
     }
 
     addSetting(layouterType: string) {
@@ -111,6 +128,8 @@ export class SettingsCollection {
         this.mapIdToSettings.set(settings.id, settings);
 
         console.log(this);
+
+        this.emitter.emit("newSettings", { currentIds: Array.from(this.mapIdToSettings.keys()) });
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -151,12 +170,22 @@ export class SettingsCollection {
                 this.mapIdToSettings.set(settings.id, settings);
             }
         }
+
+        this.commonSettings.loadFromJson(json.commonSettings);
+
+        this.emitter.emit("newSettings", { currentIds: Array.from(this.mapIdToSettings.keys()) });
     }
 
     getJson(): SettingsCollectionJson {
+
         const settingsJson: SettingsCollectionJson = {
+            commonSettings: [],
             settings: []
         };
+        // Get common settings
+        settingsJson.commonSettings = this.commonSettings.getJson();
+
+        // Get visual settings
 
         for (const layouterName in layouterMapping) {
             const layouter = layouterMapping[layouterName];

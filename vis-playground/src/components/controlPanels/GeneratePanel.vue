@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="q-pa-sm">
         <!-- Everything below should be made out of Quasar Components -->
 
         <!-- Title -->

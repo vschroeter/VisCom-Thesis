@@ -86,6 +86,16 @@ export class MetricsCollection {
         });
     }
 
+
+    cleanSettings(currentSettingIds: number[]) {
+        const currentSettingIdsSet = new Set(currentSettingIds);
+        const toDelete = Array.from(this.mapIdToMetricsResults.keys()).filter(id => !currentSettingIdsSet.has(id));
+        // Clean metrics results
+        toDelete.forEach(id => {
+            this.mapIdToMetricsResults.delete(id);
+        });
+    }
+
 }
 
 /**
@@ -248,6 +258,8 @@ export class MetricResult {
     // Normalized value of the metric
     normalizedValue: number = 0;
 
+    colorScale = d3.scaleSequential(d3.interpolateRdYlGn);
+
     // The value of the metric
     get value(): number {
         return this.calculator.getMetric(this.metricKey)
@@ -302,8 +314,19 @@ export class MetricResult {
 
         this.normalizedValue = normalizedValue;
 
+
+        // Adapt the color scale
+        const max = results.max;
+        const min = results.min;
+        const colorScale = this.colorScale;
+        if (this.definition.optimum === "higherIsBetter") {
+            colorScale.domain([max, min]);
+        } else if (this.definition.optimum === "lowerIsBetter") {
+            colorScale.domain([min, max]);
+        }
+
         this.emitter.emit("relativeValueUpdated", true);
-        console.log("Updated relative value of metric", this.settingId, this.metricKey, this.normalizedValue, this.relativePlace, sortedResults.length);
+        // console.log("Updated relative value of metric", this.settingId, this.metricKey, this.normalizedValue, this.relativePlace, sortedResults.length);
     }
 
 }

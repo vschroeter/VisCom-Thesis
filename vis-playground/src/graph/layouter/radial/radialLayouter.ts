@@ -5,18 +5,19 @@ import { Graph2d } from "src/graph/graphical/Graph2d";
 import * as d3 from "d3";
 import { AbstractConnection2d, AbstractNode2d } from "src/graph/graphical";
 import { RadialLayouterSettings } from "./radialSettings";
+import { CommonSettings } from "../commonSettings";
 
 
 export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
 
-    constructor(graph2d: Graph2d, settings: RadialLayouterSettings) {
-        super(graph2d, settings);
+    constructor(graph2d: Graph2d, settings: RadialLayouterSettings, commonSettings: CommonSettings) {
+        super(graph2d, settings, commonSettings);
     }
 
     layout(isUpdate = false) {
         const ctx = this.settings.getContext(this.graph2d);
 
-        const radius = this.settings.size.radius.getValue(ctx);
+        const radius = this.settings.size.radius.getValue(ctx) ?? 5;
 
         // TODO: Get nodes from sorting
         const nodes = this.graph2d.nodes;

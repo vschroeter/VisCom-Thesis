@@ -71,9 +71,16 @@ import GraphVisualization from 'src/graph/visualizations/GraphVisualization.vue'
 
 const store = useGraphStore();
 const settingsCollection = store.settingsCollection;
+const metricsCollection = store.metricsCollection;
 
 onMounted(() => {
   if (store.settingsCollection) { 
+
+    store.settingsCollection.emitter.on("newSettings", (ids) => {
+      console.log('newSettings', ids);
+      metricsCollection.cleanSettings(ids.currentIds);
+    })
+
     store.settingsCollection.loadFromJson(JSON.parse(store.layouterSettingsCollectionJson))
     console.log('store.settingsCollection loaded', store.layouterSettingsCollectionJson);
     // console.log(store.settingsCollection)

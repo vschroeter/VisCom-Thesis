@@ -1,20 +1,23 @@
 import { CommunicationGraph } from "../commGraph";
 import { AbstractConnection2d, AbstractNode2d } from "../graphical";
 import { Graph2d } from "../graphical/Graph2d";
+import { CommonSettings } from "./commonSettings";
 import { GraphLayouterSettings } from "./settings";
 
 export class GraphLayouter<T extends GraphLayouterSettings> {
 
     settings: T;
+    commonSettings: CommonSettings;
     commGraph: CommunicationGraph;
     graph2d: Graph2d;
 
     protected events: { [key: string]: ((this: GraphLayouter<any>) => void) } = {};
 
-    constructor(graph2d: Graph2d, settings: T) {
+    constructor(graph2d: Graph2d, settings: T, commonSettings: CommonSettings) {
         this.commGraph = graph2d.commGraph;
         this.settings = settings;
         this.graph2d = graph2d;
+        this.commonSettings = commonSettings;
     }
 
     layout(isUpdate = false): void {
@@ -56,7 +59,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('cx', (d: AbstractNode2d) => d.x)
             .attr('cy', (d: AbstractNode2d) => d.y)
             .attr('r', 10)
-            .attr('fill', 'red')
+            .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
     }
 
     updateLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
@@ -64,7 +67,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .data(this.graph2d?.links)
             .join('path')
             .attr('d', (d: AbstractConnection2d) => d.getSvgPath())
-            .attr('stroke', 'black')
+            .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
             .attr('fill', 'none')
     }
 

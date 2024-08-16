@@ -1,8 +1,7 @@
 <template>
     <div @click="onClickDiv">
         <!-- :class="(isSelected ? 'bg-primary text-white' : '') + ('full-modal': isZoomed)"> -->
-        <q-card
-            :class="{ 'bg-primary': isSelected, 'text-white': isSelected, 'full-modal': isZoomed, 'card': true }">
+        <q-card :class="{ 'bg-primary': isSelected, 'text-white': isSelected, 'full-modal': isZoomed, 'card': true }">
             <q-card-section class="row items-start q-py-xs items-center">
                 <div :class="'col q-mr-sm '"
                     :style="`inline-size: ${size - iconButtonDivWidth - 30}px; overflow-wrap: break-word;`">
@@ -44,7 +43,7 @@
             </q-card-section>
             <q-separator />
             <q-card-section>
-                <MetricOverview :settingId="props.settingId" :width="size" :height="50"/>
+                <MetricOverview :settingId="props.settingId" :width="size" :height="50" />
             </q-card-section>
         </q-card>
 
@@ -63,6 +62,7 @@ import { layouterMapping } from 'src/graph/layouter/settingsCollection';
 import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
 import MetricOverview from './MetricOverview.vue';
+import { CommonSettings } from '../layouter/commonSettings';
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -188,7 +188,7 @@ function layoutUpdated() {
 
 function layoutFinished() {
     layoutUpdated();
-    
+
     calcluateMetrics();
 }
 
@@ -225,12 +225,15 @@ onMounted(() => {
             return
         }
         graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
-        layouter = new cls(graph2d, settings.value);
+        layouter = new cls(graph2d, settings.value, settingsCollection.commonSettings as CommonSettings);
 
         watch(settings, (newVal) => {
             layouter?.layout(true);
         }, { immediate: false, deep: true })
 
+        watch(settingsCollection.commonSettings, (newVal) => {
+            layouter?.layout(true);
+        }, { immediate: false, deep: true })
 
         layouter.on('update', layoutUpdated)
         layouter.on('end', layoutFinished)

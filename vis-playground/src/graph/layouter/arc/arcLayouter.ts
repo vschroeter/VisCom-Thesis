@@ -1,16 +1,16 @@
-import { CommunicationGraph, CommunicationLink, CommunicationNode } from "src/graph/commGraph";
 import { GraphLayouter } from "../layouter";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
-import * as d3 from "d3";
-import { AbstractConnection2d, AbstractNode2d, Point2D } from "src/graph/graphical";
+import { Point2D } from "src/graph/graphical";
 import { ArcLayouterSettings } from "./arcSettings";
+import { CommonSettings } from "../commonSettings";
+import { EllipticArc } from "src/graph/graphical/EllipticArc";
 
 
 export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
 
-    constructor(graph2d: Graph2d, settings: ArcLayouterSettings) {
-        super(graph2d, settings);
+    constructor(graph2d: Graph2d, settings: ArcLayouterSettings, commonSettings: CommonSettings) {
+        super(graph2d, settings, commonSettings);
     }
 
     layout(isUpdate = false) {
@@ -38,8 +38,10 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
 
             link.points = [
                 new Point2D(source.x, source.y),
-                new Point2D(source.x + xDelta, source.y),
-                new Point2D(target.x + xDelta, target.y),
+                new EllipticArc()
+                    .radius(xDelta / 2)
+                    .endPoint(new Point2D(target.x, target.y))
+                ,
                 new Point2D(target.x, target.y)
             ]
             

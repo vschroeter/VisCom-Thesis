@@ -104,7 +104,7 @@ export class GraphLayouterSetting {
         this.label = label || key;
         this.description = description;
         this.optional = optional;
-        this.active = optional ? active: true;
+        this.active = optional ? active : true;
     }
 
     get parameters(): GraphLayouterSettingParam[] {
@@ -112,13 +112,17 @@ export class GraphLayouterSetting {
     }
 
     loadFromJson(json: any) {
-        this.active = json.active;
+        try {
+            this.active = json.active;
 
-        this.parameters.forEach(param => {
-            if (json[param.key]) {
-                param.loadFromJson(json[param.key]);
-            }
-        });
+            this.parameters.forEach(param => {
+                if (json[param.key]) {
+                    param.loadFromJson(json[param.key]);
+                }
+            });
+        } catch (error) {
+            console.error("Error loading settings from json", error);
+        }
     }
 
     getJson(): any {
@@ -135,7 +139,9 @@ export class GraphLayouterSetting {
     }
 }
 
-export class GraphLayouterSettingParam { // 
+export type ParamType = "number" | "string" | "color";
+
+export class GraphLayouterSettingParam<T = number> { // 
 
     /** Key to identify the parameter */
     key: string;
@@ -155,6 +161,10 @@ export class GraphLayouterSettingParam { //
     /** Default value of the parameter */
     default: string | number;
     // value: T;
+
+    /** Type of the parameter */
+    type: ParamType;
+
     protected _textValue: string;
 
     /** Tooltip to display in the UI */
@@ -171,12 +181,14 @@ export class GraphLayouterSettingParam { //
         label,
         description,
         defaultValue,
+        type = "string",
         optional = false,
         active = false,
     }: {
         key: string,
         label?: string,
         description?: string,
+        type?: ParamType,
         optional: boolean,
         defaultValue: string | number,
         active?: boolean,
@@ -188,9 +200,10 @@ export class GraphLayouterSettingParam { //
         this.default = defaultValue;
         this.active = optional ? active : true;
         this._textValue = defaultValue as string;
+        this.type = type;
     }
 
-    getValue(context?: Record<string, any>): any {
+    getValue(context?: Record<string, any>): T | undefined {
         if (!this.active) return undefined;
 
         try {
@@ -201,8 +214,14 @@ export class GraphLayouterSettingParam { //
         }
 
         // Cast string into number if possible
-        const numberValue = Number(this._textValue);
-        if (!isNaN(numberValue)) return numberValue;
+        if (this.type === "number") {
+            const numberValue = Number(this._textValue);
+            if (!isNaN(numberValue)) return numberValue as any;
+        } else if (this.type === "string") {
+            return this._textValue as any;
+        } else if (this.type === "color") {
+            return this._textValue as any;
+        }
         return undefined;
     }
 
@@ -217,8 +236,12 @@ export class GraphLayouterSettingParam { //
     }
 
     loadFromJson(json: any) {
-        this.active = json.active;
-        this._textValue = json.value;
+        try {
+            this.active = json.active;
+            this._textValue = json.value;
+        } catch (error) {
+            console.error("Error loading settings from json", error);
+        }
     }
 
     getJson(): any {
@@ -254,9 +277,6 @@ export class GraphLayouterSettingNodeParam extends GraphLayouterSettingParam {
             cl: 1,
         };
 
-        // Merge the context with the node context
-        ctx = { ...ctx, ...context };
-
         if (node) {
             const successors = node.data?.getSuccessors();
             const predecessors = node.data?.getPredecessors();
@@ -279,6 +299,8 @@ export class GraphLayouterSettingNodeParam extends GraphLayouterSettingParam {
                 cl,
             };
         }
+        // Merge the context with the node context
+        ctx = { ...ctx, ...context };
         return super.getValue(ctx);
     }
 }
@@ -294,7 +316,7 @@ export class GraphLayouterSettingLinkParam extends GraphLayouterSettingParam {
 
     tooltip: string[] = GraphLayouterSettingLinkParam.tooltip;
 
-    getValue(node?: AbstractConnection2d, context?: Record<string, any>): number | undefined {
+    getValue(link?: AbstractConnection2d, context?: Record<string, any>): number | undefined {
         let ctx: Record<string, any> = {
             ct: 1,
             cs: 1,
@@ -303,14 +325,12 @@ export class GraphLayouterSettingLinkParam extends GraphLayouterSettingParam {
 
         ctx = { ...ctx, ...context };
 
-        if (node) {
-            const countTargetConnections = node.target.data?.getSuccessors()?.length ?? 1;
-            const countSourceConnections = node.source.data?.getPredecessors()?.length ?? 1;
-            context = {
-                ct: countTargetConnections,
-                cs: countSourceConnections,
-                cd: countSourceConnections + countTargetConnections
-            };
+        if (link) {
+            const countTargetConnections = (link.target.data?.getSuccessors()?.length ?? 1) + (link.target.data?.getPredecessors()?.length ?? 1) - 1;
+            const countSourceConnections = (link.source.data?.getPredecessors()?.length ?? 1) + (link.source.data?.getSuccessors()?.length ?? 1) - 1;
+            ctx.ct = countTargetConnections;
+            ctx.cs = countSourceConnections;
+            ctx.cd = countSourceConnections + countTargetConnections;
         }
         return super.getValue(ctx);
     }

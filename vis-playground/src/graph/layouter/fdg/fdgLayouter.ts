@@ -5,6 +5,7 @@ import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import * as d3 from "d3";
 import { AbstractConnection2d, AbstractNode2d } from "src/graph/graphical";
+import { CommonSettings } from "../commonSettings";
 
 
 export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
@@ -12,8 +13,8 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
     simulation?: d3.Simulation<AbstractNode2d, AbstractConnection2d>;
 
 
-    constructor(graph2d: Graph2d, settings: FdgLayouterSettings) {
-        super(graph2d, settings);
+    constructor(graph2d: Graph2d, settings: FdgLayouterSettings, commonSettings: CommonSettings) {
+        super(graph2d, settings, commonSettings);
     }
 
     layout(isUpdate = false) {
@@ -38,7 +39,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
         if (this.settings.forceManyBody.active) {
             // console.log("Adding force many body", this.settings.forceManyBody.strength.getValue());
-            simulation.force("charge", d3.forceManyBody<AbstractNode2d>().strength(d => 
+            simulation.force("charge", d3.forceManyBody<AbstractNode2d>().strength(d =>
                 this.settings.forceManyBody.strength.getValue(d, ctx) ?? -20)
             )
         }
