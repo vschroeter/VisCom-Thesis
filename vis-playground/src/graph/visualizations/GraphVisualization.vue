@@ -65,7 +65,7 @@ import MetricOverview from './MetricOverview.vue';
 import { CommonSettings } from '../layouter/commonSettings';
 import { EllipticArc } from '../graphical/EllipticArc';
 import { Point2D } from '../graphical';
-import { watchDebounced } from '@vueuse/core';
+import { useDebounceFn, useThrottleFn, watchDebounced } from '@vueuse/core';
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -210,19 +210,19 @@ function deleteItem() {
 
 onMounted(() => {
 
-    let nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([0, 10]);
+    // let nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    // const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([0, 10]);
 
-    d3.select(refGRoot.value)
-        .selectAll("circle")
-        .data(nums)
-        .enter()
-        .append("circle")
-        .attr("cx", (d, i) => 20 + i * 20)
-        .attr("cy", 20)
-        .attr("r", 10)
-        // .attr("fill", (d) => colorScale(d / 10))
-        .attr("fill", (d) => colorScale(d))
+    // d3.select(refGRoot.value)
+    //     .selectAll("circle")
+    //     .data(nums)
+    //     .enter()
+    //     .append("circle")
+    //     .attr("cx", (d, i) => 20 + i * 20)
+    //     .attr("cy", 20)
+    //     .attr("r", 10)
+    //     // .attr("fill", (d) => colorScale(d / 10))
+    //     .attr("fill", (d) => colorScale(d))
 
     // const e = new EllipticArc(
     //     new Point2D(120, 100),
@@ -397,7 +397,13 @@ onMounted(() => {
             layoutUpdated()
         }, { immediate: false, deep: true })
 
-        layouter.on('update', layoutUpdated)
+        const throttledUpdate = useThrottleFn(() => {
+            layoutUpdated()
+        }, 1000)
+
+        layouter.on('update', () => {
+            throttledUpdate();
+        })
         layouter.on('end', layoutFinished)
         layouter.updateLayout();
 

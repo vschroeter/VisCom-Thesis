@@ -1,7 +1,7 @@
 import { useDebounceFn } from "@vueuse/core";
 import { Graph2d } from "../graphical/Graph2d";
 import { MetricCalculator } from "./base";
-import { EdgeLengthCalculator } from "./metricEdgeLength";
+import { EdgeLengthCalculator, NodeDistanceCalculator } from "./metricDistances";
 
 import * as d3 from "d3";
 import mitt from "mitt";
@@ -27,6 +27,7 @@ export class MetricsCollection {
     static metricsToCalculate: (typeof MetricCalculator)[] = [
         MetricCalculator,
         EdgeLengthCalculator,
+        NodeDistanceCalculator
     ];
 
     // Map from setting id to the metrics results of that setting

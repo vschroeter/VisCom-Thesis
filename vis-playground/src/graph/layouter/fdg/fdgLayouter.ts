@@ -19,7 +19,6 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
     layout(isUpdate = false) {
         const ctx = this.settings.getContext(this.graph2d);
-        console.log("Layout context", ctx);
 
         if (this.simulation) {
             // console.log("Stopping simulation");
@@ -72,6 +71,6 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
             ))
         }
 
-        simulation.alpha(isUpdate ? 0.5 : 1).restart();
+        simulation.alpha(isUpdate ? 0.5 : 1).alphaMin(0.01).restart();
     }
 }
