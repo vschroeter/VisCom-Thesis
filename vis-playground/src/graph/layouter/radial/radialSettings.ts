@@ -1,7 +1,7 @@
-import { GraphLayouterSetting, GraphLayouterSettingLinkParam, GraphLayouterSettingNodeParam, GraphLayouterSettingParam, GraphLayouterSettings } from "../settings";
+import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings";
 
-export class SizeSettings extends GraphLayouterSetting {
-    radius = new GraphLayouterSettingParam({
+export class SizeSettings extends Setting {
+    radius = new Param({
         key: "radius",
         optional: false,
         defaultValue: "100 * n",

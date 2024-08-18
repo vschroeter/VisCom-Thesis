@@ -23,7 +23,7 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
         // Place nodes on a straight line down
         nodes.forEach((node, i) => {
             node.x = 0;
-            node.y = i * 40;
+            node.y = i * (this.settings.size.nodeDistance.getValue(ctx) ?? 40);
         })
 
         // Adapt the links

@@ -31,9 +31,9 @@ export class GraphLayouterSettings {
     }
 
     /** List of all settings */
-    get settings(): GraphLayouterSetting[] {
+    get settings(): Setting[] {
         // Iterate over the keys of the object and return the values of the object that are instances or subclasses of GraphLayouterSetting
-        return Object.values(this).filter((value) => value instanceof GraphLayouterSetting);
+        return Object.values(this).filter((value) => value instanceof Setting);
     }
 
     /** Load the settings from a json */
@@ -71,7 +71,7 @@ export class GraphLayouterSettings {
     }
 }
 
-export class GraphLayouterSetting {
+export class Setting {
     /** Key to identify the setting */
     key: string;
 
@@ -107,8 +107,8 @@ export class GraphLayouterSetting {
         this.active = optional ? active : true;
     }
 
-    get parameters(): GraphLayouterSettingParam[] {
-        return Object.values(this).filter((value) => value instanceof GraphLayouterSettingParam);
+    get parameters(): Param[] {
+        return Object.values(this).filter((value) => value instanceof Param);
     }
 
     loadFromJson(json: any) {
@@ -141,7 +141,7 @@ export class GraphLayouterSetting {
 
 export type ParamType = "number" | "string" | "color";
 
-export class GraphLayouterSettingParam<T = number> { // 
+export class Param<T = number> { // 
 
     /** Key to identify the parameter */
     key: string;
@@ -174,7 +174,7 @@ export class GraphLayouterSettingParam<T = number> { //
         "- l: Number of links",
     ]
 
-    tooltip: string | string[] = GraphLayouterSettingParam.tooltip;
+    tooltip: string | string[] = Param.tooltip;
 
     constructor({
         key,
@@ -253,9 +253,9 @@ export class GraphLayouterSettingParam<T = number> { //
     }
 }
 
-export class GraphLayouterSettingNodeParam extends GraphLayouterSettingParam {
+export class ParamWithNodeContext extends Param {
 
-    static tooltip: string[] = [...GraphLayouterSettingParam.tooltip,
+    static tooltip: string[] = [...Param.tooltip,
         "You can use the following node params:",
         "- cs: Number of successors",
         "- cp: Number of predecessors",
@@ -265,7 +265,7 @@ export class GraphLayouterSettingNodeParam extends GraphLayouterSettingParam {
         "- cl: Number of links",
     ]
 
-    tooltip: string[] = GraphLayouterSettingNodeParam.tooltip;
+    tooltip: string[] = ParamWithNodeContext.tooltip;
 
     getValue(node?: AbstractNode2d, context?: Record<string, any>): number | undefined {
         let ctx: Record<string, any> = {
@@ -305,16 +305,16 @@ export class GraphLayouterSettingNodeParam extends GraphLayouterSettingParam {
     }
 }
 
-export class GraphLayouterSettingLinkParam extends GraphLayouterSettingParam {
+export class ParamWithLinkContext extends Param {
 
-    static tooltip: string[] = [...GraphLayouterSettingParam.tooltip,
+    static tooltip: string[] = [...Param.tooltip,
         "You can use the following link params:",
         "- ct: Number of connections on the target node",
         "- cs: Number of connections on the source node",
         "- cd: Number of connections on both nodes (sum of degrees)",
     ]
 
-    tooltip: string[] = GraphLayouterSettingLinkParam.tooltip;
+    tooltip: string[] = ParamWithLinkContext.tooltip;
 
     getValue(link?: AbstractConnection2d, context?: Record<string, any>): number | undefined {
         let ctx: Record<string, any> = {

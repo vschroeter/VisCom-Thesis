@@ -1,9 +1,9 @@
-import { GraphLayouterSetting, GraphLayouterSettingLinkParam, GraphLayouterSettingNodeParam } from "./settings";
+import { Setting, ParamWithLinkContext, ParamWithNodeContext } from "./settings";
 
 
-export class CommonSettings extends GraphLayouterSetting {
+export class CommonSettings extends Setting {
 
-    nodeColor = new GraphLayouterSettingNodeParam({
+    nodeColor = new ParamWithNodeContext({
         type: "color",
         key: "nodeColor",
         label: "Node Color",
@@ -12,7 +12,7 @@ export class CommonSettings extends GraphLayouterSetting {
         defaultValue: "#ff0000",
     })
 
-    nodeSize = new GraphLayouterSettingNodeParam({
+    nodeSize = new ParamWithNodeContext({
         type: "number",
         key: "nodeSize",
         label: "Node Size",
@@ -21,7 +21,7 @@ export class CommonSettings extends GraphLayouterSetting {
         defaultValue: 10,
     })
 
-    linkColor = new GraphLayouterSettingLinkParam({
+    linkColor = new ParamWithLinkContext({
         type: "color",
         key: "linkColor",
         label: "Link Color",

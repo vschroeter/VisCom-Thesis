@@ -1,7 +1,7 @@
-import { GraphLayouterSetting, GraphLayouterSettingLinkParam, GraphLayouterSettingNodeParam, GraphLayouterSettingParam, GraphLayouterSettings } from "../settings";
+import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings";
 
-export class ForceManyBodySetting extends GraphLayouterSetting {
-    strength = new GraphLayouterSettingNodeParam({
+export class ForceManyBodySetting extends Setting {
+    strength = new ParamWithNodeContext({
         key: "strength",
         optional: false,
         defaultValue: -20,
@@ -18,8 +18,8 @@ export class ForceManyBodySetting extends GraphLayouterSetting {
     }
 }
 
-export class ForceCenterSetting extends GraphLayouterSetting {
-    strength = new GraphLayouterSettingParam({
+export class ForceCenterSetting extends Setting {
+    strength = new Param({
         key: "strength",
         optional: false,
         active: true,
@@ -37,15 +37,15 @@ export class ForceCenterSetting extends GraphLayouterSetting {
     }
 }
 
-export class ForceLinkSetting extends GraphLayouterSetting {
-    distance = new GraphLayouterSettingLinkParam({
+export class ForceLinkSetting extends Setting {
+    distance = new ParamWithLinkContext({
         key: "distance",
         optional: true,
         active: true,
         defaultValue: 30,
     });
 
-    strength = new GraphLayouterSettingLinkParam({
+    strength = new ParamWithLinkContext({
         key: "strength",
         optional: true,
         active: true,
@@ -63,15 +63,15 @@ export class ForceLinkSetting extends GraphLayouterSetting {
     }
 }
 
-export class ForceCollideSetting extends GraphLayouterSetting {
-    radius = new GraphLayouterSettingNodeParam({
+export class ForceCollideSetting extends Setting {
+    radius = new ParamWithNodeContext({
         key: "radius",
         optional: true,
         active: true,
         defaultValue: 5,
     });
 
-    strength = new GraphLayouterSettingParam({
+    strength = new Param({
         key: "strength",
         optional: true,
         active: true,

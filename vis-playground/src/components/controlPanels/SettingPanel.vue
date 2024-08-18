@@ -133,7 +133,7 @@
 <script setup lang="ts">
 
 import { QTableColumn } from 'quasar';
-import { GraphLayouterSettingParam } from 'src/graph/layouter/settings';
+import { Param } from 'src/graph/layouter/settings';
 import { useGraphStore } from 'src/stores/graph-store';
 import { computed, onMounted, onUpdated, ref, watch, type Ref } from 'vue'
 
@@ -173,7 +173,7 @@ const palette = computed(() => {
 })
 
 
-const settingTableColumns: QTableColumn<GraphLayouterSettingParam>[] = [
+const settingTableColumns: QTableColumn<Param>[] = [
     {
         name: 'activated',
         required: true,
