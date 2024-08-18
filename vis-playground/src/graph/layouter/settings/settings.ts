@@ -1,5 +1,5 @@
-import { AbstractConnection2d, AbstractNode2d } from "../graphical";
-import { Graph2d } from "../graphical/Graph2d";
+import { AbstractConnection2d, AbstractNode2d } from "../../graphical";
+import { Graph2d } from "../../graphical/Graph2d";
 
 const evaluateExpression = (expression: string, context: Record<string, any>): any => {
     const keys = Object.keys(context);
@@ -139,7 +139,7 @@ export class Setting {
     }
 }
 
-export type ParamType = "number" | "string" | "color";
+export type ParamType = "number" | "string" | "color" | "boolean" | "choice";
 
 export class Param<T = number> { // 
 
@@ -159,8 +159,10 @@ export class Param<T = number> { //
     active: boolean = false;
 
     /** Default value of the parameter */
-    default: string | number;
+    default: string | number | boolean; 
     // value: T;
+
+    choices: string[] = [];
 
     /** Type of the parameter */
     type: ParamType;
@@ -190,7 +192,7 @@ export class Param<T = number> { //
         description?: string,
         type?: ParamType,
         optional: boolean,
-        defaultValue: string | number,
+        defaultValue: string | number | boolean,
         active?: boolean,
     }) {
         this.key = key;
@@ -220,6 +222,11 @@ export class Param<T = number> { //
         } else if (this.type === "string") {
             return this._textValue as any;
         } else if (this.type === "color") {
+            return this._textValue as any;
+        } else if (this.type === "boolean") {
+            // @ts-expect-error TODO: better generic types
+            return this._textValue === "true" as any;
+        } else if (this.type === "choice") {
             return this._textValue as any;
         }
         return undefined;
@@ -333,5 +340,44 @@ export class ParamWithLinkContext extends Param {
             ctx.cd = countSourceConnections + countTargetConnections;
         }
         return super.getValue(ctx);
+    }
+}
+
+
+
+export class ParamChoice<T extends string> extends Param<string> {
+
+    choices: T[];
+
+    constructor({
+        key,
+        label,
+        description,
+        choices,
+        defaultValue,
+        // type = "string",
+        optional = false,
+        active = false,
+    }: {
+        key: string,
+        label?: string,
+        description?: string,
+        choices: T[],
+        // type?: ParamType,
+        optional: boolean,
+        defaultValue: string | number,
+        active?: boolean,
+    }) {
+        super({
+            key,
+            label,
+            description,
+            type: "choice",
+            optional,
+            defaultValue,
+            active,
+        });
+
+        this.choices = choices;
     }
 }

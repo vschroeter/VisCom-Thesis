@@ -58,14 +58,14 @@ import { useGraphStore } from 'src/stores/graph-store';
 import * as d3 from 'd3'
 import { Graph2d } from 'src/graph/graphical/Graph2d';
 import { CommunicationGraph } from 'src/graph/commGraph';
-import { layouterMapping } from 'src/graph/layouter/settingsCollection';
 import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
 import MetricOverview from './MetricOverview.vue';
-import { CommonSettings } from '../layouter/commonSettings';
 import { EllipticArc } from '../graphical/EllipticArc';
 import { Point2D } from '../graphical';
 import { useDebounceFn, useThrottleFn, watchDebounced } from '@vueuse/core';
+import { layouterMapping } from '../layouter/settings/settingsCollection';
+import { CommonSettings } from '../layouter/settings/commonSettings';
 
 
 ////////////////////////////////////////////////////////////////////////////

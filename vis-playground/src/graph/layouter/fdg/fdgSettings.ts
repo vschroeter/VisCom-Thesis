@@ -1,4 +1,4 @@
-import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings";
+import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings/settings";
 
 export class ForceManyBodySetting extends Setting {
     strength = new ParamWithNodeContext({

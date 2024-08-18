@@ -1,8 +1,8 @@
 import { CommunicationGraph } from "../commGraph";
 import { AbstractConnection2d, AbstractNode2d } from "../graphical";
 import { Graph2d } from "../graphical/Graph2d";
-import { CommonSettings } from "./commonSettings";
-import { GraphLayouterSettings } from "./settings";
+import { CommonSettings } from "./settings/commonSettings";
+import { GraphLayouterSettings } from "./settings/settings";
 
 export class GraphLayouter<T extends GraphLayouterSettings> {
 

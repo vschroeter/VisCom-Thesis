@@ -1,4 +1,4 @@
-import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings";
+import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings/settings";
 
 export class SizeSettings extends Setting {
     radius = new Param({

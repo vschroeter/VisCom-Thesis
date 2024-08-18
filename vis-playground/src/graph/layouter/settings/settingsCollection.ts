@@ -1,11 +1,11 @@
 import mitt from "mitt";
-import { ArcLayouter } from "./arc/arcLayouter";
-import { ArcLayouterSettings } from "./arc/arcSettings";
-import { FdgLayouter } from "./fdg/fdgLayouter";
-import { FdgLayouterSettings } from "./fdg/fdgSettings";
-import { GraphLayouter } from "./layouter";
-import { RadialLayouter } from "./radial/radialLayouter";
-import { RadialLayouterSettings } from "./radial/radialSettings";
+import { ArcLayouter } from "../arc/arcLayouter";
+import { ArcLayouterSettings } from "../arc/arcSettings";
+import { FdgLayouter } from "../fdg/fdgLayouter";
+import { FdgLayouterSettings } from "../fdg/fdgSettings";
+import { GraphLayouter } from "../layouter";
+import { RadialLayouter } from "../radial/radialLayouter";
+import { RadialLayouterSettings } from "../radial/radialSettings";
 import { GraphLayouterSettings } from "./settings";
 import { CommonSettings } from "./commonSettings";
 

@@ -3,8 +3,8 @@ import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import { Point2D, Vector2D } from "src/graph/graphical";
 import { ArcLayouterSettings } from "./arcSettings";
-import { CommonSettings } from "../commonSettings";
 import { EllipticArc } from "src/graph/graphical/EllipticArc";
+import { CommonSettings } from "../settings/commonSettings";
 
 
 export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
@@ -19,6 +19,12 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
 
         // TODO: Get nodes from sorting
         const nodes = this.graph2d.nodes;
+
+        // const sorting = this.settings.sorting.sorting.textValue;
+        const sorting = this.settings.sorting.sorting.getValue();
+        const reversed = this.settings.sorting.reversed.getValue();
+
+        console.log("ARC", sorting, reversed);
 
         // Place nodes on a straight line down
         nodes.forEach((node, i) => {

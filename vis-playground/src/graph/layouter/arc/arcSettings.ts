@@ -1,4 +1,5 @@
-import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings";
+import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings/settings";
+import { LinearSortingSettings } from "../settings/linearSettings";
 
 export class SizeSettings extends Setting {
     nodeDistance = new Param({
@@ -18,8 +19,13 @@ export class SizeSettings extends Setting {
 }
 
 
+
+
 export class ArcLayouterSettings extends GraphLayouterSettings {
     size = new SizeSettings();
+
+    sorting = new LinearSortingSettings();
+
     constructor(type: string, name?: string) {
         super(type, name);
     }

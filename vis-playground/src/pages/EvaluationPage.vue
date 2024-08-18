@@ -63,11 +63,11 @@
 </template>
 
 <script setup lang="ts">
-import { layouterMapping } from 'src/graph/layouter/settingsCollection';
 import { useGraphStore } from 'src/stores/graph-store';
 import { onMounted } from 'vue';
 import { watchDebounced } from '@vueuse/core'
 import GraphVisualization from 'src/graph/visualizations/GraphVisualization.vue';
+import { layouterMapping } from 'src/graph/layouter/settings/settingsCollection';
 
 const store = useGraphStore();
 const settingsCollection = store.settingsCollection;

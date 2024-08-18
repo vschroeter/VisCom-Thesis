@@ -43,17 +43,19 @@
 
 
         <div ref="refDivSelectedSettingsRoot" class="row">
-            <span class="text-h6">Selected Settings</span>
+            <div class="col">
+
+                <span class="text-h6">Selected Settings</span>
 
 
-            <div class="row" v-if="currentSettings">
-                <q-input borderless v-model="currentSettings.name" label="Visualization Name" />
-            </div>
-            <!-- For each setting add a row -->
-            <!-- <div v-for="setting in settingList" :key="setting.settingName"> -->
-            <div v-for="setting in currentSettings?.settings" :key="setting.key">
+                <div class="row" v-if="currentSettings">
+                    <q-input borderless v-model="currentSettings.name" label="Visualization Name" />
+                </div>
+                <!-- For each setting add a row -->
+                <!-- <div v-for="setting in settingList" :key="setting.settingName"> -->
+                <div v-for="setting in currentSettings?.settings" :key="setting.key" class="row">
 
-                <div class="row">
+                    <!-- <div class="row"> -->
                     <div class="col">
                         <div v-if="false" class="row">
                             <div class="text-h6">{{ setting.label || setting.key }}</div>
@@ -87,14 +89,49 @@
                                     <template v-slot:body-cell-activated="props">
                                         <q-td key="activated" :props="props">
                                             <q-toggle v-model="props.row.active" dense :disable="!props.row.optional"
-                                                size="sm" />
+                                                :color="props.row.optional ? `primary` : `grey-5`" size="sm" />
                                         </q-td>
                                     </template>
 
                                     <!-- Input field for the value -->
                                     <template v-slot:body-cell-value="props">
                                         <q-td key="value" :props="props">
-                                            <q-input v-model="props.row.textValue" dense borderless />
+
+                                            <!-- If the param is of type 'boolean', add a toggle  -->
+                                            <q-toggle v-if="props.row.type == 'boolean'" v-model="props.row.textValue"
+                                                size="sm" />
+
+                                            <!-- If the param is of type 'color', add a color picker -->
+                                            <q-input v-else-if="props.row.type == 'color'" v-model="props.row.textValue"
+                                                dense borderless>
+                                                <template v-slot:append>
+                                                    <q-icon name="colorize" class="cursor-pointer">
+                                                        <q-popup-proxy cover transition-show="scale"
+                                                            transition-hide="scale">
+                                                            <q-color v-model="props.row.textValue" :palette="palette" />
+                                                        </q-popup-proxy>
+                                                    </q-icon>
+                                                </template>
+                                                <template v-slot:prepend>
+                                                    <div
+                                                        :style="{ backgroundColor: props.row.textValue, width: '20px', height: '20px', borderRadius: '50%', border: '1px solid black' }">
+                                                    </div>
+                                                </template>
+                                            </q-input>
+
+                                            <!-- If the param is of type 'number', add a number input -->
+                                            <q-input v-else-if="props.row.type == 'number'"
+                                                v-model="props.row.textValue" dense borderless type="number" />
+
+                                            <!-- If the param is of type 'choice', add a select input -->
+                                            <q-select v-else-if="props.row.type == 'choice'"
+                                                v-model="props.row.textValue" dense borderless
+                                                :options="props.row.choices" />
+
+
+                                            <!-- If the param is of type 'string', add a text input -->
+                                            <q-input v-else v-model="props.row.textValue" dense borderless />
+
 
                                         </q-td>
 
@@ -133,7 +170,7 @@
 <script setup lang="ts">
 
 import { QTableColumn } from 'quasar';
-import { Param } from 'src/graph/layouter/settings';
+import { Param } from 'src/graph/layouter/settings/settings';
 import { useGraphStore } from 'src/stores/graph-store';
 import { computed, onMounted, onUpdated, ref, watch, type Ref } from 'vue'
 

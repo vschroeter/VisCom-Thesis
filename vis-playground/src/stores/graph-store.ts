@@ -3,9 +3,9 @@ import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 
 import { CommunicationGraph } from 'src/graph/commGraph'
-import { GraphLayouterSettings } from 'src/graph/layouter/settings'
-import { SettingsCollection } from 'src/graph/layouter/settingsCollection'
 import { MetricsCollection } from 'src/graph/metrics/collection'
+import { GraphLayouterSettings } from 'src/graph/layouter/settings/settings'
+import { SettingsCollection } from 'src/graph/layouter/settings/settingsCollection'
 
 // Store for the global communication graph
 export const useGraphStore = defineStore('graph', {

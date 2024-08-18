@@ -20,16 +20,10 @@
 
 <script setup lang="ts">
 
-import { computed, onMounted, onUnmounted, onUpdated, reactive, Ref, ref, toValue, watch } from 'vue'
+import { computed, onMounted, onUnmounted, onUpdated, Ref, ref } from 'vue'
 import { useGraphStore } from 'src/stores/graph-store';
 
-import * as d3 from 'd3'
-import { Graph2d } from 'src/graph/graphical/Graph2d';
-import { CommunicationGraph } from 'src/graph/commGraph';
-import { layouterMapping } from 'src/graph/layouter/settingsCollection';
-import { GraphLayouter } from 'src/graph/layouter/layouter';
-import { svgInteractiveRef } from './svgDirectives';
-import { MetricResult, MetricsCollection, MetricsResults } from 'src/graph/metrics/collection'
+import { MetricResult, MetricsResults } from 'src/graph/metrics/collection'
 
 
 ////////////////////////////////////////////////////////////////////////////
