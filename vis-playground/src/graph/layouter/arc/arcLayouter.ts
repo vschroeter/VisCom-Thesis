@@ -57,7 +57,7 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
                 new EllipticArc()
                     .radius(xDelta / 2)
                     .endPoint(endPoint)
-                    .direction(direction == "down" ? "clockwise" : "counter-clockwise")
+                    // .direction(direction == "down" ? "clockwise" : "counter-clockwise")
                 ,
                 endAnchor,
             ]

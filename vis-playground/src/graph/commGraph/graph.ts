@@ -284,7 +284,7 @@ export class CommunicationGraph<NodeData = any> {
     });
   }
 
-  getNodeID(node: string | CommunicationNode<NodeData>) {
+  getNodeID(node: string | CommunicationNode<NodeData>): string {
     if (typeof node === 'string') {
       return node;
     } else {
@@ -292,7 +292,7 @@ export class CommunicationGraph<NodeData = any> {
     }
   }
 
-  getNode(nodeID: string | CommunicationNode<NodeData>) {
+  getNode(nodeID: string | CommunicationNode<NodeData>): CommunicationNode<NodeData> | undefined {
     if (typeof nodeID === 'string') {
       return this.nodesById.get(nodeID);
     } else {

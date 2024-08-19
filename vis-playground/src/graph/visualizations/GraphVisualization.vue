@@ -24,11 +24,11 @@
                         <g ref="refGZoom">
 
                             <g ref="refGRoot">
-                                <g ref="refGLinks">
-
-                                </g>
-
+                                
                                 <g ref="refGNodes">
+                                    
+                                </g>
+                                <g ref="refGLinks">
 
                                 </g>
 

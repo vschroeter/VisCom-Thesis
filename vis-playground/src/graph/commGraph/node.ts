@@ -21,6 +21,19 @@ export class CommunicationNode<NodeData = any> {
   /** The graph that the node belongs to */
   graph?: CommunicationGraph<NodeData>;
 
+  get degree() {
+    return this.inDegree + this.outDegree;
+  }
+
+  get inDegree() {
+    return this.getPredecessors().length;
+  }
+
+  get outDegree() {
+    return this.getSuccessors().length;
+  }
+
+
   /**
    * Create a new communication node
    * @param id The id of the node

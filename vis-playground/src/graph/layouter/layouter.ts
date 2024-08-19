@@ -71,6 +71,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('cy', (d: AbstractNode2d) => d.y)
             .attr('r', d => d.radius)
             .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
+            .attr('stroke', 'white')
+            .attr('stroke-width', 1)
     }
 
     updateLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
