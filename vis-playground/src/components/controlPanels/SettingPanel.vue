@@ -70,8 +70,8 @@
                         -->
                             <div class="col">
                                 <q-table dense hide-pagination :pagination="{ rowsPerPage: 0 }"
-                                    :title="setting.label || setting.key" :row-key="row => row.key"
-                                    :rows="setting.parameters" :columns="settingTableColumns">
+                                    :title="setting.label || setting.key" :row-key="row => row.key" :key="updated"
+                                    :rows="setting.enabledParameters" :columns="settingTableColumns">
 
                                     <!-- If the setting is optional, add a toggle at the top altering the setting.active flag -->
                                     <template v-slot:top="props">
@@ -170,7 +170,7 @@
 <script setup lang="ts">
 
 import { QTableColumn } from 'quasar';
-import { Param } from 'src/graph/layouter/settings/settings';
+import { GraphLayouterSettings, Param } from 'src/graph/layouter/settings/settings';
 import { useGraphStore } from 'src/stores/graph-store';
 import { computed, onMounted, onUpdated, ref, watch, type Ref } from 'vue'
 
@@ -197,7 +197,8 @@ const store = useGraphStore()
 // Refs and Computed values
 ////////////////////////////////////////////////////////////////////////////
 
-const currentSettings = computed(() => store.currentSettings)
+// const currentSettings = computed(() => store.currentSettings)
+const currentSettings: Ref<GraphLayouterSettings | undefined> = ref(store.currentSettings) as Ref<GraphLayouterSettings | undefined>
 const commonSettings = computed(() => store.settingsCollection.commonSettings)
 const showCommonSettings = ref(false);
 
@@ -214,7 +215,7 @@ const settingTableColumns: QTableColumn<Param>[] = [
     {
         name: 'activated',
         required: true,
-        label: 'Activated',
+        label: 'Active',
         align: 'left',
         field: 'active',
         sortable: false
@@ -224,7 +225,7 @@ const settingTableColumns: QTableColumn<Param>[] = [
         label: 'Param',
         required: true,
         align: 'left',
-        field: 'key',
+        field: 'label',
         sortable: false
     },
     {
@@ -254,8 +255,21 @@ onUpdated(() => {
 
 })
 
+const updated = ref(0)
+
 watch(() => store.currentSettings, (newSettings) => {
     // console.log("New settings: ", store.currentSettings)
+
+    if (currentSettings.value) {
+        currentSettings.value.emitter.off("updatedSettingStatus")
+    }
+
+    currentSettings.value = store.currentSettings as GraphLayouterSettings
+    if (currentSettings.value) {
+        currentSettings.value.emitter.on("updatedSettingStatus", () => {
+            updated.value += 1
+        });
+    }
 })
 
 

@@ -123,7 +123,7 @@ export class SettingsCollection {
             return;
         }
 
-        const settings = new layouter.settings(layouterType);
+        const settings = layouter.settings.createSettings(layouter.settings, layouterType);
         settingsList.push(settings);
         this.mapIdToSettings.set(settings.id, settings);
 
@@ -164,7 +164,9 @@ export class SettingsCollection {
 
             // Each enty in the settings list is a settings configuration
             for (const settingsJson of settingsListJson.settingsList) {
-                const settings = new layouter.settings(layouterName);
+                const settings = layouter.settings.createSettings(layouter.settings, layouterName)
+                // const settings = layouter.settings.createSettings(layouterName)
+                // const settings = new layouter.settings(layouterName);
                 settings.loadFromJson(settingsJson);
                 settingsList.push(settings);
                 this.mapIdToSettings.set(settings.id, settings);
