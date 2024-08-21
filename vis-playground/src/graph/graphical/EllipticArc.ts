@@ -24,7 +24,7 @@ function vectorAngle(ux: number, uy: number, vx: number, vy: number): number {
         cosTheta = -1;
     }
 
-    const angle = Math.acos(cosTheta);    
+    const angle = Math.acos(cosTheta);
 
     // Determine the sign based on cross product (ux * vy - uy * vx)
     const sign = (ux * vy - uy * vx) >= 0 ? 1 : -1;
@@ -167,7 +167,12 @@ export class EllipticArc {
         const fS = this._sweep == 1;
         let rx = Math.abs(this._rx); // Step 0.2: Ensure radii are positive
         let ry = Math.abs(this._ry); // Step 0.2: Ensure radii are positive
-        const phi = this._rotation * Math.PI / 180;
+
+        /**
+         * if rx===ry x-axis rotation is ignored
+         * otherwise convert degrees to radians
+         */
+        const phi = rx === ry ? 0 : (this._rotation * Math.PI) / 180;
 
         // Step 0: Ensure valid parameters
         // F.6.6
@@ -262,7 +267,7 @@ export class EllipticArc {
         // const theta1 = vectorAngle(1, 0, (x1Prime - cxPrime) / rx, (y1Prime - cyPrime) / ry);
 
         const theta1 = vectorAngle(1, 0, (x1Prime - cxPrime), (y1Prime - cyPrime));
-        
+
         // For global points rotate the vector (1, 0) by phi
         const rotatedXVector = [Math.cos(-phi), Math.sin(-phi)];
         const globalTheta1 = vectorAngle(rotatedXVector[0], rotatedXVector[1], (x1Prime - cxPrime), (y1Prime - cyPrime));
@@ -304,6 +309,8 @@ export class EllipticArc {
 
         return {
             center: new Point2D(cx, cy),
+            rx: rx,
+            ry: ry,
             deltaAngleDeg: deltaThetaDegrees,
             startAngleDeg: theta1Degrees,
             endAngleDeg: theta1Degrees + deltaThetaDegrees,
@@ -314,6 +321,5 @@ export class EllipticArc {
             deltaAngleGlobal: deltaTheta,
             endAngleGlobal: globalTheta1 + deltaTheta
         };
-
     }
 }

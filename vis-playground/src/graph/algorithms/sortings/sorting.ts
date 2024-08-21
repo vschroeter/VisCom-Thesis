@@ -1,7 +1,5 @@
 import { CommunicationGraph, CommunicationNode } from "../../commGraph";
 
-
-
 export class Sorter {
 
     reverse: boolean = false;

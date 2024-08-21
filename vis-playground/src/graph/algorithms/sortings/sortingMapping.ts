@@ -1,3 +1,4 @@
+import { FlowSorter } from "./flow";
 import { BreadthFirstSorter, ChildrenCountSorter, DegreeSorter, DepthFirstSorter, IdSorter, RandomSorter } from "./simple";
 import { Sorter } from "./sorting";
 import { DifferenceSourceScoreSorter, WeightedSourceScoreSorter } from "./sourceScore";
@@ -34,11 +35,13 @@ export const sortingMethods: SortingMapping[] = [
         canBeUsedAsSecondarySorting: false,
         sorter: TopologicalSorter
     },
-    // {
-    //     key: "flowSorting",
-    //     label: "Flow Sorting",
-    //     sorter: SortFlowSorting
-    // },
+    {
+        key: "flowSorting",
+        label: "Flow Sorting",
+        sorter: FlowSorter,
+        hasStartNodeSelection: true,
+        hasSecondarySorting: true,
+    },
     {
         key: "breadthFirst",
         label: "Breadth First",
