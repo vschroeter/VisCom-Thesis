@@ -15,6 +15,11 @@
                 <!-- <div class="text-h6">Graph Visualization</div>
                 <q-btn label="Reset" color="primary" size="x" flat @click="resetSimulation" /> -->
             </q-card-section>
+            <q-card-section class="row items-start q-py-xs">
+                <div class="col setting-overview-text" :style="`inline-size: ${size - iconButtonDivWidth - 10}px;`">
+                    {{ settings?.shortSummary }}
+                </div>
+            </q-card-section>
             <q-separator inset />
             <q-card-section>
                 <div class="svgContainerDiv">
@@ -24,9 +29,9 @@
                         <g ref="refGZoom">
 
                             <g ref="refGRoot">
-                                
+
                                 <g ref="refGNodes">
-                                    
+
                                 </g>
                                 <g ref="refGLinks">
 
@@ -383,7 +388,8 @@ onMounted(() => {
 
         layouter?.on('update', null);
         layouter?.on('end', null);
-        calcluateMetrics(null);
+        metricsCollection.clearMetrics(props.settingId);
+        // calcluateMetrics(null);
         if (commGraph.value.nodes.length === 0) {
             return
         }
@@ -421,6 +427,7 @@ onUpdated(() => {
 
 function resetSimulation() {
     console.log("Reset simulation");
+    metricsCollection.clearMetrics(props.settingId);
     layouter?.reset();
 }
 
@@ -482,5 +489,19 @@ const cardStyle = computed(() => {
     z-index: 9999;
     background-color: rgba(0, 0, 0, 0.5);
     box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.5);
+}
+
+.setting-overview-text {
+    /* overflow-wrap: break-word; */
+
+    /* Scroll sideways */
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+
+    /* Smaller and grey */
+    font-size: 0.6em;
+    opacity: 0.7;
+
 }
 </style>

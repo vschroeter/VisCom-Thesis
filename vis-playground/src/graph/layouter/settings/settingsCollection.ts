@@ -72,6 +72,10 @@ export class SettingsCollection {
 
     constructor() { }
 
+    get length() {
+        return this.mapIdToSettings.size;
+    }
+
     getSettings(id: number): GraphLayouterSettings | undefined {
         return this.mapIdToSettings.get(id);
     }

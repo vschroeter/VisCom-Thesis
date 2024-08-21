@@ -1,16 +1,18 @@
 <template>
     <div v-if="metricsResults">
-        <q-spinner-box color="primary" v-if="metricsResults.pending">
+        <q-spinner-box color="secondary" v-if="metricsResults.pending">
 
         </q-spinner-box>
+        <!--  -->
         <div v-else style="display: flex;">
             <div v-for="metric in metricResultList" :key="metric.metricKey">
                 <div v-if="true"
-                    :style="{ width: '10px', height: '10px', backgroundColor: metric.colorScale(metric.normalizedValue), marginRight: '1px', border: '1px solid black' }">
-                    <q-tooltip>
-                        {{ metric.metricKey }}: {{ metric.normalizedValue?.toFixed(2) }} ({{ metric.value.toFixed(2) }}) - {{ metric.relativePlace + 1 }} / {{ metric.places }}
-                    </q-tooltip>
+                    :style="{ width: '10px', height: '10px', background: getBackground(metric), marginRight: '1px', border: '1px solid black' }">
                 </div>
+                <q-tooltip>
+                    {{ metric.metricKey }}: {{ metric.normalizedValue?.toFixed(2) }} ({{ metric.value.toFixed(2) }}) -
+                    {{ metric.relativePlace + 1 }} / {{ metric.places }}
+                </q-tooltip>
                 <!-- {{ metric.isUpdating }} -->
             </div>
 
@@ -25,7 +27,7 @@ import { useGraphStore } from 'src/stores/graph-store';
 
 import { MetricResult, MetricsResults } from 'src/graph/metrics/collection'
 
-
+import * as d3 from 'd3'
 ////////////////////////////////////////////////////////////////////////////
 // Props
 ////////////////////////////////////////////////////////////////////////////
@@ -74,7 +76,25 @@ const isSelected = computed(() => {
     return props.settingId === graphStore.activeSettingId
 })
 
+const stillUpdating = computed(() => {
+    if (!metricsResults.value) {
+        return false
+    }
 
+    return metricsCollection.allMetricsResults.some((m) => {
+        return m.pending
+    })
+})
+
+
+function getBackground(metric: MetricResult) {
+    const c = metric.color;
+    if (stillUpdating.value) {
+        // Return hatch pattern
+        return `repeating-linear-gradient(45deg, ${c}, ${c} 2px, white 2px, white 3px)`;
+    }
+    return metric.color;
+}
 
 ////////////////////////////////////////////////////////////////////////////
 // Helper functions

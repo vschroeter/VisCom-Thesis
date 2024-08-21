@@ -65,6 +65,10 @@ export class MetricsCollection {
         return this.mapIdToMetricsResults.get(settingId)!;
     }
 
+    clearMetricResults(settingId: number) {
+        this.getMetricsResults(settingId).pending = true;
+    }
+
     /**
      * Calculate all metrics for the given graph of the given setting
      * @param settingId The setting id of the visualization
@@ -85,6 +89,15 @@ export class MetricsCollection {
             const singleMetricResults = this.getSingleMetricResults(key);
             singleMetricResults.update();
         });
+
+        console.log("Calculated metrics for setting", settingId);
+    }
+
+    clearMetrics(settingId: number) {
+        this.clearMetricResults(settingId);
+        Array.from(this.mapKeyToSingleMetricResults.values()).forEach(singleMetricResults => {
+            singleMetricResults.update();
+        })
     }
 
 
@@ -112,7 +125,18 @@ export class MetricsResults {
     mapMetricKeyToResult: Map<string, MetricResult> = new Map();
 
     // If the metrics are still pending
-    pending: boolean = true;
+    _pending: boolean = true;
+
+    get pending(): boolean {
+        return this._pending;
+    }
+
+    set pending(value: boolean) {
+        this._pending = value;
+        this.results.forEach(result => {
+            result.pending = value;
+        });
+    }
 
     /**
      * Emitter for events on the metrics results:
@@ -133,6 +157,8 @@ export class MetricsResults {
         this.collection = collection;
     }
 
+
+
     /**
      * Updates the results of this visualization with the new metrics from the given calculators
      * @param calculators The calculators to get the metrics from. If undefined, the object is turned to pending state
@@ -150,7 +176,6 @@ export class MetricsResults {
             return;
         }
 
-        this.pending = false;
 
         // Add the new results
         calculators.forEach(calculator => {
@@ -164,6 +189,7 @@ export class MetricsResults {
             });
         })
 
+        this.pending = false;
         // Emit an update event
         this.emitter.emit("newMetrics");
     }
@@ -201,6 +227,10 @@ export class SingleMetricResults {
         return this.metricsCollection.allMetricsResults
             .map(results => results.mapMetricKeyToResult.get(this.metricKey))
             .filter(result => result !== undefined) as MetricResult[];
+    }
+
+    get finishedResults(): MetricResult[] {
+        return this.results.filter(result => !result.pending);
     }
 
     // All values of the results
@@ -289,6 +319,8 @@ export class MetricResult {
     relativePlace: number = 0;
     places: number = 0;
 
+    pending: boolean = true;
+
     // // Normalized value of the metric
     // normalizedValue: number = 0;
 
@@ -297,6 +329,10 @@ export class MetricResult {
     // The value of the metric
     get value(): number {
         return this.calculator.getMetric(this.metricKey)
+    }
+
+    get color(): string {
+        return this.colorScale(this.normalizedValue);
     }
 
     // The normalized value of the metric according to the normalizing method defined in the metric definition
@@ -342,8 +378,8 @@ export class MetricResult {
 
 
 
-    // Update the relative value of the metric
     updateRelative() {
+    // Update the relative value of the metric
         let sortedResults: MetricResult[] = [];
         if (this.definition.optimum === "higherIsBetter") {
             sortedResults = this.singleMetricResults.results.sort((a, b) => b.normalizedValue - a.normalizedValue);

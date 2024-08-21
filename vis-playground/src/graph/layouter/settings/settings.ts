@@ -50,6 +50,18 @@ export class GraphLayouterSettings {
         return Object.values(this).filter((value) => value instanceof Setting);
     }
 
+    get shortSummary(): string {
+        const settingStrings = new Array<string>();
+        this.settings.forEach(setting => {
+            const paramStrings = new Array<string>();
+            setting.enabledParameters.forEach(param => {
+                paramStrings.push(`${param.abbreviatedLabel}: ${param.textValue}`);
+            });
+            settingStrings.push(`${setting.abbreviatedLabel}: [` + paramStrings.join(", ") + "]");
+        });
+        return settingStrings.join("  |  ");
+    }
+
     registerUpdates() {
         // For each setting, register an update listener
         this.settings.forEach(setting => {
@@ -139,6 +151,17 @@ export class Setting {
 
     get parameters(): Param[] {
         return Object.values(this).filter((value) => value instanceof Param);
+    }
+
+    get abbreviatedLabel(): string {
+
+        const label = this.label ?? this.key;
+        const splits = label.split(" ");
+        if (splits.length > 1) {
+            return splits.map(word => word[0].toUpperCase()).join("");
+        }
+
+        return label.slice(0, 3).toUpperCase();
     }
 
     registerUpdates() {
@@ -320,6 +343,17 @@ export class Param<T = number> { //
         }
         // console.log("Updated status", this.key, this.enabled);
         return enabled !== this.enabled;
+    }
+
+    get abbreviatedLabel(): string {
+
+        const label = this.label ?? this.key;
+        const splits = label.split(" ");
+        if (splits.length > 1) {
+            return splits.map(word => word[0].toUpperCase()).join("");
+        }
+
+        return label.slice(0, 3);
     }
 
     loadFromJson(json: any) {
