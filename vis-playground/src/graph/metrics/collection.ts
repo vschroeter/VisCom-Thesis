@@ -5,6 +5,7 @@ import { EdgeLengthCalculator, NodeDistanceCalculator } from "./metricDistances"
 
 import * as d3 from "d3";
 import mitt from "mitt";
+import { EdgeCrossingsCalculator } from "./metricEdgeCrossing";
 
 export type MetricNormalization =
     "none" | "byMinimum" | "byMaximum" | "byAverage" | "byMedian" | "byShorterLayoutSide" | "byLongerLayoutSide"
@@ -27,7 +28,8 @@ export class MetricsCollection {
     static metricsToCalculate: (typeof MetricCalculator)[] = [
         MetricCalculator,
         EdgeLengthCalculator,
-        NodeDistanceCalculator
+        NodeDistanceCalculator,
+        EdgeCrossingsCalculator
     ];
 
     // Map from setting id to the metrics results of that setting
@@ -74,10 +76,17 @@ export class MetricsCollection {
      * @param settingId The setting id of the visualization
      * @param graph The graph to calculate the metrics. If undefined, the metrics are initialized with pending state
      */
-    calculateMetrics(settingId: number, graph?: Graph2d | null) {
+    async calculateMetrics(settingId: number, graph?: Graph2d | null) {
 
         // Calculate all absolute metrics for the given graph of the given setting 
         const metricCalculators = graph ? MetricsCollection.metricsToCalculate.map(metric => new metric(graph)) : undefined;
+
+        if (metricCalculators) {
+            for (const calculator of metricCalculators) {
+                console.log("Calculating", calculator);
+                await calculator.calculate();
+            }
+        }
 
         // Update the metrics of the visualization with the results
         const metricsResults = this.getMetricsResults(settingId);
@@ -379,7 +388,7 @@ export class MetricResult {
 
 
     updateRelative() {
-    // Update the relative value of the metric
+        // Update the relative value of the metric
         let sortedResults: MetricResult[] = [];
         if (this.definition.optimum === "higherIsBetter") {
             sortedResults = this.singleMetricResults.results.sort((a, b) => b.normalizedValue - a.normalizedValue);

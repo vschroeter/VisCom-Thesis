@@ -1,5 +1,5 @@
-import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings/settings";
-import { LinearSortingSettings } from "../settings/linearSettings";
+import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../../settings/settings";
+import { LinearSortingSettings } from "../../settings/linearSettings";
 
 export class SizeSettings extends Setting {
     nodeDistance = new Param({

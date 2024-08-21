@@ -15,6 +15,10 @@ export class MetricCalculator {
         return (this.constructor as typeof MetricCalculator).displayedMetrics;
     }
 
+    async calculate() {
+    
+    }
+
 
     /** Reference to the graph */
     graph: Graph2d;
@@ -68,11 +72,14 @@ export class MetricCalculator {
     constructor(graph: Graph2d) {
         this.graph = graph;
 
+        console.log("Get basic metrics");
+
         // Get size of the layout
         const xNodeExtent = d3.extent(this.graph.nodes, d => d.x) as [number, number];
         const yNodeExtent = d3.extent(this.graph.nodes, d => d.y) as [number, number];
         this.layoutWidth = xNodeExtent[1] - xNodeExtent[0];
         this.layoutHeight = yNodeExtent[1] - yNodeExtent[0];
+
 
         // TODO: Fetch also the extents of the connection lines
     }

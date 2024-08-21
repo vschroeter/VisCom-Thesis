@@ -16,6 +16,7 @@ export class EdgeLengthCalculator extends MetricCalculator {
 
     constructor(graph: Graph2d) {
         super(graph);
+        console.log("Calculating edge length");
 
         // Calculate the total edge length
         this.totalEdgeLength = 0;
@@ -35,6 +36,8 @@ export class NodeDistanceCalculator extends MetricCalculator {
 
     constructor(graph: Graph2d) {
         super(graph);
+
+        console.log("Calculating node distance");
 
         // Calculate the total node distance
         this.neighboredNodeDistance = 0;

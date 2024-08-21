@@ -197,12 +197,14 @@ function layoutUpdated() {
 function layoutFinished() {
     layoutUpdated();
 
-    calcluateMetrics();
+    setTimeout(async () => {
+        await calculateMetrics();
+    }, 1000)
 }
 
-function calcluateMetrics(graph?: Graph2d | null) {
+async function calculateMetrics(graph?: Graph2d | null) {
     graph = graph === null ? undefined : graph2d;
-    metricsCollection.calculateMetrics(props.settingId, graph);
+    await metricsCollection.calculateMetrics(props.settingId, graph);
 }
 
 

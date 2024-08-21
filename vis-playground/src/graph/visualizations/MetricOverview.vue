@@ -4,7 +4,7 @@
 
         </q-spinner-box>
         <!--  -->
-        <div v-else style="display: flex;">
+        <div style="display: flex;">
             <div v-for="metric in metricResultList" :key="metric.metricKey">
                 <div v-if="true"
                     :style="{ width: '10px', height: '10px', background: getBackground(metric), marginRight: '1px', border: '1px solid black' }">

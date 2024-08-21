@@ -1,10 +1,10 @@
-import { GraphLayouter } from "../layouter";
+import { GraphLayouter } from "../../layouter";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import { AbstractNode2d, Point2D, Vector2D } from "src/graph/graphical";
 import { ArcLayouterSettings } from "./arcSettings";
 import { EllipticArc } from "src/graph/graphical/EllipticArc";
-import { CommonSettings } from "../settings/commonSettings";
+import { CommonSettings } from "../../settings/commonSettings";
 
 
 export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
@@ -57,7 +57,7 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
 
         })
 
-        console.log("Layouted arc layouter", nodes);
+        // console.log("Layouted arc layouter", nodes);
         this.emitEvent("update");
         this.emitEvent("end");
     }

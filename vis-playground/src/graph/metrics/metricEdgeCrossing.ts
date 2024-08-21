@@ -1,26 +1,86 @@
+import { AbstractConnection2d } from "../graphical";
 import { Graph2d } from "../graphical/Graph2d";
 import { MetricCalculator } from "./base";
 import { MetricDefinition } from "./collection";
 
-export class EdgeLengthCalculator extends MetricCalculator {
+import intersect, { Intersection } from 'path-intersection';
+
+export class EdgeCrossingsCalculator extends MetricCalculator {
     static displayedMetrics: MetricDefinition[] = [
-        { key: "totalEdgeLength", optimum: "lowerIsBetter", label: "Total Edge Length", description: "The total length of all edges in the graph", normalizing: "byLongerLayoutSide" },
+        { key: "totalEdgeCrossings", optimum: "lowerIsBetter", label: "Total Edge Crossings", description: "The total count of edge crossings in the graph", normalizing: "none" },
     ];
 
     /** The total length of all edges in the graph */
-    totalEdgeLength: number;
+    totalEdgeCrossings: number;
 
-    get totalLengthToShorterSideRatio(): number {
-        return this.totalEdgeLength / this.shorterSide;
-    }
+
 
     constructor(graph: Graph2d) {
         super(graph);
 
-        // Calculate the total edge length
-        this.totalEdgeLength = 0;
-        this.graph.links.forEach(link => {
-            this.totalEdgeLength += link.length;
-        });
+        console.log("Calculating edge crossings");
+
+        this.totalEdgeCrossings = 0;
     }
+
+    async calculate() {
+        await this.calculateEdgeCrossings();
+    }
+
+    async calculateEdgeCrossings() {
+        const links = this.graph.links;
+
+        const chunkSize = 100;
+        let c = 0;
+
+        for (let i = 0; i < links.length; i++) {
+            const link1 = links[i];
+            for (let j = i + 1; j < links.length; j++) {
+                const link2 = links[j];
+                const intersections = this.getIntersections(link1, link2);
+                // if (intersections.length > 0) console.log(intersections, link1.startPoint, link2.startPoint, link1.endPoint, link2.endPoint);
+                this.totalEdgeCrossings += intersections.length;
+                c++;
+
+                if (c > chunkSize) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                    c = 0;
+                }
+            }
+        }
+
+    }
+
+    getIntersections(link1: AbstractConnection2d, links2: AbstractConnection2d, filterOutStartAndEndTouchings: boolean = true): Intersection[] {
+        const path1 = link1.getSvgPath();
+        const path2 = links2.getSvgPath();
+
+        const intersections = intersect(path1, path2);
+
+        const filteredIntersections: Intersection[] = Array.from(intersections);
+
+        // Filter out intersections that are touching at the start or end of the paths
+        if (intersections.length > 0 && filterOutStartAndEndTouchings) {
+            filteredIntersections.splice(0, filteredIntersections.length);
+
+            const eps = 0.0001;
+            function checkT(t: number) {
+                return t < eps || t > 1 - eps;
+            }
+
+            intersections.forEach(intersection => {
+                const t1 = intersection.t1;
+                const t2 = intersection.t2;
+
+                if (checkT(t1) || checkT(t2)) {
+                    return;
+                }
+
+                filteredIntersections.push(intersection);
+            });
+        }
+
+        return filteredIntersections;
+    }
+
 }

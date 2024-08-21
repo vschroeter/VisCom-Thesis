@@ -1,5 +1,5 @@
-import { LinearSortingSettings } from "../settings/linearSettings";
-import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings/settings";
+import { LinearSortingSettings } from "../../settings/linearSettings";
+import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../../settings/settings";
 
 export class SizeSettings extends Setting {
     radius = new Param({
