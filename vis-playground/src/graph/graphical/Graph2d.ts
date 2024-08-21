@@ -66,6 +66,16 @@ export class Graph2d {
         });
     }
 
+    getNodeID(node: string | AbstractNode2d): string {
+        return typeof node === "string" ? node : (node.data?.id ?? "");
+    }
+
+    getNode(nodeID: string | AbstractNode2d): AbstractNode2d | undefined {
+        if (typeof nodeID === "string") {
+            return this.mapIdToNode.get(nodeID);
+        }
+        return nodeID;        
+    }
 
 
 

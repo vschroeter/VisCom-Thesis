@@ -1,3 +1,4 @@
+import mitt from "mitt";
 import { AbstractConnection2d, AbstractNode2d } from "../../graphical";
 import { Graph2d } from "../../graphical/Graph2d";
 
@@ -24,16 +25,39 @@ export class GraphLayouterSettings {
 
     [key: string]: any;
 
+    emitter = mitt<{
+        updatedSettingStatus: void
+    }>();
+
     constructor(type: string, name?: string) {
         this.type = type;
         this.name = name ?? "";
         this.id = GraphLayouterSettings.currentId++;
     }
 
+    public static createSettings<T extends GraphLayouterSettings>(cls: new (...args: any[]) => T, ...args: ConstructorParameters<typeof cls>): T {
+        const settings = new cls(...args);
+        settings.registerUpdates();
+        return settings;
+    }
+    // public static createSettings<T extends GraphLayouterSettings>(this: new (...args: any[]) => T, type: string, name?: string): T {
+    //     return new this(type, name);
+    // }
+
     /** List of all settings */
     get settings(): Setting[] {
         // Iterate over the keys of the object and return the values of the object that are instances or subclasses of GraphLayouterSetting
         return Object.values(this).filter((value) => value instanceof Setting);
+    }
+
+    registerUpdates() {
+        // For each setting, register an update listener
+        this.settings.forEach(setting => {
+            setting.registerUpdates();
+            setting.emitter.on("updatedParameterStatus", () => {
+                this.emitter.emit("updatedSettingStatus");
+            });
+        });
     }
 
     /** Load the settings from a json */
@@ -87,6 +111,12 @@ export class Setting {
     /** Whether the setting is currently active */
     active: boolean;
 
+    enabledParameters: Param[] = [];
+
+    emitter = mitt<{
+        updatedParameterStatus: void
+    }>();
+
     constructor({
         key,
         label,
@@ -109,6 +139,31 @@ export class Setting {
 
     get parameters(): Param[] {
         return Object.values(this).filter((value) => value instanceof Param);
+    }
+
+    registerUpdates() {
+        this.parameters.forEach(param => {
+            param.emitter.on("updated", () => {
+                // param.updateStatus();
+                this.updateParamsStatus();
+            });
+        });
+        this.updateParamsStatus();
+    }
+
+    updateParamsStatus(): boolean {
+        let updated = false;
+        this.parameters.forEach(param => {
+            const pUpdated = param.updateStatus();
+            updated = updated || pUpdated;
+        });
+
+        this.enabledParameters = this.parameters.filter(param => param.enabled);
+        // console.log("Updated enabled parameters", this.enabledParameters, this);
+        if (updated) {
+            this.emitter.emit("updatedParameterStatus");
+        }
+        return updated;
     }
 
     loadFromJson(json: any) {
@@ -159,7 +214,7 @@ export class Param<T = number> { //
     active: boolean = false;
 
     /** Default value of the parameter */
-    default: string | number | boolean; 
+    default: string | number | boolean;
     // value: T;
 
     choices: string[] = [];
@@ -167,7 +222,15 @@ export class Param<T = number> { //
     /** Type of the parameter */
     type: ParamType;
 
+    /** Whether the parameter is currently disabled */
+    enabledCallback: boolean | (() => boolean) = true;
+    enabled: boolean = true;
+
     protected _textValue: string;
+
+    emitter = mitt<{
+        updated: void
+    }>();
 
     /** Tooltip to display in the UI */
     static tooltip: string | string[] = [
@@ -186,6 +249,7 @@ export class Param<T = number> { //
         type = "string",
         optional = false,
         active = false,
+        enabled = true,
     }: {
         key: string,
         label?: string,
@@ -194,6 +258,7 @@ export class Param<T = number> { //
         optional: boolean,
         defaultValue: string | number | boolean,
         active?: boolean,
+        enabled?: boolean | (() => boolean),
     }) {
         this.key = key;
         this.label = label || key;
@@ -203,6 +268,9 @@ export class Param<T = number> { //
         this.active = optional ? active : true;
         this._textValue = defaultValue as string;
         this.type = type;
+        this.enabledCallback = enabled;
+
+        this.updateStatus();
     }
 
     getValue(context?: Record<string, any>): T | undefined {
@@ -240,6 +308,18 @@ export class Param<T = number> { //
 
     set textValue(value: string) {
         this._textValue = value;
+        this.emitter.emit("updated");
+    }
+
+    updateStatus(): boolean {
+        const enabled = this.enabled;
+        if (typeof this.enabledCallback === "function") {
+            this.enabled = this.enabledCallback();
+        } else {
+            this.enabled = this.enabledCallback;
+        }
+        // console.log("Updated status", this.key, this.enabled);
+        return enabled !== this.enabled;
     }
 
     loadFromJson(json: any) {
@@ -358,6 +438,7 @@ export class ParamChoice<T extends string> extends Param<string> {
         // type = "string",
         optional = false,
         active = false,
+        enabled = true,
     }: {
         key: string,
         label?: string,
@@ -367,6 +448,7 @@ export class ParamChoice<T extends string> extends Param<string> {
         optional: boolean,
         defaultValue: string | number,
         active?: boolean,
+        enabled?: boolean | (() => boolean),
     }) {
         super({
             key,
@@ -376,6 +458,7 @@ export class ParamChoice<T extends string> extends Param<string> {
             optional,
             defaultValue,
             active,
+            enabled,
         });
 
         this.choices = choices;

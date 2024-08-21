@@ -38,10 +38,10 @@ export class TopicToNodeMap<NodeData> {
   directions: {
     [key in CommunicationDirection]: Map<string, CommunicationNode<NodeData>[]>;
   } = {
-    incoming: this.incoming,
-    outgoing: this.outgoing,
-    bidirectional: this.bidirectional,
-  };
+      incoming: this.incoming,
+      outgoing: this.outgoing,
+      bidirectional: this.bidirectional,
+    };
 
   /**
    * Create a new mapping of topics to nodes on a specific communication channel.
@@ -295,9 +295,8 @@ export class CommunicationGraph<NodeData = any> {
   getNode(nodeID: string | CommunicationNode<NodeData>): CommunicationNode<NodeData> | undefined {
     if (typeof nodeID === 'string') {
       return this.nodesById.get(nodeID);
-    } else {
-      return nodeID;
     }
+    return nodeID;
   }
 
   getChannels(

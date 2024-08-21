@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 
-import { computed, onMounted, onUpdated, ref, toValue, watch } from 'vue'
+import { computed, onMounted, onUpdated, reactive, ref, toValue, watch } from 'vue'
 import { useGraphStore } from 'src/stores/graph-store';
 
 import * as d3 from 'd3'
@@ -224,13 +224,15 @@ onMounted(() => {
     //     // .attr("fill", (d) => colorScale(d / 10))
     //     .attr("fill", (d) => colorScale(d))
 
+    // <path d="M 0 100 A 60 60 0 0 0 100 0"/>
+
     // const e = new EllipticArc(
     //     new Point2D(120, 100),
-    //     new Point2D(130, 70),
+    //     new Point2D(130, 170),
     //     50,
-    //     100,
-    //     // 0,
-    //     -145,
+    //     150,
+    //     0,
+    //     // -145,
     //     0,
     //     1
     // )
@@ -261,35 +263,36 @@ onMounted(() => {
 
 
     // const descr = e.getCenterParameters()!;
-    // console.log(descr);
+    // // console.log(descr);
     // const c = descr.center;
 
+    // const len = 330;
     // const globalLine1 = {
     //     x0: c.x,
     //     y0: c.y,
-    //     x1: c.x + 150 * Math.cos(descr.startAngleGlobal),
-    //     y1: c.y + 150 * Math.sin(descr.startAngleGlobal)
+    //     x1: c.x + len * Math.cos(descr.startAngleGlobal),
+    //     y1: c.y + len * Math.sin(descr.startAngleGlobal)
     // }
 
     // const globalLine2 = {
     //     x0: c.x,
     //     y0: c.y,
-    //     x1: c.x + 150 * Math.cos(descr.endAngleGlobal),
-    //     y1: c.y + 150 * Math.sin(descr.endAngleGlobal)
+    //     x1: c.x + len * Math.cos(descr.endAngleGlobal),
+    //     y1: c.y + len * Math.sin(descr.endAngleGlobal)
     // }
 
     // const localLine1 = {
     //     x0: c.x,
     //     y0: c.y,
-    //     x1: c.x + 150 * Math.cos(descr.startAngle),
-    //     y1: c.y + 150 * Math.sin(descr.startAngle)
+    //     x1: c.x + len * Math.cos(descr.startAngle),
+    //     y1: c.y + len * Math.sin(descr.startAngle)
     // }
 
     // const localLine2 = {
     //     x0: c.x,
     //     y0: c.y,
-    //     x1: c.x + 150 * Math.cos(descr.endAngle),
-    //     y1: c.y + 150 * Math.sin(descr.endAngle)
+    //     x1: c.x + len * Math.cos(descr.endAngle),
+    //     y1: c.y + len * Math.sin(descr.endAngle)
     // }
 
     // d3.select(refGRoot.value)
