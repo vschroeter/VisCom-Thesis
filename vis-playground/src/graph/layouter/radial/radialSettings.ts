@@ -1,10 +1,11 @@
+import { LinearSortingSettings } from "../settings/linearSettings";
 import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../settings/settings";
 
 export class SizeSettings extends Setting {
     radius = new Param({
         key: "radius",
         optional: false,
-        defaultValue: "100 * n",
+        defaultValue: "10 * n",
     });
 
     constructor() {
@@ -20,6 +21,8 @@ export class SizeSettings extends Setting {
 
 export class RadialLayouterSettings extends GraphLayouterSettings {
     size = new SizeSettings();
+    sorting = new LinearSortingSettings();
+
     constructor(type: string, name?: string) {
         super(type, name);
     }

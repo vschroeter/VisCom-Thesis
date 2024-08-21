@@ -1,4 +1,6 @@
+import { Graph2d } from "src/graph/graphical/Graph2d";
 import { CommunicationGraph, CommunicationNode } from "../../commGraph";
+import { AbstractNode2d } from "src/graph/graphical";
 
 export class Sorter {
 
@@ -23,6 +25,12 @@ export class Sorter {
         const sorting = this.sortingImplementation(nodes);
         return this.reverse ? sorting.reverse() : sorting;
     }
+
+    getSorting2dNodes(graph2d: Graph2d, nodes?: CommunicationNode[]): AbstractNode2d[] {
+        const sortedNodes = this.getSorting(nodes);
+        return sortedNodes.map(node => graph2d.getNode(node.id)).filter(node => node != null) as AbstractNode2d[];
+    }
+
 }
 
 

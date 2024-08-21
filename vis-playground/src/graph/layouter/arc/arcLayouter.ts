@@ -16,13 +16,8 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
     layout(isUpdate = false) {
         const ctx = this.settings.getContext(this.graph2d);
 
-
         const sorter = this.settings.sorting.getSorter(this.commGraph);
-
-        console.log("ARC", sorter);
-        const sortedNodes = sorter.getSorting()
-
-        const nodes = sortedNodes.map(node => this.graph2d.getNode(node.id)).filter(node => node != null) as AbstractNode2d[];
+        const nodes = sorter.getSorting2dNodes(this.graph2d)
 
         // Place nodes on a straight line down
         nodes.forEach((node, i) => {

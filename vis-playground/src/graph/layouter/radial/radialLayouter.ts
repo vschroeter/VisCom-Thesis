@@ -18,9 +18,9 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
         const ctx = this.settings.getContext(this.graph2d);
 
         const radius = this.settings.size.radius.getValue(ctx) ?? 5;
-
-        // TODO: Get nodes from sorting
-        const nodes = this.graph2d.nodes;
+        
+        const sorter = this.settings.sorting.getSorter(this.commGraph);
+        const nodes = sorter.getSorting2dNodes(this.graph2d)
         
         // Place nodes on a circle with radius
         const angleStep = 2 * Math.PI / nodes.length;

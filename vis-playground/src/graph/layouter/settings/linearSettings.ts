@@ -18,7 +18,7 @@ export class LinearSortingSettings extends Setting {
         key: "startNodeSelection",
         label: "Start Node Selection",
         description: "The node to start the sorting algorithm from.",
-        defaultValue: "random",
+        defaultValue: "sourceScoreWeighted",
         optional: false,
         choices: sortingMethods.filter(m => m.canBeUsedAsSecondarySorting).map(m => m.key),
         enabled: () => (this.sorting.textValue !== undefined) && (mapKeyToSortingMethod.get(this.sorting.textValue)?.hasStartNodeSelection ?? false)
@@ -28,7 +28,7 @@ export class LinearSortingSettings extends Setting {
         key: "secondarySorting",
         label: "Secondary Sorting",
         description: "Secondary sorting algorithm to use (on data where the primary sorting yields no specific order).",
-        defaultValue: "byId",
+        defaultValue: "degree",
         optional: false,
         choices: sortingMethods.filter(m => m.canBeUsedAsSecondarySorting).map(m => m.key),
         enabled: () => (this.sorting.textValue !== undefined) && (mapKeyToSortingMethod.get(this.sorting.textValue)?.hasSecondarySorting ?? false)
