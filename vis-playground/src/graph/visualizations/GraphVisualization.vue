@@ -67,10 +67,13 @@ import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
 import MetricOverview from './MetricOverview.vue';
 import { EllipticArc } from '../graphical/EllipticArc';
-import { Point2D } from '../graphical';
+import { Point2D, Vector2D } from '../graphical';
 import { useDebounceFn, useThrottleFn, watchDebounced } from '@vueuse/core';
 import { layouterMapping } from '../layouter/settings/settingsCollection';
 import { CommonSettings } from '../layouter/settings/commonSettings';
+import { LSystem, LSystemState, SpaceFillingCurve } from '../layouter/linear/spaceFilling/lSystem';
+// import { HilbertAlgorithm, HilbertCurve } from '../layouter/linear/spaceFilling/hilbertCurveLayouter';
+// import { MooreCurve } from '../layouter/linear/spaceFilling/mooreCurveLayouter';
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -216,6 +219,90 @@ function deleteItem() {
 ////////////////////////////////////////////////////////////////////////////
 
 onMounted(() => {
+
+
+    // const lHilbert = new LSystem({
+    //     variables: ['X', 'Y'],
+    //     constants: ['F', '+', '-'],
+    //     axiom: 'X',
+    //     rules: {
+    //         'X': '+YF-XFX-FY+',
+    //         'Y': '-XF+YFY+FX-'
+    //     },
+    //     moveRules: {
+    //         'F': (state: LSystemState) => state.goForward(1),
+    //         '+': (state: LSystemState) => state.turn(90),
+    //         '-': (state: LSystemState) => state.turn(-90),
+    //     }
+    // })
+
+    // const lSierpinski = new LSystem({
+    //     variables: ['X'],
+    //     constants: ['F', '+', '-'],
+    //     axiom: 'F--XF--F--XF',
+    //     rules: {
+    //         'X': 'XF+F+XF--F--XF+F+X',
+    //     },
+    //     moveRules: {
+    //         'F': (state: LSystemState) => state.goForward(1),
+    //         '+': (state: LSystemState) => state.turn(45),
+    //         '-': (state: LSystemState) => state.turn(-45),
+
+    //     }
+    // })
+
+    // const lGosper = new LSystem({
+    //     variables: ['G', 'F'],
+    //     constants: ['+', '-'],
+    //     axiom: 'F',
+    //     rules: {
+    //         'F': 'F-G--G+F++FF+G-',
+    //         'G': '+F-GG--G-F++F+G'
+    //     },
+    //     moveRules: {
+    //         'F': (state: LSystemState) => state.goForward(1),
+    //         'G': (state: LSystemState) => state.goForward(1),
+    //         '+': (state: LSystemState) => state.turn(60),
+    //         '-': (state: LSystemState) => state.turn(-60),
+    //     }
+    // })
+
+
+    // const curve = new SpaceFillingCurve(lGosper, 1);
+    // // const curve2 = new SpaceFillingCurve(2, lGosper);
+    // // const curve3 = new SpaceFillingCurve(3, lGosper);
+    // // const curve4 = new SpaceFillingCurve(4, lGosper);
+    // // const mooreCurve = new HilbertAlgorithm(2);
+
+ 
+    // console.log("Curve Points:", curve.totalPointCount, curve.points);
+
+    // // Map interval [0, 1] to the curve
+    // // const t = 0.5; // Midpoint of the interval
+    // // const position = mooreCurve.mapToMooreCurve(t);
+
+    // // console.log("Position at t = 0.5:", position);
+
+    // const size = 10;
+
+    // // Map points to a polyline
+    // // Distances = [0...max_h]
+    // const points = [];
+
+    // for (let h = 0; h < curve.totalPointCount; h++) {
+    //     const p = curve.getPointAtIndex(h);
+    //     points.push(p);
+    // }
+
+    // console.log("Points:", points);
+
+    // d3.select(refGRoot.value)
+    //     .append("polyline")
+    //     .attr("points", points.map((p) => `${p.x * size},${p.y * size}`).join(" "))
+    //     .attr("fill", "none")
+    //     .attr("stroke", "black")
+    //     .attr("stroke-width", 2)
+
 
     // let nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     // const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([0, 10]);

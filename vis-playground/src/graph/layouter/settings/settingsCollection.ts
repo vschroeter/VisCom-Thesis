@@ -8,6 +8,8 @@ import { RadialLayouter } from "../linear/radial/radialLayouter";
 import { RadialLayouterSettings } from "../linear/radial/radialSettings";
 import { GraphLayouterSettings } from "./settings";
 import { CommonSettings } from "./commonSettings";
+import { SpaceFillingCurveLayouter } from "../linear/spaceFilling/spaceFillingLayouter";
+import { SpaceFillingLayouterSettings } from "../linear/spaceFilling/spaceFillingSettings";
 
 export const layouterMapping: Record<string, { label: string, layouter: typeof GraphLayouter<any>, settings: typeof GraphLayouterSettings }> = {
     "fdg": {
@@ -24,6 +26,11 @@ export const layouterMapping: Record<string, { label: string, layouter: typeof G
         label: "Arc Layouts",
         layouter: ArcLayouter,
         settings: ArcLayouterSettings
+    },
+    "spaceFilling": {
+        label: "Space Filling Layouts",
+        layouter: SpaceFillingCurveLayouter,
+        settings: SpaceFillingLayouterSettings
     }
 }
 

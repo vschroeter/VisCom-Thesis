@@ -1,5 +1,5 @@
 import { mapKeyToSortingMethod, sortingMethods } from "src/graph/algorithms/sortings/sortingMapping";
-import { Param, ParamChoice, Setting } from "./settings"
+import { GraphLayouterSettings, Param, ParamChoice, Setting } from "./settings"
 import { Sorter } from "src/graph/algorithms/sortings/sorting";
 import { CommunicationGraph } from "src/graph/commGraph";
 
@@ -71,4 +71,9 @@ export class LinearSortingSettings extends Setting {
         return sorter;
     }
 
+}
+
+
+export class LinearGraphLayouterSettings extends GraphLayouterSettings {
+    sorting = new LinearSortingSettings();
 }
