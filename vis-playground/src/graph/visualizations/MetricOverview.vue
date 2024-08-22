@@ -3,17 +3,15 @@
         <!-- <q-spinner-box color="secondary" v-if="metricsResults.pending">
 
         </q-spinner-box> -->
-        <!--  -->
         <div style="display: flex;">
             <div v-for="metric in metricResultList" :key="metric.metricKey">
                 <div v-if="true"
-                    :style="{ width: '10px', height: '10px', background: getBackground(metric), marginRight: '1px', border: '1px solid black' }">
+                    :style="{ width: '10px', height: '10px', background: getBackground(metric), marginRight: '1px', border: `1px solid ${isSelected ? 'white' : 'black'}` }">
                 </div>
                 <q-tooltip>
                     {{ metric.metricKey }}: {{ metric.normalizedValue?.toFixed(2) }} ({{ metric.value.toFixed(2) }}) -
                     {{ metric.relativePlace + 1 }} / {{ metric.places }}
                 </q-tooltip>
-                <!-- {{ metric.isUpdating }} -->
             </div>
 
         </div>
@@ -60,8 +58,6 @@ const metricsCollection = graphStore.metricsCollection;
 // const metrics = computed(() => {
 //     return metricsCollection.getDisplayedMetrics(props.settingId) ?? new DisplayedMetrics(props.settingId);
 // })
-let metricsRef: Ref<null> = ref(null);
-// let metrics: DisplayedMetrics | null = null;
 
 const metricsResults: Ref<MetricsResults | null> = ref(null);
 const metricResultList: Ref<MetricResult[]> = ref([])
@@ -76,27 +72,15 @@ const isSelected = computed(() => {
     return props.settingId === graphStore.activeSettingId
 })
 
-const stillUpdating = ref(true);
-
-function getPendingStatus() {
-    if (!metricsResults.value) {
-        return false
-    }
-
-    return metricsCollection.allMetricsResults.some((m) => {
-        return m.pending
-    })
-}
-
 function getBackground(metric: MetricResult) {
 
     if (metric.pending) {
-        return 'gray'
+        // return 'gray'
+        return 'repeating-linear-gradient(45deg, gray, gray 1px, white 2px, white 3px)';	
     }
 
     const c = metric.color;
     
-    // if (stillUpdating.value) {
     if (metric.singleMetricResults.pending) {
         // Return hatch pattern
         return `repeating-linear-gradient(45deg, ${c}, ${c} 2px, white 2px, white 3px)`;
@@ -116,9 +100,6 @@ function updateMetrics() {
     metricResultList.value = metricsResults.value!.results;
     metricsResults.value = metricsCollection.getMetricsResults(props.settingId)
     // console.log('update metrics', props.settingId, metricsResults.value.pending)
-    stillUpdating.value = getPendingStatus()
-
-    console.log(`[MO] ${props.settingId} updateMetrics`, stillUpdating.value, metricsCollection.allMetricsResults)
 }
 
 function initMetrics() {

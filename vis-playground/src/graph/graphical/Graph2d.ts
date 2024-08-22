@@ -26,6 +26,10 @@ export class Graph2d {
         this.updateGraph();
     }
 
+    static emptyGraph(): Graph2d {
+        return new Graph2d(new CommunicationGraph([], []));
+    }
+
     createNode2d(node: CommunicationNode): AbstractNode2d {
         return new AbstractNode2d(null, node);
     }

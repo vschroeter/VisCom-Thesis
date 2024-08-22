@@ -202,11 +202,18 @@ function layoutFinished() {
 
     setTimeout(async () => {
         await calculateMetrics();
-    }, 1000)
+    }, 0)
+
 }
 
 async function calculateMetrics(graph?: Graph2d | null) {
-    graph = graph === null ? undefined : graph2d;
+    if (!graph) {
+        graph = graph2d;
+    }
+    if (!graph) {
+        console.error("No graph found for metrics calculation");
+        return
+    }
     await metricsCollection.calculateMetrics(props.settingId, graph);
 }
 
@@ -477,8 +484,8 @@ onMounted(() => {
 
         layouter?.on('update', null);
         layouter?.on('end', null);
+        metricsCollection.initMetrics(props.settingId, true);
         metricsCollection.clearMetrics(props.settingId);
-        // calcluateMetrics(null);
         if (commGraph.value.nodes.length === 0) {
             return
         }
@@ -490,7 +497,6 @@ onMounted(() => {
         }, { debounce: 1000, immediate: false, deep: true })
 
         watch(settingsCollection.commonSettings, (newVal) => {
-            // layouter?.updateLayout(true);
             layouter?.updateGraphByCommongSettings();
             layoutUpdated()
         }, { immediate: false, deep: true })

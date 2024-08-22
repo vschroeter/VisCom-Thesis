@@ -76,32 +76,34 @@ export class MetricsCollection {
      * @param settingId The setting id of the visualization
      * @param graph The graph to calculate the metrics. If undefined, the metrics are initialized with pending state
      */
-    async calculateMetrics(settingId: number, graph?: Graph2d | null) {
+    async calculateMetrics(settingId: number, graph: Graph2d) {
 
         // Calculate all absolute metrics for the given graph of the given setting 
-        const metricCalculators = graph ? MetricsCollection.metricsToCalculate.map(metric => new metric(graph)) : undefined;
-
-        // if (metricCalculators) {
-        //     for (const calculator of metricCalculators) {
-        //         console.log("Calculating", calculator);
-        //         await calculator.calculate();
-        //     }
-        // }
+        const metricCalculators = MetricsCollection.metricsToCalculate.map(metric => new metric(graph));
 
         // Update the metrics of the visualization with the results
         const metricsResults = this.getMetricsResults(settingId);
+        // This update also asynchronously calculates the metrics (at least the ones, that are not already calculated and take a longer time)
+        // This update also updates the single metric results asynchronously
         metricsResults.update(metricCalculators);
-
-        // // Update the single metric results
-        // metricsResults.results.forEach(metricResult => {
-        //     const key = metricResult.metricKey;
-        //     const singleMetricResults = this.getSingleMetricResults(key);
-        //     singleMetricResults.update();
-        // });
-
-        // console.log("Calculated metrics for setting", settingId);
     }
 
+    /**
+     * Initialize the metrics of the visualization with the given setting id to ensure, 
+     * that it is taken into account for the relative metrics even for the first time 
+     */
+    initMetrics(settingId: number, ignoreIfExisting: boolean = true) {
+        if (ignoreIfExisting && this.getMetricsResults(settingId).results.length > 0) {
+            return;
+        }
+        const metricCalculators = MetricsCollection.metricsToCalculate.map(metric => new metric(Graph2d.emptyGraph()));
+        this.getMetricsResults(settingId).update(metricCalculators);
+    }
+
+    /**
+     * Clear all metrics of the visualization with the given setting id to mark them as pending while recalculating
+     * @param settingId The setting id of the visualization
+     */
     clearMetrics(settingId: number) {
         this.clearMetricResults(settingId);
         Array.from(this.mapKeyToSingleMetricResults.values()).forEach(singleMetricResults => {
@@ -110,6 +112,10 @@ export class MetricsCollection {
     }
 
 
+    /**
+     * Helper method to clean up the metrics results so that only the metrics of the current visualizations are stored
+     * @param currentSettingIds The setting ids of the current visualizations
+     */
     cleanSettings(currentSettingIds: number[]) {
         const currentSettingIdsSet = new Set(currentSettingIds);
         const toDelete = Array.from(this.mapIdToMetricsResults.keys()).filter(id => !currentSettingIdsSet.has(id));
@@ -132,17 +138,14 @@ export class MetricsResults {
 
     // Map from metric key to the metric result
     mapMetricKeyToResult: Map<string, MetricResult> = new Map();
-
-    // If the metrics are still pending
-    _pending: boolean = true;
-
+    
+    // If some of the metrics are still pending
     get pending(): boolean {
-        // return this._pending;
         return this.results.some(result => result.pending);
     }
 
+    // Sets all metrics to pending
     set pending(value: boolean) {
-        // this._pending = value;
         this.results.forEach(result => {
             result.pending = value;
         });
@@ -151,7 +154,8 @@ export class MetricsResults {
     /**
      * Emitter for events on the metrics results:
      * - "newMetrics": When there has been new metrics calculated
-     */
+     * - "metricsUpdated": When the metrics have been updated
+    */
     emitter = mitt<{
         newMetrics: void,
         metricsUpdated: void
@@ -167,7 +171,13 @@ export class MetricsResults {
         this.collection = collection;
     }
 
-
+    /**
+     * Returns the metric result object for the given metric definition. 
+     * Either takes the existing one or creates a new one. 
+     * Also takes care of linking the update events of the metric result to the metrics results
+     * @param metricDefinition The metric definition to get the result for
+     * @returns The metric result object
+     */
     getMetricResult(metricDefinition: MetricDefinition): MetricResult {
         const key = metricDefinition.key;
         if (!this.mapMetricKeyToResult.has(key)) {
@@ -193,44 +203,28 @@ export class MetricsResults {
      * Updates the results of this visualization with the new metrics from the given calculators
      * @param calculators The calculators to get the metrics from. If undefined, the object is turned to pending state
      */
-    update(calculators?: MetricCalculator[]) {
-        // Clear the old results
-        // this.results.forEach(result => {
-        //     result.emitter.off("relativeValueUpdated");
-        // });
-        // this.mapMetricKeyToResult.clear();
-
-        if (!calculators) {
-            // this.pending = true;
-            this.emitter.emit("newMetrics");
-            return;
-        }
-
-
+    update(calculators: MetricCalculator[]) {
         // Add the new results
         calculators.forEach(calculator => {
             // For each calculator, there can be multiple metrics
             calculator.getMetricDefinitions().forEach(metricDefinition => {
 
+                // Get the metric result object for the specific metric definition
+                // and update it with the new calculator
                 const result = this.getMetricResult(metricDefinition);
+                // This update asynchronously calculates the metric and emits an update event when done
                 result.update(calculator);
-
-                // const result = new MetricResult(this.settingId, calculator, metricDefinition, this.collection.getSingleMetricResults(metricDefinition.key));
-                // result.emitter.on("relativeValueUpdated", () => {
-                //     this.emitDebouncedMetricsUpdated();
-                // });
-                // this.mapMetricKeyToResult.set(result.metricKey, result);
             });
         })
 
-        // this.pending = !this.results.every(result => !result.pending);
         // Emit an update event
         this.emitter.emit("newMetrics");
     }
 
+    /**
+     * Debounced version of the metrics updated event
+     */
     protected emitDebouncedMetricsUpdated = useDebounceFn(() => {
-        // this.pending = !this.results.every(result => !result.pending);
-        console.log("Metrics updated", this.settingId, this.pending, this.results);
         this.emitter.emit("metricsUpdated");
     }, 100);
 
@@ -357,20 +351,22 @@ export class MetricResult {
 
     // Place of the metric
     relativePlace: number = 0;
+
+    // Number of total places to compare to
     places: number = 0;
 
+    // If the metric is still pending its calculation
     pending: boolean = true;
 
-    // // Normalized value of the metric
-    // normalizedValue: number = 0;
-
-    colorScale = d3.scaleSequential(d3.interpolateRdYlGn);
+    // Color scale for the metric
+    protected colorScale = d3.scaleSequential(d3.interpolateRdYlGn);
 
     // The value of the metric
     get value(): number {
         return this.calculator?.getMetric(this.metricKey) ?? 0
     }
 
+    // The color of the metric. Based on the normalized value relative to other metrics
     get color(): string {
         return this.colorScale(this.normalizedValue);
     }
@@ -428,15 +424,21 @@ export class MetricResult {
         this.singleMetricResults = singleMetricResults;
     }
 
+    /**
+     * Update the metric with the given calculator.
+     * This method asynchronously calculates the metric and emits an "valueUpdated" event when done.
+     * It also updates the single metric results of this metric.
+     * @param calculator The metric calculator to calculate the metric
+     */
     update(calculator: MetricCalculator) {
         this.calculator = calculator;
         this.pending = true;
 
-        console.log("Calculating metric", this.metricKey, this.settingId);
+        // console.log("Calculating metric", this.metricKey, this.settingId);
 
         calculator.calculate().then(() => {
             this.pending = false;
-            console.log("FIN Calculated metric", this.metricKey, this.settingId, this.value);
+            // console.log("FIN Calculated metric", this.metricKey, this.settingId, this.value);
             this.emitter.emit("valueUpdated", true);
 
             // Update the single metric results
@@ -445,7 +447,9 @@ export class MetricResult {
     }
 
 
-
+    /**
+     * Update the relative value of the metric.
+     */
     updateRelative() {
         // Update the relative value of the metric
         let sortedResults: MetricResult[] = [];
