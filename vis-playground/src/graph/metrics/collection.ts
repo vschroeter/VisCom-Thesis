@@ -81,25 +81,25 @@ export class MetricsCollection {
         // Calculate all absolute metrics for the given graph of the given setting 
         const metricCalculators = graph ? MetricsCollection.metricsToCalculate.map(metric => new metric(graph)) : undefined;
 
-        if (metricCalculators) {
-            for (const calculator of metricCalculators) {
-                console.log("Calculating", calculator);
-                await calculator.calculate();
-            }
-        }
+        // if (metricCalculators) {
+        //     for (const calculator of metricCalculators) {
+        //         console.log("Calculating", calculator);
+        //         await calculator.calculate();
+        //     }
+        // }
 
         // Update the metrics of the visualization with the results
         const metricsResults = this.getMetricsResults(settingId);
         metricsResults.update(metricCalculators);
 
-        // Update the single metric results
-        metricsResults.results.forEach(metricResult => {
-            const key = metricResult.metricKey;
-            const singleMetricResults = this.getSingleMetricResults(key);
-            singleMetricResults.update();
-        });
+        // // Update the single metric results
+        // metricsResults.results.forEach(metricResult => {
+        //     const key = metricResult.metricKey;
+        //     const singleMetricResults = this.getSingleMetricResults(key);
+        //     singleMetricResults.update();
+        // });
 
-        console.log("Calculated metrics for setting", settingId);
+        // console.log("Calculated metrics for setting", settingId);
     }
 
     clearMetrics(settingId: number) {
@@ -137,11 +137,12 @@ export class MetricsResults {
     _pending: boolean = true;
 
     get pending(): boolean {
-        return this._pending;
+        // return this._pending;
+        return this.results.some(result => result.pending);
     }
 
     set pending(value: boolean) {
-        this._pending = value;
+        // this._pending = value;
         this.results.forEach(result => {
             result.pending = value;
         });
@@ -167,6 +168,26 @@ export class MetricsResults {
     }
 
 
+    getMetricResult(metricDefinition: MetricDefinition): MetricResult {
+        const key = metricDefinition.key;
+        if (!this.mapMetricKeyToResult.has(key)) {
+
+            // Create a new metric result
+            const mr = new MetricResult(this.settingId, metricDefinition, this.collection.getSingleMetricResults(key));
+
+            // Link its update events
+            mr.emitter.on("relativeValueUpdated", () => {
+                this.emitDebouncedMetricsUpdated();
+            });
+            mr.emitter.on("valueUpdated", () => {
+                this.emitDebouncedMetricsUpdated();
+            });
+
+
+            this.mapMetricKeyToResult.set(key, mr);
+        }
+        return this.mapMetricKeyToResult.get(key)!;
+    }
 
     /**
      * Updates the results of this visualization with the new metrics from the given calculators
@@ -174,13 +195,13 @@ export class MetricsResults {
      */
     update(calculators?: MetricCalculator[]) {
         // Clear the old results
-        this.results.forEach(result => {
-            result.emitter.off("relativeValueUpdated");
-        });
-        this.mapMetricKeyToResult.clear();
+        // this.results.forEach(result => {
+        //     result.emitter.off("relativeValueUpdated");
+        // });
+        // this.mapMetricKeyToResult.clear();
 
         if (!calculators) {
-            this.pending = true;
+            // this.pending = true;
             this.emitter.emit("newMetrics");
             return;
         }
@@ -190,20 +211,26 @@ export class MetricsResults {
         calculators.forEach(calculator => {
             // For each calculator, there can be multiple metrics
             calculator.getMetricDefinitions().forEach(metricDefinition => {
-                const result = new MetricResult(this.settingId, calculator, metricDefinition, this.collection.getSingleMetricResults(metricDefinition.key));
-                result.emitter.on("relativeValueUpdated", () => {
-                    this.emitDebouncedMetricsUpdated();
-                });
-                this.mapMetricKeyToResult.set(result.metricKey, result);
+
+                const result = this.getMetricResult(metricDefinition);
+                result.update(calculator);
+
+                // const result = new MetricResult(this.settingId, calculator, metricDefinition, this.collection.getSingleMetricResults(metricDefinition.key));
+                // result.emitter.on("relativeValueUpdated", () => {
+                //     this.emitDebouncedMetricsUpdated();
+                // });
+                // this.mapMetricKeyToResult.set(result.metricKey, result);
             });
         })
 
-        this.pending = false;
+        // this.pending = !this.results.every(result => !result.pending);
         // Emit an update event
         this.emitter.emit("newMetrics");
     }
 
     protected emitDebouncedMetricsUpdated = useDebounceFn(() => {
+        // this.pending = !this.results.every(result => !result.pending);
+        console.log("Metrics updated", this.settingId, this.pending, this.results);
         this.emitter.emit("metricsUpdated");
     }, 100);
 
@@ -218,6 +245,10 @@ export class SingleMetricResults {
 
     // Reference to the metrics collection
     metricsCollection: MetricsCollection
+
+    get pending(): boolean {
+        return this.results.some(result => result.pending);
+    }
 
     constructor(metricKey: string, metricsCollection: MetricsCollection) {
         this.metricKey = metricKey;
@@ -319,7 +350,7 @@ export class MetricResult {
     definition: MetricDefinition;
 
     // The metric calculator that calculated this metric
-    calculator: MetricCalculator;
+    calculator?: MetricCalculator;
 
     // The key of the metric
     metricKey: string;
@@ -337,15 +368,32 @@ export class MetricResult {
 
     // The value of the metric
     get value(): number {
-        return this.calculator.getMetric(this.metricKey)
+        return this.calculator?.getMetric(this.metricKey) ?? 0
     }
 
     get color(): string {
         return this.colorScale(this.normalizedValue);
     }
 
+    // Reference to the single metric results of this metric
+    singleMetricResults: SingleMetricResults;
+
+    /**
+     * Emitter for events on the metric result:
+     * - "valueUpdated": When the value of the metric has been updated, so when the metric has been calculated
+     * - "relativeValueUpdated": When the relative value of the metric has been updated due to other metrics new results
+     */
+    emitter = mitt<{
+        valueUpdated: boolean,
+        relativeValueUpdated: boolean
+    }>();
+
     // The normalized value of the metric according to the normalizing method defined in the metric definition
     get normalizedValue(): number {
+        if (!this.calculator) {
+            return 0;
+        }
+
         let normalizedValue = this.value;
         const normalizing = this.definition.normalizing;
         const results = this.singleMetricResults;
@@ -369,20 +417,31 @@ export class MetricResult {
         return normalizedValue;
     }
 
-    // Reference to the single metric results of this metric
-    singleMetricResults: SingleMetricResults;
 
-    emitter = mitt<{
-        relativeValueUpdated: boolean
-    }>();
 
-    constructor(settingId: number, calculator: MetricCalculator, metricDefinition: MetricDefinition, singleMetricResults: SingleMetricResults) {
+    constructor(settingId: number, metricDefinition: MetricDefinition, singleMetricResults: SingleMetricResults) {
         this.settingId = settingId;
-        this.calculator = calculator;
+        // this.calculator = calculator;
         this.definition = metricDefinition;
 
         this.metricKey = metricDefinition.key;
         this.singleMetricResults = singleMetricResults;
+    }
+
+    update(calculator: MetricCalculator) {
+        this.calculator = calculator;
+        this.pending = true;
+
+        console.log("Calculating metric", this.metricKey, this.settingId);
+
+        calculator.calculate().then(() => {
+            this.pending = false;
+            console.log("FIN Calculated metric", this.metricKey, this.settingId, this.value);
+            this.emitter.emit("valueUpdated", true);
+
+            // Update the single metric results
+            this.singleMetricResults.update();
+        });
     }
 
 

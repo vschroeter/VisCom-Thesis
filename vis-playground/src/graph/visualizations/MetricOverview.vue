@@ -1,8 +1,8 @@
 <template>
     <div v-if="metricsResults">
-        <q-spinner-box color="secondary" v-if="metricsResults.pending">
+        <!-- <q-spinner-box color="secondary" v-if="metricsResults.pending">
 
-        </q-spinner-box>
+        </q-spinner-box> -->
         <!--  -->
         <div style="display: flex;">
             <div v-for="metric in metricResultList" :key="metric.metricKey">
@@ -76,7 +76,9 @@ const isSelected = computed(() => {
     return props.settingId === graphStore.activeSettingId
 })
 
-const stillUpdating = computed(() => {
+const stillUpdating = ref(true);
+
+function getPendingStatus() {
     if (!metricsResults.value) {
         return false
     }
@@ -84,12 +86,18 @@ const stillUpdating = computed(() => {
     return metricsCollection.allMetricsResults.some((m) => {
         return m.pending
     })
-})
-
+}
 
 function getBackground(metric: MetricResult) {
+
+    if (metric.pending) {
+        return 'gray'
+    }
+
     const c = metric.color;
-    if (stillUpdating.value) {
+    
+    // if (stillUpdating.value) {
+    if (metric.singleMetricResults.pending) {
         // Return hatch pattern
         return `repeating-linear-gradient(45deg, ${c}, ${c} 2px, white 2px, white 3px)`;
     }
@@ -108,6 +116,9 @@ function updateMetrics() {
     metricResultList.value = metricsResults.value!.results;
     metricsResults.value = metricsCollection.getMetricsResults(props.settingId)
     // console.log('update metrics', props.settingId, metricsResults.value.pending)
+    stillUpdating.value = getPendingStatus()
+
+    console.log(`[MO] ${props.settingId} updateMetrics`, stillUpdating.value, metricsCollection.allMetricsResults)
 }
 
 function initMetrics() {
