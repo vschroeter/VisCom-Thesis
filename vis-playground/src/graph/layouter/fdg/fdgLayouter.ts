@@ -12,11 +12,6 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
     simulation?: d3.Simulation<AbstractNode2d, AbstractConnection2d>;
 
-
-    constructor(graph2d: Graph2d, settings: FdgLayouterSettings, commonSettings: CommonSettings) {
-        super(graph2d, settings, commonSettings);
-    }
-
     layout(isUpdate = false) {
         const ctx = this.settings.getContext(this.graph2d);
 

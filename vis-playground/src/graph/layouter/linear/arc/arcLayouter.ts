@@ -9,10 +9,6 @@ import { CommonSettings } from "../../settings/commonSettings";
 
 export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
 
-    constructor(graph2d: Graph2d, settings: ArcLayouterSettings, commonSettings: CommonSettings) {
-        super(graph2d, settings, commonSettings);
-    }
-
     layout(isUpdate = false) {
         const ctx = this.settings.getContext(this.graph2d);
 

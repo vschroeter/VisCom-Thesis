@@ -6,6 +6,7 @@ import { CommunicationGraph } from 'src/graph/commGraph'
 import { MetricsCollection } from 'src/graph/metrics/collection'
 import { GraphLayouterSettings } from 'src/graph/layouter/settings/settings'
 import { SettingsCollection } from 'src/graph/layouter/settings/settingsCollection'
+import { UserInteractions } from 'src/graph/visualizations/interactions'
 
 // Store for the global communication graph
 export const useGraphStore = defineStore('graph', {
@@ -16,6 +17,7 @@ export const useGraphStore = defineStore('graph', {
         layouterSettingsCollectionJson: useStorage("layouterSettingsCollectionJson", "{}" as string),
         settingsCollection: new SettingsCollection() as SettingsCollection,
         metricsCollection: new MetricsCollection() as MetricsCollection,
+        userInteractions: new UserInteractions() as UserInteractions,
     }),
     getters: {
         // graph: (state) => state.graph,

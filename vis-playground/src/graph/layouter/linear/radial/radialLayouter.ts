@@ -10,9 +10,6 @@ import { CommonSettings } from "../../settings/commonSettings";
 
 export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
 
-    constructor(graph2d: Graph2d, settings: RadialLayouterSettings, commonSettings: CommonSettings) {
-        super(graph2d, settings, commonSettings);
-    }
 
     layout(isUpdate = false) {
         const ctx = this.settings.getContext(this.graph2d);

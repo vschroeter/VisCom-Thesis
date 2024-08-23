@@ -72,8 +72,6 @@ export class MetricCalculator {
     constructor(graph: Graph2d) {
         this.graph = graph;
 
-        console.log("Get basic metrics");
-
         // Get size of the layout
         const xNodeExtent = d3.extent(this.graph.nodes, d => d.x) as [number, number];
         const yNodeExtent = d3.extent(this.graph.nodes, d => d.y) as [number, number];

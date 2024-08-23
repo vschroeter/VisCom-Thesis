@@ -67,11 +67,12 @@ import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
 import MetricOverview from './MetricOverview.vue';
 import { EllipticArc } from '../graphical/EllipticArc';
-import { Point2D, Vector2D } from '../graphical';
+import { AbstractNode2d, Point2D, Vector2D } from '../graphical';
 import { useDebounceFn, useThrottleFn, watchDebounced } from '@vueuse/core';
 import { layouterMapping } from '../layouter/settings/settingsCollection';
 import { CommonSettings } from '../layouter/settings/commonSettings';
 import { LSystem, LSystemState, SpaceFillingCurve } from '../layouter/linear/spaceFilling/lSystem';
+import { UserInteractions } from './interactions';
 // import { HilbertAlgorithm, HilbertCurve } from '../layouter/linear/spaceFilling/hilbertCurveLayouter';
 // import { MooreCurve } from '../layouter/linear/spaceFilling/mooreCurveLayouter';
 
@@ -99,6 +100,8 @@ const props = withDefaults(defineProps<{
 const graphStore = useGraphStore();
 const settingsCollection = graphStore.settingsCollection;
 const metricsCollection = graphStore.metricsCollection;
+const userInteractions = graphStore.userInteractions as UserInteractions;
+
 
 ////////////////////////////////////////////////////////////////////////////
 // Template Refs
@@ -174,6 +177,17 @@ const iconButtonDivWidth = computed(() => {
 // Helper functions
 ////////////////////////////////////////////////////////////////////////////
 
+const throttledUpdate1000 = useThrottleFn(() => {
+    layoutUpdated()
+}, 1000)
+
+
+const throttledUpdateUserInteractions = useThrottleFn(() => {
+    layoutUpdated()
+}, 50, true, true)
+
+
+
 function layoutUpdated() {
     // console.log("[GViz] Layout updated", layouter, graph2d);
 
@@ -183,7 +197,26 @@ function layoutUpdated() {
 
     // console.log("Updating nodes and links");
     d3.select(refGNodes.value)
-        .call(layouter.updateNodes.bind(layouter))
+        // .call(layouter.updateNodes.bind(layouter))
+        .call((sel) => layouter?.updateNodes(sel, {
+            mouseenter: (d: AbstractNode2d) => {
+                const id = d.data?.id;
+                console.log("Mouse enter", id, d);
+                if (id) {
+                    userInteractions.addHoveredNode(id)
+                    // console.log("Updating nodes", userInteractions.hoveredNodeIds);
+                    throttledUpdateUserInteractions()
+                }
+            },
+            mouseleave: (d: AbstractNode2d) => {
+                const id = d.data?.id;
+                if (id) {
+                    userInteractions.removeHoveredNode(id)
+                    // console.log("Updating nodes", userInteractions.hoveredNodeIds);
+                    throttledUpdateUserInteractions()
+                }
+            },
+        }))
 
     d3.select(refGLinks.value)
         .call(layouter.updateLinks.bind(layouter))
@@ -281,7 +314,7 @@ onMounted(() => {
     // // const curve4 = new SpaceFillingCurve(4, lGosper);
     // // const mooreCurve = new HilbertAlgorithm(2);
 
- 
+
     // console.log("Curve Points:", curve.totalPointCount, curve.points);
 
     // // Map interval [0, 1] to the curve
@@ -472,6 +505,11 @@ onMounted(() => {
 
     console.log("[VIS] Mounted"); //, props.settings);
 
+
+    userInteractions.emitter.on('update', () => {
+        throttledUpdateUserInteractions()
+    })
+
     watch(commGraph, (newVal) => {
         //updateSimulation();
         console.log("[GViz] Graph updated", commGraph.value, commGraph.value instanceof CommunicationGraph);
@@ -490,7 +528,7 @@ onMounted(() => {
             return
         }
         graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
-        layouter = new cls(graph2d, settings.value, settingsCollection.commonSettings as CommonSettings);
+        layouter = new cls(graph2d, settings.value, settingsCollection.commonSettings as CommonSettings, userInteractions);
 
         watchDebounced(settings, (newVal) => {
             layouter?.updateLayout(true);
@@ -501,12 +539,10 @@ onMounted(() => {
             layoutUpdated()
         }, { immediate: false, deep: true })
 
-        const throttledUpdate = useThrottleFn(() => {
-            layoutUpdated()
-        }, 1000)
+
 
         layouter.on('update', () => {
-            throttledUpdate();
+            throttledUpdate1000();
         })
         layouter.on('end', layoutFinished)
         layouter.updateLayout();
