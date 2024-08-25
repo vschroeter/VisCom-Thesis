@@ -11,6 +11,11 @@ export class AbstractNode2d { // <NodeData>
   // The (abstract communication graph's node) data of the node
   data?: CommunicationNode // NodeData;
 
+  // The id of the node
+  get id() {
+    return this.data?.id;
+  }
+
   // The radius of the node. Can also have an abstract meaning for non-circular nodes.
   radius: number = 10;
 

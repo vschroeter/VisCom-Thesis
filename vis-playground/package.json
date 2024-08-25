@@ -16,8 +16,10 @@
   "dependencies": {
     "@quasar/extras": "^1.16.4",
     "@types/d3": "^7.4.3",
+    "@types/dagre-d3": "^0.6.6",
     "@vueuse/core": "^10.11.0",
     "d3": "^7.9.0",
+    "dagre-d3": "^0.6.4",
     "mitt": "^3.0.1",
     "ngraph.graph": "^20.0.1",
     "path-intersection": "^3.1.0",

@@ -593,6 +593,19 @@ const cardStyle = computed(() => {
 
 </script>
 
+<style>
+.edgePath path {
+    stroke: #333;
+    stroke-width: 1.5px;
+}
+
+.node rect {
+  stroke: #999;
+  fill: #fff;
+  stroke-width: 1.5px;
+}
+</style>
+
 <style scoped>
 .svgContainerDiv {
     border: 1px solid #00000025;
