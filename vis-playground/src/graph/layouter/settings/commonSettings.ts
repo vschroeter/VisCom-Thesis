@@ -1,7 +1,16 @@
-import { Setting, ParamWithLinkContext, ParamWithNodeContext } from "./settings";
+import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param } from "./settings";
 
 
 export class CommonSettings extends Setting {
+
+    tileSize = new Param<number>({
+        type: "number",
+        key: "tileSize",
+        label: "Tile Size",
+        description: "The size of the tiles",
+        optional: false,
+        defaultValue: 200,
+    })
 
     nodeColor = new ParamWithNodeContext({
         type: "color",

@@ -5,8 +5,16 @@
         </q-spinner-box> -->
         <div style="display: flex;">
             <div v-for="metric in metricResultList" :key="metric.metricKey">
-                <div v-if="true"
-                    :style="{ width: '10px', height: '10px', background: getBackground(metric), marginRight: '1px', border: `1px solid ${isSelected ? 'white' : 'black'}` }">
+                <div v-if="true" style="display: flex"
+                    :style="{ width: `${sizePerMetric}px`, height: '10px', background: getBackground(metric), marginRight: `${xMargin}px`, border: `1px solid ${isSelected ? 'white' : 'black'}` }">
+
+                    <FittingSvgText :text="metric.shortResult" :height="10" :width="sizePerMetric" :color="metric.textColor" v-if="!metric.pending" />
+
+                    <!-- <svg :width="sizePerMetric" :height="10" style="position: relative; top: 0; left: 0;">
+                        <text x="0" y="0" fill="black" alignment-baseline="hanging" text-anchor="right">
+                            {{ metric.shortResult }}
+                        </text>
+                    </svg> -->
                 </div>
                 <q-tooltip>
                     {{ metric.metricKey }}: {{ metric.normalizedValue?.toFixed(2) }} ({{ metric.value.toFixed(2) }}) -
@@ -26,6 +34,7 @@ import { useGraphStore } from 'src/stores/graph-store';
 import { MetricResult, MetricsResults } from 'src/graph/metrics/collection'
 
 import * as d3 from 'd3'
+import FittingSvgText from './FittingSvgText.vue';
 ////////////////////////////////////////////////////////////////////////////
 // Props
 ////////////////////////////////////////////////////////////////////////////
@@ -54,6 +63,16 @@ const metricsCollection = graphStore.metricsCollection;
 // Refs and Computed values
 ////////////////////////////////////////////////////////////////////////////
 
+
+///++++ Sizing stuff ++++///
+
+const xMargin = ref(2);
+
+const sizePerMetric = computed(() => {
+    return (props.width - xMargin.value * (metricResultList.value.length - 1)) / metricResultList.value.length;
+})
+
+
 ///++++ Metric stuff ++++///
 // const metrics = computed(() => {
 //     return metricsCollection.getDisplayedMetrics(props.settingId) ?? new DisplayedMetrics(props.settingId);
@@ -76,11 +95,11 @@ function getBackground(metric: MetricResult) {
 
     if (metric.pending) {
         // return 'gray'
-        return 'repeating-linear-gradient(45deg, gray, gray 1px, white 2px, white 3px)';	
+        return 'repeating-linear-gradient(45deg, gray, gray 1px, white 2px, white 3px)';
     }
 
     const c = metric.color;
-    
+
     if (metric.singleMetricResults.pending) {
         // Return hatch pattern
         return `repeating-linear-gradient(45deg, ${c}, ${c} 2px, white 2px, white 3px)`;

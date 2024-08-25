@@ -35,7 +35,7 @@
               <div class="col-auto q-mx-xs q-my-sm"
                 v-for="setting in settingsCollection.mapLayoutTypeToListOfSettings.get(layouterKey)"
                 :key="setting.id">
-                <GraphVisualization :settingId="setting.id" :size="250" :layoutType="layouterKey" />
+                <GraphVisualization :settingId="setting.id" :size="commonSettings.tileSize.getValue()" :layoutType="layouterKey" />
 
               </div>
 
@@ -72,6 +72,8 @@ import { layouterMapping } from 'src/graph/layouter/settings/settingsCollection'
 const store = useGraphStore();
 const settingsCollection = store.settingsCollection;
 const metricsCollection = store.metricsCollection;
+
+const commonSettings = settingsCollection.commonSettings;
 
 onMounted(() => {
   if (store.settingsCollection) { 

@@ -4,7 +4,7 @@ import { MetricDefinition } from "./collection";
 
 export class EdgeLengthCalculator extends MetricCalculator {
     static displayedMetrics: MetricDefinition[] = [
-        { key: "totalEdgeLength", optimum: "lowerIsBetter", label: "Total Edge Length", description: "The total length of all edges in the graph", normalizing: "byLongerLayoutSide" },
+        { key: "totalEdgeLength", optimum: "lowerIsBetter", label: "Total Edge Length", abbreviation: "EL", description: "The total length of all edges in the graph", normalizing: "byLongerLayoutSide" },
     ];
 
     /** The total length of all edges in the graph */
@@ -28,7 +28,7 @@ export class EdgeLengthCalculator extends MetricCalculator {
 
 export class NodeDistanceCalculator extends MetricCalculator {
     static displayedMetrics: MetricDefinition[] = [
-        { key: "neighboredNodeDistance", optimum: "lowerIsBetter", label: "Neighbored Node Distance", description: "The total distance between all neighbored nodes in the graph", normalizing: "byLongerLayoutSide" },
+        { key: "neighboredNodeDistance", optimum: "lowerIsBetter", label: "Neighbored Node Distance", abbreviation: "ND", description: "The total distance between all neighbored nodes in the graph", normalizing: "byLongerLayoutSide" },
     ];
 
     /** The average distance between all nodes in the graph */

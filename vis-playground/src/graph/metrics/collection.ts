@@ -18,6 +18,7 @@ export type MetricDefinition = {
     optimum: "higherIsBetter" | "lowerIsBetter",
     normalizing?: MetricNormalization,
     unit?: string
+    abbreviation?: string
 }
 
 /**
@@ -138,7 +139,7 @@ export class MetricsResults {
 
     // Map from metric key to the metric result
     mapMetricKeyToResult: Map<string, MetricResult> = new Map();
-    
+
     // If some of the metrics are still pending
     get pending(): boolean {
         return this.results.some(result => result.pending);
@@ -371,6 +372,28 @@ export class MetricResult {
         return this.colorScale(this.normalizedValue);
     }
 
+    /** 
+     * Get the text color based on the color as background.
+     * If the color is dark, the text color is white, otherwise black.
+     */
+    get textColor(): string {
+
+        if (this.singleMetricResults.pending) return "black";
+
+        const color = d3.rgb(d3.color(this.color)!);
+        const labColor = d3.lab(color);
+        const luminance = labColor.l
+        console.log(color, luminance);
+        if (luminance > 50) {
+            return "black";
+        }
+        return "white";
+        // if (color.r * 0.299 + color.g * 0.587 + color.b * 0.114 > 186) {
+        //     return "black";
+        // }
+        // return "white"
+    }
+
     // Reference to the single metric results of this metric
     singleMetricResults: SingleMetricResults;
 
@@ -413,6 +436,18 @@ export class MetricResult {
         return normalizedValue;
     }
 
+
+    get shortResult() {
+        let abbr = this.definition.abbreviation ?? "";
+        if (abbr.length == 0) {
+            const label = this.definition.label;
+            const split = label?.split(" ");
+            split?.forEach(word => {
+                abbr += word[0].toUpperCase();
+            })
+        }
+        return abbr + ": " + this.normalizedValue.toFixed(2);
+    }
 
 
     constructor(settingId: number, metricDefinition: MetricDefinition, singleMetricResults: SingleMetricResults) {

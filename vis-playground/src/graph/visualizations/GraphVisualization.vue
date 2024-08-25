@@ -233,10 +233,11 @@ function layoutUpdated() {
 function layoutFinished() {
     layoutUpdated();
 
-    setTimeout(async () => {
-        await calculateMetrics();
-    }, 0)
-
+    if (layouter?.calculateMetrics) {
+        setTimeout(async () => {
+            await calculateMetrics();
+        }, 0)
+    }
 }
 
 async function calculateMetrics(graph?: Graph2d | null) {
@@ -522,8 +523,10 @@ onMounted(() => {
 
         layouter?.on('update', null);
         layouter?.on('end', null);
-        metricsCollection.initMetrics(props.settingId, true);
-        metricsCollection.clearMetrics(props.settingId);
+        if (layouter?.calculateMetrics) {
+            metricsCollection.initMetrics(props.settingId, true);
+            metricsCollection.clearMetrics(props.settingId);
+        }
         if (commGraph.value.nodes.length === 0) {
             return
         }
@@ -558,7 +561,9 @@ onUpdated(() => {
 
 function resetSimulation() {
     console.log("Reset simulation");
-    metricsCollection.clearMetrics(props.settingId);
+    if (layouter?.calculateMetrics) {
+        metricsCollection.clearMetrics(props.settingId);
+    }
     layouter?.reset();
 }
 
@@ -600,9 +605,9 @@ const cardStyle = computed(() => {
 }
 
 .node rect {
-  stroke: #999;
-  fill: #fff;
-  stroke-width: 1.5px;
+    stroke: #999;
+    fill: #fff;
+    stroke-width: 1.5px;
 }
 </style>
 

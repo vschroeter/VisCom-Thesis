@@ -1,6 +1,45 @@
-import { onMounted, ref, Ref, shallowRef } from "vue";
+import { computed, onMounted, ref, Ref, shallowRef } from "vue";
 
 import * as d3 from "d3";
+
+
+export function useGetBbox(refSvgElement: Ref<SVGGraphicsElement | null>) {
+    const bBox = ref<DOMRect | null>(null);
+
+    function updateBbox() {
+        if (refSvgElement.value) {
+            bBox.value = refSvgElement.value.getBBox();
+        }
+    }
+
+    onMounted(() => {
+        updateBbox();
+    });
+
+    return { bBox, updateBbox };
+}
+
+export function useGetViewboxFitToContent(refContentElement: Ref<SVGGElement | null>) {
+
+    const { bBox, updateBbox } = useGetBbox(refContentElement);
+
+    const viewBox = computed(() => {
+        if (bBox.value === null) {
+            return "0 0 100 100"
+        }
+        return `${bBox.value.x} ${bBox.value.y} ${bBox.value.width} ${bBox.value.height}`
+    })
+
+    function updateViewbox() {
+        updateBbox();
+    }
+
+    onMounted(() => {
+        updateBbox();
+    })
+
+    return { viewBox, updateViewbox };
+}
 
 export function svgInteractiveRef(
     svgRef: Ref<SVGElement | null>,
@@ -27,7 +66,7 @@ export function svgInteractiveRef(
     const zoom = ref<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
 
     onMounted(() => {
-        console.log('svgInteractiveRef onMounted', elementRef.value, svgRef.value);
+        // console.log('svgInteractiveRef onMounted', elementRef.value, svgRef.value);
 
         const svg = d3.select(svgRef.value as SVGSVGElement);
         svgSelection.value = svg;

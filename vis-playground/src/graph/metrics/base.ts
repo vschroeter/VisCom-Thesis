@@ -8,7 +8,7 @@ import { MetricDefinition } from "./collection";
 export class MetricCalculator {
 
     static displayedMetrics: MetricDefinition[] = [
-        { key: "aspectRatio", optimum: "higherIsBetter", label: "Side Ratio", description: "The ratio of shorter side to longer side of the layout" },
+        { key: "aspectRatio", optimum: "higherIsBetter", label: "Aspect Ratio", description: "The ratio of shorter side to longer side of the layout" },
     ];
 
     getMetricDefinitions(): MetricDefinition[] {

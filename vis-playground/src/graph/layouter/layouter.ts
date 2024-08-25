@@ -12,6 +12,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     userInteractions: UserInteractions;
     commGraph: CommunicationGraph;
     graph2d: Graph2d;
+    calculateMetrics: boolean = true;
 
     protected events: { [key: string]: ((this: GraphLayouter<any>) => void) } = {};
 

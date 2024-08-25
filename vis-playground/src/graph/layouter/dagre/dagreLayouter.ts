@@ -8,9 +8,15 @@ import * as d3 from "d3";
 import { AbstractConnection2d, AbstractNode2d } from "src/graph/graphical";
 import { CommonSettings } from "../settings/commonSettings";
 import { GraphLayouterSettings } from '../settings/settings';
+import { UserInteractions } from 'src/graph/visualizations/interactions';
 
 
 export class DagreLayouter extends GraphLayouter<GraphLayouterSettings> {
+
+  constructor(graph2d: Graph2d, settings: GraphLayouterSettings, commonSettings: CommonSettings, userInteractions: UserInteractions) {
+    super(graph2d, settings, commonSettings, userInteractions);
+    this.calculateMetrics = false;
+  }
 
 
   layout(isUpdate = false) {

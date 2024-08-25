@@ -7,7 +7,7 @@ import intersect, { Intersection } from 'path-intersection';
 
 export class EdgeCrossingsCalculator extends MetricCalculator {
     static displayedMetrics: MetricDefinition[] = [
-        { key: "totalEdgeCrossings", optimum: "lowerIsBetter", label: "Total Edge Crossings", description: "The total count of edge crossings in the graph", normalizing: "none" },
+        { key: "totalEdgeCrossings", optimum: "lowerIsBetter", label: "Total Edge Crossings", abbreviation: "EC", description: "The total count of edge crossings in the graph", normalizing: "none" },
     ];
 
     /** The total length of all edges in the graph */
