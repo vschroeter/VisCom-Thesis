@@ -383,7 +383,6 @@ export class MetricResult {
         const color = d3.rgb(d3.color(this.color)!);
         const labColor = d3.lab(color);
         const luminance = labColor.l
-        console.log(color, luminance);
         if (luminance > 50) {
             return "black";
         }

@@ -54,9 +54,9 @@
             <q-item-section>
                 <q-input
                     v-model="param.value"
-                    :type="'number'"
-                    :min="param.range.min"
-                    :max="param.range.max"
+                    :type="param.inputType"
+                    :min="param.range?.min"
+                    :max="param.range?.max"
                     :step="param.type == 'int' ? 1 : 0.01"
                     outlined />
             </q-item-section>

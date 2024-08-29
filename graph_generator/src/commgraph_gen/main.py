@@ -5,6 +5,8 @@ from flask_cors import CORS
 import networkx as nx
 import random
 
+from commgraph_gen.comm_graph.generator import CommGraphGenerator
+
 app = Flask(__name__)
 CORS(app)
 
@@ -14,7 +16,7 @@ MAX_NODES = 1000
 
 # Configuration of available methods and their parameters
 methods_config = {
-    "rary_tree": {
+    "r-ary_tree": {
         "params": {
             "r": {"type": "int", "description": "Branching factor of the tree", "range": [1, 10], "default": 2},
             "n": {"type": "int", "description": "Number of nodes", "range": [1, MAX_NODES], "default": 10}
@@ -48,6 +50,16 @@ methods_config = {
         },
         "description": "Generates a random graph using the Erdős-Rényi model.",
         "method": nx.gnp_random_graph
+    },
+    "communication_graph": {
+        "params": {
+            "node_count": {"type": "int", "description": "Number of nodes", "range": [1, MAX_NODES], "default": 10},
+            "seed": {"type": "int", "description": "Seed for random number generator", "range": [0, 2**32 - 1], "default": None},
+            "pipeline_count_mu": {"type": "str", "description": "Mean of the pipeline count distribution", "default": "n/8"},
+            "pipeline_count_deviation": {"type": "str", "description": "Standard deviation of the pipeline count distribution", "default": "n/6"}
+        },
+        "description": "Generates a random graph using the Erdős-Rényi model.",
+        "method": CommGraphGenerator().generate
     },
 }
 

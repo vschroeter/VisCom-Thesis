@@ -1,8 +1,8 @@
 export interface ApiParam {
     default: number | null;
     description: string;
-    range: [number, number];
-    type: 'int' | 'float';
+    range?: [number, number];
+    type: 'int' | 'float' | 'bool' | 'string';
 }
 
 export interface ApiGeneratorParams {
@@ -22,17 +22,33 @@ export class Param {
     key: string;
     default: number | null;
     description: string;
-    range: { min: number, max: number}
-    type: 'int' | 'float';
+    range?: { min: number, max: number}
+    type: 'int' | 'float' | 'bool' | 'string';
     value: number
+
+    get inputType(): "number" | "text" {
+        switch (this.type) {
+            case 'int':
+                return 'number';
+            case 'float':
+                return 'number';
+            case 'bool':
+                return 'text';
+                // return 'checkbox';
+            case 'string':
+                return 'text';
+            default:
+                return 'text';
+        }
+    }
 
     constructor(key: string, param: ApiParam) {
         this.key = key;
         this.default = param.default;
         this.description = param.description;
-        this.range = { min: param.range[0], max: param.range[1] };
+        this.range = param.range ? { min: param.range[0], max: param.range[1] } : undefined;
         this.type = param.type;
-        this.value = this.default || this.range.min;
+        this.value = this.default || (this.range?.min ?? 0);
     }
 }
 
