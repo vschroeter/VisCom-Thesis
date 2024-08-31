@@ -8,6 +8,11 @@ export function convertGraphToCommGraph(graph: Graph): CommunicationGraph {
 
   let topicId = 0;
 
+  graph.forEachNode((node) => {
+    const commNode = new CommunicationNode(node.id.toString());
+    commNodesMap.set(node.id.toString(), commNode);
+  });
+
   graph.forEachLink((link) => {
     const from = link.fromId.toString();
     const to = link.toId.toString();

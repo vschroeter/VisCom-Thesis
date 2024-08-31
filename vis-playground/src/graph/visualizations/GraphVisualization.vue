@@ -183,6 +183,9 @@ const throttledUpdate1000 = useThrottleFn(() => {
 
 
 const throttledUpdateUserInteractions = useThrottleFn(() => {
+    if (!isSelected.value) {
+        return;
+    }
     layoutUpdated()
 }, 50, true, true)
 
@@ -200,6 +203,7 @@ function layoutUpdated() {
         // .call(layouter.updateNodes.bind(layouter))
         .call((sel) => layouter?.updateNodes(sel, {
             mouseenter: (d: AbstractNode2d) => {
+                if (!isSelected.value) return;
                 const id = d.data?.id;
                 console.log("Mouse enter", id, d);
                 if (id) {
@@ -209,6 +213,8 @@ function layoutUpdated() {
                 }
             },
             mouseleave: (d: AbstractNode2d) => {
+                if (!isSelected.value) return;
+
                 const id = d.data?.id;
                 if (id) {
                     userInteractions.removeHoveredNode(id)
@@ -570,7 +576,7 @@ function resetSimulation() {
 function onClickDiv(event: MouseEvent) {
     graphStore.currentSettings = settings.value ? settings.value : undefined;
     graphStore.activeSettingId = props.settingId;
-    console.log(graphStore.currentSettings);
+    // console.log(graphStore.currentSettings);
 
     // Stop propagation
     event.stopPropagation();

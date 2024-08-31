@@ -42,6 +42,7 @@ export function parseGraphData(
     // }
 ): Graph {
     const data: ApiGraph = typeof jsonGraph === 'string' ? JSON.parse(jsonGraph) : jsonGraph;
+    console.log('data', data);
     const graph = createGraph({ multigraph: true });
 
     const dNodes = data.nodes ?? [];

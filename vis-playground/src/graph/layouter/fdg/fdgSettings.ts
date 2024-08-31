@@ -23,14 +23,14 @@ export class ForceCenterSetting extends Setting {
         key: "strength",
         optional: false,
         active: true,
-        defaultValue: 1,
+        defaultValue: 0.1,
     });
 
     constructor() {
         super({
             key: "forceCenter",
             label: "Force Center",
-            description: "Attracts nodes to the specified center.",
+            description: "Attracts nodes to the center.",
             optional: true,
             active: true,
         });

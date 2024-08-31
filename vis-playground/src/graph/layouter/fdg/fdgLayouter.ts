@@ -52,9 +52,12 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
         if (this.settings.forceCenter.active) {
             // console.log("Adding force center", this.settings.forceCenter.strength.getValue());
-            simulation.force("center", d3.forceCenter().strength(
-                this.settings.forceCenter.strength.getValue(ctx) ?? 1
-            ))
+            // simulation.force("center", d3.forceCenter().strength(
+            //     this.settings.forceCenter.strength.getValue(ctx) ?? 1
+            // ))
+
+            simulation.force("x", d3.forceX().strength(this.settings.forceCenter.strength.getValue(ctx) ?? 1))
+            simulation.force("y", d3.forceY().strength(this.settings.forceCenter.strength.getValue(ctx) ?? 1))
         }
 
         if (this.settings.forceCollide.active) {
@@ -65,6 +68,8 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
                 this.settings.forceCollide.strength.getValue(ctx) ?? 0.5
             ))
         }
+
+
 
         simulation.alpha(isUpdate ? 0.5 : 1).alphaMin(0.01).restart();
     }
