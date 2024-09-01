@@ -69,14 +69,15 @@ export class FlowSorter extends Sorter {
                 sortedSet.add(node)
             }
 
-            // Sort the children by the number of successors they have, ascending
+            // Sort the children by the number of successors they have, descending
             const childrensSuccessorCount = children.map(child => {
                 return {
                     node: child,
                     successorCount: child.getSuccessors().length
                 }
             })
-            const sortedChildren = childrensSuccessorCount.sort((a, b) => a.successorCount - b.successorCount).map(item => item.node)
+            // const sortedChildren = childrensSuccessorCount.sort((a, b) => a.successorCount - b.successorCount).map(item => item.node)
+            const sortedChildren = childrensSuccessorCount.sort((a, b) => b.successorCount - a.successorCount).map(item => item.node)
 
             // Visit each child
             sortedChildren.forEach(child => {
