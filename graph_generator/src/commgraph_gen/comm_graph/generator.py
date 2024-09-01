@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-
+import math
 
 class Distribution:
     def __init__(
@@ -11,13 +11,13 @@ class Distribution:
         self.min_value = min_value
 
     @staticmethod
-    def get_value(value: float | str, total_node_count: int) -> float:
+    def get_value(value: float | str, total_node_count: int | None) -> float:
         if isinstance(value, float):
             return value
         else:
-            return eval(str(value), {"n": total_node_count})
+            return eval(str(value), {"n": total_node_count} if total_node_count else {})
 
-    def sample(self, total_node_count: int) -> float:
+    def sample(self, total_node_count: int | None, only_positive = False) -> float:
         # If expected value / deviation is a float, just take it
         # Otherwise, evaluate the string with n = total_node_count
 
@@ -25,12 +25,15 @@ class Distribution:
         deviation = Distribution.get_value(self.deviation, total_node_count)
 
         val = np.random.normal(expected_value, deviation)
+
+        if only_positive:
+            val = abs(val)
         # val = max(val, self.min_value)
         val = max(val, Distribution.get_value(self.min_value, total_node_count))
         return val
 
-    def sample_int(self, total_node_count: int) -> int:
-        return round(self.sample(total_node_count))
+    def sample_int(self, total_node_count: int | None, only_positive = False) -> int:
+        return round(self.sample(total_node_count, only_positive))
 
 
 class GenBase:
@@ -62,6 +65,9 @@ class GenBase:
 
         random_ids = np.random.choice(list(node_ids), count, replace=False).tolist()
         return random_ids
+
+    def do_with_probability(self, probability: float) -> bool:
+        return np.random.rand() < probability
 
     @staticmethod
     def get_random_selection_of_ids(ids: set[int], count: int) -> list[int]:
@@ -110,7 +116,11 @@ class GenPipeline(GenBase):
         super().__init__()
         # self.node_count_distribution = Distribution(4, 6, min_value=2)
         self.pipeline_length = pipeline_length
-        self.generated_pipeline_count = 0
+        self.generated_pipelines: list[list[int]] = []
+
+    @property
+    def generated_pipeline_count(self) -> int:
+        return len(self.generated_pipelines)
 
     @staticmethod
     def connect_ids_with_a_pipeline(
@@ -143,9 +153,74 @@ class GenPipeline(GenBase):
             # Remove connected nodes from unconnected nodes
             unconnected_ids -= set(random_ids)
 
-            self.generated_pipeline_count += 1
+            # Add pipeline to generated pipelines
+            self.generated_pipelines.append(random_ids)
 
         return graph
+
+
+class GenForwardEdge(GenBase):
+    """
+    Generates forward edges inside a pipeline.
+    A forward edge is a connection from a source node to a sink node.
+
+    This generator iterates over all pipelines and connects nodes inside a pipeline with random count of successor nodes by a forward edge with a given probability.
+    """
+
+    def __init__(self, pipeline_generator: GenPipeline, probability: float):
+        super().__init__()
+        self.probability = float(probability)
+        self.pipeline_generator = pipeline_generator
+        self.count_added_forward_edges = 0
+        self.count_added_forward_edges_sources = 0
+
+    @staticmethod
+    def connect_by_forward_edge(graph: nx.DiGraph, source_id: int, target_ids: list[int] | int):
+        if isinstance(target_ids, int):
+            target_ids = [target_ids]
+
+        for sink_id in target_ids:
+            graph.add_edge(source_id, sink_id)
+
+    def generate_implementation(
+        self, graph: nx.DiGraph
+    ) -> nx.DiGraph:
+        
+        pipelines = self.pipeline_generator.generated_pipelines
+
+        # Go through each pipeline and each node in the pipeline
+        for pipeline in pipelines:
+            # pipeline_length = len(pipeline)
+            for current_node_index, node_id in enumerate(pipeline):
+                # Decide if a forward edge should be added
+                if self.do_with_probability(self.probability):
+
+                    # all_successor_ids = pipeline[current_node_index + 1 :]
+                    # Avoid linking to the direct successor of current node
+                    all_successor_ids_after_direct_successor = pipeline[current_node_index + 2 :]
+
+                    if len(all_successor_ids_after_direct_successor) == 0:
+                        continue
+
+                    # The max count of forwart edges is the length of the pipeline minus the current node
+                    max_forward_edges = len(all_successor_ids_after_direct_successor)
+
+                    distribution = Distribution(0, math.sqrt(max_forward_edges), min_value=1)
+                    forward_edge_count = distribution.sample_int(max_forward_edges, only_positive=True)
+                    
+                    # Get target nodes
+                    target_ids = self.get_random_selection_of_ids(all_successor_ids_after_direct_successor, forward_edge_count)
+
+                    # Connect source node with target nodes
+                    print(f"Connecting {node_id} with {target_ids}")
+                    GenForwardEdge.connect_by_forward_edge(graph, node_id, target_ids)
+
+                    self.count_added_forward_edges += forward_edge_count
+                    self.count_added_forward_edges_sources += 1
+
+        return graph
+
+
 
 
 class GenHub(GenBase):
@@ -247,6 +322,7 @@ class CommGraphGenerator:
         pipeline_length_mu="4",
         pipeline_length_deviation="4",
         pipeline_min_len="3",
+        forward_edge_probability=0.1,
         # hub_count_mu="n / 20",
         # hub_count_deviation="2",
     ) -> nx.DiGraph:
@@ -274,7 +350,12 @@ class CommGraphGenerator:
         pipeline_gen.generate(graph)
         print(f"Generated {pipeline_gen.generated_pipeline_count} pipelines.")
 
+        # Generate forward edges
+        forward_edge_gen = GenForwardEdge(pipeline_gen, probability=forward_edge_probability)
+        forward_edge_gen.generate(graph)
+        print(f"Generated {forward_edge_gen.count_added_forward_edges} forward edges ({forward_edge_gen.count_added_forward_edges_sources} sources).")
         
+
         # # Generate hubs
         # hub_gen = GenHub(node_count, Distribution(hub_count_mu, hub_count_deviation))
         # print(f"Generating {hub_gen.count_to_generate} hubs")
