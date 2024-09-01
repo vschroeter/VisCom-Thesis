@@ -4,7 +4,7 @@ import numpy as np
 
 class Distribution:
     def __init__(
-        self, expected_value: float | str, deviation: float | str, min_value: str | float
+        self, expected_value: float | str, deviation: float | str, min_value=0
     ):
         self.expected_value = expected_value
         self.deviation = deviation
@@ -25,8 +25,7 @@ class Distribution:
         deviation = Distribution.get_value(self.deviation, total_node_count)
 
         val = np.random.normal(expected_value, deviation)
-        # val = max(val, self.min_value)
-        val = max(val, Distribution.get_value(self.min_value, total_node_count))
+        val = max(val, self.min_value)
         return val
 
     def sample_int(self, total_node_count: int) -> int:
@@ -34,14 +33,27 @@ class Distribution:
 
 
 class GenBase:
-    def __init__(self):
+    def __init__(
+        self, total_node_count: int, count_to_generate: Distribution | int = 1
+    ):
+        self.count_to_generate = (
+            count_to_generate
+            if isinstance(count_to_generate, int)
+            else count_to_generate.sample_int(total_node_count)
+        )
         self.count_already_generated = 0
 
-    def generate(self, graph: nx.DiGraph) -> nx.DiGraph:
-        self.generate_implementation(graph)
+    @property
+    def finished(self):
+        return self.count_already_generated >= self.count_to_generate
+
+    def generate(self, graph: nx.DiGraph, node_count: int = -1) -> nx.DiGraph:
+        self.generate_implementation(graph, node_count)
         self.count_already_generated += 1
 
-    def generate_implementation(self, graph: nx.DiGraph) -> nx.DiGraph:
+    def generate_implementation(
+        self, graph: nx.DiGraph, node_count: int = -1
+    ) -> nx.DiGraph:
         raise NotImplementedError
 
     def get_random_node_ids(
@@ -63,59 +75,23 @@ class GenBase:
         random_ids = np.random.choice(list(node_ids), count, replace=False).tolist()
         return random_ids
 
-    @staticmethod
-    def get_random_selection_of_ids(ids: set[int], count: int) -> list[int]:
-        count = min(count, len(ids))
-        return np.random.choice(list(ids), count, replace=False).tolist()
-
-    @staticmethod
-    def get_unconnected_ids(graph: nx.DiGraph) -> set[int]:
-        return set(
-            [
-                node_id
-                for node_id in graph.nodes
-                if (
-                    len(list(graph.successors(node_id))) == 0
-                    and len(list(graph.predecessors(node_id))) == 0
-                )
-            ]
-        )
-
-    @staticmethod
-    def get_connected_ids(graph: nx.DiGraph) -> set[int]:
-        return set(
-            [
-                node_id
-                for node_id in graph.nodes
-                if (
-                    len(list(graph.successors(node_id))) > 0
-                    or len(list(graph.predecessors(node_id))) > 0
-                )
-            ]
-        )
-
 
 class GenPipeline(GenBase):
     """
-    Generates pipelines in the graph.
-    A pipeline is a sequence of n nodes connected by a path.
-    This generator generatores pipelines until all nodes are part of a pipeline.
+    Generates a pipeline:
+    - n nodes connected by a path
 
     Options:
     - prioritize connection of non-connected nodes
     - prioritize source and sink nodes to be already connected nodes
     """
 
-    def __init__(self, pipeline_length: Distribution):
-        super().__init__()
-        # self.node_count_distribution = Distribution(4, 6, min_value=2)
-        self.pipeline_length = pipeline_length
-        self.generated_pipeline_count = 0
+    def __init__(self, total_node_count: int, gen_deviation: Distribution):
+        super().__init__(total_node_count, gen_deviation)
+        self.node_count_distribution = Distribution(4, 6, min_value=2)
 
     @staticmethod
-    def connect_ids_with_a_pipeline(
-        graph: nx.DiGraph, node_ids: list[int]
-    ) -> nx.DiGraph:
+    def connect_pipeline(graph: nx.DiGraph, node_ids: list[int]) -> nx.DiGraph:
         for i in range(1, len(node_ids)):
             graph.add_edge(node_ids[i - 1], node_ids[i])
 
@@ -127,23 +103,16 @@ class GenPipeline(GenBase):
         # Get node count of graph
         total_node_count = len(graph.nodes)
 
-        # Get unconnected node IDs
-        unconnected_ids = GenPipeline.get_unconnected_ids(graph)
+        # Get number of nodes to generate
+        sample_count = self.node_count_distribution.sample_int(total_node_count)
+        node_count = node_count if node_count != -1 else round(sample_count)
 
-        while len(unconnected_ids) > 0:
-            # Get number of nodes to generate
-            pipeline_length = self.pipeline_length.sample_int(total_node_count)
+        # Get random node IDs
+        random_ids = self.get_random_node_ids(graph, node_count)
 
-            # Get random IDs from unconnected nodes
-            random_ids = self.get_random_selection_of_ids(unconnected_ids, pipeline_length)
-
-            # Connect nodes in pipeline
-            GenPipeline.connect_ids_with_a_pipeline(graph, random_ids)
-
-            # Remove connected nodes from unconnected nodes
-            unconnected_ids -= set(random_ids)
-
-            self.generated_pipeline_count += 1
+        # Add links between each node
+        for i in range(1, len(random_ids)):
+            graph.add_edge(random_ids[i - 1], random_ids[i])
 
         return graph
 
@@ -203,6 +172,29 @@ class GenUnconnected(GenBase):
     def __init__(self, total_node_count: int):
         super().__init__(total_node_count, 1)
 
+    @staticmethod
+    def get_unconnected_ids(graph: nx.DiGraph) -> set[int]:
+        # # Get outgoing neighbors
+        # outgoing_neighbors = set()
+        # for node_id in graph.nodes:
+        #     outgoing_neighbors |= set(graph.successors(node_id))
+
+        # # Get incoming neighbors
+        # incoming_neighbors = set()
+        # for node_id in graph.nodes:
+        #     incoming_neighbors |= set(graph.predecessors(node_id))
+
+        return set(
+            [
+                node_id
+                for node_id in graph.nodes
+                if (
+                    len(list(graph.successors(node_id))) == 0
+                    and len(list(graph.predecessors(node_id))) == 0
+                )
+            ]
+        )
+
     def generate_implementation(
         self, graph: nx.DiGraph, node_count: int = -1
     ) -> nx.DiGraph:
@@ -228,7 +220,7 @@ class GenUnconnected(GenBase):
             ids_to_connect = np.random.choice(
                 list(unconnected_ids), count_to_connect, replace=False
             ).tolist()
-            GenPipeline.connect_ids_with_a_pipeline(graph, ids_to_connect)
+            GenPipeline.connect_pipeline(graph, ids_to_connect)
 
             # Remove connected nodes from unconnected nodes
             unconnected_ids -= set(ids_to_connect)
@@ -244,11 +236,10 @@ class CommGraphGenerator:
         self,
         node_count: int,
         seed: int = 42,
-        pipeline_length_mu="4",
-        pipeline_length_deviation="4",
-        pipeline_min_len="3",
-        # hub_count_mu="n / 20",
-        # hub_count_deviation="2",
+        pipeline_count_mu="n/8",
+        pipeline_count_deviation="n/6",
+        hub_count_mu="n / 20",
+        hub_count_deviation="2",
     ) -> nx.DiGraph:
         """
         Generates a communication graph with the given generator settings.
@@ -267,25 +258,27 @@ class CommGraphGenerator:
         for i in range(node_count):
             graph.add_node(i)
 
-        # Generate pipelines
+        # Generate pipeline
         pipeline_gen = GenPipeline(
-            Distribution(pipeline_length_mu, pipeline_length_deviation, pipeline_min_len)
+            node_count,
+            Distribution(pipeline_count_mu, pipeline_count_deviation, min_value=1),
         )
-        pipeline_gen.generate(graph)
-        print(f"Generated {pipeline_gen.generated_pipeline_count} pipelines.")
+        print(f"Generating pipeline with {pipeline_gen.count_to_generate} pipelines")
 
-        
-        # # Generate hubs
-        # hub_gen = GenHub(node_count, Distribution(hub_count_mu, hub_count_deviation))
-        # print(f"Generating {hub_gen.count_to_generate} hubs")
-        # while not hub_gen.finished:
-        #     hub_gen.generate(graph)
+        while not pipeline_gen.finished:
+            pipeline_gen.generate(graph)
 
-        # # Generate unconnected nodes
-        # uc = GenUnconnected.get_unconnected_ids(graph)
-        # print(f"Connecting {len(uc)} unconnected nodes {uc}")
-        # unconnected_gen = GenUnconnected(node_count)
-        # unconnected_gen.generate(graph)
+        # Generate hubs
+        hub_gen = GenHub(node_count, Distribution(hub_count_mu, hub_count_deviation))
+        print(f"Generating {hub_gen.count_to_generate} hubs")
+        while not hub_gen.finished:
+            hub_gen.generate(graph)
+
+        # Generate unconnected nodes
+        uc = GenUnconnected.get_unconnected_ids(graph)
+        print(f"Connecting {len(uc)} unconnected nodes {uc}")
+        unconnected_gen = GenUnconnected(node_count)
+        unconnected_gen.generate(graph)
 
         return graph
 

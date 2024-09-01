@@ -55,8 +55,9 @@ methods_config = {
         "params": {
             "node_count": {"type": "int", "description": "Number of nodes", "range": [1, MAX_NODES], "default": 10},
             "seed": {"type": "int", "description": "Seed for random number generator", "range": [0, 2**32 - 1], "default": None},
-            "pipeline_count_mu": {"type": "str", "description": "Mean of the pipeline count distribution", "default": "n/8"},
-            "pipeline_count_deviation": {"type": "str", "description": "Standard deviation of the pipeline count distribution", "default": "n/6"}
+            "pipeline_length_mu": {"type": "str", "description": "Mean of the pipeline length distribution", "default": "4"},
+            "pipeline_length_deviation": {"type": "str", "description": "Standard deviation of the pipeline length distribution", "default": "4"},
+            "pipeline_min_len": {"type": "str", "description": "Minimum length of the pipeline", "default": "3"},
         },
         "description": "Generates a random graph using the Erdős-Rényi model.",
         "method": CommGraphGenerator().generate
