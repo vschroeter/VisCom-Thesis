@@ -409,6 +409,56 @@ class GenDiamond(GenBase):
         return graph
 
 
+class GenNodeRewiring(GenBase):
+    """
+    This generator selects two random nodes of the graph:
+    - source node s
+    - target node t
+    The target node gets new edges:
+    - all predecessors of s are connected to t
+    - t is connected to all successors of s
+    """
+    def __init__(self, pipeline_generator: GenPipeline, probability: float):
+        super().__init__()
+        self.pipeline_generator = pipeline_generator
+        self.probability = float(probability)
+
+    def generate_implementation(self, graph: nx.DiGraph) -> nx.DiGraph:
+        pipelines = self.pipeline_generator.generated_pipelines
+
+        for pipeline in pipelines:
+            pipeline_length = len(pipeline)
+
+            for node_index, node in enumerate(pipeline):
+                if self.do_with_probability(self.probability):
+                    # Select random source node 
+                    max_tries = 10
+                    while (source_node := random.choice(pipeline)) == node:
+                        max_tries -= 1
+                        if max_tries == 0:
+                            break
+
+                    if source_node == node:
+                        continue
+                    
+                    # Connect the predecessors of source with target
+                    predecessors = list(graph.predecessors(source_node))
+                    for predecessor in predecessors:
+                        graph.add_edge(predecessor, node)
+
+                    # Connect target with the successors of source
+                    successors = list(graph.successors(source_node))
+                    for successor in successors:
+                        # Exclude target as successor
+                        if successor != node:
+                            graph.add_edge(node, successor)
+
+                    print(f"Rewired node {node} with source node {source_node}")
+
+        return graph
+
+
+
 class GenHub(GenBase):
     """
     Generates a hub:
@@ -513,6 +563,7 @@ class CommGraphGenerator:
         cross_connection_probability=0.1,
         cross_integration_probability=0.1,
         diamond_probability=0.1,
+        node_rewiring_probability=0.1,
         # hub_count_mu="n / 20",
         # hub_count_deviation="2",
     ) -> nx.DiGraph:
@@ -579,6 +630,11 @@ class CommGraphGenerator:
         diamond_gen = GenDiamond(pipeline_gen, probability=diamond_probability)
         diamond_gen.generate(graph)
         print(f"Generated diamonds.")
+
+        # Generate node rewiring
+        node_rewiring_gen = GenNodeRewiring(pipeline_gen, probability=node_rewiring_probability)
+        node_rewiring_gen.generate(graph)
+        print(f"Generated node rewirings.")
 
         # # Generate hubs
         # hub_gen = GenHub(node_count, Distribution(hub_count_mu, hub_count_deviation))

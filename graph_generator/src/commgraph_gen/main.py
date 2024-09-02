@@ -63,6 +63,7 @@ methods_config = {
             "cross_connection_probability": {"type": "str", "description": "Probability to generate a cross connection between pipelines", "default": "0.0"},
             "cross_integration_probability": {"type": "str", "description": "Probability to generate a cross integration between pipelines", "default": "0.0"},
             "diamond_probability": {"type": "str", "description": "Probability to generate a diamond connection in a pipeline", "default": "0.0"},
+            "node_rewiring_probability": {"type": "str", "description": "Probability to rewire the connections of a node to another node in the same pipeline", "default": "0.0"},
         },
         "description": "Generates a random graph using the Erdős-Rényi model.",
         "method": CommGraphGenerator().generate
