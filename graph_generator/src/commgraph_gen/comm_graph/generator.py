@@ -100,6 +100,13 @@ class GenBase:
             ]
         )
 
+    @staticmethod
+    def connect_by_edge(graph: nx.DiGraph, source_id: int, target_ids: list[int] | int):
+        if isinstance(target_ids, int):
+            target_ids = [target_ids]
+
+        for target_id in target_ids:
+            graph.add_edge(source_id, target_id)
 
 class GenPipeline(GenBase):
     """
@@ -156,6 +163,8 @@ class GenPipeline(GenBase):
             # Add pipeline to generated pipelines
             self.generated_pipelines.append(random_ids)
 
+            print(f"Generated pipeline: {random_ids}")
+
         return graph
 
 
@@ -173,14 +182,6 @@ class GenForwardEdge(GenBase):
         self.pipeline_generator = pipeline_generator
         self.count_added_forward_edges = 0
         self.count_added_forward_edges_sources = 0
-
-    @staticmethod
-    def connect_by_forward_edge(graph: nx.DiGraph, source_id: int, target_ids: list[int] | int):
-        if isinstance(target_ids, int):
-            target_ids = [target_ids]
-
-        for sink_id in target_ids:
-            graph.add_edge(source_id, sink_id)
 
     def generate_implementation(
         self, graph: nx.DiGraph
@@ -213,13 +214,64 @@ class GenForwardEdge(GenBase):
 
                     # Connect source node with target nodes
                     print(f"Connecting {node_id} with {target_ids}")
-                    GenForwardEdge.connect_by_forward_edge(graph, node_id, target_ids)
+                    GenForwardEdge.connect_by_edge(graph, node_id, target_ids)
 
                     self.count_added_forward_edges += forward_edge_count
                     self.count_added_forward_edges_sources += 1
 
         return graph
 
+
+class GenBackwardEdge(GenBase):
+    """
+    Generates backward edges inside a pipeline.
+    A backward edge is a connection from a sink node to a source node.
+
+    This generator iterates over all pipelines and connects nodes inside a pipeline with random count of predecessor nodes by a backward edge with a given probability.
+    """
+
+    def __init__(self, pipeline_generator: GenPipeline, probability: float):
+        super().__init__()
+        self.probability = float(probability)
+        self.pipeline_generator = pipeline_generator
+        self.count_added_backward_edges = 0
+        self.count_added_backward_edges_sources = 0
+
+    def generate_implementation(
+        self, graph: nx.DiGraph
+    ) -> nx.DiGraph:
+        
+        pipelines = self.pipeline_generator.generated_pipelines
+
+        # Go through each pipeline and each node in the pipeline
+        for pipeline in pipelines:
+            # pipeline_length = len(pipeline)
+            for current_node_index, node_id in enumerate(pipeline):
+                # Decide if a backward edge should be added
+                if self.do_with_probability(self.probability):
+
+                    # all_predecessor_ids = pipeline[:current_node_index]
+                    # Avoid linking to the direct predecessor of current node
+                    first_predecessor_index = max(0, current_node_index - 1)
+                    all_predecessor_ids_before_direct_predecessor = pipeline[:first_predecessor_index]
+
+                    if len(all_predecessor_ids_before_direct_predecessor) == 0:
+                        continue
+
+                    # The max count of backward edges is the length of the pipeline minus the current node
+                    max_backward_edges = len(all_predecessor_ids_before_direct_predecessor)
+
+                    distribution = Distribution(0, math.sqrt(max_backward_edges), min_value=1)
+                    backward_edge_count = distribution.sample_int(max_backward_edges, only_positive=True)
+                    
+                    # Get target nodes
+                    target_ids = self.get_random_selection_of_ids(all_predecessor_ids_before_direct_predecessor, backward_edge_count)
+
+                    # Connect source node with target nodes
+                    print(f"Connecting {node_id} with {target_ids}")
+                    GenBackwardEdge.connect_by_edge(graph, node_id, target_ids)
+
+                    self.count_added_backward_edges += backward_edge_count
 
 
 
@@ -323,6 +375,7 @@ class CommGraphGenerator:
         pipeline_length_deviation="4",
         pipeline_min_len="3",
         forward_edge_probability=0.1,
+        backward_edge_probability=0.1,
         # hub_count_mu="n / 20",
         # hub_count_deviation="2",
     ) -> nx.DiGraph:
@@ -355,6 +408,11 @@ class CommGraphGenerator:
         forward_edge_gen.generate(graph)
         print(f"Generated {forward_edge_gen.count_added_forward_edges} forward edges ({forward_edge_gen.count_added_forward_edges_sources} sources).")
         
+        # Generate backward edges
+        backward_edge_gen = GenBackwardEdge(pipeline_gen, probability=backward_edge_probability)
+        backward_edge_gen.generate(graph)
+        print(f"Generated {backward_edge_gen.count_added_backward_edges} backward edges ({backward_edge_gen.count_added_backward_edges_sources} sources).")
+
 
         # # Generate hubs
         # hub_gen = GenHub(node_count, Distribution(hub_count_mu, hub_count_deviation))

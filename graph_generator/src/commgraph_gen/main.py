@@ -58,7 +58,8 @@ methods_config = {
             "pipeline_length_mu": {"type": "str", "description": "Mean of the pipeline length distribution", "default": "4"},
             "pipeline_length_deviation": {"type": "str", "description": "Standard deviation of the pipeline length distribution", "default": "4"},
             "pipeline_min_len": {"type": "str", "description": "Minimum length of the pipeline", "default": "3"},
-            "forward_edge_probability": {"type": "str", "description": "Probability to generate a forward edge inside a pipeline", "default": "0.5"},
+            "forward_edge_probability": {"type": "str", "description": "Probability to generate a forward edge inside a pipeline", "default": "0.0"},
+            "backward_edge_probability": {"type": "str", "description": "Probability to generate a backward edge inside a pipeline", "default": "0.1"},
         },
         "description": "Generates a random graph using the Erdős-Rényi model.",
         "method": CommGraphGenerator().generate
