@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import math
+import random
 
 class Distribution:
     def __init__(
@@ -274,6 +275,72 @@ class GenBackwardEdge(GenBase):
                     self.count_added_backward_edges += backward_edge_count
 
 
+class GenCrossConnection(GenBase):
+    """
+    This generator adds random cross connections between pipelines with a given probability.
+    """
+
+    def __init__(self, pipeline_generator: GenPipeline, probability: float):
+        super().__init__()
+        self.probability = float(probability)
+        self.pipeline_generator = pipeline_generator
+
+    def generate_implementation(
+        self, graph: nx.DiGraph
+    ) -> nx.DiGraph:
+        pipelines = self.pipeline_generator.generated_pipelines
+
+        for pipeline in pipelines:
+            for node in pipeline:
+                if self.do_with_probability(self.probability):
+                    # Get random pipeline
+                    # other_pipeline_index = np.random.choice(range(len(pipelines)))
+                    # other_pipeline = pipelines[other_pipeline_index]
+                    other_pipeline = random.choice(pipelines)
+
+                    # Get random node from other pipeline
+                    other_node = random.choice(other_pipeline)
+
+                    # Connect node with other node
+                    graph.add_edge(node, other_node)
+        return graph
+
+
+class GenCrossIntegration(GenBase):
+    """
+    This generator integrates a random node from another pipeline into a pipeline with a given probability.
+    """
+
+    def __init__(self, pipeline_generator: GenPipeline, probability: float):
+        super().__init__()
+        self.probability = float(probability)
+        self.pipeline_generator = pipeline_generator
+
+    def generate_implementation(
+        self, graph: nx.DiGraph
+    ) -> nx.DiGraph:
+        pipelines = self.pipeline_generator.generated_pipelines
+
+        for pipeline in pipelines:
+            # Don't mind the last node
+            for node_index, node in enumerate(pipeline[:-1]):
+                next_node = pipeline[node_index + 1]
+                if self.do_with_probability(self.probability):
+                    # Get random pipeline
+                    other_pipeline = random.choice(pipelines)
+
+                    # Get random node from other pipeline
+                    other_node = random.choice(other_pipeline)
+
+                    # Remove edge between node and next node
+                    # Connect node with other node
+                    # Connect other node with next node
+                    graph.remove_edge(node, next_node)
+                    graph.add_edge(node, other_node)
+                    graph.add_edge(other_node, next_node)
+                    
+        return graph
+
 
 class GenHub(GenBase):
     """
@@ -376,6 +443,8 @@ class CommGraphGenerator:
         pipeline_min_len="3",
         forward_edge_probability=0.1,
         backward_edge_probability=0.1,
+        cross_connection_probability=0.1,
+        cross_integration_probability=0.1,
         # hub_count_mu="n / 20",
         # hub_count_deviation="2",
     ) -> nx.DiGraph:
@@ -388,6 +457,7 @@ class CommGraphGenerator:
             seed = None
 
         np.random.seed(seed)
+        random.seed(seed)
 
         # graph = nx.DiGraph()
         graph = nx.MultiDiGraph()
@@ -412,6 +482,16 @@ class CommGraphGenerator:
         backward_edge_gen = GenBackwardEdge(pipeline_gen, probability=backward_edge_probability)
         backward_edge_gen.generate(graph)
         print(f"Generated {backward_edge_gen.count_added_backward_edges} backward edges ({backward_edge_gen.count_added_backward_edges_sources} sources).")
+
+        # Generate cross connections
+        cross_connection_gen = GenCrossConnection(pipeline_gen, probability=cross_connection_probability)
+        cross_connection_gen.generate(graph)
+        print(f"Generated cross connections.")
+
+        # Generate cross integrations
+        cross_integration_gen = GenCrossIntegration(pipeline_gen, probability=cross_integration_probability)
+        cross_integration_gen.generate(graph)
+        print(f"Generated cross integrations.")
 
 
         # # Generate hubs

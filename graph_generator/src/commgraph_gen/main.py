@@ -53,13 +53,15 @@ methods_config = {
     },
     "communication_graph": {
         "params": {
-            "node_count": {"type": "int", "description": "Number of nodes", "range": [1, MAX_NODES], "default": 5},
+            "node_count": {"type": "int", "description": "Number of nodes", "range": [1, MAX_NODES], "default": 15},
             "seed": {"type": "int", "description": "Seed for random number generator", "range": [0, 2**32 - 1], "default": "55"},
             "pipeline_length_mu": {"type": "str", "description": "Mean of the pipeline length distribution", "default": "4"},
             "pipeline_length_deviation": {"type": "str", "description": "Standard deviation of the pipeline length distribution", "default": "4"},
             "pipeline_min_len": {"type": "str", "description": "Minimum length of the pipeline", "default": "3"},
             "forward_edge_probability": {"type": "str", "description": "Probability to generate a forward edge inside a pipeline", "default": "0.0"},
-            "backward_edge_probability": {"type": "str", "description": "Probability to generate a backward edge inside a pipeline", "default": "0.1"},
+            "backward_edge_probability": {"type": "str", "description": "Probability to generate a backward edge inside a pipeline", "default": "0.0"},
+            "cross_connection_probability": {"type": "str", "description": "Probability to generate a cross connection between pipelines", "default": "0.0"},
+            "cross_integration_probability": {"type": "str", "description": "Probability to generate a cross integration between pipelines", "default": "0.0"},
         },
         "description": "Generates a random graph using the Erdős-Rényi model.",
         "method": CommGraphGenerator().generate
