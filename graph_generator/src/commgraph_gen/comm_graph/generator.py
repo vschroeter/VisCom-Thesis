@@ -3,9 +3,13 @@ import numpy as np
 import math
 import random
 
+
 class Distribution:
     def __init__(
-        self, expected_value: float | str, deviation: float | str, min_value: str | float
+        self,
+        expected_value: float | str,
+        deviation: float | str,
+        min_value: str | float,
     ):
         self.expected_value = expected_value
         self.deviation = deviation
@@ -18,7 +22,7 @@ class Distribution:
         else:
             return eval(str(value), {"n": total_node_count} if total_node_count else {})
 
-    def sample(self, total_node_count: int | None, only_positive = False) -> float:
+    def sample(self, total_node_count: int | None, only_positive=False) -> float:
         # If expected value / deviation is a float, just take it
         # Otherwise, evaluate the string with n = total_node_count
 
@@ -33,7 +37,7 @@ class Distribution:
         val = max(val, Distribution.get_value(self.min_value, total_node_count))
         return val
 
-    def sample_int(self, total_node_count: int | None, only_positive = False) -> int:
+    def sample_int(self, total_node_count: int | None, only_positive=False) -> int:
         return round(self.sample(total_node_count, only_positive))
 
 
@@ -109,6 +113,7 @@ class GenBase:
         for target_id in target_ids:
             graph.add_edge(source_id, target_id)
 
+
 class GenPipeline(GenBase):
     """
     Generates pipelines in the graph.
@@ -153,7 +158,9 @@ class GenPipeline(GenBase):
             pipeline_length = self.pipeline_length.sample_int(total_node_count)
 
             # Get random IDs from unconnected nodes
-            random_ids = self.get_random_selection_of_ids(unconnected_ids, pipeline_length)
+            random_ids = self.get_random_selection_of_ids(
+                unconnected_ids, pipeline_length
+            )
 
             # Connect nodes in pipeline
             GenPipeline.connect_ids_with_a_pipeline(graph, random_ids)
@@ -184,10 +191,7 @@ class GenForwardEdge(GenBase):
         self.count_added_forward_edges = 0
         self.count_added_forward_edges_sources = 0
 
-    def generate_implementation(
-        self, graph: nx.DiGraph
-    ) -> nx.DiGraph:
-        
+    def generate_implementation(self, graph: nx.DiGraph) -> nx.DiGraph:
         pipelines = self.pipeline_generator.generated_pipelines
 
         # Go through each pipeline and each node in the pipeline
@@ -196,10 +200,11 @@ class GenForwardEdge(GenBase):
             for current_node_index, node_id in enumerate(pipeline):
                 # Decide if a forward edge should be added
                 if self.do_with_probability(self.probability):
-
                     # all_successor_ids = pipeline[current_node_index + 1 :]
                     # Avoid linking to the direct successor of current node
-                    all_successor_ids_after_direct_successor = pipeline[current_node_index + 2 :]
+                    all_successor_ids_after_direct_successor = pipeline[
+                        current_node_index + 2 :
+                    ]
 
                     if len(all_successor_ids_after_direct_successor) == 0:
                         continue
@@ -207,11 +212,17 @@ class GenForwardEdge(GenBase):
                     # The max count of forwart edges is the length of the pipeline minus the current node
                     max_forward_edges = len(all_successor_ids_after_direct_successor)
 
-                    distribution = Distribution(0, math.sqrt(max_forward_edges), min_value=1)
-                    forward_edge_count = distribution.sample_int(max_forward_edges, only_positive=True)
-                    
+                    distribution = Distribution(
+                        0, math.sqrt(max_forward_edges), min_value=1
+                    )
+                    forward_edge_count = distribution.sample_int(
+                        max_forward_edges, only_positive=True
+                    )
+
                     # Get target nodes
-                    target_ids = self.get_random_selection_of_ids(all_successor_ids_after_direct_successor, forward_edge_count)
+                    target_ids = self.get_random_selection_of_ids(
+                        all_successor_ids_after_direct_successor, forward_edge_count
+                    )
 
                     # Connect source node with target nodes
                     print(f"Connecting {node_id} with {target_ids}")
@@ -238,10 +249,7 @@ class GenBackwardEdge(GenBase):
         self.count_added_backward_edges = 0
         self.count_added_backward_edges_sources = 0
 
-    def generate_implementation(
-        self, graph: nx.DiGraph
-    ) -> nx.DiGraph:
-        
+    def generate_implementation(self, graph: nx.DiGraph) -> nx.DiGraph:
         pipelines = self.pipeline_generator.generated_pipelines
 
         # Go through each pipeline and each node in the pipeline
@@ -250,23 +258,33 @@ class GenBackwardEdge(GenBase):
             for current_node_index, node_id in enumerate(pipeline):
                 # Decide if a backward edge should be added
                 if self.do_with_probability(self.probability):
-
                     # all_predecessor_ids = pipeline[:current_node_index]
                     # Avoid linking to the direct predecessor of current node
                     first_predecessor_index = max(0, current_node_index - 1)
-                    all_predecessor_ids_before_direct_predecessor = pipeline[:first_predecessor_index]
+                    all_predecessor_ids_before_direct_predecessor = pipeline[
+                        :first_predecessor_index
+                    ]
 
                     if len(all_predecessor_ids_before_direct_predecessor) == 0:
                         continue
 
                     # The max count of backward edges is the length of the pipeline minus the current node
-                    max_backward_edges = len(all_predecessor_ids_before_direct_predecessor)
+                    max_backward_edges = len(
+                        all_predecessor_ids_before_direct_predecessor
+                    )
 
-                    distribution = Distribution(0, math.sqrt(max_backward_edges), min_value=1)
-                    backward_edge_count = distribution.sample_int(max_backward_edges, only_positive=True)
-                    
+                    distribution = Distribution(
+                        0, math.sqrt(max_backward_edges), min_value=1
+                    )
+                    backward_edge_count = distribution.sample_int(
+                        max_backward_edges, only_positive=True
+                    )
+
                     # Get target nodes
-                    target_ids = self.get_random_selection_of_ids(all_predecessor_ids_before_direct_predecessor, backward_edge_count)
+                    target_ids = self.get_random_selection_of_ids(
+                        all_predecessor_ids_before_direct_predecessor,
+                        backward_edge_count,
+                    )
 
                     # Connect source node with target nodes
                     print(f"Connecting {node_id} with {target_ids}")
@@ -285,9 +303,7 @@ class GenCrossConnection(GenBase):
         self.probability = float(probability)
         self.pipeline_generator = pipeline_generator
 
-    def generate_implementation(
-        self, graph: nx.DiGraph
-    ) -> nx.DiGraph:
+    def generate_implementation(self, graph: nx.DiGraph) -> nx.DiGraph:
         pipelines = self.pipeline_generator.generated_pipelines
 
         for pipeline in pipelines:
@@ -316,9 +332,7 @@ class GenCrossIntegration(GenBase):
         self.probability = float(probability)
         self.pipeline_generator = pipeline_generator
 
-    def generate_implementation(
-        self, graph: nx.DiGraph
-    ) -> nx.DiGraph:
+    def generate_implementation(self, graph: nx.DiGraph) -> nx.DiGraph:
         pipelines = self.pipeline_generator.generated_pipelines
 
         for pipeline in pipelines:
@@ -338,7 +352,60 @@ class GenCrossIntegration(GenBase):
                     graph.remove_edge(node, next_node)
                     graph.add_edge(node, other_node)
                     graph.add_edge(other_node, next_node)
-                    
+
+        return graph
+
+
+class GenDiamond(GenBase):
+    """
+    This generator takes nodes of a pipeline and connects them in a diamond shape:
+    - select n nodes from the pipeline
+    - direct connections between the nodes are removed
+    - the predecessor of the first node is connected to all selected nodes
+    - all selected nodes are connected to the predecessor of the last node
+    """
+
+    def __init__(self, pipeline_generator: GenPipeline, probability: float):
+        super().__init__()
+        self.pipeline_generator = pipeline_generator
+        self.probability = float(probability)
+
+    def generate_implementation(self, graph: nx.DiGraph) -> nx.DiGraph:
+        pipelines = self.pipeline_generator.generated_pipelines
+
+        for pipeline in pipelines:
+            pipeline_length = len(pipeline)
+
+            if self.do_with_probability(self.probability):
+                # Count of diamond nodes
+                max_diamond_count = pipeline_length - 2
+                if max_diamond_count < 2:
+                    continue
+
+                diamond_count = np.random.randint(2, max_diamond_count) if max_diamond_count > 2 else 2
+
+                # Select random start index
+                start_index = np.random.randint(0, pipeline_length - diamond_count)
+
+                # Get the diamond nodes
+                diamond_nodes = pipeline[start_index : start_index + diamond_count]
+
+                # Connect the predecessors of the first node with all diamond nodes
+                predecessors = list(graph.predecessors(diamond_nodes[0]))
+                for predecessor in predecessors:
+                    for diamond_node in diamond_nodes:
+                        graph.add_edge(predecessor, diamond_node)
+
+                # Connect the diamond nodes with the successors of the last node
+                successors = list(graph.successors(diamond_nodes[-1]))
+                for successor in successors:
+                    for diamond_node in diamond_nodes:
+                        graph.add_edge(diamond_node, successor)
+
+                # Remove direct connections between diamond nodes
+                for i in range(1, len(diamond_nodes)):
+                    graph.remove_edge(diamond_nodes[i - 1], diamond_nodes[i])
+
         return graph
 
 
@@ -445,6 +512,7 @@ class CommGraphGenerator:
         backward_edge_probability=0.1,
         cross_connection_probability=0.1,
         cross_integration_probability=0.1,
+        diamond_probability=0.1,
         # hub_count_mu="n / 20",
         # hub_count_deviation="2",
     ) -> nx.DiGraph:
@@ -459,8 +527,8 @@ class CommGraphGenerator:
         np.random.seed(seed)
         random.seed(seed)
 
-        # graph = nx.DiGraph()
-        graph = nx.MultiDiGraph()
+        graph = nx.DiGraph()
+        # graph = nx.MultiDiGraph()
 
         # Add nodes
         for i in range(node_count):
@@ -468,31 +536,49 @@ class CommGraphGenerator:
 
         # Generate pipelines
         pipeline_gen = GenPipeline(
-            Distribution(pipeline_length_mu, pipeline_length_deviation, pipeline_min_len)
+            Distribution(
+                pipeline_length_mu, pipeline_length_deviation, pipeline_min_len
+            )
         )
         pipeline_gen.generate(graph)
         print(f"Generated {pipeline_gen.generated_pipeline_count} pipelines.")
 
         # Generate forward edges
-        forward_edge_gen = GenForwardEdge(pipeline_gen, probability=forward_edge_probability)
+        forward_edge_gen = GenForwardEdge(
+            pipeline_gen, probability=forward_edge_probability
+        )
         forward_edge_gen.generate(graph)
-        print(f"Generated {forward_edge_gen.count_added_forward_edges} forward edges ({forward_edge_gen.count_added_forward_edges_sources} sources).")
-        
+        print(
+            f"Generated {forward_edge_gen.count_added_forward_edges} forward edges ({forward_edge_gen.count_added_forward_edges_sources} sources)."
+        )
+
         # Generate backward edges
-        backward_edge_gen = GenBackwardEdge(pipeline_gen, probability=backward_edge_probability)
+        backward_edge_gen = GenBackwardEdge(
+            pipeline_gen, probability=backward_edge_probability
+        )
         backward_edge_gen.generate(graph)
-        print(f"Generated {backward_edge_gen.count_added_backward_edges} backward edges ({backward_edge_gen.count_added_backward_edges_sources} sources).")
+        print(
+            f"Generated {backward_edge_gen.count_added_backward_edges} backward edges ({backward_edge_gen.count_added_backward_edges_sources} sources)."
+        )
 
         # Generate cross connections
-        cross_connection_gen = GenCrossConnection(pipeline_gen, probability=cross_connection_probability)
+        cross_connection_gen = GenCrossConnection(
+            pipeline_gen, probability=cross_connection_probability
+        )
         cross_connection_gen.generate(graph)
         print(f"Generated cross connections.")
 
         # Generate cross integrations
-        cross_integration_gen = GenCrossIntegration(pipeline_gen, probability=cross_integration_probability)
+        cross_integration_gen = GenCrossIntegration(
+            pipeline_gen, probability=cross_integration_probability
+        )
         cross_integration_gen.generate(graph)
         print(f"Generated cross integrations.")
 
+        # Generate diamonds
+        diamond_gen = GenDiamond(pipeline_gen, probability=diamond_probability)
+        diamond_gen.generate(graph)
+        print(f"Generated diamonds.")
 
         # # Generate hubs
         # hub_gen = GenHub(node_count, Distribution(hub_count_mu, hub_count_deviation))

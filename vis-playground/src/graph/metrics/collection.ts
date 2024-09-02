@@ -30,7 +30,7 @@ export class MetricsCollection {
         MetricCalculator,
         EdgeLengthCalculator,
         NodeDistanceCalculator,
-        EdgeCrossingsCalculator
+        // EdgeCrossingsCalculator
     ];
 
     // Map from setting id to the metrics results of that setting
