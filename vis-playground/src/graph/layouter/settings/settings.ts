@@ -153,6 +153,10 @@ export class Setting {
         return Object.values(this).filter((value) => value instanceof Param);
     }
 
+    get parameterMap(): Record<string, Param> {
+        return Object.fromEntries(this.parameters.map(param => [param.key, param]));
+    }
+
     get abbreviatedLabel(): string {
 
         const label = this.label ?? this.key;

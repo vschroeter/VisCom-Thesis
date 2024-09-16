@@ -102,6 +102,39 @@ export class CommunicationChannelGraphs {
   }
 }
 
+export class CommunicationGraphCommunity {
+  nodeIds: string[] = [];
+
+  nodeIsInCommunity(node: string | CommunicationNode): boolean {
+    const nodeId = CommunicationGraph.getNodeID(node);
+    return this.nodeIds.includes(nodeId);
+  }
+}
+
+export class CommunicationGraphCommunities {
+  communities: CommunicationGraphCommunity[] = [];
+
+  getCommunitiesOfNode(node?: string | CommunicationNode): number[] {
+    if (!node) {
+      return [];
+    }
+    const nodeId = CommunicationGraph.getNodeID(node);
+    return this.communities
+      .map((community, index) => {
+        return community.nodeIsInCommunity(nodeId) ? index : -1;
+      })
+      .filter((index) => index >= 0);
+  }
+
+  setCommunitiesByList(communitiesIds: string[][]) {
+    this.communities = communitiesIds.map((communityIds) => {
+      const community = new CommunicationGraphCommunity();
+      community.nodeIds = communityIds;
+      return community;
+    });
+  }
+}
+
 /**
  * Class representing a communication graph.
  */
@@ -121,6 +154,8 @@ export class CommunicationGraph<NodeData = any> {
 
   /** Mapping channel type id to the CommunicationChannelGraphs object */
   graphsByChannelType: Map<string, CommunicationChannelGraphs>;
+
+  communities: CommunicationGraphCommunities = new CommunicationGraphCommunities();
 
   /**
    * List of topics that should be hidden
@@ -284,7 +319,7 @@ export class CommunicationGraph<NodeData = any> {
     });
   }
 
-  getNodeID(node: string | CommunicationNode<NodeData>): string {
+  static getNodeID(node: string | CommunicationNode<any>): string {
     if (typeof node === 'string') {
       return node;
     } else {
@@ -338,7 +373,7 @@ export class CommunicationGraph<NodeData = any> {
     const successors: CommunicationNode<NodeData>[] = [];
     const addedNodes = new Set<string>();
 
-    const nodeID = this.getNodeID(node);
+    const nodeID = CommunicationGraph.getNodeID(node);
     const commChannels = this.getChannels(channels);
 
     commChannels.forEach((channel) => {
@@ -417,7 +452,7 @@ export class CommunicationGraph<NodeData = any> {
   ): CommunicationLink[] {
     const links: CommunicationLink[] = [];
 
-    const nodeID = this.getNodeID(node);
+    const nodeID = CommunicationGraph.getNodeID(node);
     const commChannels = this.getChannels(channels);
 
     commChannels.forEach((channel) => {

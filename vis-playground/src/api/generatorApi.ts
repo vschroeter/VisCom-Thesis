@@ -1,17 +1,15 @@
 export interface ApiParam {
+    key: string;
     default: number | null;
     description: string;
     range?: [number, number];
     type: 'int' | 'float' | 'bool' | 'string';
 }
 
-export interface ApiGeneratorParams {
-    [key: string]: ApiParam;
-}
-
 export interface ApiGenerator {
     description: string;
-    params: ApiGeneratorParams;
+    // params: ApiGeneratorParams;
+    params: ApiParam[];
 }
 
 export interface ApiGeneratorMethods {
@@ -42,8 +40,8 @@ export class Param {
         }
     }
 
-    constructor(key: string, param: ApiParam) {
-        this.key = key;
+    constructor(param: ApiParam) {
+        this.key = param.key;
         this.default = param.default;
         this.description = param.description;
         this.range = param.range ? { min: param.range[0], max: param.range[1] } : undefined;
@@ -61,9 +59,9 @@ export class Generator {
         this.key = key;
         this.description = gen.description;
         this.params = new Map<string, Param>();
-
-        for (const [key, param] of Object.entries(gen.params)) {
-            this.params.set(key, new Param(key, param));
+        // console.log(gen);
+        for (const param of gen.params) {
+            this.params.set(param.key, new Param(param));
         }
     }
 

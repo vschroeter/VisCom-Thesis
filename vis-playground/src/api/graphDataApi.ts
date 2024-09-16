@@ -1,5 +1,6 @@
 
 import createGraph, { Graph } from 'ngraph.graph';
+import { CommunicationGraph } from 'src/graph/commGraph';
 
 
 export interface ApiLink {
@@ -22,24 +23,6 @@ export interface ApiGraph {
 
 export function parseGraphData(
     jsonGraph: ApiGraph | string,
-    // { jsonString,
-    //     nodes = 'nodes',
-    //     links = 'links',
-    //     nodeID = 'id',
-    //     linkFrom = 'source',
-    //     linkTo = 'target',
-    //     nodeData = 'data',
-    //     linkData = 'data'
-    // }: {
-    //     jsonString: string,
-    //     nodes?: string,
-    //     links?: string,
-    //     nodeID?: string,
-    //     linkFrom?: string,
-    //     linkTo?: string,
-    //     nodeData?: string,
-    //     linkData?: string
-    // }
 ): Graph {
     const data: ApiGraph = typeof jsonGraph === 'string' ? JSON.parse(jsonGraph) : jsonGraph;
     console.log('data', data);
@@ -69,3 +52,15 @@ export function parseGraphData(
 }
 
 
+
+export function commGraphToNodeLinkData(commGraph: CommunicationGraph) {
+    const nodes: ApiNode[] = [];
+    const links: ApiLink[] = [];
+    commGraph.nodes.forEach((node) => {
+        nodes.push({ id: node.id });
+    });
+    commGraph.getAllLinks().forEach((link) => {
+        links.push({ source: link.fromId, target: link.toId });
+    });
+    return { nodes, links };
+}

@@ -17,7 +17,7 @@
     </q-header>
 
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered :width="leftDrawerWidth" side="left">
-      <GeneratePanel></GeneratePanel>
+      <ApiPanel></ApiPanel>
       <div v-touch-pan.preserveCursor.prevent.mouse.horizontal="resizeLeftDrawer" class="q-drawer__resizerl"></div>
     </q-drawer>
 
@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import EssentialLink, { EssentialLinkProps } from 'components/EssentialLink.vue';
-import GeneratePanel from 'src/components/controlPanels/GeneratePanel.vue';
+import ApiPanel from 'src/components/controlPanels/ApiPanel.vue';
 import SettingPanel from 'src/components/controlPanels/SettingPanel.vue';
 import { useStorage } from '@vueuse/core';
 

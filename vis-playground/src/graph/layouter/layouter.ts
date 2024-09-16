@@ -5,6 +5,8 @@ import { UserInteractions } from "../visualizations/interactions";
 import { CommonSettings } from "./settings/commonSettings";
 import { GraphLayouterSettings } from "./settings/settings";
 
+import * as d3 from 'd3';
+
 export class GraphLayouter<T extends GraphLayouterSettings> {
 
     settings: T;
@@ -72,6 +74,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         mouseleave?: (d: AbstractNode2d, e: MouseEvent) => void,
         click?: (d: AbstractNode2d, e: MouseEvent) => void
     }) {
+        const communitiesColorScheme = d3.interpolateSinebow;
+
         const nodes = selection.selectAll('circle')
             .data(this.graph2d?.nodes)
             .join('circle')
@@ -79,8 +83,25 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('cy', (d: AbstractNode2d) => d.y)
             .attr('r', d => d.radius)
             .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
-            .attr('stroke', 'white')
-            .attr('stroke-width', 1)
+            // .attr('stroke', 'white')
+            .attr('stroke', d => {
+                const communities = this.commGraph.communities.getCommunitiesOfNode(d.data);
+
+                if (communities.length === 0) {
+                    return 'white';
+                }
+
+                const totalCommunityCount = this.commGraph.communities.communities.length;
+                if (totalCommunityCount === 0) {
+                    return 'white';
+                }
+
+                // Position on color scheme between 0 and 1
+                const positionOfNodeCommunity = communities[0] / totalCommunityCount;
+
+                return communitiesColorScheme(positionOfNodeCommunity);
+            })
+            .attr('stroke-width', 2)
             .attr('opacity', d => {
 
                 if (this.userInteractions.somethinIsSelectedOrFocusedOrHovered) {

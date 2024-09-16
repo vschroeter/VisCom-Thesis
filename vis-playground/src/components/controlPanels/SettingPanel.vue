@@ -7,24 +7,8 @@
 
                 <div v-for="param in commonSettings.parameters" :key="param.key" class="q-mb-md">
                     <!-- :rules="['anyColor']" -->
-                    <q-input v-model="param.textValue" filled :label="param.label" :hint="param.description">
 
-                        <!-- If color, add a icon for the color picker -->
-                        <template v-slot:append v-if="param.type == 'color'">
-                            <q-icon name="colorize" class="cursor-pointer">
-                                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                                    <q-color v-model="param.textValue" :palette="palette" format-model="rgba" />
-                                </q-popup-proxy>
-                            </q-icon>
-                        </template>
-                        <!-- Add a small circle showing that color -->
-                        <template v-slot:prepend v-if="param.type == 'color'">
-                            <div
-                                :style="{ backgroundColor: param.textValue, width: '20px', height: '20px', borderRadius: '50%', border: '1px solid black' }">
-                            </div>
-                        </template>
-
-                    </q-input>
+                    <ParamInput v-model="commonSettings.parameterMap[param.key]" outlined/>
 
 
                 </div>
@@ -175,6 +159,8 @@ import { useGraphStore } from 'src/stores/graph-store';
 import { computed, onMounted, onUpdated, ref, watch, type Ref } from 'vue'
 
 import * as d3 from 'd3'
+import ParamInput from '../elements/ParamInput.vue';
+import { CommonSettings } from 'src/graph/layouter/settings/commonSettings';
 
 ////////////////////////////////////////////////////////////////////////////
 // Props
@@ -199,7 +185,7 @@ const store = useGraphStore()
 
 // const currentSettings = computed(() => store.currentSettings)
 const currentSettings: Ref<GraphLayouterSettings | undefined> = ref(store.currentSettings) as Ref<GraphLayouterSettings | undefined>
-const commonSettings = computed(() => store.settingsCollection.commonSettings)
+const commonSettings = computed(() => store.settingsCollection.commonSettings as CommonSettings)
 const showCommonSettings = ref(false);
 
 const palette = computed(() => {

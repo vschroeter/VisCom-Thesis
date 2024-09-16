@@ -22,7 +22,7 @@ export class CommonSettings extends Setting {
     })
 
     nodeSize = new ParamWithNodeContext({
-        type: "number",
+        type: "string",
         key: "nodeSize",
         label: "Node Size",
         description: "The size of the nodes",
@@ -39,6 +39,14 @@ export class CommonSettings extends Setting {
         defaultValue: "#000000AA",
     })
 
+    showCommunities = new Param({
+        type: "boolean",
+        key: "showCommunities",
+        label: "Show Communities",
+        description: "Show communities",
+        optional: false,
+        defaultValue: true,
+    })
 
 
 
