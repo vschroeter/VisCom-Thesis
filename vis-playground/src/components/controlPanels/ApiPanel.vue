@@ -232,20 +232,37 @@ function fetchGeneratedGraph(generatorId?: string) {
         params.append(param.key, param.value.toString())
     })
 
-    fetch(`${url}?${params.toString()}`)
+    return fetch(`${url}?${params.toString()}`)
         .then(response => response.json())
         .then((data) => {
             const graph = parseGraphData(data)
 
             const commGraph = convertGraphToCommGraph(graph)
 
+            if (commGraph === null) {
+                return
+            }
+
             console.log(data, graph, commGraph)
-            graphStore.setGraph(commGraph)
+            if (selectedCommunityDetection.value?.key !== undefined) {
+                fetchCommunities(selectedCommunityDetection.value?.key, commGraph)?.then(() => {
+                    // graphStore.setGraph(commGraph)
+                }).finally(() => {
+                    graphStore.setGraph(commGraph)
+                })
+            } else {
+                graphStore.setGraph(commGraph)
+            }
         })
 }
 
-function fetchCommunities(generatorId?: string) {
+function fetchCommunities(generatorId?: string, graph?: CommunicationGraph) {
     if (generatorId === undefined) {
+        return
+    }
+
+    graph = graph ?? currentGraph.value
+    if (!graph) {
         return
     }
 
@@ -259,9 +276,9 @@ function fetchCommunities(generatorId?: string) {
     const urlWithParams = `${url}?${params.toString()}`
 
     // Fetch a POST request with the parameters
-    fetch(urlWithParams, {
+    return fetch(urlWithParams, {
         method: 'POST',
-        body: JSON.stringify(commGraphToNodeLinkData(currentGraph.value)),
+        body: JSON.stringify(commGraphToNodeLinkData(graph)),
         headers: {
             'Content-Type': 'application/json'
         }
@@ -269,7 +286,7 @@ function fetchCommunities(generatorId?: string) {
         .then(response => response.json())
         .then((data) => {
             console.log(data)
-            currentGraph.value.communities.setCommunitiesByList(data)
+            graph?.communities.setCommunitiesByList(data)
         })
 
 }

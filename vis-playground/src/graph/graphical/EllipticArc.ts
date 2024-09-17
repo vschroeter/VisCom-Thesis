@@ -143,7 +143,11 @@ export class EllipticArc {
     }
 
     toString() {
-        this.checkIfValid();
+        try {
+            this.checkIfValid();
+        } catch (e) {
+            return "";
+        }
 
         let s = "";
         if (this._start) {
