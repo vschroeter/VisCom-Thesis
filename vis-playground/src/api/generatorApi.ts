@@ -10,6 +10,7 @@ export interface ApiGenerator {
     description: string;
     // params: ApiGeneratorParams;
     params: ApiParam[];
+    is_saved_dataset?: boolean;
 }
 
 export interface ApiGeneratorMethods {
@@ -53,12 +54,18 @@ export class Param {
 export class Generator {
     key: string;
     description: string;
+    isStoredDataset: boolean = false;
     params: Map<string, Param>;
 
     constructor(key: string, gen: ApiGenerator) {
         this.key = key;
         this.description = gen.description;
         this.params = new Map<string, Param>();
+
+        if (gen.is_saved_dataset) {
+            this.isStoredDataset = true;
+        }
+
         // console.log(gen);
         for (const param of gen.params) {
             this.params.set(param.key, new Param(param));

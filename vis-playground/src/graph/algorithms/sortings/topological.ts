@@ -122,12 +122,22 @@ export class TopologicalSorter extends Sorter {
         const nonAssignedNodes = new Set<CommunicationNode>(component)
         const gen0nodes: Set<CommunicationNode> = new Set<CommunicationNode>()
 
-        // To start we take every node that has no parents and set the generation to 0
+        // To start we take every node that has no parents and so siblings and set the generation to 0
         for (const node of mapNodeToItsParents.keys()) {
-            if (!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) {
+            if ((!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) && (!mapNodeToItsSiblings.has(node) || mapNodeToItsSiblings.get(node)!.size == 0)) {
                 generationMap.set(node, 0)
                 gen0nodes.add(node)
                 nonAssignedNodes.delete(node)
+            }
+        }
+        // If there are no gen0 nodes due to sibling structures, take all nodes, that have no parents
+        if (gen0nodes.size == 0) {
+            for (const node of mapNodeToItsParents.keys()) {
+                if (!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) {
+                    generationMap.set(node, 0)
+                    gen0nodes.add(node)
+                    nonAssignedNodes.delete(node)
+                }
             }
         }
 
@@ -215,7 +225,7 @@ export class TopologicalSorter extends Sorter {
     }
 
     sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
-        
+
         if (this.startNodeSelectionSorter) {
             nodes = this.startNodeSelectionSorter.getSorting(nodes);
         }

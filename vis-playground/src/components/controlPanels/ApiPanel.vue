@@ -153,27 +153,22 @@ const generators = computed(() => {
     if (generateMethods.value === null) {
         return []
     }
-    return Array.from(generateMethods.value?.generators.values())
+
+
+
+    return Array.from(generateMethods.value?.generators.values()).sort((a, b) => {
+        if (a.isStoredDataset == b.isStoredDataset) {
+            return a.key.localeCompare(b.key)
+        }
+
+        return a.isStoredDataset ? 1 : -1
+    })
 })
 
 
 watch(selectedGenerator, (newVal) => {
     console.log(newVal)
 })
-
-
-
-
-// const selectedGenerator = ref('')
-// const generatorNames = computed(() => {
-//     if (generateMethods.value === null) {
-//         return []
-//     }
-//     // Remove underscore and make the words capitalized
-//     return Array.from(generateMethods.value?.generators.keys()).map((k) => {
-//         return k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-//     })
-// })
 
 
 ////////////////////////////////////////////////////////////////////////////

@@ -28,7 +28,6 @@ export class FlowSorter extends Sorter {
         this.topoligicalSorter.secondarySorting = this.secondarySorting
 
         const topoGens = this.topoligicalSorter.getTopologicalGenerations(nodes[0], undefined, nodes);
-        const topoSorting = this.topoligicalSorter.getSorting()
 
         const genMap = new Map<CommunicationNode, number>()
         topoGens.forEach(gen => {
@@ -60,7 +59,11 @@ export class FlowSorter extends Sorter {
             //    - currently visited, thus in the current path OR
             //    - also child, thus sibling connections, which can be ignored OR
             //    - in a later generation, thus the connections making this node a parent can be ignored
-            const allParentsAreSorted = parents.length == 0 || Array.from(parents).every(parent => sortedSet.has(parent) || currentlyVisited.has(parent) || children.includes(parent) || genMap.get(parent)! > nodesGen)
+            const allParentsAreSorted = parents.length == 0 ||
+                Array.from(parents).every(parent => sortedSet.has(parent) ||
+                    currentlyVisited.has(parent) ||
+                    children.includes(parent) ||
+                    genMap.get(parent)! > nodesGen)
             if (!allParentsAreSorted) return
 
             // Add the node to the sorted list
@@ -88,14 +91,26 @@ export class FlowSorter extends Sorter {
             })
         }
 
-        // Visit each node in the topological sorting
-        while (sorted.length < topoSorting.length) {
-            let i = 0;
-            while (i < topoSorting.length) {
-                visitNode(topoSorting[i])
-                i++
+        // We don't want to visit nodes from different connected components at the same time, 
+        // so we do the visiting for each connected component separately, starting with the smallest one
+
+        // Get the connected components
+        const connectedComponents = this.clusterer.getConnectedComponents().sort((a, b) => a.length - b.length)
+
+        // Visit each connected component
+        connectedComponents.forEach(component => {
+            const topoSorting = this.topoligicalSorter.getSorting(component)
+    
+            const alreadySortedCount = sorted.length
+
+            // Visit each node in the topological sorting
+            while ((sorted.length - alreadySortedCount) < topoSorting.length) {
+                topoSorting.forEach(node => {
+                    visitNode(node)
+                })
             }
-        }
+        })
+
 
         return sorted
     }

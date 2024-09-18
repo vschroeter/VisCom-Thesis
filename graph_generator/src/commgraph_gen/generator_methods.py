@@ -3,6 +3,7 @@ from __future__ import annotations
 import networkx as nx
 
 from commgraph_gen.comm_graph.generator import CommGraphGenerator
+from commgraph_gen.comm_graph.saved_data.reader import RosMetaSysGraphGenerator
 
 MAX_NODES = 1000
 
@@ -67,3 +68,5 @@ generator_methods_config = {
     },
     "zacharys_karate_club": {"params": [], "description": "Generates the Zachary's Karate Club graph.", "method": nx.karate_club_graph},
 }
+
+RosMetaSysGraphGenerator.extent_generator_methods(generator_methods_config)
