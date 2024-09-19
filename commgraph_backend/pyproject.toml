@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 
 [project]
-name = "commgraph-gen"
+name = "commgraph-backend"
 version = "0.1.0"
 authors = [
   { name="Valentin Schröter", email="valentin.schroeter@student.hpi.uni-potsdam.de" },

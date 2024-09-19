@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import networkx as nx
 
-from commgraph_gen.comm_graph.generator import CommGraphGenerator
-from commgraph_gen.comm_graph.saved_data.reader import RosMetaSysGraphGenerator
+from commgraph_backend.data.reader import RosMetaSysGraphGenerator
+from commgraph_backend.generator.generator import CommGraphGenerator
 
 MAX_NODES = 1000
 

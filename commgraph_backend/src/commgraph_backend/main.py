@@ -6,9 +6,9 @@ import networkx as nx
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from commgraph_gen.comm_graph.generator import CommGraphGenerator
-from commgraph_gen.community_detection_methods import community_methods_config
-from commgraph_gen.generator_methods import generator_methods_config
+from commgraph_backend.communities.community_detection_methods import community_methods_config
+from commgraph_backend.generator.generator import CommGraphGenerator
+from commgraph_backend.generator.generator_methods import generator_methods_config
 
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +16,7 @@ CORS(app)
 MAX_NODES = 1000
 
 
-@app.route('/generate/methods', methods=['GET'])
+@app.route("/generate/methods", methods=["GET"])
 def get_methods():
     # Drop method references from config
     # Deep copy to avoid modifying the original config
@@ -26,43 +26,43 @@ def get_methods():
 
     return jsonify(methods_config_copy)
 
-@app.route('/generate/<generator>', methods=['GET'])
+
+@app.route("/generate/<generator>", methods=["GET"])
 def generate_graph(generator):
     if generator not in generator_methods_config:
         return jsonify({"error": "Unknown generator"}), 400
-    
+
     params = {}
     # for param_name, param_config in generator_methods_config[generator]['params'].items():
-    for param_config in generator_methods_config[generator]['params']:
-        param_name = param_config['key']
+    for param_config in generator_methods_config[generator]["params"]:
+        param_name = param_config["key"]
         param_value = request.args.get(param_name)
         if param_value is None:
             # Use default value if parameter is missing
-            if 'default' in param_config:
-                param_value = param_config['default']
+            if "default" in param_config:
+                param_value = param_config["default"]
             else:
                 return jsonify({"error": f"Missing parameter: {param_name}"}), 400
-        
+
         # Convert parameter value to correct type
-        if param_value is not None and param_config['type'] != 'str':
-            if param_config['type'] == 'int':
+        if param_value is not None and param_config["type"] != "str":
+            if param_config["type"] == "int":
                 param_value = int(param_value)
-            elif param_config['type'] == 'float':
+            elif param_config["type"] == "float":
                 param_value = float(param_value)
-        
+
             # Check if parameter value is within valid range
-            if 'range' in param_config and not (param_config['range'][0] <= param_value <= param_config['range'][1]):
+            if "range" in param_config and not (param_config["range"][0] <= param_value <= param_config["range"][1]):
                 return jsonify({"error": f"Parameter {param_name} out of range"}), 400
-        
+
         params[param_name] = param_value
-    
-    graph = generator_methods_config[generator]['method'](**params)
+
+    graph = generator_methods_config[generator]["method"](**params)
     data = nx.node_link_data(graph)
     return jsonify(data)
 
 
-
-@app.route('/analyze/communities/methods', methods=['GET'])
+@app.route("/analyze/communities/methods", methods=["GET"])
 def get_community_methods():
     # Drop method references from config
     # Deep copy to avoid modifying the original config
@@ -72,42 +72,42 @@ def get_community_methods():
 
     return jsonify(community_methods_config_copy)
 
-@app.route('/analyze/communities/<method>', methods=['POST'])
-def analyze_communities(method):
 
+@app.route("/analyze/communities/<method>", methods=["POST"])
+def analyze_communities(method):
     # Get the body of the request
     data = request.get_json()
     # print(data)
 
     if method not in community_methods_config:
         return jsonify({"error": "Unknown method"}), 400
-    
+
     params = {}
-    for param in community_methods_config[method]['params']:
-        param_value = request.args.get(param['key'])
+    for param in community_methods_config[method]["params"]:
+        param_value = request.args.get(param["key"])
         if param_value is None:
             # Use default value if parameter is missing
-            if 'default' in param:
-                param_value = param['default']
+            if "default" in param:
+                param_value = param["default"]
             else:
                 return jsonify({"error": f"Missing parameter: {param['key']}"}), 400
-        
+
         # Convert parameter value to correct type
-        if param_value is not None and param['type'] != 'str':
-            if param['type'] == 'int':
+        if param_value is not None and param["type"] != "str":
+            if param["type"] == "int":
                 param_value = int(param_value)
-            elif param['type'] == 'float':
+            elif param["type"] == "float":
                 param_value = float(param_value)
-        
+
             # Check if parameter value is within valid range
-            if 'range' in param and not (param['range'][0] <= param_value <= param['range'][1]):
+            if "range" in param and not (param["range"][0] <= param_value <= param["range"][1]):
                 return jsonify({"error": f"Parameter {param['key']} out of range"}), 400
-        
-        params[param['key']] = param_value
-    
+
+        params[param["key"]] = param_value
+
     data = request.get_json()
     graph = nx.node_link_graph(data)
-    result = community_methods_config[method]['method'](graph, **params)
+    result = community_methods_config[method]["method"](graph, **params)
     # print(result)
 
     # Convert sets in the result to lists
@@ -115,5 +115,6 @@ def analyze_communities(method):
 
     return jsonify(result)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True)
