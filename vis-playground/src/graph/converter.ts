@@ -1,12 +1,13 @@
 import { Graph } from 'ngraph.graph';
 import { CommunicationChannel, CommunicationGraph, CommunicationNode, CommunicationTopic, MessageType } from "./commGraph";
+import { ApiGraphData } from 'src/api/graphDataApi';
 
-export function convertGraphToCommGraph(graph: Graph): CommunicationGraph {
-  const channels = [new CommunicationChannel('PubSub')];
+export function convertGraphToCommGraph(graph: Graph<any, ApiGraphData>): CommunicationGraph {
+  const channels = [new CommunicationChannel('PubSub'), new CommunicationChannel('Services')];
   const commNodes = new Array<CommunicationNode>();
   const commNodesMap = new Map<string, CommunicationNode>();
 
-  let topicId = 0;
+  let topicIdCounter = 0;
 
   graph.forEachNode((node) => {
     const commNode = new CommunicationNode(node.id.toString());
@@ -16,33 +17,47 @@ export function convertGraphToCommGraph(graph: Graph): CommunicationGraph {
   graph.forEachLink((link) => {
     const from = link.fromId.toString();
     const to = link.toId.toString();
-
+    
     const fromNode = commNodesMap.get(from) ?? new CommunicationNode(from);
     const toNode = commNodesMap.get(to) ?? new CommunicationNode(to);
 
-    const channel = channels[0];
+    const pubTopic = link.data.pub_topic;
+    const serviceName = link.data.service_name;
+
+    const channel = pubTopic ? channels[0] : channels[1];
+    const topicId = (pubTopic ? pubTopic : serviceName) ?? (topicIdCounter++).toString();
+    // const channel = channels[0];
+
+    console.log({
+      from,
+      to,
+      pubTopic,
+      serviceName,
+      channel,
+      topicId,
+      link
+    });
+
     const topicOut = new CommunicationTopic(
       fromNode.id.toString(),
-      topicId.toString(),
+      topicId,
       channel,
       'outgoing',
       new MessageType('Message'),
     );
     const topicIn = new CommunicationTopic(
-      fromNode.id.toString(),
-      topicId.toString(),
+      toNode.id.toString(),
+      topicId,
       channel,
       'incoming',
       new MessageType('Message'),
     );
 
-    fromNode.topics.push(topicOut);
-    toNode.topics.push(topicIn);
+    fromNode.addTopic(topicOut);
+    toNode.addTopic(topicIn);
 
     commNodesMap.set(from, fromNode);
     commNodesMap.set(to, toNode);
-
-    topicId++;
   });
 
   commNodesMap.forEach((node) => {
@@ -50,5 +65,6 @@ export function convertGraphToCommGraph(graph: Graph): CommunicationGraph {
   });
 
   const commGraph = new CommunicationGraph(commNodes, channels);
+  console.log('commGraph', commGraph);
   return commGraph;
 }

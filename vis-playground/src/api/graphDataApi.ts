@@ -6,7 +6,9 @@ import { CommunicationGraph } from 'src/graph/commGraph';
 export interface ApiLink {
     source: string;
     target: string;
-    data?: object;
+    
+    pub_topic?: string;
+    service_name?: string;
 }
 
 export interface ApiNode {
@@ -21,9 +23,14 @@ export interface ApiGraph {
     directed: boolean;
 }
 
+export interface ApiGraphData {
+    pub_topic?: string;
+    service_name?: string;
+}
+
 export function parseGraphData(
     jsonGraph: ApiGraph | string,
-): Graph {
+): Graph<any, ApiGraphData> {
     const data: ApiGraph = typeof jsonGraph === 'string' ? JSON.parse(jsonGraph) : jsonGraph;
     console.log('data', data);
     const graph = createGraph({ multigraph: true });
@@ -42,11 +49,17 @@ export function parseGraphData(
     dLinks.forEach((link) => {
         const dFrom = link.source ?? null;
         const dTo = link.target ?? null;
-        const dData = link.data ?? null;
+        // const dData = link.data ?? null;
+
+        const data = {
+            service_name: link.service_name,
+            pub_topic: link.pub_topic,
+        }
+
         if (dFrom === null || dTo === null) {
             throw new Error('linkFrom or linkTo not found in link' + JSON.stringify(link));
         }
-        graph.addLink(dFrom, dTo, dData);
+        graph.addLink(dFrom, dTo, data);
     });
     return graph;
 }

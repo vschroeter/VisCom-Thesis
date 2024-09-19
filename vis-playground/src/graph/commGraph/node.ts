@@ -45,6 +45,29 @@ export class CommunicationNode<NodeData = any> {
   }
 
   ////////////////////////////////////////////////////////////////////////////
+  // Topic Methods
+  ////////////////////////////////////////////////////////////////////////////
+
+  addTopic(topic: CommunicationTopic, ignoreExisting = true) {
+
+    // Check if the ID is correct
+    if (topic.nodeID !== this.id) {
+      throw new Error('Topic does not belong to the node');
+    }
+
+    // Check if the topic already exists
+    for (const existingTopic of this.topics) {
+      if (existingTopic.id === topic.id && existingTopic.channel === topic.channel && existingTopic.direction === topic.direction) {
+        if (ignoreExisting) return;
+        
+        throw new Error(`Topic with id ${topic.id} (${topic.channel.type}, ${topic.direction}) already exists`);
+      }
+    }
+    
+    this.topics.push(topic);
+  }
+
+  ////////////////////////////////////////////////////////////////////////////
   // Node methods
   ////////////////////////////////////////////////////////////////////////////
 
