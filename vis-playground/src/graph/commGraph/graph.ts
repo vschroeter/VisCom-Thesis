@@ -135,6 +135,44 @@ export class CommunicationGraphCommunities {
   }
 }
 
+export class NodeRanking {
+  nodeRanks: Map<string, number> = new Map<string, number>();
+
+  clear() {
+    this.nodeRanks.clear();
+  }
+
+  getRankExtent(): [number, number] {
+    let minRank = Number.POSITIVE_INFINITY;
+    let maxRank = Number.NEGATIVE_INFINITY;
+    this.nodeRanks.forEach((rank) => {
+      minRank = Math.min(minRank, rank);
+      maxRank = Math.max(maxRank, rank);
+    });
+    return [minRank, maxRank];
+  }
+
+  getRankOfNode(node?: string | CommunicationNode): number {
+    if (!node) {
+      return 0;
+    }
+    const nodeId = CommunicationGraph.getNodeID(node);
+    return this.nodeRanks.get(nodeId) || 0;
+  }
+
+  setRankOfNode(node: string | CommunicationNode, rank: number) {
+    const nodeId = CommunicationGraph.getNodeID(node);
+    this.nodeRanks.set(nodeId, rank);
+  }
+
+  setRankingByList(ranking: [string, number][]) {
+    for (const [nodeId, rank] of ranking) {
+      this.setRankOfNode(nodeId, rank);
+    }
+  }
+
+}
+
 /**
  * Class representing a communication graph.
  */
@@ -156,6 +194,7 @@ export class CommunicationGraph<NodeData = any> {
   graphsByChannelType: Map<string, CommunicationChannelGraphs>;
 
   communities: CommunicationGraphCommunities = new CommunicationGraphCommunities();
+  ranking: NodeRanking = new NodeRanking();
 
   /**
    * List of topics that should be hidden
@@ -468,6 +507,7 @@ export class CommunicationGraph<NodeData = any> {
             ) {
               links.push(
                 new CommunicationLink(
+                  link.data.topic.id,
                   link.fromId as string,
                   link.toId as string,
                   channel,

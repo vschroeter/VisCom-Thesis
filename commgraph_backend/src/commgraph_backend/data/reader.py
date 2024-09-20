@@ -7,7 +7,7 @@ import networkx as nx
 
 class RosMetaSysGraphGenerator:
     @staticmethod
-    def get_available_datasets():
+    def get_available_datasets(return_full_path=False):
         datasets = []
 
         # Search for all jsons in the ./datasets folder
@@ -17,6 +17,9 @@ class RosMetaSysGraphGenerator:
         for file in os.listdir(path):
             if file.endswith(".json"):
                 datasets.append(file)
+
+        if return_full_path:
+            return [os.path.join(path, dataset) for dataset in datasets]
 
         return datasets
 

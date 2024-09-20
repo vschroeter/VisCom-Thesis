@@ -81,7 +81,8 @@
                         </q-item-label>
 
                         <!-- Input for each parameter in the selected generator, depending on its type. -->
-                        <q-item v-for="(param, key) in selectedCommunityDetection?.paramList" :key="key" class="q-mb-xs">
+                        <q-item v-for="(param, key) in selectedCommunityDetection?.paramList" :key="key"
+                            class="q-mb-xs">
                             <q-item-section>
                                 <q-item-label>
                                     {{ param.description }}
@@ -102,6 +103,41 @@
 
                 </q-card>
             </q-expansion-item>
+
+            <q-expansion-item label="Node Ranking" icon="sym_o_analytics" expand-separator>
+                <q-card>
+                    <q-card-section>
+
+                        <q-select v-model="selectedNodeRanking" :options="nodeRankings"
+                            :option-label="(ranking: Generator) => keyToName(ranking.key)" label="Node Ranking Method"
+                            outlined @focus="fetchNodeRankingMethods" class="q-mb-md" />
+
+                        <!-- Description of the ranking -->
+                        <q-item-label class="q-mb-md">
+                            {{ selectedNodeRanking?.description }}
+                        </q-item-label>
+
+                        <!-- Input for each parameter in the selected ranking, depending on its type. -->
+                        <q-item v-for="(param, key) in selectedNodeRanking?.paramList" :key="key" class="q-mb-xs">
+                            <q-item-section>
+                                <q-item-label>
+                                    {{ param.description }}
+                                </q-item-label>
+                            </q-item-section>
+                            <q-item-section>
+                                <q-input v-model="param.value" :type="param.inputType" :min="param.range?.min"
+                                    :max="param.range?.max" :step="param.type == 'int' ? 1 : 0.01" outlined />
+                            </q-item-section>
+                        </q-item>
+
+                        <!-- Button to fetch the ranking -->
+                        <q-btn :disable="selectedNodeRanking === null" label="Generate" color="primary"
+                            @click="fetchNodeRanking(selectedNodeRanking?.key)" />
+
+                    </q-card-section>
+                </q-card>
+            </q-expansion-item>
+
         </q-list>
 
     </div>
@@ -171,30 +207,6 @@ watch(selectedGenerator, (newVal) => {
 })
 
 
-////////////////////////////////////////////////////////////////////////////
-// Community Detection Methods
-////////////////////////////////////////////////////////////////////////////
-const showComunityDetectionSettings = useStorage("showComunityDetectionSettings", true)
-const communityDetectionMethods: Ref<GeneratorMethods | null> = ref(null)
-
-const selectedCommunityDetection: Ref<Generator | null> = ref(null)
-
-const communityDetections = computed(() => {
-    if (communityDetectionMethods.value === null) {
-        return []
-    }
-    return Array.from(communityDetectionMethods.value?.generators.values())
-})
-
-
-////////////////////////////////////////////////////////////////////////////
-// Helper functions
-////////////////////////////////////////////////////////////////////////////
-
-function keyToName(key: string) {
-    return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
 function fetchGenerateMethods() {
     fetch(`${generatorApiUrl.value}/generate/methods`)
         .then(response => response.json())
@@ -205,15 +217,6 @@ function fetchGenerateMethods() {
         })
 }
 
-function fetchCommunityDetectionMethods() {
-    fetch(`${generatorApiUrl.value}/analyze/communities/methods`)
-        .then(response => response.json())
-        .then((data: ApiGeneratorMethods) => {
-            const methods = reactive(new GeneratorMethods(data))
-            communityDetectionMethods.value = methods
-            console.log(communityDetectionMethods)
-        })
-}
 
 function fetchGeneratedGraph(generatorId?: string) {
     if (generatorId === undefined) {
@@ -251,6 +254,34 @@ function fetchGeneratedGraph(generatorId?: string) {
         })
 }
 
+////////////////////////////////////////////////////////////////////////////
+// Community Detection Methods
+////////////////////////////////////////////////////////////////////////////
+const showComunityDetectionSettings = useStorage("showComunityDetectionSettings", true)
+const communityDetectionMethods: Ref<GeneratorMethods | null> = ref(null)
+
+const selectedCommunityDetection: Ref<Generator | null> = ref(null)
+
+const communityDetections = computed(() => {
+    if (communityDetectionMethods.value === null) {
+        return []
+    }
+    return Array.from(communityDetectionMethods.value?.generators.values())
+})
+
+
+function fetchCommunityDetectionMethods() {
+    fetch(`${generatorApiUrl.value}/analyze/communities/methods`)
+        .then(response => response.json())
+        .then((data: ApiGeneratorMethods) => {
+            const methods = reactive(new GeneratorMethods(data))
+            communityDetectionMethods.value = methods
+            console.log(communityDetectionMethods)
+        })
+}
+
+
+
 function fetchCommunities(generatorId?: string, graph?: CommunicationGraph) {
     if (generatorId === undefined) {
         return
@@ -285,6 +316,90 @@ function fetchCommunities(generatorId?: string, graph?: CommunicationGraph) {
         })
 
 }
+
+////////////////////////////////////////////////////////////////////////////
+// Node Ranking Methods
+////////////////////////////////////////////////////////////////////////////
+
+const showNodeRankingSettings = useStorage("showNodeRankingSettings", true)
+const nodeRankingMethods: Ref<GeneratorMethods | null> = ref(null)
+
+const selectedNodeRanking: Ref<Generator | null> = ref(null)
+
+const nodeRankings = computed(() => {
+    if (nodeRankingMethods.value === null) {
+        return []
+    }
+    return Array.from(nodeRankingMethods.value?.generators.values())
+})
+
+function fetchNodeRankingMethods() {
+    fetch(`${generatorApiUrl.value}/analyze/noderank/methods`)
+        .then(response => response.json())
+        .then((data: ApiGeneratorMethods) => {
+            const methods = reactive(new GeneratorMethods(data))
+            nodeRankingMethods.value = methods
+            console.log(nodeRankingMethods)
+        })
+}
+
+function fetchNodeRanking(generatorId?: string, graph?: CommunicationGraph) {
+
+    if (generatorId === undefined) {
+        return
+    }
+
+    graph = graph ?? currentGraph.value
+    if (!graph) {
+        return
+    }
+
+    const url = `${generatorApiUrl.value}/analyze/noderank/${generatorId}`
+
+    const params = new URLSearchParams()
+    selectedNodeRanking.value?.paramList.forEach((param) => {
+        params.append(param.key, param.value.toString())
+    })
+
+    const urlWithParams = `${url}?${params.toString()}`
+
+    // Fetch a POST request with the parameters
+    return fetch(urlWithParams, {
+        method: 'POST',
+        body: JSON.stringify(commGraphToNodeLinkData(graph)),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then((data) => {
+            console.log(data)
+
+            const rankList: [string, number][] = Object.entries(data)
+
+            graph?.ranking.setRankingByList(rankList)
+            // graph?.communities.setCommunitiesByList(data)
+        })
+
+
+    return fetch(`${url}?${params.toString()}`)
+        .then(response => response.json())
+        .then((data) => {
+            console.log(data)
+        })
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Helper functions
+////////////////////////////////////////////////////////////////////////////
+
+function keyToName(key: string) {
+    return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////
 // Lifecycle hooks

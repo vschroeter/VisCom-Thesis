@@ -75,6 +75,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         click?: (d: AbstractNode2d, e: MouseEvent) => void
     }) {
         const communitiesColorScheme = d3.interpolateSinebow;
+        const nodeRankingColorScheme = d3.interpolateRdYlGn;
 
         const nodes = selection.selectAll('circle')
             .data(this.graph2d?.nodes)
@@ -82,7 +83,20 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('cx', (d: AbstractNode2d) => d.x)
             .attr('cy', (d: AbstractNode2d) => d.y)
             .attr('r', d => d.radius)
-            .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
+            // .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
+            .attr('fill', d => {
+                const nodeRanking = this.commGraph.ranking.getRankOfNode(d.data);
+
+                if (nodeRanking === undefined) {
+                    return this.commonSettings.nodeColor.getValue(d) ?? "red";
+                }
+
+                const rankExtent = this.commGraph.ranking.getRankExtent();
+                const scale = d3.scaleLinear().domain(rankExtent).range([0, 1]);
+
+                return nodeRankingColorScheme(scale(nodeRanking));
+
+            })
             // .attr('stroke', 'white')
             .attr('stroke', d => {
                 const communities = this.commGraph.communities.getCommunitiesOfNode(d.data);

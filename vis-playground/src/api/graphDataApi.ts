@@ -73,7 +73,12 @@ export function commGraphToNodeLinkData(commGraph: CommunicationGraph) {
         nodes.push({ id: node.id });
     });
     commGraph.getAllLinks().forEach((link) => {
-        links.push({ source: link.fromId, target: link.toId });
+        // console.log('link', link);
+        if (link.channel.type == "PubSub") {
+            links.push({ source: link.fromId, target: link.toId, pub_topic: link.topicId });
+        } else {
+            links.push({ source: link.fromId, target: link.toId, service_name: link.topicId });
+        }
     });
     return { nodes, links };
 }
