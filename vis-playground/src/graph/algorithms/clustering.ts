@@ -45,8 +45,8 @@ export class Clusterer {
      * Get the connected components of the graph.
      * @returns The connected components of the graph.
      */
-    getConnectedComponents(): CommunicationNode[][] {
-        const nodes = this.commGraph.nodes;
+    getConnectedComponents(nodes?: CommunicationNode[]): CommunicationNode[][] {
+        nodes = nodes ?? this.commGraph.nodes;
         const visited = new Set<string>();
         const components: CommunicationNode[][] = [];
 

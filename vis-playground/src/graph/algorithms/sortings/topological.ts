@@ -122,24 +122,33 @@ export class TopologicalSorter extends Sorter {
         const nonAssignedNodes = new Set<CommunicationNode>(component)
         const gen0nodes: Set<CommunicationNode> = new Set<CommunicationNode>()
 
-        // To start we take every node that has no parents and so siblings and set the generation to 0
-        for (const node of mapNodeToItsParents.keys()) {
-            if ((!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) && (!mapNodeToItsSiblings.has(node) || mapNodeToItsSiblings.get(node)!.size == 0)) {
-                generationMap.set(node, 0)
-                gen0nodes.add(node)
-                nonAssignedNodes.delete(node)
-            }
-        }
-        // If there are no gen0 nodes due to sibling structures, take all nodes, that have no parents
-        if (gen0nodes.size == 0) {
-            for (const node of mapNodeToItsParents.keys()) {
-                if (!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) {
+        const components = this.clusterer.getConnectedComponents(nodes as CommunicationNode[]);
+
+        // Check the generation 0 nodes for each component,
+        // otherwise there could be a deadlock between sibling nodes
+        components.forEach(singleComponent => {
+            const addedNodes = [];
+            // To start we take every node that has no parents and so siblings and set the generation to 0
+            singleComponent.forEach(node => {
+                if ((!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) && (!mapNodeToItsSiblings.has(node) || mapNodeToItsSiblings.get(node)!.size == 0)) {
                     generationMap.set(node, 0)
                     gen0nodes.add(node)
                     nonAssignedNodes.delete(node)
+                    addedNodes.push(node)
                 }
+            })
+            // If there are no gen0 nodes due to sibling structures, take all nodes, that have no parents
+            if (addedNodes.length == 0) {
+                singleComponent.forEach(node => {
+                    if (!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) {
+                        generationMap.set(node, 0)
+                        gen0nodes.add(node)
+                        nonAssignedNodes.delete(node)
+                    }
+                })
             }
-        }
+        });
+
 
         while (nonAssignedNodes.size > 0) {
             // Every other node gets either the maximum generation of its parents increased by one, or if there are no parents the maximum generation of its siblings
