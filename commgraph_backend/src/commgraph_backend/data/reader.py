@@ -2,6 +2,7 @@ import json
 import os
 from typing import Any
 
+from commgraph_backend.commgraph.converter import convert_node_connections_graph_to_topic_graph
 import networkx as nx
 
 
@@ -28,18 +29,30 @@ class RosMetaSysGraphGenerator:
         datasets = RosMetaSysGraphGenerator.get_available_datasets()
         for dataset in datasets:
 
-            def create_lambda(dataset=dataset):
-                return lambda: RosMetaSysGraphGenerator.read_graph_from_file(os.path.join(os.path.dirname(__file__), "datasets", dataset))
+            def callback(dataset=dataset, **kwargs):
+                print(f"Reading dataset {dataset} with kwargs {kwargs}")
+                return RosMetaSysGraphGenerator.read_graph_from_file(
+                    os.path.join(os.path.dirname(__file__), "datasets", dataset),
+                    **kwargs
+                )
 
             generator_methods_config[dataset] = {
-                "params": [],
+                "params": [
+                    {
+                        "key": "return_topic_graph",
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Return a topic graph instead of a node graph.",
+                    }
+                ],
                 "description": "A communication graph generated from a ROS meta system description.",
                 "is_saved_dataset": True,
-                "method": create_lambda(),
+                # "method": create_lambda(),
+                "method": callback,
             }
 
     @staticmethod
-    def read_graph_from_file(file_path: str):
+    def read_graph_from_file(file_path: str, return_topic_graph: bool = False) -> nx.MultiDiGraph:
         with open(file_path) as file:
             data = json.load(file)
 
@@ -64,6 +77,8 @@ class RosMetaSysGraphGenerator:
                 node_namespace += "/"
             node_name = f"{node_namespace}{node_name}" if node_namespace != "/" else node_name
             graph.add_node(node_name)
+
+            # print(node_data)
 
             for topic in node_data["publishers"]:
                 topic_name = topic["name"]
@@ -104,4 +119,8 @@ class RosMetaSysGraphGenerator:
                     graph.add_edge(client_node, service_node, service_name=service_name)
 
         # graph = nx.node_link_graph(data)
+
+        if return_topic_graph:
+            return convert_node_connections_graph_to_topic_graph(graph)
+
         return graph

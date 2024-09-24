@@ -221,8 +221,8 @@ export class Setting {
     }
 }
 
-export type ParamType = "number" | "string" | "color" | "boolean" | "choice";
-
+export type ParamType = "number" | "int" | "float" | "string" | "color" | "boolean" | "choice";
+export type NumberRange = { min?: number, max?: number };
 export class Param<T = number> { // 
 
     /** Key to identify the parameter */
@@ -245,6 +245,8 @@ export class Param<T = number> { //
     // value: T;
 
     choices: string[] = [];
+
+    range?: NumberRange;
 
     /** Type of the parameter */
     type: ParamType;
@@ -277,6 +279,7 @@ export class Param<T = number> { //
         optional = false,
         active = false,
         enabled = true,
+        range
     }: {
         key: string,
         label?: string,
@@ -286,6 +289,7 @@ export class Param<T = number> { //
         defaultValue: string | number | boolean,
         active?: boolean,
         enabled?: boolean | (() => boolean),
+        range?: NumberRange,
     }) {
         this.key = key;
         this.label = label || key;
@@ -296,6 +300,7 @@ export class Param<T = number> { //
         this._textValue = defaultValue as string;
         this.type = type;
         this.enabledCallback = enabled;
+        this.range = range;
 
         this.updateStatus();
     }
@@ -325,6 +330,10 @@ export class Param<T = number> { //
             return this._textValue as any;
         }
         return undefined;
+    }
+
+    get value(): T | string {
+        return this.getValue() ?? this._textValue;
     }
 
     get textValue(): string | undefined {

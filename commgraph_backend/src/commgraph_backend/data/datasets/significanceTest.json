@@ -1,0 +1,182 @@
+{
+    "version": "1.0.0",
+    "name": "siblingTest",
+    "description": "Sibling Test for Topo Gens.",
+    "created_at": "2023-09-01T12:00:00.000000",
+    "nodeCount": 6,
+    "author": "vschroeter",
+    "cc_by_sa_consent": true,
+    "nodes": [
+        {
+            "name": "respeaker",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/kwd",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/status_visualizer",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/facial_expression_manager",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/respeaker",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "tts_pico",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/equalizer",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/tts_pico",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "status_visualizer",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+            ],
+            "subscribers": [
+                {
+                    "name": "/status_visualizer",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "kwd",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/tts_guard",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/kwd",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "equalizer",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/loudness_analyzer",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/sound_sink",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/facial_expression_manager",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/equalizer",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "loudness_analyzer",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/status_visualizer",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/loudness_analyzer",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "tts_guard",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+            ],
+            "subscribers": [
+                {
+                    "name": "/tts_guard",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "sound_sink",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+            ],
+            "subscribers": [
+                {
+                    "name": "/sound_sink",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "facial_expression_manager",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+            ],
+            "subscribers": [
+                {
+                    "name": "/facial_expression_manager",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        }
+    ]
+}

@@ -41,17 +41,11 @@
                         </q-item-label>
 
                         <!-- Input for each parameter in the selected generator, depending on its type. -->
-                        <q-item v-for="(param, key) in selectedGenerator?.paramList" :key="key" class="q-mb-xs">
-                            <q-item-section>
-                                <q-item-label>
-                                    {{ param.description }}
-                                </q-item-label>
-                            </q-item-section>
-                            <q-item-section>
-                                <q-input v-model="param.value" :type="param.inputType" :min="param.range?.min"
-                                    :max="param.range?.max" :step="param.type == 'int' ? 1 : 0.01" outlined />
-                            </q-item-section>
-                        </q-item>
+                        <div v-if="selectedGenerator">
+                            <div v-for="(param, key) in selectedGenerator?.paramList" :key="param.key" class="q-mb-md">
+                                <ParamInput v-model="selectedGenerator.parameterRecord[param.key]" outlined />
+                            </div>
+                        </div>
 
                         <!-- Button to generate the graph -->
 
@@ -81,18 +75,12 @@
                         </q-item-label>
 
                         <!-- Input for each parameter in the selected generator, depending on its type. -->
-                        <q-item v-for="(param, key) in selectedCommunityDetection?.paramList" :key="key"
-                            class="q-mb-xs">
-                            <q-item-section>
-                                <q-item-label>
-                                    {{ param.description }}
-                                </q-item-label>
-                            </q-item-section>
-                            <q-item-section>
-                                <q-input v-model="param.value" :type="param.inputType" :min="param.range?.min"
-                                    :max="param.range?.max" :step="param.type == 'int' ? 1 : 0.01" outlined />
-                            </q-item-section>
-                        </q-item>
+                        <div v-if="selectedCommunityDetection">
+                            <div v-for="(param, key) in selectedCommunityDetection?.paramList" :key="param.key"
+                                class="q-mb-md">
+                                <ParamInput v-model="selectedCommunityDetection.parameterRecord[param.key]" outlined />
+                            </div>
+                        </div>
 
                         <!-- Button to fetch the communities -->
 
@@ -118,17 +106,12 @@
                         </q-item-label>
 
                         <!-- Input for each parameter in the selected ranking, depending on its type. -->
-                        <q-item v-for="(param, key) in selectedNodeRanking?.paramList" :key="key" class="q-mb-xs">
-                            <q-item-section>
-                                <q-item-label>
-                                    {{ param.description }}
-                                </q-item-label>
-                            </q-item-section>
-                            <q-item-section>
-                                <q-input v-model="param.value" :type="param.inputType" :min="param.range?.min"
-                                    :max="param.range?.max" :step="param.type == 'int' ? 1 : 0.01" outlined />
-                            </q-item-section>
-                        </q-item>
+                        <div v-if="selectedNodeRanking">
+                            <div v-for="(param, key) in selectedNodeRanking?.paramList" :key="param.key"
+                                class="q-mb-md">
+                                <ParamInput v-model="selectedNodeRanking.parameterRecord[param.key]" outlined />
+                            </div>
+                        </div>
 
                         <!-- Button to fetch the ranking -->
                         <q-btn :disable="selectedNodeRanking === null" label="Generate" color="primary"
@@ -152,6 +135,7 @@ import { CommunicationGraph } from 'src/graph/commGraph';
 import { convertGraphToCommGraph } from 'src/graph/converter';
 import { useGraphStore } from 'src/stores/graph-store';
 import { computed, onMounted, onUpdated, reactive, ref, watch, type Ref } from 'vue'
+import ParamInput from '../elements/ParamInput.vue';
 
 ////////////////////////////////////////////////////////////////////////////
 // Props
@@ -211,7 +195,7 @@ function fetchGenerateMethods() {
     fetch(`${generatorApiUrl.value}/generate/methods`)
         .then(response => response.json())
         .then((data: ApiGeneratorMethods) => {
-            const methods = reactive(new GeneratorMethods(data))
+            const methods = reactive(new GeneratorMethods(data)) as GeneratorMethods
             generateMethods.value = methods
             console.log(generateMethods)
         })
@@ -274,7 +258,7 @@ function fetchCommunityDetectionMethods() {
     fetch(`${generatorApiUrl.value}/analyze/communities/methods`)
         .then(response => response.json())
         .then((data: ApiGeneratorMethods) => {
-            const methods = reactive(new GeneratorMethods(data))
+            const methods = reactive(new GeneratorMethods(data)) as GeneratorMethods
             communityDetectionMethods.value = methods
             console.log(communityDetectionMethods)
         })
@@ -337,7 +321,7 @@ function fetchNodeRankingMethods() {
     fetch(`${generatorApiUrl.value}/analyze/noderank/methods`)
         .then(response => response.json())
         .then((data: ApiGeneratorMethods) => {
-            const methods = reactive(new GeneratorMethods(data))
+            const methods = reactive(new GeneratorMethods(data)) as GeneratorMethods
             nodeRankingMethods.value = methods
             console.log(nodeRankingMethods)
         })

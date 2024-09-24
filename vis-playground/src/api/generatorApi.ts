@@ -1,9 +1,11 @@
+import { Param } from "src/graph/layouter/settings/settings";
+
 export interface ApiParam {
     key: string;
     default: number | null;
     description: string;
     range?: [number, number];
-    type: 'int' | 'float' | 'bool' | 'string';
+    type: 'int' | 'float' | 'boolean' | 'string';
 }
 
 export interface ApiGenerator {
@@ -15,40 +17,6 @@ export interface ApiGenerator {
 
 export interface ApiGeneratorMethods {
     [key: string]: ApiGenerator;
-}
-
-export class Param {
-    key: string;
-    default: number | null;
-    description: string;
-    range?: { min: number, max: number}
-    type: 'int' | 'float' | 'bool' | 'string';
-    value: number
-
-    get inputType(): "number" | "text" {
-        switch (this.type) {
-            case 'int':
-                return 'number';
-            case 'float':
-                return 'number';
-            case 'bool':
-                return 'text';
-                // return 'checkbox';
-            case 'string':
-                return 'text';
-            default:
-                return 'text';
-        }
-    }
-
-    constructor(param: ApiParam) {
-        this.key = param.key;
-        this.default = param.default;
-        this.description = param.description;
-        this.range = param.range ? { min: param.range[0], max: param.range[1] } : undefined;
-        this.type = param.type;
-        this.value = this.default || (this.range?.min ?? 0);
-    }
 }
 
 export class Generator {
@@ -68,13 +36,24 @@ export class Generator {
 
         // console.log(gen);
         for (const param of gen.params) {
-            this.params.set(param.key, new Param(param));
+            this.params.set(param.key, new Param({
+                key: param.key,
+                defaultValue: param.default ?? 0,
+                description: param.description,
+                optional: false,
+                type: param.type,
+                range: { min: param.range?.[0], max: param.range?.[1] },
+            }));
         }
     }
 
     // Getter for param list
     get paramList(): Param[] {
         return Array.from(this.params.values());
+    }
+
+    get parameterRecord(): Record<string, Param> {
+        return Object.fromEntries(this.paramList.map(p => [p.key, p]));
     }
 }
 

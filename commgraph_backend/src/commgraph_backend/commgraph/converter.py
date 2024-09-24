@@ -38,9 +38,6 @@ def convert_node_connections_graph_to_topic_graph(graph: nx.MultiDiGraph) -> nx.
                     topic_name = get_topic_name(topic_type, topic)
                     map_topic_to_use_count[topic_name] = map_topic_to_use_count.get(topic_name, 0) + 1
 
-    print(node_set)
-    print(map_topic_to_use_count)
-
     for node in node_set:
         topic_graph.add_node(node, type="node")
 
@@ -54,6 +51,9 @@ def convert_node_connections_graph_to_topic_graph(graph: nx.MultiDiGraph) -> nx.
                     topic_name = get_topic_name(topic_type, topic)
 
                     count = map_topic_to_use_count[topic_name]
+
+                    # Half the count
+                    count = count / 2
 
                     topic_graph.add_edge(start_node, topic_name, distance=count)
                     topic_graph.add_edge(topic_name, target_node, distance=count)

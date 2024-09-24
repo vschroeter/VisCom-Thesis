@@ -7,6 +7,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from commgraph_backend.communities.community_detection_methods import community_methods_config
+from commgraph_backend.data.reader import RosMetaSysGraphGenerator
 from commgraph_backend.generator.generator import CommGraphGenerator
 from commgraph_backend.generator.generator_methods import generator_methods_config
 from commgraph_backend.noderank.node_rank_methods import node_rank_methods_config
@@ -15,6 +16,17 @@ app = Flask(__name__)
 CORS(app)
 
 MAX_NODES = 1000
+
+
+def convert_param(param_config, param_value):
+    if param_config["type"] == "int":
+        return int(param_value)
+    elif param_config["type"] == "float":
+        return float(param_value)
+    elif param_config["type"] == "boolean":
+        return param_value.lower() == "true" or param_value == "1" or param_value.lower() == "yes"
+    else:
+        return param_value
 
 
 @app.route("/generate/methods", methods=["GET"])
@@ -46,15 +58,11 @@ def generate_graph(generator):
                 return jsonify({"error": f"Missing parameter: {param_name}"}), 400
 
         # Convert parameter value to correct type
-        if param_value is not None and param_config["type"] != "str":
-            if param_config["type"] == "int":
-                param_value = int(param_value)
-            elif param_config["type"] == "float":
-                param_value = float(param_value)
+        param_value = convert_param(param_config, param_value)
 
-            # Check if parameter value is within valid range
-            if "range" in param_config and not (param_config["range"][0] <= param_value <= param_config["range"][1]):
-                return jsonify({"error": f"Parameter {param_name} out of range"}), 400
+        # Check if parameter value is within valid range
+        if "range" in param_config and not (param_config["range"][0] <= param_value <= param_config["range"][1]):
+            return jsonify({"error": f"Parameter {param_name} out of range"}), 400
 
         params[param_name] = param_value
 
@@ -65,6 +73,8 @@ def generate_graph(generator):
 
 @app.route("/analyze/communities/methods", methods=["GET"])
 def get_community_methods():
+    RosMetaSysGraphGenerator.extent_generator_methods(generator_methods_config)
+
     # Drop method references from config
     # Deep copy to avoid modifying the original config
     community_methods_config_copy = {k: v.copy() for k, v in community_methods_config.items()}
@@ -94,15 +104,11 @@ def analyze_communities(method):
                 return jsonify({"error": f"Missing parameter: {param['key']}"}), 400
 
         # Convert parameter value to correct type
-        if param_value is not None and param["type"] != "str":
-            if param["type"] == "int":
-                param_value = int(param_value)
-            elif param["type"] == "float":
-                param_value = float(param_value)
+        param_value = convert_param(param, param_value)
 
-            # Check if parameter value is within valid range
-            if "range" in param and not (param["range"][0] <= param_value <= param["range"][1]):
-                return jsonify({"error": f"Parameter {param['key']} out of range"}), 400
+        # Check if parameter value is within valid range
+        if "range" in param and not (param["range"][0] <= param_value <= param["range"][1]):
+            return jsonify({"error": f"Parameter {param['key']} out of range"}), 400
 
         params[param["key"]] = param_value
 
@@ -148,15 +154,11 @@ def analyze_noderank(method):
                 return jsonify({"error": f"Missing parameter: {param['key']}"}), 400
 
         # Convert parameter value to correct type
-        if param_value is not None and param["type"] != "str":
-            if param["type"] == "int":
-                param_value = int(param_value)
-            elif param["type"] == "float":
-                param_value = float(param_value)
+        param_value = convert_param(param, param_value)
 
-            # Check if parameter value is within valid range
-            if "range" in param and not (param["range"][0] <= param_value <= param["range"][1]):
-                return jsonify({"error": f"Parameter {param['key']} out of range"}), 400
+        # Check if parameter value is within valid range
+        if "range" in param and not (param["range"][0] <= param_value <= param["range"][1]):
+            return jsonify({"error": f"Parameter {param['key']} out of range"}), 400
 
         params[param["key"]] = param_value
 
