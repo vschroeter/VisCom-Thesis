@@ -14,11 +14,11 @@ import networkx as nx
 #     return comm_graph
 
 
-def convert_node_connections_graph_to_topic_graph(graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
+def convert_node_connections_graph_to_topic_graph(graph: nx.MultiDiGraph, directed=True, reversed=False) -> nx.DiGraph:
     """
     Convert a node connections graph to a topic graph.
     """
-    topic_graph = nx.MultiDiGraph()
+    topic_graph = nx.DiGraph()
 
     node_set = set(graph.nodes())
     map_topic_to_use_count: dict[str, int] = dict()
@@ -55,7 +55,18 @@ def convert_node_connections_graph_to_topic_graph(graph: nx.MultiDiGraph) -> nx.
                     # Half the count
                     count = count / 2
 
-                    topic_graph.add_edge(start_node, topic_name, distance=count)
-                    topic_graph.add_edge(topic_name, target_node, distance=count)
+                    if not reversed:
+                        topic_graph.add_edge(start_node, topic_name, distance=count)
+                        topic_graph.add_edge(topic_name, target_node, distance=count)
 
+                        if not directed:
+                            topic_graph.add_edge(target_node, topic_name, distance=count)
+                            topic_graph.add_edge(topic_name, start_node, distance=count)
+                    else:
+                        topic_graph.add_edge(target_node, topic_name, distance=count)
+                        topic_graph.add_edge(topic_name, start_node, distance=count)
+
+                        if not directed:
+                            topic_graph.add_edge(start_node, topic_name, distance=count)
+                            topic_graph.add_edge(topic_name, target_node, distance=count)
     return topic_graph

@@ -1,14 +1,12 @@
-import networkx as nx
-
-from commgraph_backend.commgraph.converter import convert_node_connections_graph_to_topic_graph
 from commgraph_backend.data.reader import RosMetaSysGraphGenerator
-from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality, get_commgraph_centrality
+from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality, get_commgraph_node_clusters
 
 ds = RosMetaSysGraphGenerator.get_available_datasets(True)
 
-self_driving_json = [d for d in ds if "0026nodes" in d][0]
+# self_driving_json = [d for d in ds if "0026nodes" in d][0]
 # self_driving_json = [d for d in ds if "handcraftedBroadcastExample" in d][0]
 # self_driving_json = [d for d in ds if "significanceTest" in d][0]
+self_driving_json = [d for d in ds if "handcraftedCommunityExample.json" in d][0]
 
 # print(ds)
 
@@ -81,7 +79,7 @@ nodes_to_keep = [
 centrality_significance = calculate_commgraph_centrality(graph, mode="significance")
 centrality_reachability = calculate_commgraph_centrality(graph, mode="reachability")
 centrality_closeness = calculate_commgraph_centrality(graph, mode="closeness")
-centrality_degree = calculate_commgraph_centrality(graph, mode="degree")
+centrality_degree = calculate_commgraph_centrality(graph, mode="degree", normalize=False)
 
 # topic_graph = convert_node_connections_graph_to_topic_graph(graph)
 
@@ -113,6 +111,8 @@ for node in centrality_degree:
 # for node, value in closeness.items():
 #     rounded_value = round(value, 4)
 #     print(rounded_value, node)
+print("\nClusters:")
+get_commgraph_node_clusters(graph)
 
 print(5)
 # comm_graph =

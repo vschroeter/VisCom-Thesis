@@ -1,4 +1,4 @@
-from commgraph_backend.noderank.commgraph_centrality import get_commgraph_centrality
+from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
 import networkx as nx
 
 node_rank_methods_config = {
@@ -28,14 +28,29 @@ node_rank_methods_config = {
         "method": nx.closeness_centrality,
     },
     "betweenness_centrality": {
-        "params": [{"key": "normalized", "type": "bool", "description": "If True the betweenness values are normalized by 2/((n-1)(n-2)) for graphs, and 1/((n-1)(n-2)) for directed graphs where n is the number of nodes in G.", "default": True}],
+        "params": [
+            {
+                "key": "normalized",
+                "type": "bool",
+                "description": "If True the betweenness values are normalized by 2/((n-1)(n-2)) for graphs, and 1/((n-1)(n-2)) for directed graphs where n is the number of nodes in G.",
+                "default": True,
+            }
+        ],
         "description": "Compute the shortest-path betweenness centrality for nodes.",
         "method": nx.betweenness_centrality,
     },
     "commgraph_centrality": {
-        "params": [],
+        "params": [
+            {
+                "key": "mode",
+                "type": "choice",
+                "choices": ["reachability", "closeness", "significance", "degree"],
+                "description": "The mode to calculate the commgraph centrality",
+                "default": "significance",
+            }
+        ],
         "description": "Compute the commgraph centrality for nodes.",
-        "method": get_commgraph_centrality,
+        "method": calculate_commgraph_centrality,
     },
     # "local_reaching_centrality": {
     #     "params": [],
