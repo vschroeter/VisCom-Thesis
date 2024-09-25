@@ -1,3 +1,7 @@
+from bitarray import bitarray
+
+a = bitarray(buffer=)
+
 from commgraph_backend.data.reader import RosMetaSysGraphGenerator
 from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality, get_commgraph_node_clusters
 
@@ -6,6 +10,7 @@ ds = RosMetaSysGraphGenerator.get_available_datasets(True)
 # self_driving_json = [d for d in ds if "0026nodes" in d][0]
 # self_driving_json = [d for d in ds if "handcraftedBroadcastExample" in d][0]
 # self_driving_json = [d for d in ds if "significanceTest" in d][0]
+# self_driving_json = [d for d in ds if "0122" in d][0]
 self_driving_json = [d for d in ds if "handcraftedCommunityExample.json" in d][0]
 
 # print(ds)

@@ -78,7 +78,8 @@ export class MetricsCollection {
      * @param graph The graph to calculate the metrics. If undefined, the metrics are initialized with pending state
      */
     async calculateMetrics(settingId: number, graph: Graph2d) {
-
+        return;
+        
         // Calculate all absolute metrics for the given graph of the given setting 
         const metricCalculators = MetricsCollection.metricsToCalculate.map(metric => new metric(graph));
 

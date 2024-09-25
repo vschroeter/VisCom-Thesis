@@ -129,14 +129,14 @@ export class TopologicalSorter extends Sorter {
         components.forEach(singleComponent => {
             const addedNodes = [];
             // To start we take every node that has no parents and so siblings and set the generation to 0
-            singleComponent.forEach(node => {
-                if ((!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) && (!mapNodeToItsSiblings.has(node) || mapNodeToItsSiblings.get(node)!.size == 0)) {
-                    generationMap.set(node, 0)
-                    gen0nodes.add(node)
-                    nonAssignedNodes.delete(node)
-                    addedNodes.push(node)
-                }
-            })
+            // singleComponent.forEach(node => {
+            //     if ((!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) && (!mapNodeToItsSiblings.has(node) || mapNodeToItsSiblings.get(node)!.size == 0)) {
+            //         generationMap.set(node, 0)
+            //         gen0nodes.add(node)
+            //         nonAssignedNodes.delete(node)
+            //         addedNodes.push(node)
+            //     }
+            // })
             // If there are no gen0 nodes due to sibling structures, take all nodes, that have no parents
             if (addedNodes.length == 0) {
                 singleComponent.forEach(node => {
@@ -150,7 +150,7 @@ export class TopologicalSorter extends Sorter {
         });
 
 
-        while (nonAssignedNodes.size > 0) {
+        while (nonAssignedNodes. size > 0) {
             // Every other node gets either the maximum generation of its parents increased by one, or if there are no parents the maximum generation of its siblings
             for (const node of nonAssignedNodes.keys()) {
                 if (generationMap.has(node)) continue

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from multiprocessing import Event
+
 from typing import Literal
 
 import networkx as nx
@@ -261,12 +263,12 @@ def get_commgraph_node_clusters(graph: nx.MultiDiGraph):
         distance = distance_result.distance
 
         if target_node in node_to_distance_in_cluster_map:  # noqa: SIM102
-            # We only continue if the current distance is greater than the already added distance
+            # We continue if the current distance is greater than the already added distance
             if distance > node_to_distance_in_cluster_map[target_node]:
                 continue
-            else:
-                # If the distance is the same, we add the node to the duplicated nodes
-                duplicated_nodes.add(target_node)
+
+            # If the distance is the same, we add the node to the duplicated nodes
+            duplicated_nodes.add(target_node)
 
         cluster = cluster_map[parent_node]
         cluster.add_distance_result(target_node, distance)
@@ -315,56 +317,55 @@ def get_commgraph_node_clusters(graph: nx.MultiDiGraph):
             separated_clusters.append(cluster)
             resolved_clusters.remove(cluster)
             added_nodes = cluster.child_node_to_distance_map.keys()
+        else:
 
-        moved_cluster_count = 0
+            # If the cluster has a greater path distance than the max path distance, we try to separate it
+            if cluster.max_path_distance > max_path_distance:
+                nodes_in_cluster = set(cluster.child_node_to_distance_map.keys())
+                next_clusters = [c for c in resolved_clusters if c.node in nodes_in_cluster and c != cluster]
+                if len(next_clusters) == 0:
+                    separated_clusters.append(cluster)
+                    resolved_clusters.remove(cluster)
+                    added_nodes = cluster.child_node_to_distance_map.keys()
+                else:
+                    next_cluster = next_clusters[0]
+                    nodes_in_cluster |= set(next_cluster.child_node_to_distance_map.keys())
 
-        # If the cluster has a greater path distance than the max path distance, we try to separate it
-        if cluster.max_path_distance > max_path_distance:
-            nodes_in_cluster = set(cluster.child_node_to_distance_map.keys())
-            next_clusters = [c for c in resolved_clusters if c.node in nodes_in_cluster and c != cluster]
-            if len(next_clusters) == 0:
+                    nodes_to_keep_in_current_cluster = set()
+                    nodes_to_keep_in_next_cluster = set()
+
+                    # For each node of the clusters, we assign it to the cluster where the distance to the center node is shorter
+                    for node in nodes_in_cluster:
+                        distance_cluster = cluster.child_node_to_distance_map.get(node, None)
+                        distance_next_cluster = next_cluster.child_node_to_distance_map.get(node, None)
+
+                        if distance_cluster is None:
+                            nodes_to_keep_in_next_cluster.add(node)
+                        elif distance_next_cluster is None or distance_cluster <= distance_next_cluster:
+                            nodes_to_keep_in_current_cluster.add(node)
+                        else:
+                            nodes_to_keep_in_next_cluster.add(node)
+                    
+                    if len(nodes_to_keep_in_next_cluster) <= min_node_count_per_cluster:
+                        nodes_to_keep_in_current_cluster |= nodes_to_keep_in_next_cluster
+                        nodes_to_keep_in_next_cluster = set()
+                        resolved_clusters.remove(next_cluster)
+
+                    # Remove the nodes from the clusters
+                    for node in nodes_to_keep_in_current_cluster:
+                        next_cluster.remove_node(node)
+                    for node in nodes_to_keep_in_next_cluster:
+                        cluster.remove_node(node)
+
+                    # Update the distances
+                    cluster.update_distances()
+                    next_cluster.update_distances()
+
+                    continue
+                
+            else:
                 separated_clusters.append(cluster)
                 resolved_clusters.remove(cluster)
-                added_nodes = cluster.child_node_to_distance_map.keys()
-            else:
-                next_cluster = next_clusters[0]
-                nodes_in_cluster |= set(next_cluster.child_node_to_distance_map.keys())
-
-                nodes_to_keep_in_current_cluster = set()
-                nodes_to_keep_in_next_cluster = set()
-
-                # For each node of the clusters, we assign it to the cluster where the distance to the center node is shorter
-                for node in nodes_in_cluster:
-                    distance_cluster = cluster.child_node_to_distance_map.get(node, None)
-                    distance_next_cluster = next_cluster.child_node_to_distance_map.get(node, None)
-
-                    if distance_cluster is None:
-                        nodes_to_keep_in_next_cluster.add(node)
-                    elif distance_next_cluster is None or distance_cluster <= distance_next_cluster:
-                        nodes_to_keep_in_current_cluster.add(node)
-                    else:
-                        nodes_to_keep_in_next_cluster.add(node)
-                
-                if len(nodes_to_keep_in_next_cluster) <= min_node_count_per_cluster:
-                    nodes_to_keep_in_current_cluster |= nodes_to_keep_in_next_cluster
-                    nodes_to_keep_in_next_cluster = set()
-                    resolved_clusters.remove(next_cluster)
-
-                # Remove the nodes from the clusters
-                for node in nodes_to_keep_in_current_cluster:
-                    next_cluster.remove_node(node)
-                for node in nodes_to_keep_in_next_cluster:
-                    cluster.remove_node(node)
-
-                # Update the distances
-                cluster.update_distances()
-                next_cluster.update_distances()
-
-                continue
-            
-        else:
-            separated_clusters.append(cluster)
-            resolved_clusters.remove(cluster)
             added_nodes = cluster.child_node_to_distance_map.keys()
 
 
