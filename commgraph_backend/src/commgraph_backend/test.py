@@ -1,7 +1,4 @@
-from bitarray import bitarray
-
-a = bitarray(buffer=)
-
+from commgraph_backend.communities.community_detection import CommGraphCommunityDetector
 from commgraph_backend.data.reader import RosMetaSysGraphGenerator
 from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality, get_commgraph_node_clusters
 
@@ -116,8 +113,11 @@ for node in centrality_degree:
 # for node, value in closeness.items():
 #     rounded_value = round(value, 4)
 #     print(rounded_value, node)
-print("\nClusters:")
-get_commgraph_node_clusters(graph)
+# print("\nClusters:")
+# get_commgraph_node_clusters(graph)
+
+detector = CommGraphCommunityDetector(graph)
+comms = detector.calculate_commgraph_communities()
 
 print(5)
 # comm_graph =

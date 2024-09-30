@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from multiprocessing import Event
-
 from typing import Literal
 
 import networkx as nx
 
 from commgraph_backend.commgraph.converter import convert_node_connections_graph_to_topic_graph
+
 
 
 def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reachability", "closeness", "significance", "degree"], normalize=True) -> dict[str, float]:
