@@ -12,14 +12,28 @@ from commgraph_backend.commgraph.converter import convert_node_connections_graph
 
 class Community:
     def __init__(self, nodes: set[str] = None) -> None:
+        """
+        Initialize a Community.
+
+        Parameters
+        ----------
+        nodes : set[str], optional
+            A set of node identifiers that belong to this community. Default is an empty set.
+        """
         self.nodes = nodes or set()
-
         self.hypermodes: list[HyperNode] = []
-
         self.total_in_degree = 0
         self.total_out_degree = 0
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
+        """
+        Check if the community is empty.
+
+        Returns
+        -------
+        bool
+            True if the community has no nodes, False otherwise.
+        """
         return len(self.nodes) == 0
 
     def __repr__(self) -> str:
@@ -28,28 +42,61 @@ class Community:
     def __str__(self) -> str:
         return self.__repr__()
 
-
 class HyperNode:
     def __init__(self, hypernode_id: str | int, communities: Communities, community: Community) -> None:
+        """
+        Initialize a HyperNode.
+
+        Parameters
+        ----------
+        hypernode_id : str or int
+            The identifier for the hypernode.
+        communities : Communities
+            The Communities object to which this hypernode belongs.
+        community : Community
+            The initial community of this hypernode.
+        """
         self.community: Community = community
         self.hypernode_id = hypernode_id
         self.communities = communities
         self.nodes = list(community.nodes)
-
         self.total_in_degree = 0
         self.total_out_degree = 0
-
         self.weights_to_other_hypernodes: dict[str, float] = defaultdict(float)
 
     @property
     def G(self):
+        """
+        Get the hyper graph.
+
+        Returns
+        -------
+        nx.DiGraph
+            The hyper graph.
+        """
         return self.communities.hyper_graph
 
     @property
     def m(self):
+        """
+        Get the total edge count of the original graph.
+
+        Returns
+        -------
+        float
+            The total edge count.
+        """
         return self.communities.m
 
     def init(self, weight="weight"):
+        """
+        Initialize the hypernode by setting up degrees and weights.
+
+        Parameters
+        ----------
+        weight : str, optional
+            The edge attribute to use as weight. Default is "weight".
+        """
         # Set the node to hyper node mapping
         for node in self.nodes:
             self.communities.node_to_hypernode[node] = self
@@ -88,29 +135,111 @@ class HyperNode:
 
     def __str__(self) -> str:
         return self.__repr__()
+    
+    def is_empty(self) -> bool:
+        """
+        Check if the hypernode is empty.
 
-    def is_empty(self):
+        Returns
+        -------
+        bool
+            True if the hypernode has no nodes, False otherwise.
+        """
         return len(self.nodes) == 0
 
-    def get_neighbor_communities(self):
+    def get_neighbor_communities(self) -> list[Community]:
+        """
+        Get the neighboring communities of the hypernode.
+
+        Returns
+        -------
+        list of Community
+            A list of neighboring communities.
+        """
         return list(self.get_weights_to_communities().keys())
 
     def get_weight_to_hypernode(self, hypernode: str) -> float:
+        """
+        Get the weight to another hypernode.
+
+        Parameters
+        ----------
+        hypernode : str
+            The identifier of the other hypernode.
+
+        Returns
+        -------
+        float
+            The weight to the other hypernode.
+        """
         return self.weights_to_other_hypernodes.get(hypernode, 0)
 
-    def get_expected_out_edges_prob_to_community(self, community: Community, resolution: float = 1):
+    def get_expected_out_edges_prob_to_community(self, community: Community, resolution: float = 1) -> float:
+        """
+        Get the expected probability of outgoing edges to a community.
+
+        Parameters
+        ----------
+        community : Community
+            The target community.
+        resolution : float, optional
+            The resolution parameter. Default is 1.
+
+        Returns
+        -------
+        float
+            The expected probability of outgoing edges to the community.
+        """
         return resolution * (self.total_out_degree * community.total_in_degree / self.communities.m)
 
-    def get_expected_in_edges_prob_from_community(self, community: Community, resolution: float = 1):
+    def get_expected_in_edges_prob_from_community(self, community: Community, resolution: float = 1) -> float:
+        """
+        Get the expected probability of incoming edges from a community.
+
+        Parameters
+        ----------
+        community : Community
+            The target community.
+        resolution : float, optional
+            The resolution parameter. Default is 1.
+
+        Returns
+        -------
+        float
+            The expected probability of incoming edges from the community.
+        """
         return resolution * (self.total_in_degree * community.total_out_degree / self.communities.m)
 
-    def get_expected_total_edges_prob_to_community(self, community: Community, resolution: float = 1):
-        out_pro = self.get_expected_out_edges_prob_to_community(community, resolution)
+    def get_expected_total_edges_prob_to_community(self, community: Community, resolution: float = 1) -> float:
+        """
+        Get the expected total probability of edges to a community.
+
+        Parameters
+        ----------
+        community : Community
+            The target community.
+        resolution : float, optional
+            The resolution parameter. Default is 1.
+
+        Returns
+        -------
+        float
+            The expected total probability of edges to the community.
+        """
+        out_prob = self.get_expected_out_edges_prob_to_community(community, resolution)
         in_prob = self.get_expected_in_edges_prob_from_community(community, resolution)
 
-        return out_pro + in_prob
+        return out_prob + in_prob
 
     def get_weights_to_communities(self) -> dict[Community, float]:
+        """
+        Get the weights to neighboring communities.
+
+        Returns
+        -------
+        dict of Community to float
+            A dictionary mapping neighboring communities to their respective weights.
+        """
         weights_to_communities = defaultdict(float)
 
         for other_hypernode_id, weight in self.weights_to_other_hypernodes.items():
@@ -118,13 +247,19 @@ class HyperNode:
             weights_to_communities[neighbor_community] += weight
         return weights_to_communities
 
-    def remove_from_current_community(self, resolution: float = 1.0):
-        """Remove the hypernode from its current community and return the removal costs.
+    def remove_from_current_community(self, resolution: float = 1.0) -> float:
+        """
+        Remove the hypernode from its current community and return the removal costs.
 
         Parameters
         ----------
-        node : str
-            The node to remove from its current community
+        resolution : float, optional
+            The resolution parameter. Default is 1.0.
+
+        Returns
+        -------
+        float
+            The modularity cost of removing the hypernode from its current community.
         """
         comm = self.community
 
@@ -147,60 +282,101 @@ class HyperNode:
 
         return remove_mod_cost
 
-    def get_gain_for_adding_to_community(self, community: Community, resolution: float = 1.0):
+    def get_gain_for_adding_to_community(self, community: Community, resolution: float = 1.0) -> float:
+        """
+        Get the modularity gain for adding the hypernode to a community.
+
+        Parameters
+        ----------
+        community : Community
+            The target community.
+        resolution : float, optional
+            The resolution parameter. Default is 1.0.
+
+        Returns
+        -------
+        float
+            The modularity gain for adding the hypernode to the community.
+        """
         weights_to_neighbor_communities = self.get_weights_to_communities()
         weight_to_community = weights_to_neighbor_communities[community]
-
         expected_total_prob = self.get_expected_total_edges_prob_to_community(community, resolution)
-
-        gain = (weight_to_community - (expected_total_prob)) / self.m
-
+        gain = (weight_to_community - expected_total_prob) / self.m
         return gain
 
-    def add_to_community(self, community: Community):
-        # Update the total in and out degrees of the community
+    def add_to_community(self, community: Community) -> None:
+        """
+        Add the hypernode to a community.
+
+        Parameters
+        ----------
+        community : Community
+            The target community.
+        """
         community.total_in_degree += self.total_in_degree
         community.total_out_degree += self.total_out_degree
-
-        # Update the global partition and the inner partition
         community.nodes.update(self.nodes)
         self.community = community
 
 
 class Communities:
     def __init__(self, origin_graph: nx.MultiDiGraph, weight="weight") -> None:
-        # The original graph with connections between single nodes
+        """
+        Initialize Communities.
+
+        Parameters
+        ----------
+        origin_graph : nx.MultiDiGraph
+            The original graph with connections between single nodes.
+        weight : str, optional
+            The edge attribute to use as weight. Default is "weight".
+        """
         self.origin_graph = origin_graph
 
-        # # The current graph with hyper nodes
-        # self.graph = self.G = G = graph
+        # The current graph with hyper nodes
         self.hyper_graph: nx.DiGraph = origin_graph
         G = self.hyper_graph
 
-        # self.global_partition: list[set[str]] = partitions
         self.node_to_community: dict[str, Community] = {n: Community({n}) for n in G.nodes()}
         self.communities: list[Community] = list(self.node_to_community.values())
-        # self.inner_partition = [{node} for node in G.nodes()]
         self.node_to_hypernode: dict[str, HyperNode] = {n: HyperNode(n, self, self.node_to_community[n]) for n in self.origin_graph.nodes()}
         self.hypernode_id_to_hypernode: dict[str, HyperNode] = dict(self.node_to_hypernode)
         self.hypernodes = list(self.node_to_hypernode.values())
 
         self.total_edge_count = self.origin_graph.size(weight=weight)
 
-        # self.generate_new_hypernode_graph()
-
     def get_communities_as_sets(self) -> list[set[str]]:
+        """
+        Get the communities as sets of nodes.
+
+        Returns
+        -------
+        list of set of str
+            A list of sets, each containing the nodes of a community.
+        """
         return [c.nodes for c in self.communities]
 
     @property
-    def m(self):
+    def m(self) -> float:
+        """
+        Get the total edge count of the original graph.
+
+        Returns
+        -------
+        float
+            The total edge count.
+        """
         return self.total_edge_count
 
     def generate_new_hypernode_graph(self) -> Communities:
         """
-        Update the current graph according to the current hyper communities
-        """
+        Update the current graph according to the current hyper communities.
 
+        Returns
+        -------
+        Communities
+            The updated Communities object.
+        """
         new_graph = nx.DiGraph()
 
         community_to_new_hypernode_id: dict[Community, int] = dict()
@@ -258,27 +434,106 @@ class Communities:
     #########################################################
 
     def get_community_of_node(self, node: str) -> Community:
+        """
+        Get the community of a node.
+
+        Parameters
+        ----------
+        node : str
+            The node identifier.
+
+        Returns
+        -------
+        Community
+            The community to which the node belongs.
+        """
         return self.node_to_community[node]
 
-    # def get_community_of_hypernode(self, hypernode: str) -> HyperNode:
     def get_hypernode_of_node(self, hypernode: str) -> HyperNode:
+        """
+        Get the hypernode of a node.
+
+        Parameters
+        ----------
+        hypernode : str
+            The hypernode identifier.
+
+        Returns
+        -------
+        HyperNode
+            The hypernode to which the node belongs.
+        """
         return self.node_to_hypernode[hypernode]
 
     def get_community_of_hypernode(self, hypernode: HyperNode) -> Community:
+        """
+        Get the community of a hypernode.
+
+        Parameters
+        ----------
+        hypernode : HyperNode
+            The hypernode object.
+
+        Returns
+        -------
+        Community
+            The community to which the hypernode belongs.
+        """
         return hypernode.community
 
     def get_hypernode_from_hypernode_id(self, hypernode_id: str) -> HyperNode:
+        """
+        Get the hypernode from its identifier.
+
+        Parameters
+        ----------
+        hypernode_id : str
+            The hypernode identifier.
+
+        Returns
+        -------
+        HyperNode
+            The hypernode object.
+        """
         return self.hypernode_id_to_hypernode[hypernode_id]
 
     def get_community_of_hypernode_id(self, hypernode_id: str) -> Community:
+        """
+        Get the community of a hypernode by its identifier.
+
+        Parameters
+        ----------
+        hypernode_id : str
+            The hypernode identifier.
+
+        Returns
+        -------
+        Community
+            The community to which the hypernode belongs.
+        """
         return self.get_hypernode_from_hypernode_id(hypernode_id).community
 
     def get_communities(self) -> list[Community]:
+        """
+        Get all non-empty communities.
+
+        Returns
+        -------
+        list of Community
+            A list of non-empty communities.
+        """
         return [c for c in self.communities if not c.is_empty()]
 
     def get_current_hypernodes(self) -> list[HyperNode]:
-        return [hn for hn in self.hypernodes if not hn.is_empty()]
+        """
+        Get all non-empty hypernodes.
 
+        Returns
+        -------
+        list of HyperNode
+            A list of non-empty hypernodes.
+        """
+        return [hn for hn in self.hypernodes if not hn.is_empty()]
 
 class CommGraphCommunityDetector:
     def __init__(self, graph: nx.MultiDiGraph) -> None:
