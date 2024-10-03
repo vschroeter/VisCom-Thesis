@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import random
 from collections import defaultdict
 from functools import lru_cache
@@ -11,7 +12,7 @@ from commgraph_backend.commgraph.converter import convert_node_connections_graph
 
 
 class Community:
-    def __init__(self, nodes: set[str] = None) -> None:
+    def __init__(self, communities: Communities, nodes: set[str] = None) -> None:
         """
         Initialize a Community.
 
@@ -21,7 +22,8 @@ class Community:
             A set of node identifiers that belong to this community. Default is an empty set.
         """
         self.nodes = nodes or set()
-        self.hypermodes: list[HyperNode] = []
+        self.communities = communities
+
         self.total_in_degree = 0
         self.total_out_degree = 0
 
@@ -41,6 +43,23 @@ class Community:
 
     def __str__(self) -> str:
         return self.__repr__()
+
+    def get_edge_nodes(self) -> set[str]:
+        """Returns nodes that are connected to nodes outside the community"""
+
+        edge_nodes = set()
+        for node in self.nodes:
+            for neighbor in self.communities.origin_graph.successors(node):
+                if neighbor not in self.nodes:
+                    edge_nodes.add(node)
+                    break
+            for neighbor in self.communities.origin_graph.predecessors(node):
+                if neighbor not in self.nodes:
+                    edge_nodes.add(node)
+                    break
+
+        return edge_nodes
+
 
 class HyperNode:
     def __init__(self, hypernode_id: str | int, communities: Communities, community: Community) -> None:
@@ -135,7 +154,7 @@ class HyperNode:
 
     def __str__(self) -> str:
         return self.__repr__()
-    
+
     def is_empty(self) -> bool:
         """
         Check if the hypernode is empty.
@@ -304,6 +323,73 @@ class HyperNode:
         gain = (weight_to_community - expected_total_prob) / self.m
         return gain
 
+    def get_edges_to_community(self, community: Community) -> list[tuple[str, str, int]]:
+        """
+        Get the edges to a community.
+
+        Parameters
+        ----------
+        community : Community
+            The target community.
+
+        Returns
+        -------
+        list of tuple of str
+            A list of tuples, each containing the start node, target node, and weight of an edge to the community.
+        """
+        edges: list[tuple[str, str, int]] = []
+        for start_node, target_node, connection_data in self.G.out_edges(self.hypernode_id, data=True):
+            if start_node == target_node:
+                continue
+
+            weight = connection_data.get("weight", 1)
+            if self.communities.get_community_of_hypernode_id(target_node) == community:
+                edges.append((start_node, target_node, weight))
+
+        for start_node, target_node, connection_data in self.G.in_edges(self.hypernode_id, data=True):
+            if start_node == target_node:
+                continue
+
+            weight = connection_data.get("weight", 1)
+            if self.communities.get_community_of_hypernode_id(start_node) == community:
+                edges.append((start_node, target_node, weight))
+
+        return edges
+
+    def get_gain_for_splitting_node_to_communities(self, community1: Community, community2: Community, resolution: float = 1.0, splitting_penalty=1.0) -> float:
+        """
+        Get the modularity gain for adding the hypernode to a community.
+
+        Parameters
+        ----------
+        community : Community
+            The target community.
+        resolution : float, optional
+            The resolution parameter. Default is 1.0.
+
+        Returns
+        -------
+        float
+            The modularity gain for adding the hypernode to the community.
+        """
+        weights_to_neighbor_communities = self.get_weights_to_communities()
+        weight_to_community1 = weights_to_neighbor_communities[community1]
+        weight_to_community2 = weights_to_neighbor_communities[community2]
+
+        edges_to_community1 = self.get_edges_to_community(community1)
+        edges_to_community2 = self.get_edges_to_community(community2)
+
+        expected_total_prob1 = self.get_expected_total_edges_prob_to_community(community1, resolution)
+        expected_total_prob2 = self.get_expected_total_edges_prob_to_community(community2, resolution)
+
+        expected_total_prob1 = 0
+        expected_total_prob2 = 0
+
+        weight_to_communities = weight_to_community1 + weight_to_community2
+        expected_total_prob = expected_total_prob1 + expected_total_prob2
+        gain = (weight_to_communities - splitting_penalty - expected_total_prob) / self.m
+        return gain
+
     def add_to_community(self, community: Community) -> None:
         """
         Add the hypernode to a community.
@@ -334,16 +420,18 @@ class Communities:
         self.origin_graph = origin_graph
 
         # The current graph with hyper nodes
-        self.hyper_graph: nx.DiGraph = origin_graph
+        self.hyper_graph: nx.DiGraph = self.origin_graph
         G = self.hyper_graph
 
-        self.node_to_community: dict[str, Community] = {n: Community({n}) for n in G.nodes()}
+        self.node_to_community: dict[str, Community] = {n: Community(self, {n}) for n in G.nodes()}
         self.communities: list[Community] = list(self.node_to_community.values())
         self.node_to_hypernode: dict[str, HyperNode] = {n: HyperNode(n, self, self.node_to_community[n]) for n in self.origin_graph.nodes()}
         self.hypernode_id_to_hypernode: dict[str, HyperNode] = dict(self.node_to_hypernode)
         self.hypernodes = list(self.node_to_hypernode.values())
 
         self.total_edge_count = self.origin_graph.size(weight=weight)
+
+        # self.node_to_other_nodes_weights: dict[str, dict[str, float]] = defaultdict(dict)
 
     def get_communities_as_sets(self) -> list[set[str]]:
         """
@@ -354,7 +442,7 @@ class Communities:
         list of set of str
             A list of sets, each containing the nodes of a community.
         """
-        return [c.nodes for c in self.communities]
+        return [c.nodes for c in self.communities if not c.is_empty()]
 
     @property
     def m(self) -> float:
@@ -535,13 +623,235 @@ class Communities:
         """
         return [hn for hn in self.hypernodes if not hn.is_empty()]
 
+    def get_weight_from_node_to_community(self, node: str, community: Community) -> float:
+        """
+        Get the weight from a node to a community.
+
+        Parameters
+        ----------
+        node : str
+            The node identifier.
+        community : Community
+            The target community.
+
+        Returns
+        -------
+        float
+            The weight from the node to the community.
+        """
+
+        weight = 0
+        for other_node in community.nodes:
+            if self.origin_graph.has_edge(node, other_node):
+                weight += self.origin_graph[node][other_node].get("weight", 1)
+            if self.origin_graph.has_edge(other_node, node):
+                weight += self.origin_graph[other_node][node].get("weight", 1)
+
+        return weight
+
+    def split_node_to_communities(self, node: str, community1: Community, community2: Community, penalty=1.0) -> None:
+        """
+        Split a node to two communities.
+
+        Parameters
+        ----------
+        node : str
+            The node identifier.
+        community1 : Community
+            The first community.
+        community2 : Community
+            The second community.
+        penalty : float, optional
+            The penalty for splitting the node. Default is 1.0.
+        """
+
+        before_weight = self.origin_graph.size(weight="weight")
+        before_weight_hyper = self.hyper_graph.size(weight="weight")
+
+        # Get initial information
+        current_hypernode = self.node_to_hypernode[node]
+        current_community = current_hypernode.community
+        other_community = community1 if current_hypernode.community == community2 else community2
+
+        # Create new nodes for the node to split
+        counter = 0
+        split_node = f"{node}__split_{counter}"
+        while split_node in self.origin_graph.nodes():
+            counter += 1
+            split_node = f"{node}__split_{counter}"
+
+        split_hypernode = HyperNode(split_node, self, other_community)
+        split_hypernode.nodes = [split_node]
+
+        # Add penalty edges to the new split node
+        self.origin_graph.add_edge(node, split_node, weight=penalty / 2)
+        self.origin_graph.add_edge(split_node, node, weight=penalty / 2)
+
+        # Add penalty edges to the new split hyper node
+        self.hyper_graph.add_edge(current_hypernode.hypernode_id, split_node, weight=penalty / 2)
+        self.hyper_graph.add_edge(split_node, current_hypernode.hypernode_id, weight=penalty / 2)
+
+        # Check edges in original graph between nodes of other community and the node to split
+        # Add these edges to the new split node and remove them from the old node
+        # Also store the sum of these weights as in and out weights for the hypenode connections
+        weights_from_node_to_hypernodes: dict[str, float] = defaultdict(float)
+        weights_from_hypernodes_to_node: dict[str, float] = defaultdict(float)
+
+        for other_node in other_community.nodes:
+            if self.origin_graph.has_edge(other_node, node):
+                weight = self.origin_graph[other_node][node].get("weight", 1)
+                self.origin_graph.add_edge(other_node, split_node, weight=weight)
+                self.origin_graph.remove_edge(other_node, node)
+
+                hypernode = self.node_to_hypernode[other_node]
+                weights_from_hypernodes_to_node[hypernode.hypernode_id] += weight
+
+            if self.origin_graph.has_edge(node, other_node):
+                weight = self.origin_graph[node][other_node].get("weight", 1)
+                self.origin_graph.add_edge(split_node, other_node, weight=weight)
+                self.origin_graph.remove_edge(node, other_node)
+
+                hypernode = self.node_to_hypernode[other_node]
+                weights_from_node_to_hypernodes[hypernode.hypernode_id] += weight
+
+        # Add the weights to the new split hyper node and remove (or lower) them from the old hyper node
+        for hypernode_id, weight in weights_from_node_to_hypernodes.items():
+            self.hyper_graph.add_edge(split_node, hypernode_id, weight=weight)
+
+            # Get current weight of existing edge
+            existing_weight = self.hyper_graph[current_hypernode.hypernode_id][hypernode_id].get("weight", 0)
+            if existing_weight > weight:
+                self.hyper_graph[current_hypernode.hypernode_id][hypernode_id]["weight"] -= weight
+            else:
+                self.hyper_graph.remove_edge(current_hypernode.hypernode_id, hypernode_id)
+
+        for hypernode_id, weight in weights_from_hypernodes_to_node.items():
+            self.hyper_graph.add_edge(hypernode_id, split_node, weight=weight)
+
+            # Get current weight of existing edge
+            existing_weight = self.hyper_graph[hypernode_id][current_hypernode.hypernode_id].get("weight", 0)
+            if existing_weight > weight:
+                self.hyper_graph[hypernode_id][current_hypernode.hypernode_id]["weight"] -= weight
+            else:
+                self.hyper_graph.remove_edge(hypernode_id, current_hypernode.hypernode_id)
+
+        after_weight = self.origin_graph.size(weight="weight")
+        after_weight_hyper = self.hyper_graph.size(weight="weight")
+
+        diff = after_weight - (before_weight + penalty)
+        diff_hyper = after_weight_hyper - (before_weight_hyper + penalty)
+
+        assert math.isclose(diff, 0, abs_tol=1e-6)
+        assert math.isclose(diff_hyper, 0, abs_tol=1e-6)
+
+        # Init new hyper node and add it
+        split_hypernode.init()
+        self.hypernodes.append(split_hypernode)
+        # Add new node to the other community
+        other_community.nodes.add(split_node)
+
+        # # Add two new nodes for the two communities
+        # new_node1 = f"{node}/1"
+        # new_node2 = f"{node}/2"
+
+        # weight_before = self.origin_graph.size(weight="weight")
+
+        # self.origin_graph.add_node(new_node1)
+        # self.origin_graph.add_node(new_node2)
+
+        # # Connect the first node with nodes from community 1 and the second node with nodes from community 2
+        # for other_node in community1.nodes:
+        #     if self.origin_graph.has_edge(node, other_node):
+        #         weight = self.origin_graph[node][other_node].get("weight", 1)
+        #         self.origin_graph.add_edge(new_node1, other_node, weight=weight)
+        #     if self.origin_graph.has_edge(other_node, node):
+        #         weight = self.origin_graph[other_node][node].get("weight", 1)
+        #         self.origin_graph.add_edge(other_node, new_node1, weight=weight)
+
+        # for other_node in community2.nodes:
+        #     if self.origin_graph.has_edge(node, other_node):
+        #         weight = self.origin_graph[node][other_node].get("weight", 1)
+        #         self.origin_graph.add_edge(new_node2, other_node, weight=weight)
+        #     if self.origin_graph.has_edge(other_node, node):
+        #         weight = self.origin_graph[other_node][node].get("weight", 1)
+        #         self.origin_graph.add_edge(other_node, new_node2, weight=weight)
+
+        # # Connect the two new nodes
+        # self.origin_graph.add_edge(new_node1, new_node2, weight=penalty / 2)
+        # self.origin_graph.add_edge(new_node2, new_node1, weight=penalty / 2)
+
+        # # Remove the old node
+        # self.origin_graph.remove_node(node)
+
+        # weight_after = self.origin_graph.size(weight="weight")
+
+        # assert weight_before == weight_after - penalty
+
+        # # Update the communities
+        # if node in community1.nodes:
+        #     community1.nodes.remove(node)
+        # if node in community2.nodes:
+        #     community2.nodes.remove(node)
+
+        # community1.nodes.add(new_node1)
+        # community2.nodes.add(new_node2)
+
+        # #########################################################
+        # # Update the hyper nodes
+        # #########################################################
+
+        # current_hypernode = self.node_to_hypernode[node]
+
+        # # Remove node from current hyper node
+        # current_hypernode.nodes.remove(node)
+
+        # # Add the two new hyper nodes
+        # hypernode1 = HyperNode(new_node1, self, community1)
+        # hypernode2 = HyperNode(new_node2, self, community2)
+        # hypernode1.nodes = [new_node1]
+        # hypernode2.nodes = [new_node2]
+
+        # self.hypernodes.append(hypernode1)
+        # self.hypernodes.append(hypernode2)
+
+        # # Add connectios between the two new hyper nodes
+        # self.hyper_graph.add_edge(hypernode1.hypernode_id, hypernode2.hypernode_id, weight=penalty / 2)
+        # self.hyper_graph.add_edge(hypernode2.hypernode_id, hypernode1.hypernode_id, weight=penalty / 2)
+
+        # # Add connections between the hypernode the node was currently in and the first new hyper node
+        # for node_in_hypernode in current_hypernode.nodes:
+        #     if self.origin_graph.has_edge(node_in_hypernode, node):
+        #         weight = self.origin_graph[node_in_hypernode][node].get("weight", 1)
+        #         self.hyper_graph.add_edge(hypernode1.hypernode_id, current_hypernode.hypernode_id, weight=weight)
+        #     if self.origin_graph.has_edge(node, node_in_hypernode):
+        #         weight = self.origin_graph[node][node_in_hypernode].get("weight", 1)
+        #         self.hyper_graph.add_edge(current_hypernode.hypernode_id, hypernode1.hypernode_id, weight=weight)
+
+        # # Build connections between new hyper nodes
+        # self.hyper_graph.add_edge(hypernode1.hypernode_id, hypernode2.hypernode_id, weight=penalty / 2)
+        # self.hyper_graph.add_edge(hypernode2.hypernode_id, hypernode1.hypernode_id, weight=penalty / 2)
+
+        # # Build connections between new hyper nodes and old hyper nodes
+
+
 class CommGraphCommunityDetector:
     def __init__(self, graph: nx.MultiDiGraph) -> None:
         self.graph = graph
 
-        self.weighted_node_graph = convert_to_weighted_graph(graph)
+        self.weighted_node_graph = self._convert_multigraph(convert_to_weighted_graph(graph))
         self.topic_graph = convert_node_connections_graph_to_topic_graph(graph)
         self.communities = Communities(self.weighted_node_graph)
+
+    def _convert_multigraph(self, G: nx.MultiDiGraph, weight="weight"):
+        """Convert a Multigraph to normal Graph"""
+        H = nx.DiGraph() if G.is_directed() else nx.Graph()
+        H.add_nodes_from(G)
+        for u, v, wt in G.edges(data=weight, default=1):
+            if H.has_edge(u, v):
+                H[u][v]["weight"] += wt
+            else:
+                H.add_edge(u, v, weight=wt)
+        return H
 
     def calculate_commgraph_communities(self, weight="weight", resolution=1, threshold=0.0000001, seed=None) -> list[set[str]]:
         """
@@ -614,15 +924,6 @@ class CommGraphCommunityDetector:
                         best_gain = total_gain
                         best_community = new_community
 
-                    # Check the connections to the old and the new community
-                    # print(f"Current communities: {communities.get_global_communities()}")
-
-                    # nodes = communities.graph.nodes[node].get("nodes", {node})
-                    # weights = communities.get_weights_from_community_to_other_communities(node)
-                    # current_comm_connections = weights[current_community]
-                    # new_comm_connections = weights[new_community]
-                    # x = 5
-
                 # Add the node to the best community
                 hypernode.add_to_community(best_community)
 
@@ -630,31 +931,80 @@ class CommGraphCommunityDetector:
                 if best_community != current_community:
                     moved_nodes += 1
                     improved = True
+        x = 5
 
-        # # Now we check for each community pair, if there is a node, that can be duplicated to improve modularity
-        # for hypernode_id in G.nodes():
-        #     current_community_index = communities[hypernode_id]
+        # for hypernode_id in random_hypernodes:
+        #     hypernode = self.communities.hypernode_id_to_hypernode[hypernode_id]
+        #     current_community = hypernode.community
+        #     best_community = current_community
 
-        #     hyper_comms = communities.hypernodes
-        #     for i, other_community in enumerate(hyper_comms):
-        #         if i == current_community_index:
+        #     best_gain = 0
+        #     do_split = False
+
+        #     # First remove the node from its current community and get the removal cost
+        #     nodes = hypernode.nodes
+        #     remove_cost = hypernode.remove_from_current_community()
+
+        #     # Now also check for each neighbor community, if the gain is higher, if the node is duplicated
+        #     for new_community in hypernode.get_neighbor_communities():
+        #         if new_community == current_community:
         #             continue
-        #         if len(other_community) == 0:
-        #             continue
 
-        #         # Check if there are nodes that can be moved from one community to the other
-        #         comm = communities.get_community_nodes(current_community_index)
-        #         other_comm = communities.get_community_nodes(i)
-        #         for hypernode_id in comm:
-        #             node_to_comm_connection_weight = communities.get_weight_from_node_to_community(hypernode_id, i)
-        #             if node_to_comm_connection_weight >= 2:
-        #                 x = 5
-        #             # Check if the node can be moved to the other community
-        #             # gain = communities.get_gain_for_adding_node_to_community(node, i)
+        #         gain = hypernode.get_gain_for_splitting_node_to_communities(community1=current_community, community2=new_community, splitting_penalty=1)
+        #         gain = hypernode.get_gain_for_splitting_node_to_communities(community1=current_community, community2=new_community, splitting_penalty=1)
+        #         total_gain = remove_cost + gain
+        #         if total_gain > best_gain:
+        #             do_split = True
+        #             best_gain = total_gain
+        #             best_community = new_community
+
+        #     if best_community == current_community:
+        #         hypernode.add_to_community(best_community)
+        #     else:
+        #         x = 5
+
+        x = 5
 
         # Filter out empty communities
         global_communities = communities.get_communities()
         inner_communities = communities.get_current_hypernodes()
+
+        for i, community in enumerate(global_communities):
+            edge_nodes = community.get_edge_nodes()
+
+            for node in edge_nodes:
+                weight_from_node_to_community = communities.get_weight_from_node_to_community(node, community)
+
+                for j, other_community in enumerate(global_communities):
+                    if i == j:
+                        continue
+
+                    weight_from_node_to_other_community = communities.get_weight_from_node_to_community(node, other_community)
+
+                    penalty = 1.5
+
+                    if weight_from_node_to_other_community - penalty > 0:
+                        # Print all edges
+                        # print(f"\n\nEdges from {node} to {community}: {weight_from_node_to_community}")
+                        # for n in self.communities.origin_graph.nodes():
+                        #     print("Edges from", n)
+                        #     for neighbor in self.communities.origin_graph.successors(n):
+                        #         try:
+                        #             # w = self.communities.origin_graph[n][neighbor]["weight"]
+                        #             w = self.communities.origin_graph.get_edge_data(n, neighbor)
+
+                        #         except:
+                        #             w = -1
+
+                        #         print(f"  {neighbor}: {self.communities.origin_graph[n][neighbor]} ({w}) ")
+                        #         # print(f"  {neighbor}: {self.communities.origin_graph[node][neighbor]['weight']}")
+
+                        print("Splitting node", node, "to", community, "and", other_community)
+                        weight_from_node_to_other_community = communities.get_weight_from_node_to_community(node, other_community)
+                        communities.split_node_to_communities(node, community, other_community, penalty=penalty)
+
+            if len(edge_nodes) > 0:
+                x = 5
 
         print(f"Global communities:")
         for c in global_communities:

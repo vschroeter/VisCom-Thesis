@@ -4,11 +4,11 @@ from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_
 
 ds = RosMetaSysGraphGenerator.get_available_datasets(True)
 
-# self_driving_json = [d for d in ds if "0026nodes" in d][0]
+self_driving_json = [d for d in ds if "0026nodes" in d][0]
 # self_driving_json = [d for d in ds if "handcraftedBroadcastExample" in d][0]
 # self_driving_json = [d for d in ds if "significanceTest" in d][0]
 # self_driving_json = [d for d in ds if "0122" in d][0]
-self_driving_json = [d for d in ds if "handcraftedCommunityExample.json" in d][0]
+# self_driving_json = [d for d in ds if "handcraftedOverlappingCommunityExample.json" in d][0]
 
 # print(ds)
 
@@ -118,6 +118,8 @@ for node in centrality_degree:
 
 detector = CommGraphCommunityDetector(graph)
 comms = detector.calculate_commgraph_communities()
-
+print(f"Communities:")
+for comm in comms:
+    print(comm)
 print(5)
 # comm_graph =
