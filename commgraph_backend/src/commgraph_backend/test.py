@@ -118,8 +118,12 @@ for node in centrality_degree:
 
 detector = CommGraphCommunityDetector(graph)
 comms = detector.calculate_commgraph_communities()
-print(f"Communities:")
+print(f"\nCommunities:")
 for comm in comms:
     print(comm)
+
+print("\nSplitted nodes:")
+for splitted, node in detector.communities.splitted_nodes_to_original_nodes.items():
+    print(splitted, "-->", node)
 print(5)
 # comm_graph =
