@@ -17,6 +17,9 @@ export class CommunicationLink {
   /** The direction of the communication */
   direction: CommunicationDirection;
 
+  /** The weight of the communication */
+  weight: number = 1;
+
   /** Reference to the communication graph to get the nodes */
   private graph: CommunicationGraph;
 
@@ -27,6 +30,7 @@ export class CommunicationLink {
    * @param channel The channel of the communication
    * @param direction The direction of the communication
    * @param graph Reference to the communication graph
+   * @param weight The weight of the communication
    */
   constructor(
     topicId: string,
@@ -35,6 +39,7 @@ export class CommunicationLink {
     channel: CommunicationChannel,
     direction: CommunicationDirection,
     graph: CommunicationGraph,
+    weight = 1
   ) {
     this.topicId = topicId;
     this.fromId = fromId;
@@ -42,6 +47,7 @@ export class CommunicationLink {
     this.channel = channel;
     this.direction = direction;
     this.graph = graph;
+    this.weight = weight;
   }
 
   /** The source node of the link */
@@ -53,6 +59,7 @@ export class CommunicationLink {
   get toNode(): CommunicationNode {
     return this.graph.nodesById.get(this.toId)!;
   }
+
 }
 
 export class ChannelGraphLinkData {

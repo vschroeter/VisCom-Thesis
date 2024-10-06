@@ -28,15 +28,17 @@ export function convertGraphToCommGraph(graph: Graph<any, ApiGraphData>): Commun
     const topicId = (pubTopic ? pubTopic : serviceName) ?? (topicIdCounter++).toString();
     // const channel = channels[0];
 
-    console.log({
-      from,
-      to,
-      pubTopic,
-      serviceName,
-      channel,
-      topicId,
-      link
-    });
+    // console.log({
+    //   from,
+    //   to,
+    //   pubTopic,
+    //   serviceName,
+    //   channel,
+    //   topicId,
+    //   w: link.data.weight,
+    //   d: link.data.distance,
+    //   link
+    // });
 
     const topicOut = new CommunicationTopic(
       fromNode.id.toString(),
@@ -44,6 +46,7 @@ export function convertGraphToCommGraph(graph: Graph<any, ApiGraphData>): Commun
       channel,
       'outgoing',
       new MessageType('Message'),
+      link.data.weight,
     );
     const topicIn = new CommunicationTopic(
       toNode.id.toString(),
@@ -51,6 +54,7 @@ export function convertGraphToCommGraph(graph: Graph<any, ApiGraphData>): Commun
       channel,
       'incoming',
       new MessageType('Message'),
+      link.data.weight,
     );
 
     fromNode.addTopic(topicOut);

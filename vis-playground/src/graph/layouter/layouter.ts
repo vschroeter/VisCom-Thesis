@@ -41,6 +41,17 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         throw new Error("Method not implemented.");
     }
 
+    getFilteredLinks() {
+        const filteredLinks = this.graph2d?.links.filter(l => {
+            const weight = l.data?.weight ?? 1;
+            // const distance = 1 / weight;
+
+            return weight > (this.commonSettings.hideLinksThreshold.getValue() ?? 100);
+        })
+        // console.log("Filtered links", filteredLinks);
+        return filteredLinks;
+    }
+
     reset() {
         this.graph2d.nodes.forEach(node => {
             node.x = 0;
@@ -85,13 +96,12 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('r', d => d.radius)
             // .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
             .attr('fill', d => {
+                const rankExtent = this.commGraph.ranking.getRankExtent();                
                 const nodeRanking = this.commGraph.ranking.getRankOfNode(d.data);
-
-                if (nodeRanking === undefined) {
+                if (nodeRanking === undefined || rankExtent[0] == Infinity || rankExtent[1] == -Infinity) {
                     return this.commonSettings.nodeColor.getValue(d) ?? "red";
                 }
 
-                const rankExtent = this.commGraph.ranking.getRankExtent();
                 const scale = d3.scaleLinear().domain(rankExtent).range([0, 1]);
 
                 return nodeRankingColorScheme(scale(nodeRanking));
@@ -110,10 +120,20 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
                     return 'white';
                 }
 
-                // Position on color scheme between 0 and 1
-                const positionOfNodeCommunity = communities[0] / totalCommunityCount;
+                const colors = communities.map(community => {
+                    const positionOfNodeCommunity = community / totalCommunityCount;
+                    return d3.hsl(communitiesColorScheme(positionOfNodeCommunity));
+                });
+                
+                // console.log(colors);
+                // Get the average color of all communities
+                const averageColor = d3.hsl(d3.mean(colors, c => c.h)!, d3.mean(colors, c => c.s)!, d3.mean(colors, c => c.l)!);
+                return averageColor.formatRgb();
 
-                return communitiesColorScheme(positionOfNodeCommunity);
+                // // Position on color scheme between 0 and 1
+                // const positionOfNodeCommunity = communities[0] / totalCommunityCount;
+
+                // return communitiesColorScheme(positionOfNodeCommunity);
             })
             .attr('stroke-width', 2)
             .attr('opacity', d => {
@@ -164,8 +184,11 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             return 1;
         }
 
+
+
         selection.selectAll('path.arrow')
-            .data(this.graph2d?.links)
+            // .data(this.graph2d?.links)
+            .data(this.getFilteredLinks())
             .join('path')
             .classed('arrow', true)
             .attr('d', (d: AbstractConnection2d) => d.getArrowPath())
@@ -174,7 +197,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('opacity', opacityGetter)
 
         selection.selectAll('path.link')
-            .data(this.graph2d?.links)
+            // .data(this.graph2d?.links)
+            .data(this.getFilteredLinks())
             .join('path')
             .classed('link', true)
             .attr('d', (d: AbstractConnection2d) => d.getSvgPath())

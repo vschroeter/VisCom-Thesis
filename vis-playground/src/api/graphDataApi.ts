@@ -26,6 +26,8 @@ export interface ApiGraph {
 export interface ApiGraphData {
     pub_topic?: string;
     service_name?: string;
+    weight?: number;
+    distance?: number;
 }
 
 export function parseGraphData(
@@ -51,15 +53,16 @@ export function parseGraphData(
         const dTo = link.target ?? null;
         // const dData = link.data ?? null;
 
-        const data = {
-            service_name: link.service_name,
-            pub_topic: link.pub_topic,
-        }
-
+        // const data = {
+        //     service_name: link.service_name,
+        //     pub_topic: link.pub_topic,
+        //     data: link
+        // }
+        // console.log('link', link);
         if (dFrom === null || dTo === null) {
             throw new Error('linkFrom or linkTo not found in link' + JSON.stringify(link));
         }
-        graph.addLink(dFrom, dTo, data);
+        graph.addLink(dFrom, dTo, link);
     });
     return graph;
 }

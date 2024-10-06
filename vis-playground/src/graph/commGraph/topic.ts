@@ -23,6 +23,9 @@ export class CommunicationTopic {
   /** The direction of the topic */
   direction: CommunicationDirection;
 
+  /** The weight of the topic */
+  weight: number = 1;
+
   /**
    * Create a new communication topic
    * @param nodeID The node that the topic belongs to
@@ -30,6 +33,7 @@ export class CommunicationTopic {
    * @param channel The channel of the topic
    * @param messageType The type of the message
    * @param direction The direction of the topic
+   * @param weight The weight of the topic
    */
   constructor(
     nodeID: string,
@@ -37,11 +41,17 @@ export class CommunicationTopic {
     channel: CommunicationChannel,
     direction: CommunicationDirection,
     messageType: MessageType,
+    weight = 1
   ) {
     this.nodeID = nodeID;
     this.id = topicId;
     this.channel = channel;
     this.messageType = messageType;
     this.direction = direction;
+    this.weight = weight;
+  }
+
+  get distance() {
+    return 1 / (this.weight**2);
   }
 }

@@ -48,6 +48,15 @@ export class CommonSettings extends Setting {
         defaultValue: true,
     })
 
+    hideLinksThreshold = new Param({
+        type: "number",
+        key: "hideLinksThreshold",
+        label: "Hide Links Threshold",
+        description: "Hide links with a weight below this threshold",
+        optional: false,
+        defaultValue: 0.25,
+    })
+
 
 
 }

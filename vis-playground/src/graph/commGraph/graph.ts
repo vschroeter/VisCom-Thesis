@@ -269,34 +269,6 @@ export class CommunicationGraph<NodeData = any> {
     return Array.from(this.channelsByType.values());
   }
 
-  // getLayoutGraph(): LayoutGraph {
-  //   const nodes: Map<string, LayoutGraphNode> = new Map<
-  //     string,
-  //     LayoutGraphNode
-  //   >();
-  //   for (const node of this.nodes) {
-  //     nodes.set(node.id, new LayoutGraphNode(node.id, node));
-  //   }
-
-  //   const links: LayoutGraphLink[] = [];
-  //   console.log(this.channels, this.graphsByChannelType);
-  //   this.channels.forEach((channel) => {
-  //     this.graphsByChannelType
-  //       .get(channel.type)!
-  //       .outgoing.forEachLink((link) => {
-  //         links.push(
-  //           new LayoutGraphLink(
-  //             nodes.get(link.fromId.valueOf() as string)!,
-  //             nodes.get(link.toId.valueOf() as string)!,
-  //           ),
-  //         );
-  //       });
-  //   });
-
-  //   const layout = new LayoutGraph(Array.from(nodes.values()), links);
-  //   return layout;
-  // }
-
   ////////////////////////////////////////////////////////////////////////////
   // Internal helper methods
   ////////////////////////////////////////////////////////////////////////////
@@ -513,6 +485,7 @@ export class CommunicationGraph<NodeData = any> {
                   channel,
                   direction,
                   this,
+                  link.data.topic.weight
                 ),
               );
             }
@@ -569,4 +542,5 @@ export class CommunicationGraph<NodeData = any> {
 
     return links;
   }
+
 }

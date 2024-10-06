@@ -58,12 +58,22 @@ export class CommunicationNode<NodeData = any> {
     // Check if the topic already exists
     for (const existingTopic of this.topics) {
       if (existingTopic.id === topic.id && existingTopic.channel === topic.channel && existingTopic.direction === topic.direction) {
+
+        // Check if distances differ
+        const existingDistance = existingTopic.distance;
+        const newDistance = topic.distance;
+        
+        if (existingDistance !== newDistance) {
+          throw new Error(`Topic with id ${topic.id} (${topic.channel.type}, ${topic.direction}) already exists with different distance`);
+        }
+
         if (ignoreExisting) return;
         
         throw new Error(`Topic with id ${topic.id} (${topic.channel.type}, ${topic.direction}) already exists`);
       }
     }
-    
+
+    // console.log('Adding topic', topic);    
     this.topics.push(topic);
   }
 

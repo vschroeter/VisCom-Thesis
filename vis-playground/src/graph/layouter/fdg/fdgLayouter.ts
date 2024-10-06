@@ -40,7 +40,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
         if (this.settings.forceLink.active) {
             // console.log("Adding force link", this.settings.forceLink.distance.getValue(), this.settings.forceLink.strength.getValue());
-            const force = d3.forceLink(this.graph2d.links)
+            const force = d3.forceLink(this.getFilteredLinks())
             if (this.settings.forceLink.strength.active) {
                 force.strength(d => this.settings.forceLink.strength.getValue(d, ctx) ?? 1)
             }
