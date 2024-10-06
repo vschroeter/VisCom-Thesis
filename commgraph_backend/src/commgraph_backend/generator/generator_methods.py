@@ -2,10 +2,30 @@ from __future__ import annotations
 
 import networkx as nx
 
+from commgraph_backend.commgraph.converter import convert_normal_graph_to_commgraph, convert_to_weighted_graph
 from commgraph_backend.data.reader import RosMetaSysGraphGenerator
 from commgraph_backend.generator.generator import CommGraphGenerator
 
 MAX_NODES = 1000
+
+
+def get_nx_to_commgraph_method(nx_method):
+    def nx_to_commgraph_method(*args, **kwargs):
+        graph = nx_method(*args, **kwargs)
+        comm_graph = convert_normal_graph_to_commgraph(graph)
+        return convert_to_weighted_graph(comm_graph)
+        # return comm_graph
+
+    return nx_to_commgraph_method
+
+
+def get_generator_output(graph_generator):
+    def generator_output(*args, **kwargs):
+        graph = graph_generator(*args, **kwargs)
+        return graph
+        # return convert_to_weighted_graph(graph)
+
+    return generator_output
 
 
 generator_methods_config = {
@@ -15,7 +35,7 @@ generator_methods_config = {
             {"key": "n", "type": "int", "description": "Number of nodes", "range": [1, MAX_NODES], "default": 10},
         ],
         "description": "Creates a full r-ary tree of n nodes.",
-        "method": nx.full_rary_tree,
+        "method": get_generator_output(get_nx_to_commgraph_method(nx.full_rary_tree)),
     },
     "watts_strogatz": {
         "params": [
@@ -25,7 +45,7 @@ generator_methods_config = {
             {"key": "seed", "type": "int", "description": "Seed for random number generator", "range": [0, 2**32 - 1], "default": None},
         ],
         "description": "Generates a Watts-Strogatz small-world graph.",
-        "method": nx.watts_strogatz_graph,
+        "method": get_generator_output(get_nx_to_commgraph_method(nx.watts_strogatz_graph)),
     },
     "barabasi_albert": {
         "params": [
@@ -34,7 +54,7 @@ generator_methods_config = {
             {"key": "seed", "type": "int", "description": "Seed for random number generator", "range": [0, 2**32 - 1], "default": None},
         ],
         "description": "Generates a Barabási-Albert preferential attachment graph.",
-        "method": nx.barabasi_albert_graph,
+        "method": get_generator_output(get_nx_to_commgraph_method(nx.barabasi_albert_graph)),
     },
     "random_graph": {
         "params": [
@@ -42,7 +62,7 @@ generator_methods_config = {
             {"key": "p", "type": "float", "description": "Probability for edge creation", "range": [0.0, 1.0], "default": 0.1},
         ],
         "description": "Generates a random graph using the Erdős-Rényi model.",
-        "method": nx.gnp_random_graph,
+        "method": get_generator_output(get_nx_to_commgraph_method(nx.gnp_random_graph)),
     },
     "communication_graph": {
         "params": [
@@ -64,9 +84,13 @@ generator_methods_config = {
             },
         ],
         "description": "Generates a random graph using the Erdős-Rényi model.",
-        "method": CommGraphGenerator().generate,
+        "method": get_generator_output(CommGraphGenerator().generate),
     },
-    "zacharys_karate_club": {"params": [], "description": "Generates the Zachary's Karate Club graph.", "method": nx.karate_club_graph},
+    "zacharys_karate_club": {
+        "params": [],
+        "description": "Generates the Zachary's Karate Club graph.",
+        "method": get_generator_output(get_nx_to_commgraph_method(nx.karate_club_graph)),
+    },
 }
 
 RosMetaSysGraphGenerator.extent_generator_methods(generator_methods_config)

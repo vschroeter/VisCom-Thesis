@@ -27,6 +27,18 @@ class Community:
         self.total_in_degree = 0
         self.total_out_degree = 0
 
+    @property
+    def origin_nodes(self) -> set[str]:
+        """
+        Get the original nodes of the community.
+
+        Returns
+        -------
+        set of str
+            The original nodes of the community.
+        """
+        return {self.communities.splitted_nodes_to_original_nodes.get(n, n) for n in self.nodes}
+
     def is_empty(self) -> bool:
         """
         Check if the community is empty.
@@ -850,6 +862,13 @@ class Communities:
 
 
 class CommGraphCommunityDetector:
+
+    @staticmethod
+    def detect_communities(graph: nx.MultiDiGraph, split_penalty=1.5, weight="weight", resolution=1, threshold=0.0000001, seed=None) -> list[set[str]]:
+        detector = CommGraphCommunityDetector(graph)
+        comms = detector.calculate_commgraph_communities(split_penalty=split_penalty, weight=weight, resolution=resolution, threshold=threshold, seed=seed)
+        return comms
+
     def __init__(self, graph: nx.MultiDiGraph) -> None:
         self.graph = graph
 
@@ -868,7 +887,7 @@ class CommGraphCommunityDetector:
                 H.add_edge(u, v, weight=wt)
         return H
 
-    def calculate_commgraph_communities(self, weight="weight", resolution=1, threshold=0.0000001, seed=None) -> list[set[str]]:
+    def calculate_commgraph_communities(self, split_penalty: float = 1.5, weight="weight", resolution=1, threshold=0.0000001, seed=None) -> list[set[str]]:
         """
         Get communities from a graph using a adapted Louvain algorithm
         """
@@ -879,14 +898,16 @@ class CommGraphCommunityDetector:
 
         # Louvain as comparison
         communities = nx.algorithms.community.louvain_communities(self.weighted_node_graph)
-        print(f"Louvain: {communities}")
+        print(f"Louvain:")
+        for c in communities:
+            print(c)
 
         while True:
             # Create the new graph according to the current hyper communities
             self.communities.generate_new_hypernode_graph()
 
             # Iterate a step to get the new improved communities
-            global_communities, inner_communities, improved = self._iterate_one_level()
+            global_communities, inner_communities, improved = self._iterate_one_level(split_penalty)
 
             new_mod = modularity(self.weighted_node_graph, self.communities.get_communities_as_sets(), weight=weight, resolution=resolution)
 
@@ -900,9 +921,9 @@ class CommGraphCommunityDetector:
                 print(f"Did not improve End mod: {mod}")
                 break
 
-        return global_communities
+        return [c.origin_nodes for c in global_communities if not c.is_empty()]
 
-    def _iterate_one_level(self) -> None:
+    def _iterate_one_level(self, split_penalty=1.5) -> tuple[list[Community], list[HyperNode], bool]:
         G = self.communities.hyper_graph
 
         communities = self.communities
@@ -963,9 +984,7 @@ class CommGraphCommunityDetector:
 
                     weight_from_node_to_other_community = communities.get_weight_from_node_to_community(node, other_community)
 
-                    penalty = 1.5
-
-                    if weight_from_node_to_other_community - penalty > 0:
+                    if weight_from_node_to_other_community - split_penalty > 0:
                         # Print all edges
                         # print(f"\n\nEdges from {node} to {community}: {weight_from_node_to_community}")
                         # for n in self.communities.origin_graph.nodes():
@@ -981,9 +1000,10 @@ class CommGraphCommunityDetector:
                         #         print(f"  {neighbor}: {self.communities.origin_graph[n][neighbor]} ({w}) ")
                         #         # print(f"  {neighbor}: {self.communities.origin_graph[node][neighbor]['weight']}")
 
-                        print("Splitting node", node, "to", community, "and", other_community)
+                        # print("Splitting node", node, "to", community, "and", other_community)
+                        print("Splitting node", node, "having weight", weight_from_node_to_other_community)
                         weight_from_node_to_other_community = communities.get_weight_from_node_to_community(node, other_community)
-                        communities.split_node_to_communities(node, community, other_community, penalty=penalty)
+                        communities.split_node_to_communities(node, community, other_community, penalty=split_penalty)
 
             if len(edge_nodes) > 0:
                 x = 5

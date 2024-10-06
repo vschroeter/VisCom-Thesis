@@ -2,8 +2,9 @@ import json
 import os
 from typing import Any
 
-from commgraph_backend.commgraph.converter import convert_node_connections_graph_to_topic_graph
 import networkx as nx
+
+from commgraph_backend.commgraph.converter import convert_node_connections_graph_to_topic_graph, convert_to_weighted_graph
 
 
 class RosMetaSysGraphGenerator:
@@ -31,10 +32,8 @@ class RosMetaSysGraphGenerator:
 
             def callback(dataset=dataset, **kwargs):
                 print(f"Reading dataset {dataset} with kwargs {kwargs}")
-                return RosMetaSysGraphGenerator.read_graph_from_file(
-                    os.path.join(os.path.dirname(__file__), "datasets", dataset),
-                    **kwargs
-                )
+                graph = RosMetaSysGraphGenerator.read_graph_from_file(os.path.join(os.path.dirname(__file__), "datasets", dataset), **kwargs)
+                return convert_to_weighted_graph(graph)
 
             generator_methods_config[dataset] = {
                 "params": [

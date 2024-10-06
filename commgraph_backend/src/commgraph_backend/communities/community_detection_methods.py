@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from commgraph_backend.communities.community_detection import CommGraphCommunityDetector
 import networkx as nx
 
 MAX_NODES = 1000
@@ -17,4 +18,9 @@ community_methods_config = {
         # "method": nx.algorithms.community.modularity_max.greedy_modularity_communities
         "method": nx.community.louvain_communities,
     },
+    "comm_splitter": {
+        "params": [{"key": "split_penalty", "type": "float", "description": "Value of the split penalty", "range": [1.1, 100], "default": 1.5}],
+        "description": "Detects communities in the graph using the comm_splitter method.",
+        "method": CommGraphCommunityDetector.detect_communities
+    }
 }

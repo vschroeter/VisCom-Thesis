@@ -1,3 +1,6 @@
+import networkx as nx
+
+from commgraph_backend.commgraph.converter import convert_normal_graph_to_commgraph, convert_to_weighted_graph
 from commgraph_backend.communities.community_detection import CommGraphCommunityDetector
 from commgraph_backend.data.reader import RosMetaSysGraphGenerator
 from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality, get_commgraph_node_clusters
@@ -6,6 +9,7 @@ ds = RosMetaSysGraphGenerator.get_available_datasets(True)
 
 self_driving_json = [d for d in ds if "0026nodes" in d][0]
 # self_driving_json = [d for d in ds if "handcraftedBroadcastExample" in d][0]
+# self_driving_json = [d for d in ds if "handcraftedBroadcastExample" in d][0]
 # self_driving_json = [d for d in ds if "significanceTest" in d][0]
 # self_driving_json = [d for d in ds if "0122" in d][0]
 # self_driving_json = [d for d in ds if "handcraftedOverlappingCommunityExample.json" in d][0]
@@ -13,8 +17,9 @@ self_driving_json = [d for d in ds if "0026nodes" in d][0]
 # print(ds)
 
 graph = RosMetaSysGraphGenerator.read_graph_from_file(self_driving_json)
-# for link in graph.edges(data=True):
-#     print(link)
+# graph = convert_normal_graph_to_commgraph(nx.karate_club_graph())
+for link in convert_to_weighted_graph(graph).edges(data=True):
+    print(link)
 
 nodes_to_keep = [
     "asr_vosk",

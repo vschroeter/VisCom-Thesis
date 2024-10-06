@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import math
 
 import networkx as nx
@@ -7,6 +8,18 @@ import networkx as nx
 def get_topic_name(topic_type: str, topic_name: str) -> str:
     return f"{topic_type}/{topic_name}"
 
+
+def convert_normal_graph_to_commgraph(graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
+    """This convert method adds topics to the connections of a normal graph."""
+
+    new_graph = nx.MultiDiGraph()
+
+    # For each connection, add a pub_topic 
+    for start_node, connections in graph.adjacency():
+        for target_node, data in connections.items():
+            new_graph.add_edge(start_node, target_node, pub_topic=f"{start_node}->{target_node}")
+
+    return new_graph
 
 def convert_node_connections_graph_to_topic_graph(graph: nx.MultiDiGraph, directed=True, reversed=False) -> nx.DiGraph:
     """
@@ -76,7 +89,9 @@ def convert_to_weighted_graph(node_graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
 
                     # Get the distance in the topic graph
                     distance = topic_graph[start_node][topic_name]["distance"] * 2
-                    weighted_graph.add_edge(start_node, target_node, distance=distance, weight=math.sqrt(1 / distance))
+                    # weighted_graph.add_edge(start_node, target_node, distance=distance, weight=math.sqrt(1 / distance), topic=topic)
+                    # weighted_graph.add_edge(start_node, target_node, distance=distance, weight=math.sqrt(1 / distance), **{topic_type: topic})
+                    weighted_graph.add_edge(start_node, target_node, distance=distance, weight=math.sqrt(1 / distance), **{topic_type: topic})
                     # weighted_graph.add_edge(start_node, target_node, distance=distance, weight=1)
 
     return weighted_graph
