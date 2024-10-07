@@ -279,7 +279,8 @@ export class Param<T = number> { //
         optional = false,
         active = false,
         enabled = true,
-        range
+        range,
+        choices,
     }: {
         key: string,
         label?: string,
@@ -290,6 +291,7 @@ export class Param<T = number> { //
         active?: boolean,
         enabled?: boolean | (() => boolean),
         range?: NumberRange,
+        choices?: string[],
     }) {
         this.key = key;
         this.label = label || key;
@@ -301,6 +303,7 @@ export class Param<T = number> { //
         this.type = type;
         this.enabledCallback = enabled;
         this.range = range;
+        this.choices = choices ?? [];
 
         this.updateStatus();
     }

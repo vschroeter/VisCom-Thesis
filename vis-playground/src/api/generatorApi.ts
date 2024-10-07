@@ -6,6 +6,7 @@ export interface ApiParam {
     description: string;
     range?: [number, number];
     type: 'int' | 'float' | 'boolean' | 'string';
+    choices?: string[];
 }
 
 export interface ApiGenerator {
@@ -43,6 +44,7 @@ export class Generator {
                 optional: false,
                 type: param.type,
                 range: { min: param.range?.[0], max: param.range?.[1] },
+                choices: param.choices,
             }));
         }
     }

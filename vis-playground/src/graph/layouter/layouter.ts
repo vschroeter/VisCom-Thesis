@@ -166,6 +166,9 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     updateLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
 
         const opacityGetter = (d: AbstractConnection2d) => {
+            const weight = d.data?.weight ?? 1;
+            // const adaptedWeight = Math.max(0.2, Math.sqrt(weight));
+            const adaptedWeight = Math.max(0.05, weight);
             if (this.userInteractions.somethinIsSelectedOrFocusedOrHovered) {
 
                 const startNode = d.source;
@@ -173,18 +176,19 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
                 // if (this.userInteractions.)) {
                 //     return 1;
                 // }
-
+        
                 if (this.userInteractions.isHovered(startNode) || this.userInteractions.isHovered(endNode)) {
                     return 1;
                 }
 
-                return 0.2;
+                return 0.4 * adaptedWeight;
             }
 
-            return 1;
+            return adaptedWeight;
         }
 
-
+        const wMultiplier = 2;
+        const minW = 0.1;
 
         selection.selectAll('path.arrow')
             // .data(this.graph2d?.links)
@@ -193,6 +197,10 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .classed('arrow', true)
             .attr('d', (d: AbstractConnection2d) => d.getArrowPath())
             .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
+            .attr('stroke-width', (l) => {
+                const weight = l.data?.weight ?? 1;
+                return Math.max(minW, weight * wMultiplier);
+            })
             .attr('fill', 'none')
             .attr('opacity', opacityGetter)
 
@@ -203,6 +211,10 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .classed('link', true)
             .attr('d', (d: AbstractConnection2d) => d.getSvgPath())
             .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
+            .attr('stroke-width', (l) => {
+                const weight = l.data?.weight ?? 1;
+                return Math.max(minW, weight * wMultiplier);
+            })
             .attr('fill', 'none')
             .attr('opacity', opacityGetter)
 
