@@ -173,6 +173,10 @@ export class NodeRanking {
 
 }
 
+export class CommunicationTopicGraph<NodeData = any> {
+
+}
+
 /**
  * Class representing a communication graph.
  */
@@ -250,8 +254,12 @@ export class CommunicationGraph<NodeData = any> {
         if (!directedTopicMap.has(topicId)) {
           directedTopicMap.set(topicId, []);
         }
+        // if (!topicMap.all.has(topicId)) {
+        //   topicMap.all.set(topicId, []);
+        // }
 
         directedTopicMap.get(topicId)!.push(node);
+        // topicMap.all.get(topicId)!.push(node);
       });
     });
 
@@ -307,7 +315,7 @@ export class CommunicationGraph<NodeData = any> {
         const channelType = topic.channel.type;
         const graphs = this.graphsByChannelType.get(channelType)!;
         const topicMap = this.getTopicToNodeMapByChannelType(channelType);
-
+        
         // Adding links to the graph representing the direction of the topic
         const graph: Graph<any, ChannelGraphLinkData> = graphs[topic.direction];
 
@@ -541,6 +549,22 @@ export class CommunicationGraph<NodeData = any> {
     });
 
     return links;
+  }
+
+
+  getTopicWeight(topicId?: string, channel?: string | CommunicationChannel): number {
+    if (!topicId || !channel) {
+      return 0;
+    }
+    const channelType = typeof channel === 'string' ? channel : channel.type;
+    const topicMap = this.getTopicToNodeMapByChannelType(channelType);
+    const targetNodes = topicMap.all.get(topicId);
+    console.log(topicId, channelType, targetNodes);
+    if (!targetNodes) {
+      return 0;
+    }
+
+    return Math.sqrt(1 / (targetNodes.length));
   }
 
 }

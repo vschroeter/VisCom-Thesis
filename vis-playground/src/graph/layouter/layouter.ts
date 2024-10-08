@@ -213,6 +213,13 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
             .attr('stroke-width', (l) => {
                 const weight = l.data?.weight ?? 1;
+
+                console.log({
+                    connection: `${l.source.data?.id} -> ${l.target.data?.id}`,
+                    apiWeight: weight,
+                    calcWeight: this.commGraph.getTopicWeight(l.data?.topicId, l.data?.channel)
+                });
+
                 return Math.max(minW, weight * wMultiplier);
             })
             .attr('fill', 'none')
