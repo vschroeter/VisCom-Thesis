@@ -2,6 +2,7 @@ import createGraph, { Graph } from "ngraph.graph";
 import { CommunicationChannel, CommunicationDirection, CommunicationDirectionPendant } from "./channel";
 import { ChannelGraphLinkData, CommunicationLink } from "./link";
 import { CommunicationNode } from "./node";
+import { CommunicationTopic } from "./topic";
 
 /**
  * Helper class representing a mapping of topics to nodes on a specific communication channel.
@@ -173,9 +174,32 @@ export class NodeRanking {
 
 }
 
-export class CommunicationTopicGraph<NodeData = any> {
+export class NodeToNodeConnection {
+  from: string;
+  to: string;
+  connectionCount: number;
+  topic: CommunicationTopic;
 
+  constructor(from: string, to: string, topic: CommunicationTopic, connectionCount: number) {
+    this.from = from;
+    this.to = to;
+    this.topic = topic;
+    this.connectionCount = connectionCount;
+  }
+
+  get linearWeight(): number {
+    return 1 / this.connectionCount;
+  }
+
+  get quadraticWeight(): number {
+    return Math.sqrt(1 / this.connectionCount);
+  }
+
+  static getCombinedWeight(connections: NodeToNodeConnection[]): number {
+    return connections.reduce((acc, connection) => acc + connection.quadraticWeight, 0);
+  }
 }
+
 
 /**
  * Class representing a communication graph.
@@ -315,7 +339,7 @@ export class CommunicationGraph<NodeData = any> {
         const channelType = topic.channel.type;
         const graphs = this.graphsByChannelType.get(channelType)!;
         const topicMap = this.getTopicToNodeMapByChannelType(channelType);
-        
+
         // Adding links to the graph representing the direction of the topic
         const graph: Graph<any, ChannelGraphLinkData> = graphs[topic.direction];
 
@@ -552,19 +576,44 @@ export class CommunicationGraph<NodeData = any> {
   }
 
 
-  getTopicWeight(topicId?: string, channel?: string | CommunicationChannel): number {
-    if (!topicId || !channel) {
-      return 0;
-    }
-    const channelType = typeof channel === 'string' ? channel : channel.type;
-    const topicMap = this.getTopicToNodeMapByChannelType(channelType);
-    const targetNodes = topicMap.all.get(topicId);
-    console.log(topicId, channelType, targetNodes);
-    if (!targetNodes) {
-      return 0;
+
+  getConnectionsBetweenNodes(startNodeId?: CommunicationNode | string, endNodeId?: CommunicationNode | string): NodeToNodeConnection[] {
+
+    if (!startNodeId || !endNodeId) {
+      return [];
     }
 
-    return Math.sqrt(1 / (targetNodes.length));
+    const startNode = this.getNode(startNodeId);
+    const endNode = this.getNode(endNodeId);
+
+    if (!startNode || !endNode) {
+      return [];
+    }
+
+    // Get the topics that are shared between the nodes
+    const sharedTopics = startNode.topics
+      .filter(startTopic => startTopic.direction === 'outgoing')
+      .filter((startTopic) => {
+        return endNode.topics.filter(endTopic => endTopic.direction == "incoming").some((endTopic) => {
+          return startTopic.channel.type === endTopic.channel.type && startTopic.id === endTopic.id;
+        });
+      });
+
+    // For each of the topic, now get the amount of nodes publishing to the this topic
+    const connections: NodeToNodeConnection[] = []
+
+    sharedTopics.forEach((topic) => {
+      const channelType = topic.channel.type;
+      const topicMap = this.getTopicToNodeMapByChannelType(channelType);
+      const directedTopicToNodeMap = topicMap[topic.direction];
+      const targetNodes = directedTopicToNodeMap.get(topic.id) || [];
+
+      // const filteredNodes = targetNodes.filter((targetNode) => targetNode.id !== startNode.id);
+      const filteredNodes = targetNodes;
+      const count = filteredNodes.length
+      connections.push(new NodeToNodeConnection(startNode.id, endNode.id, topic, count));
+    });
+
+    return connections;
   }
-
 }
