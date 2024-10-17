@@ -4,13 +4,13 @@ import { FdgLayouterSettings } from "./fdgSettings";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import * as d3 from "d3";
-import { AbstractConnection2d, AbstractNode2d } from "src/graph/graphical";
+import { Connection2d, Node2d } from "src/graph/graphical";
 import { CommonSettings } from "../settings/commonSettings";
 
 
 export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
-    simulation?: d3.Simulation<AbstractNode2d, AbstractConnection2d>;
+    simulation?: d3.Simulation<Node2d, Connection2d>;
 
     layout(isUpdate = false) {
         const ctx = this.settings.getContext({ graph2d: this.graph2d });
@@ -33,7 +33,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
         if (this.settings.forceManyBody.active) {
             // console.log("Adding force many body", this.settings.forceManyBody.strength.getValue());
-            simulation.force("charge", d3.forceManyBody<AbstractNode2d>().strength(d =>
+            simulation.force("charge", d3.forceManyBody<Node2d>().strength(d =>
                 this.settings.forceManyBody.strength.getValue(d, ctx) ?? -20)
             )
         }
@@ -62,7 +62,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
         if (this.settings.forceCollide.active) {
             // console.log("Adding force collide", this.settings.forceCollide.radius.getValue(), this.settings.forceCollide.strength.getValue());
-            simulation.force("collide", d3.forceCollide<AbstractNode2d>().radius(
+            simulation.force("collide", d3.forceCollide<Node2d>().radius(
                 d => this.settings.forceCollide.radius.getValue(d, ctx) ?? 5
             ).strength(
                 this.settings.forceCollide.strength.getValue(ctx) ?? 0.5

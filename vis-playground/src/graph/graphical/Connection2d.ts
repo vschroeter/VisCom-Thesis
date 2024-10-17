@@ -1,5 +1,5 @@
 import { CommunicationLink } from "../commGraph";
-import { AbstractNode2d } from "./AbstractNode2d";
+import { Node2d } from "./Node2d";
 import { Anchor2d } from "./Anchor2d";
 import { EllipticArc } from "./EllipticArc";
 import { Point2D } from "./Point2d";
@@ -31,13 +31,13 @@ export class Arrow2D {
         const direction = anchor.direction
 
         const scaledPoints = Arrow2D.normalPoints.map(p => p.scale(this.width, this.height))
-        const rotatedPoints = scaledPoints.map(p => p.rotate(-direction.degBetween(), {x: 0, y: 0}))
+        const rotatedPoints = scaledPoints.map(p => p.rotate(-direction.degBetween(), { x: 0, y: 0 }))
 
         const path = d3.line<Point2D>()
             .x(d => d.x + startPoint.x)
             .y(d => d.y + startPoint.y)
             .curve(d3.curveLinear)
-        
+
         return path(rotatedPoints)!;
     }
 
@@ -46,7 +46,17 @@ export class Arrow2D {
 
 }
 
-export class AbstractConnection2d {
+export interface Connection2dData {
+    /** The id of the source node */
+    fromId: string;
+    /** The id of the target node */
+    toId: string;
+
+    /** The weight of the link */
+    weight?: number;
+}
+
+export class Connection2d {
 
     /** The points that make up the connection */
     points: (Point2D | EllipticArc | Anchor2d)[] = []
@@ -55,28 +65,30 @@ export class AbstractConnection2d {
     curveStyle: CurveStyle = "linear"
 
     /** The data of the link */
-    data?: CommunicationLink
+    data: Connection2dData
 
     /** The source node of the connection */
-    source: AbstractNode2d
+    source: Node2d
     /** The target node of the connection */
-    target: AbstractNode2d
-
-    /** The width of the stroke */
-    strokeWeight = 1
+    target: Node2d
 
     
     arrow: Arrow2D = new Arrow2D()
-        
+    
     
     constructor(
-        source: AbstractNode2d,
-        target: AbstractNode2d,
-        data?: CommunicationLink,
+        source: Node2d,
+        target: Node2d,
+        data: Connection2dData,
     ) {
         this.source = source
         this.target = target
         this.data = data
+    }
+    
+    /** The weight of the connection */
+    get weight() {
+        return this.data.weight ?? 1
     }
 
     /** The start point of the connection (either the first defined point or the source node) */
@@ -137,7 +149,7 @@ export class AbstractConnection2d {
             .x(d => d.x)
             .y(d => d.y)
             .curve(this.curveFactory)
-        
+
         return (points: (Point2D | EllipticArc | Anchor2d)[]) => {
             let path = ""
             let currentPoints: Point2D[] = []
@@ -158,7 +170,7 @@ export class AbstractConnection2d {
             return path + (currentPoints.length > 0 ? pointLine(currentPoints) : "")
         }
 
-        
+
     }
 
     getSvgPath(): string {

@@ -21,16 +21,27 @@ export class CommunicationNode<NodeData = any> {
   /** The graph that the node belongs to */
   graph?: CommunicationGraph<NodeData>;
 
+  /** The score of the node */
+  score = 0;
+
   get degree() {
     return this.inDegree + this.outDegree;
   }
 
   get inDegree() {
-    return this.getPredecessors().length;
+    return this.getIncomingLinks().length;
   }
 
   get outDegree() {
+    return this.getOutgoingLinks().length;
+  }
+
+  get successorCount() {
     return this.getSuccessors().length;
+  }
+  
+  get predecessorCount() {
+    return this.getPredecessors().length;
   }
 
 

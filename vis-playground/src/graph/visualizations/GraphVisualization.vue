@@ -62,12 +62,12 @@ import { useGraphStore } from 'src/stores/graph-store';
 
 import * as d3 from 'd3'
 import { Graph2d } from 'src/graph/graphical/Graph2d';
-import { CommunicationGraph } from 'src/graph/commGraph';
+import { CommunicationGraph, CommunicationNode } from 'src/graph/commGraph';
 import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
 import MetricOverview from './MetricOverview.vue';
 import { EllipticArc } from '../graphical/EllipticArc';
-import { AbstractNode2d, Point2D, Vector2D } from '../graphical';
+import { Node2d, Point2D, Vector2D } from '../graphical';
 import { useDebounceFn, useThrottleFn, watchDebounced } from '@vueuse/core';
 import { layouterMapping } from '../layouter/settings/settingsCollection';
 import { CommonSettings } from '../layouter/settings/commonSettings';
@@ -125,7 +125,7 @@ const interactiveRef = svgInteractiveRef(refSVG, refGZoom, undefined, undefined)
 
 const commGraph = computed(() => graphStore.graph);
 
-let graph2d: Graph2d | null = null
+// let graph2d: Graph2d | null = null
 let layouter: GraphLayouter<any> | null = null
 
 ///++++ Metric stuff ++++///
@@ -194,15 +194,15 @@ const throttledUpdateUserInteractions = useThrottleFn(() => {
 function layoutUpdated() {
     // console.log("[GViz] Layout updated", layouter, graph2d);
 
-    if (!graph2d || !layouter) {
+    if (!layouter) {
         return
     }
 
     // console.log("Updating nodes and links");
     d3.select(refGNodes.value)
         // .call(layouter.updateNodes.bind(layouter))
-        .call((sel) => layouter?.updateNodes(sel, {
-            mouseenter: (d: AbstractNode2d) => {
+        .call((sel) => layouter?.graph2d.renderNodes(sel, {
+            mouseenter: (d: Node2d) => {
                 if (!isSelected.value) return;
                 const id = d.data?.id;
                 console.log("Mouse enter", id, d);
@@ -212,7 +212,7 @@ function layoutUpdated() {
                     throttledUpdateUserInteractions()
                 }
             },
-            mouseleave: (d: AbstractNode2d) => {
+            mouseleave: (d: Node2d) => {
                 if (!isSelected.value) return;
 
                 const id = d.data?.id;
@@ -225,10 +225,10 @@ function layoutUpdated() {
         }))
 
     d3.select(refGLinks.value)
-        .call(layouter.updateLinks.bind(layouter))
+        .call(sel => layouter?.graph2d.renderLinks(sel))
 
     d3.select(refGLabels.value)
-        .call(layouter.updateLabels.bind(layouter))
+        .call(sel => layouter?.graph2d.renderLabels(sel))
 
     // console.log("BBox", bBox.value, refGRoot.value)
     bBox.value = refGRoot.value?.getBBox() ?? null
@@ -248,7 +248,7 @@ function layoutFinished() {
 
 async function calculateMetrics(graph?: Graph2d | null) {
     if (!graph) {
-        graph = graph2d;
+        graph = layouter?.graph2d;
     }
     if (!graph) {
         console.error("No graph found for metrics calculation");
@@ -536,15 +536,24 @@ onMounted(() => {
         if (commGraph.value.nodes.length === 0) {
             return
         }
-        graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
-        layouter = new cls(graph2d, settings.value, settingsCollection.commonSettings as CommonSettings, userInteractions);
+        // graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
+        // layouter = new cls(graph2d, settings.value, settingsCollection.commonSettings as CommonSettings, userInteractions);
+        layouter = new cls({
+            commGraph: commGraph.value as CommunicationGraph,
+            settings: settings.value,
+            commonSettings: settingsCollection.commonSettings as CommonSettings,
+            userInteractions: userInteractions,
+            nodes: commGraph.value.nodes as CommunicationNode[],
+            // links: graph2d.links,
+            // nodes: graph2d.nodes2d,
+        });
 
         watchDebounced(settings, (newVal) => {
             layouter?.updateLayout(true);
         }, { debounce: 1000, immediate: false, deep: true })
 
         watch(settingsCollection.commonSettings, (newVal) => {
-            layouter?.updateGraphByCommongSettings();
+            layouter?.updateGraphByCommonSettings();
             layoutUpdated()
         }, { immediate: false, deep: true })
 

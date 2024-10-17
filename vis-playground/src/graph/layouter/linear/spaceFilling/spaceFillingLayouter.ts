@@ -1,7 +1,7 @@
 import { GraphLayouter } from "../../layouter";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
-import { AbstractNode2d, Point2D, Vector2D } from "src/graph/graphical";
+import { Node2d, Point2D, Vector2D } from "src/graph/graphical";
 import { EllipticArc } from "src/graph/graphical/EllipticArc";
 import { CommonSettings } from "../../settings/commonSettings";
 import { LSystem, SpaceFillingCurve } from "./lSystem";
@@ -25,7 +25,7 @@ export class SpaceFillingCurveLayouter extends GraphLayouter<SpaceFillingLayoute
         const spaceFillingAlg = new SpaceFillingCurve(lSystem, order);
 
 
-        const nodeUnitPositions = new Map<AbstractNode2d, number>();
+        const nodeUnitPositions = new Map<Node2d, number>();
 
         // Assign nodes a number in interval [0, 1]
         nodes.forEach((node, i) => {

@@ -1,8 +1,9 @@
 import createGraph, { Graph } from "ngraph.graph";
 import { CommunicationChannel, CommunicationDirection, CommunicationDirectionPendant } from "./channel";
-import { ChannelGraphLinkData, CommunicationLink } from "./link";
+import { ChannelGraphLinkData, CommunicationLink, NodeToNodeConnection, NodeToNodeConnections } from "./link";
 import { CommunicationNode } from "./node";
 import { CommunicationTopic } from "./topic";
+import { NodeCommunities } from "./community";
 
 /**
  * Helper class representing a mapping of topics to nodes on a specific communication channel.
@@ -103,104 +104,6 @@ export class CommunicationChannelGraphs {
   }
 }
 
-export class CommunicationGraphCommunity {
-  nodeIds: string[] = [];
-
-  nodeIsInCommunity(node: string | CommunicationNode): boolean {
-    const nodeId = CommunicationGraph.getNodeID(node);
-    return this.nodeIds.includes(nodeId);
-  }
-}
-
-export class CommunicationGraphCommunities {
-  communities: CommunicationGraphCommunity[] = [];
-
-  getCommunitiesOfNode(node?: string | CommunicationNode): number[] {
-    if (!node) {
-      return [];
-    }
-    const nodeId = CommunicationGraph.getNodeID(node);
-    return this.communities
-      .map((community, index) => {
-        return community.nodeIsInCommunity(nodeId) ? index : -1;
-      })
-      .filter((index) => index >= 0);
-  }
-
-  setCommunitiesByList(communitiesIds: string[][]) {
-    this.communities = communitiesIds.map((communityIds) => {
-      const community = new CommunicationGraphCommunity();
-      community.nodeIds = communityIds;
-      return community;
-    });
-  }
-}
-
-export class NodeRanking {
-  nodeRanks: Map<string, number> = new Map<string, number>();
-
-  clear() {
-    this.nodeRanks.clear();
-  }
-
-  getRankExtent(): [number, number] {
-    let minRank = Number.POSITIVE_INFINITY;
-    let maxRank = Number.NEGATIVE_INFINITY;
-    this.nodeRanks.forEach((rank) => {
-      minRank = Math.min(minRank, rank);
-      maxRank = Math.max(maxRank, rank);
-    });
-    return [minRank, maxRank];
-  }
-
-  getRankOfNode(node?: string | CommunicationNode): number {
-    if (!node) {
-      return 0;
-    }
-    const nodeId = CommunicationGraph.getNodeID(node);
-    return this.nodeRanks.get(nodeId) || 0;
-  }
-
-  setRankOfNode(node: string | CommunicationNode, rank: number) {
-    const nodeId = CommunicationGraph.getNodeID(node);
-    this.nodeRanks.set(nodeId, rank);
-  }
-
-  setRankingByList(ranking: [string, number][]) {
-    for (const [nodeId, rank] of ranking) {
-      this.setRankOfNode(nodeId, rank);
-    }
-  }
-
-}
-
-export class NodeToNodeConnection {
-  from: string;
-  to: string;
-  connectionCount: number;
-  topic: CommunicationTopic;
-
-  constructor(from: string, to: string, topic: CommunicationTopic, connectionCount: number) {
-    this.from = from;
-    this.to = to;
-    this.topic = topic;
-    this.connectionCount = connectionCount;
-  }
-
-  get linearWeight(): number {
-    return 1 / this.connectionCount;
-  }
-
-  get quadraticWeight(): number {
-    return Math.sqrt(1 / this.connectionCount);
-  }
-
-  static getCombinedWeight(connections: NodeToNodeConnection[]): number {
-    return connections.reduce((acc, connection) => acc + connection.quadraticWeight, 0);
-  }
-}
-
-
 /**
  * Class representing a communication graph.
  */
@@ -221,8 +124,8 @@ export class CommunicationGraph<NodeData = any> {
   /** Mapping channel type id to the CommunicationChannelGraphs object */
   graphsByChannelType: Map<string, CommunicationChannelGraphs>;
 
-  communities: CommunicationGraphCommunities = new CommunicationGraphCommunities();
-  ranking: NodeRanking = new NodeRanking();
+  communities: NodeCommunities = new NodeCommunities();
+  // scoring: NodeScoring = new NodeScoring();
 
   /**
    * List of topics that should be hidden
@@ -512,15 +415,19 @@ export class CommunicationGraph<NodeData = any> {
                 return link.data.topic.id.match(regex);
               })
             ) {
+
+              const weight = this.getTopicWeight(channel.type, link.data.topic.id);
+              // const w = link.data.topic.weight;
+
               links.push(
                 new CommunicationLink(
-                  link.data.topic.id,
+                  link.data.topic,
                   link.fromId as string,
                   link.toId as string,
                   channel,
                   direction,
                   this,
-                  link.data.topic.weight
+                  weight //link.data.topic.weight
                 ),
               );
             }
@@ -559,38 +466,63 @@ export class CommunicationGraph<NodeData = any> {
   }
 
   /**
-   * Get all links of a node on the given channel(s).
-   * @param nodeID The starting node
+   * Get all links on the given channel(s).
    * @param channels The communicaiton channel(s) to consider. If not set, all channels are considered.
    * @returns List of links
    */
   getAllLinks(
     channels?: CommunicationChannel[] | string[],
   ): CommunicationLink[] {
+    return this.getAllLinksOfNodes(this.nodes, channels);
+  }
+
+  /**
+   * Get all links of a set of node on the given channel(s).
+   * @param nodes The nodes to get the links of
+   * @param channels The communicaiton channel(s) to consider. If not set, all channels are considered.
+   * @returns List of links
+   */
+  getAllLinksOfNodes(nodes: CommunicationNode[], channels?: CommunicationChannel[] | string[]): CommunicationLink[] {
     const links: CommunicationLink[] = [];
 
     const commChannels = this.getChannels(channels);
 
-    this.nodes.forEach((node) => {
+    nodes.forEach((node) => {
       links.push(...this.getOutgoingLinks(node.id, commChannels));
     });
 
     return links;
   }
 
+  getAllInternalLinksOfNodes(nodes: CommunicationNode[], channels?: CommunicationChannel[] | string[]): CommunicationLink[] {
+    const links: CommunicationLink[] = [];
+
+    const commChannels = this.getChannels(channels);
+
+    const allLinks = this.getAllLinks(commChannels);
+
+    // Filter out all links that are not internal
+    allLinks.forEach((link) => {
+      if (nodes.some(node => node.id === link.fromId) && nodes.some(node => node.id === link.toId)) {
+        links.push(link);
+      }
+    });
+
+    return links;
+  }
 
 
-  getConnectionsBetweenNodes(startNodeId?: CommunicationNode | string, endNodeId?: CommunicationNode | string): NodeToNodeConnection[] {
+  getConnectionsBetweenNodes(startNodeId?: CommunicationNode | string, endNodeId?: CommunicationNode | string): NodeToNodeConnections | undefined {
 
     if (!startNodeId || !endNodeId) {
-      return [];
+      return undefined;
     }
 
     const startNode = this.getNode(startNodeId);
     const endNode = this.getNode(endNodeId);
 
     if (!startNode || !endNode) {
-      return [];
+      return undefined;
     }
 
     // Get the topics that are shared between the nodes
@@ -617,6 +549,55 @@ export class CommunicationGraph<NodeData = any> {
       connections.push(new NodeToNodeConnection(startNode.id, endNode.id, topic, count));
     });
 
-    return connections;
+    // return connections;
+    return new NodeToNodeConnections(startNode.id, endNode.id, connections);
   }
+
+  ////////////////////////////////////////////////////////////////////////////
+  // Topic weight methods
+  ////////////////////////////////////////////////////////////////////////////
+
+  getTopicUsageCount(channel: string, topicId: string, ignoreSelfLoops = false): number {
+    const topicMap = this.getTopicToNodeMapByChannelType(channel);
+    const pubNodes = topicMap.outgoing.get(topicId)!;
+    const subNodes = topicMap.incoming.get(topicId)!;
+    const pubAndSubNodes = pubNodes.filter((pubNode) => subNodes.some((subNode) => subNode.id === pubNode.id));
+
+    // The usage count is the count of publishers multiplied by the count of subscribers
+    // to ignore self-loops, we subtract the count of nodes that are both publishers and subscribers
+    const usageCount = pubNodes.length * subNodes.length;
+    if (ignoreSelfLoops) {
+      return usageCount - pubAndSubNodes.length;
+    }
+    return usageCount;
+  }
+
+  getTopicWeight(channel: string, topicId: string): number {
+    const count = this.getTopicUsageCount(channel, topicId);
+    return Math.sqrt(1 / Math.max(count, 1));
+  }
+
+  ////////////////////////////////////////////////////////////////////////////
+  // Node scoring methods
+  ////////////////////////////////////////////////////////////////////////////
+
+  setNodeScoringByList(scoring: [string, number][]) {
+    for (const [nodeId, score] of scoring) {
+      const node = this.getNode(nodeId);
+      if (node) {
+        node.score = score;
+      }
+    }
+  }
+
+  getScoreExtent(): [number, number] {
+    let minScore = Number.POSITIVE_INFINITY;
+    let maxScore = Number.NEGATIVE_INFINITY;
+    this.nodes.forEach((node) => {
+      minScore = Math.min(minScore, node.score);
+      maxScore = Math.max(maxScore, node.score);
+    });
+    return [minScore, maxScore];
+  }
+
 }

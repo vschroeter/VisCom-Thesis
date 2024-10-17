@@ -91,7 +91,9 @@ def convert_to_weighted_graph(node_graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
                     distance = topic_graph[start_node][topic_name]["distance"] * 2
                     # weighted_graph.add_edge(start_node, target_node, distance=distance, weight=math.sqrt(1 / distance), topic=topic)
                     # weighted_graph.add_edge(start_node, target_node, distance=distance, weight=math.sqrt(1 / distance), **{topic_type: topic})
-                    weighted_graph.add_edge(start_node, target_node, distance=distance, weight=math.sqrt(1 / distance), **{topic_type: topic})
+                    weight = math.sqrt(1 / distance)
+                    # print(f"Adding edge {start_node} -> {target_node} with distance {distance} and weight {weight} for topic {topic}")
+                    weighted_graph.add_edge(start_node, target_node, distance=distance, weight=weight, **{topic_type: topic})
                     # weighted_graph.add_edge(start_node, target_node, distance=distance, weight=1)
 
     return weighted_graph

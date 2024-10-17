@@ -1,19 +1,30 @@
 import { CommunicationNode } from '../commGraph';
+import { NodeCommunities } from '../commGraph/community';
 import { Anchor2d } from './Anchor2d';
 import { Point2D } from './Point2d';
 import { Vector2D } from './Vector2d';
 
-export class AbstractNode2d { // <NodeData>
+export interface Node2dData {
+  id: string;
+  score: number;
+  successorCount: number;
+  predecessorCount: number;
+  outDegree: number;
+  inDegree: number;
+}
+
+export class Node2d { // <NodeData>
   
   // Center of the node
   center: Point2D;
 
   // The (abstract communication graph's node) data of the node
-  data?: CommunicationNode // NodeData;
+  // data?: CommunicationNode // NodeData;
+  data: Node2dData;
 
   // The id of the node
   get id() {
-    return this.data?.id;
+    return this.data.id;
   }
 
   // The radius of the node. Can also have an abstract meaning for non-circular nodes.
@@ -27,6 +38,12 @@ export class AbstractNode2d { // <NodeData>
   fx: number | null = null;
   // fixed y position of the node (for force-directed simulations
   fy: number | null = null;
+
+  // The score of the node (e.g. for ranking the significance of nodes)
+  score: number = 0;
+
+  // Reference to the node communities
+  communities?: NodeCommunities;
 
   // X coordinate of the node's center
   get x() {
@@ -47,7 +64,7 @@ export class AbstractNode2d { // <NodeData>
     this.center.y = value;
   }
 
-  constructor(center?: Point2D | null, data?: CommunicationNode) {
+  constructor(data: Node2dData, center?: Point2D | null) {
     this.center = center || new Point2D(0, 0);
     this.data = data;
   }

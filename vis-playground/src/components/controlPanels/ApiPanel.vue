@@ -362,7 +362,7 @@ function fetchNodeRanking(generatorId?: string, graph?: CommunicationGraph) {
 
             const rankList: [string, number][] = Object.entries(data)
 
-            graph?.ranking.setRankingByList(rankList)
+            graph?.setNodeScoringByList(rankList)
             // graph?.communities.setCommunitiesByList(data)
         })
 

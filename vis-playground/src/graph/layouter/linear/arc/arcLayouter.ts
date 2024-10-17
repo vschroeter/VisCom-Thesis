@@ -1,7 +1,7 @@
 import { GraphLayouter } from "../../layouter";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
-import { AbstractNode2d, Point2D, Vector2D } from "src/graph/graphical";
+import { Node2d, Point2D, Vector2D } from "src/graph/graphical";
 import { ArcLayouterSettings } from "./arcSettings";
 import { EllipticArc } from "src/graph/graphical/EllipticArc";
 import { CommonSettings } from "../../settings/commonSettings";

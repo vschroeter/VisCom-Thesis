@@ -1,6 +1,12 @@
 import mitt from "mitt"
-import { AbstractNode2d } from "../graphical"
+import { Node2d } from "../graphical"
 
+
+export interface MouseEvents<EventData> {
+    mouseenter?: (d: EventData, e: MouseEvent) => void,
+    mouseleave?: (d: EventData, e: MouseEvent) => void,
+    click?: (d: EventData, e: MouseEvent) => void
+}
 
 export class UserInteractions {
 
@@ -55,22 +61,22 @@ export class UserInteractions {
     }
 
 
-    isHovered(nodeId: string | AbstractNode2d): boolean {
-        if (nodeId instanceof AbstractNode2d) {
+    isHovered(nodeId: string | Node2d): boolean {
+        if (nodeId instanceof Node2d) {
             nodeId = nodeId.data?.id ?? ""
         }
         return this.hoveredNodeIds.has(nodeId)
     }
 
-    isSelected(nodeId: string | AbstractNode2d): boolean {
-        if (nodeId instanceof AbstractNode2d) {
+    isSelected(nodeId: string | Node2d): boolean {
+        if (nodeId instanceof Node2d) {
             nodeId = nodeId.data?.id ?? ""
         }
         return this.selectedNodeIds.has(nodeId)
     }
 
-    isFocused(nodeId: string | AbstractNode2d): boolean {
-        if (nodeId instanceof AbstractNode2d) {
+    isFocused(nodeId: string | Node2d): boolean {
+        if (nodeId instanceof Node2d) {
             nodeId = nodeId.data?.id ?? ""
         }
         return this.focusedNodeId === nodeId
@@ -102,7 +108,7 @@ export class UserInteractions {
     }
 
 
-    get somethinIsSelectedOrFocusedOrHovered(): boolean {
+    get somethingIsSelectedOrFocusedOrHovered(): boolean {
         return this.somethingIsSelected || this.somethingIsFocused || this.somethingIsHovered
     }
 

@@ -1,4 +1,4 @@
-import { AbstractConnection2d } from "../graphical";
+import { Connection2d } from "../graphical";
 import { Graph2d } from "../graphical/Graph2d";
 import { MetricCalculator } from "./base";
 import { MetricDefinition } from "./collection";
@@ -51,7 +51,7 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
 
     }
 
-    getIntersections(link1: AbstractConnection2d, links2: AbstractConnection2d, filterOutStartAndEndTouchings: boolean = true): Intersection[] {
+    getIntersections(link1: Connection2d, links2: Connection2d, filterOutStartAndEndTouchings: boolean = true): Intersection[] {
         const path1 = link1.getSvgPath();
         const path2 = links2.getSvgPath();
 

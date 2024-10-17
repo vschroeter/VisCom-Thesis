@@ -98,7 +98,7 @@ export class MetricsCollection {
         if (ignoreIfExisting && this.getMetricsResults(settingId).results.length > 0) {
             return;
         }
-        const metricCalculators = MetricsCollection.metricsToCalculate.map(metric => new metric(Graph2d.emptyGraph()));
+        const metricCalculators = MetricsCollection.metricsToCalculate.map(metric => new metric(Graph2d.createEmptyGraph()));
         this.getMetricsResults(settingId).update(metricCalculators);
     }
 

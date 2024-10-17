@@ -3,7 +3,7 @@ import { GraphLayouter } from "../../layouter";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import * as d3 from "d3";
-import { AbstractConnection2d, AbstractNode2d } from "src/graph/graphical";
+import { Connection2d, Node2d } from "src/graph/graphical";
 import { RadialLayouterSettings } from "./radialSettings";
 import { CommonSettings } from "../../settings/commonSettings";
 

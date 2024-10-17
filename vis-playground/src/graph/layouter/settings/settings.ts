@@ -1,5 +1,5 @@
 import mitt from "mitt";
-import { AbstractConnection2d, AbstractNode2d } from "../../graphical";
+import { Connection2d, Node2d } from "../../graphical";
 import { Graph2d } from "../../graphical/Graph2d";
 
 const evaluateExpression = (expression: string, context: Record<string, any>): any => {
@@ -102,8 +102,8 @@ export class GraphLayouterSettings {
     getContext({ graph2d, nodes, links }:
         {
             graph2d?: Graph2d;
-            nodes?: AbstractNode2d[];
-            links?: AbstractConnection2d[];
+            nodes?: Node2d[];
+            links?: Connection2d[];
         }
     ): Record<string, any> {
 
@@ -414,7 +414,7 @@ export class ParamWithNodeContext extends Param {
 
     tooltip: string[] = ParamWithNodeContext.tooltip;
 
-    getValue(node?: AbstractNode2d, context?: Record<string, any>): number | undefined {
+    getValue(node?: Node2d, context?: Record<string, any>): number | undefined {
         let ctx: Record<string, any> = {
             cs: 1,
             cp: 1,
@@ -425,16 +425,12 @@ export class ParamWithNodeContext extends Param {
         };
 
         if (node) {
-            const successors = node.data?.getSuccessors();
-            const predecessors = node.data?.getPredecessors();
-            const cs = successors?.length ?? 0;
-            const cp = predecessors?.length ?? 0;
+            const cs = node.data?.successorCount ?? 0;
+            const cp = node.data?.predecessorCount ?? 0;
             const cn = cs + cp;
 
-            const outgoingLinks = node.data?.getOutgoingLinks();
-            const incomingLinks = node.data?.getIncomingLinks();
-            const co = outgoingLinks?.length ?? 0;
-            const ci = incomingLinks?.length ?? 0;
+            const co = node.data?.outDegree ?? 0;
+            const ci = node.data?.inDegree ?? 0;
             const cl = co + ci;
 
             context = {
@@ -463,7 +459,7 @@ export class ParamWithLinkContext extends Param {
 
     tooltip: string[] = ParamWithLinkContext.tooltip;
 
-    getValue(link?: AbstractConnection2d, context?: Record<string, any>): number | undefined {
+    getValue(link?: Connection2d, context?: Record<string, any>): number | undefined {
         let ctx: Record<string, any> = {
             ct: 1,
             cs: 1,
@@ -473,8 +469,8 @@ export class ParamWithLinkContext extends Param {
         ctx = { ...ctx, ...context };
 
         if (link) {
-            const countTargetConnections = (link.target.data?.getSuccessors()?.length ?? 1) + (link.target.data?.getPredecessors()?.length ?? 1) - 1;
-            const countSourceConnections = (link.source.data?.getPredecessors()?.length ?? 1) + (link.source.data?.getSuccessors()?.length ?? 1) - 1;
+            const countTargetConnections = (link.target.data?.successorCount ?? 1) + (link.target.data?.predecessorCount ?? 1) - 1;
+            const countSourceConnections = (link.source.data?.predecessorCount ?? 1) + (link.source.data?.successorCount ?? 1) - 1;
             ctx.ct = countTargetConnections;
             ctx.cs = countSourceConnections;
             ctx.cd = countSourceConnections + countTargetConnections;

@@ -1,11 +1,11 @@
 import * as dagreD3 from 'dagre-d3';
 
 import { CommunicationGraph, CommunicationLink, CommunicationNode } from "src/graph/commGraph";
-import { GraphLayouter } from "../layouter";
+import { GraphLayouter, GraphLayouterArgs } from "../layouter";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import * as d3 from "d3";
-import { AbstractConnection2d, AbstractNode2d } from "src/graph/graphical";
+import { Connection2d, Node2d } from "src/graph/graphical";
 import { CommonSettings } from "../settings/commonSettings";
 import { GraphLayouterSettings } from '../settings/settings';
 import { UserInteractions } from 'src/graph/visualizations/interactions';
@@ -13,8 +13,8 @@ import { UserInteractions } from 'src/graph/visualizations/interactions';
 
 export class DagreLayouter extends GraphLayouter<GraphLayouterSettings> {
 
-  constructor(graph2d: Graph2d, settings: GraphLayouterSettings, commonSettings: CommonSettings, userInteractions: UserInteractions) {
-    super(graph2d, settings, commonSettings, userInteractions);
+  constructor(layouterArgs: GraphLayouterArgs<GraphLayouterSettings>) {
+    super(layouterArgs);
     this.calculateMetrics = false;
   }
 
@@ -26,9 +26,9 @@ export class DagreLayouter extends GraphLayouter<GraphLayouterSettings> {
   }
 
   updateNodes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: {
-    mouseenter?: (d: AbstractNode2d, e: MouseEvent) => void,
-    mouseleave?: (d: AbstractNode2d, e: MouseEvent) => void,
-    click?: (d: AbstractNode2d, e: MouseEvent) => void
+    mouseenter?: (d: Node2d, e: MouseEvent) => void,
+    mouseleave?: (d: Node2d, e: MouseEvent) => void,
+    click?: (d: Node2d, e: MouseEvent) => void
   }) {
 
     const g = new dagreD3.graphlib.Graph()
