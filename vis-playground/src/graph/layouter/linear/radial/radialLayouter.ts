@@ -11,10 +11,12 @@ import { CommonSettings } from "../../settings/commonSettings";
 export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
 
 
-    layout(isUpdate = false) {
-        const ctx = this.settings.getContext({ graph2d: this.graph2d });
+    getRadius() {
+        return this.settings.size.radius.getValue(this.settings.getContext({ graph2d: this.graph2d })) ?? 5;
+    }
 
-        const radius = this.settings.size.radius.getValue(ctx) ?? 5;
+    layout(isUpdate = false) {
+        const radius = this.getRadius();
         
         const sorter = this.settings.sorting.getSorter(this.commGraph);
         const nodes = sorter.getSorting2dNodes(this.graph2d)
@@ -25,6 +27,9 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
             node.x = radius * Math.cos(i * angleStep);
             node.y = radius * Math.sin(i * angleStep);
         });
+
+        // Adapt to the center
+        this.adaptNodesByCenterTranslation();
 
         // this.emitEvent("update");
         this.emitEvent("end");

@@ -105,6 +105,33 @@ export class CommunicationLink {
     return this.graph.nodesById.get(this.toId)!;
   }
 
+  static mergeLinks(links: CommunicationLink[]): CommunicationLink[] {
+    const mergedLinks: CommunicationLink[] = [];
+
+    const mapFromIdToToIdToLink = new Map<string, Map<string, CommunicationLink>>();
+
+    links.forEach(link => {
+      if (!mapFromIdToToIdToLink.has(link.fromId)) {
+        mapFromIdToToIdToLink.set(link.fromId, new Map());
+      }
+      const mapToIdToLink = mapFromIdToToIdToLink.get(link.fromId)!;
+      if (!mapToIdToLink.has(link.toId)) {
+        mapToIdToLink.set(link.toId, link);
+      } else {
+        const existingLink = mapToIdToLink.get(link.toId)!;
+        existingLink.weight += link.weight;
+      }
+    });
+
+    mapFromIdToToIdToLink.forEach(mapToIdToLink => {
+      mapToIdToLink.forEach(link => {
+        mergedLinks.push(link);
+      });
+    });
+
+    return mergedLinks;
+  }
+
 }
 
 export class ChannelGraphLinkData {

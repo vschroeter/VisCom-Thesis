@@ -1,7 +1,7 @@
 import { CommunicationGraph, CommunicationNode, NodeToNodeConnection } from "../commGraph";
-import { Connection2d, Node2d } from "../graphical";
+import { Connection2d, Node2d, Point2D } from "../graphical";
 import { Graph2d } from "../graphical/Graph2d";
-import { UserInteractions } from "../visualizations/interactions";
+import { MouseEvents, UserInteractions } from "../visualizations/interactions";
 import { CommonSettings } from "./settings/commonSettings";
 import { GraphLayouterSettings } from "./settings/settings";
 
@@ -25,12 +25,15 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     commGraph: CommunicationGraph;
     graph2d: Graph2d;
     nodes: CommunicationNode[] = [];
+
+    center: Point2D = new Point2D(0, 0);
+
     // nodes: Node2d[] = [];
     // links: Connection2d[] = [];
     calculateMetrics: boolean = true;
 
     protected events: { [key: string]: ((this: GraphLayouter<any>) => void) } = {};
-    
+
     constructor(layouterArgs: GraphLayouterArgs<T>) {
         this.commGraph = layouterArgs.commGraph;
         this.settings = layouterArgs.settings;
@@ -49,6 +52,13 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     get connections2d(): Connection2d[] {
         return this.graph2d.links;
+    }
+
+    adaptNodesByCenterTranslation() {
+        this.nodes2d.forEach(node => {
+            node.x += this.center.x;
+            node.y += this.center.y;
+        });
     }
 
     createGraph2d() {
@@ -74,9 +84,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         console.log("Filtering links", this.commonSettings.hideLinksThreshold.getValue());
         const filteredLinks = this.graph2d.links.filter(l => {
             const weight = l.data?.weight ?? 1;
-            // const distance = 1 / weight;
-            console.log("Weight", weight, l);
-            return weight > (this.commonSettings.hideLinksThreshold.getValue() ?? 100);
+            return weight > (this.commonSettings.hideLinksThreshold.getValue() ?? 0.25);
         })
         // console.log("Filtered links", filteredLinks);
         return filteredLinks;
@@ -110,159 +118,186 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         }
     }
 
-    // updateNodes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: {
-    //     mouseenter?: (d: Node2d, e: MouseEvent) => void,
-    //     mouseleave?: (d: Node2d, e: MouseEvent) => void,
-    //     click?: (d: Node2d, e: MouseEvent) => void
-    // }) {
-    //     const communitiesColorScheme = d3.interpolateSinebow;
-    //     const nodeRankingColorScheme = d3.interpolateRdYlGn;
+    ////////////////////////////////////////////////////////////////////////////
+    // Render methods
+    ////////////////////////////////////////////////////////////////////////////
 
-    //     const nodes = selection.selectAll('circle')
-    //         .data(this.nodes)
-    //         .join('circle')
-    //         .attr('cx', (d: Node2d) => d.x)
-    //         .attr('cy', (d: Node2d) => d.y)
-    //         .attr('r', d => d.radius)
-    //         // .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
-    //         .attr('fill', d => {
-    //             const rankExtent = this.commGraph.scoring.getScoreExtent();                
-    //             const nodeRanking = this.commGraph.scoring.getScoreOfNode(d.data);
-    //             if (nodeRanking === undefined || rankExtent[0] == Infinity || rankExtent[1] == -Infinity) {
-    //                 return this.commonSettings.nodeColor.getValue(d) ?? "red";
-    //             }
+    selectGroup(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, className: string) {        
+        selection.selectAll(`g.${className}`).data([0]).join("g").classed(className, true);
+        return selection.select<SVGGElement | null>(`g.${className}`);
+    }
 
-    //             const scale = d3.scaleLinear().domain(rankExtent).range([0, 1]);
+    renderAll(selection: d3.Selection<SVGGElement | any, any, any, any>, events?: {
+        nodesEvents?: MouseEvents<Node2d>,
+        linksEvents?: MouseEvents<Node2d>,
+        labelsEvents?: MouseEvents<Node2d>
+    }) {
+        this.renderLinks(this.selectGroup(selection, 'links'), events?.linksEvents);
+        this.renderNodes(this.selectGroup(selection, 'nodes'), events?.nodesEvents);
+        this.renderLabels(this.selectGroup(selection, 'labels'), events?.labelsEvents);
+    }
 
-    //             return nodeRankingColorScheme(scale(nodeRanking));
+    renderNodes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
+        const communitiesColorScheme = d3.interpolateSinebow;
+        const nodeRankingColorScheme = d3.interpolateRdYlGn;
 
-    //         })
-    //         // .attr('stroke', 'white')
-    //         .attr('stroke', d => {
-    //             const communities = this.commGraph.communities.getCommunitiesOfNode(d.data);
+        const scoreExtent = d3.extent(this.nodes, d => d.score) as [number, number];
 
-    //             if (communities.length === 0) {
-    //                 return 'white';
-    //             }
+        const nodes = selection.selectAll('circle')
+            .data(this.graph2d.nodes)
+            .join('circle')
+            .attr('cx', (d: Node2d) => d.x)
+            .attr('cy', (d: Node2d) => d.y)
+            .attr('r', d => d.radius)
+            // .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
+            .attr('fill', d => {
+                if (Math.abs(scoreExtent[0]) == Infinity || Math.abs(scoreExtent[1]) == Infinity || scoreExtent[0] == scoreExtent[1]) {
+                    return this.commonSettings.nodeColor.getValue(d) ?? "red";
+                }
 
-    //             const totalCommunityCount = this.commGraph.communities.communities.length;
-    //             if (totalCommunityCount === 0) {
-    //                 return 'white';
-    //             }
+                const scale = d3.scaleLinear().domain(scoreExtent).range([0, 1]);
 
-    //             const colors = communities.map(community => {
-    //                 const positionOfNodeCommunity = community / totalCommunityCount;
-    //                 return d3.hsl(communitiesColorScheme(positionOfNodeCommunity));
-    //             });
-                
-    //             // console.log(colors);
-    //             // Get the average color of all communities
-    //             const averageColor = d3.hsl(d3.mean(colors, c => c.h)!, d3.mean(colors, c => c.s)!, d3.mean(colors, c => c.l)!);
-    //             return averageColor.formatRgb();
+                return nodeRankingColorScheme(scale(d.score));
 
-    //             // // Position on color scheme between 0 and 1
-    //             // const positionOfNodeCommunity = communities[0] / totalCommunityCount;
+            })
+            // .attr('stroke', 'white')
+            .attr('stroke', d => {
 
-    //             // return communitiesColorScheme(positionOfNodeCommunity);
-    //         })
-    //         .attr('stroke-width', 2)
-    //         .attr('opacity', d => {
+                if (!d.communities) {
+                    return 'white';
+                }
 
-    //             if (this.userInteractions.somethingIsSelectedOrFocusedOrHovered) {
+                const communities = d.communities.getCommunitiesOfNode(d.id);
 
-    //                 // if (this.userInteractions.)) {
-    //                 //     return 1;
-    //                 // }
+                if (communities.length === 0) {
+                    return 'white';
+                }
 
-    //                 if (this.userInteractions.isHovered(d)) {
-    //                     return 1;
-    //                 }
+                const totalCommunityCount = d.communities.countOfCommunities;
+                if (totalCommunityCount === 0) {
+                    return 'white';
+                }
 
-    //                 return 0.2;
-    //             }
+                const colors = communities.map(community => {
+                    const positionOfNodeCommunity = community / totalCommunityCount;
+                    return d3.hsl(communitiesColorScheme(positionOfNodeCommunity));
+                });
 
-    //             return 1;
+                // console.log(colors);
+                // Get the average color of all communities
+                const averageColor = d3.hsl(d3.mean(colors, c => c.h)!, d3.mean(colors, c => c.s)!, d3.mean(colors, c => c.l)!);
+                return averageColor.formatRgb();
 
-    //         })
-    //     // .on('mouseenter', (e, d) => {
-    //     //     console.log("Mouse enter", d, e);
-    //     // })
+                // // Position on color scheme between 0 and 1
+                // const positionOfNodeCommunity = communities[0] / totalCommunityCount;
 
-    //     if (events?.click) nodes.on("click", (e, d) => events.click?.(d, e))
-    //     if (events?.mouseleave) nodes.on("mouseleave", (e, d) => events.mouseleave?.(d, e))
-    //     if (events?.mouseenter) nodes.on("mouseenter", (e, d) => events.mouseenter?.(d, e))
-    // }
+                // return communitiesColorScheme(positionOfNodeCommunity);
+            })
+            .attr('stroke-width', 2)
+            .attr('opacity', d => {
 
-    // updateLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
+                if (this.userInteractions.somethingIsSelectedOrFocusedOrHovered) {
 
-    //     const opacityGetter = (d: Connection2d) => {
-    //         const weight = d.data?.weight ?? 1;
-    //         // const adaptedWeight = Math.max(0.2, Math.sqrt(weight));
-    //         const adaptedWeight = Math.max(0.05, weight);
-    //         if (this.userInteractions.somethingIsSelectedOrFocusedOrHovered) {
+                    // if (this.userInteractions.)) {
+                    //     return 1;
+                    // }
 
-    //             const startNode = d.source;
-    //             const endNode = d.target;
-    //             // if (this.userInteractions.)) {
-    //             //     return 1;
-    //             // }
-        
-    //             if (this.userInteractions.isHovered(startNode) || this.userInteractions.isHovered(endNode)) {
-    //                 return 1;
-    //             }
+                    if (this.userInteractions.isHovered(d)) {
+                        return 1;
+                    }
 
-    //             return 0.4 * adaptedWeight;
-    //         }
+                    return 0.2;
+                }
 
-    //         return adaptedWeight;
-    //     }
+                return 1;
 
-        
-    //     const getWidth = (l: Connection2d) => {
-    //         const minW = 0.1;
-    //         const maxW = 3;
-    //         const wMultiplier = 2;
-    //         const weight = NodeToNodeConnection.getCombinedWeight(this.commGraph.getConnectionsBetweenNodes(l.source.data?.id, l.target.data?.id));
+            })
+        // .on('mouseenter', (e, d) => {
+        //     console.log("Mouse enter", d, e);
+        // })
 
-    //         return Math.min(maxW, Math.max(minW, weight * wMultiplier));
-    //     }
+        if (events?.click) nodes.on("click", (e, d) => events.click?.(d, e))
+        if (events?.mouseleave) nodes.on("mouseleave", (e, d) => events.mouseleave?.(d, e))
+        if (events?.mouseenter) nodes.on("mouseenter", (e, d) => events.mouseenter?.(d, e))
+    }
 
-    //     selection.selectAll('path.arrow')
-    //         // .data(this.graph2d?.links)
-    //         .data(this.getFilteredLinks())
-    //         .join('path')
-    //         .classed('arrow', true)
-    //         .attr('d', (d: Connection2d) => d.getArrowPath())
-    //         .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
-    //         .attr('stroke-width', (l) => {
-    //             return getWidth(l);
-    //         })
-    //         .attr('fill', 'none')
-    //         .attr('opacity', opacityGetter)
+    renderLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
 
-    //     selection.selectAll('path.link')
-    //         // .data(this.graph2d?.links)
-    //         .data(this.getFilteredLinks())
-    //         .join('path')
-    //         .classed('link', true)
-    //         .attr('d', (d: Connection2d) => d.getSvgPath())
-    //         .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
-    //         .attr('stroke-width', (l) => {
-    //             return getWidth(l);
-    //         })
-    //         .attr('fill', 'none')
-    //         .attr('opacity', opacityGetter)
+        const weightOfLink = (l: Connection2d) => {
+            return l.data?.weight ?? 1;
+        }
+
+        const opacityGetter = (d: Connection2d) => {
+            const weight = weightOfLink(d);
+            // const adaptedWeight = Math.max(0.2, Math.sqrt(weight));
+            const adaptedWeight = Math.max(0.05, weight);
+            if (this.userInteractions.somethingIsSelectedOrFocusedOrHovered) {
+
+                const startNode = d.source;
+                const endNode = d.target;
+                // if (this.userInteractions.)) {
+                //     return 1;
+                // }
+
+                if (this.userInteractions.isHovered(startNode) || this.userInteractions.isHovered(endNode)) {
+                    return 1;
+                }
+
+                return 0.4 * adaptedWeight;
+            }
+
+            return adaptedWeight;
+        }
 
 
-    // }
+        const getWidth = (l: Connection2d) => {
+            const minW = 0.1;
+            const maxW = 3;
+            const wMultiplier = 2;
+            // const weight = NodeToNodeConnection.getCombinedWeight(this.commGraph.getConnectionsBetweenNodes(l.source.data?.id, l.target.data?.id));
+            const weight = weightOfLink(l);
 
-    // updateLabels(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
-    //     selection.selectAll('text')
-    //         .data(this.nodes)
-    //         .join('text')
-    //         .attr('x', (d: Node2d) => d.x + 10)
-    //         .attr('y', (d: Node2d) => d.y)
-    //         .text((d: Node2d) => d.data?.id ?? "")
-    // }
+            return Math.min(maxW, Math.max(minW, weight * wMultiplier));
+        }
 
+        // TODO: Rendering is done twice on user interaction
+
+        const filteredLinks = this.getFilteredLinks();
+
+        selection.selectAll('path.arrow')
+            // .data(this.graph2d?.links)
+            .data(filteredLinks)
+            .join('path')
+            .classed('arrow', true)
+            .attr('d', (d: Connection2d) => d.getArrowPath())
+            .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
+            .attr('stroke-width', (l) => {
+                return getWidth(l);
+            })
+            .attr('fill', 'none')
+            .attr('opacity', opacityGetter)
+
+        selection.selectAll('path.link')
+            // .data(this.graph2d?.links)
+            .data(filteredLinks)
+            .join('path')
+            .classed('link', true)
+            .attr('d', (d: Connection2d) => d.getSvgPath())
+            .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
+            .attr('stroke-width', (l) => {
+                return getWidth(l);
+            })
+            .attr('fill', 'none')
+            .attr('opacity', opacityGetter)
+
+    }
+
+    renderLabels(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
+        selection.selectAll('text')
+            .data(this.graph2d.nodes)
+            .join('text')
+            .attr('x', (d: Node2d) => d.x + 10)
+            .attr('y', (d: Node2d) => d.y)
+            .text((d: Node2d) => d.data?.id ?? "")
+    }
 }

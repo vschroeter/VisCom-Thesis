@@ -29,17 +29,6 @@
                         <g ref="refGZoom">
 
                             <g ref="refGRoot">
-
-                                <g ref="refGNodes">
-
-                                </g>
-                                <g ref="refGLinks">
-
-                                </g>
-
-                                <g ref="refGLabels">
-
-                                </g>
                             </g>
                         </g>
 
@@ -187,7 +176,7 @@ const throttledUpdateUserInteractions = useThrottleFn(() => {
         return;
     }
     layoutUpdated()
-}, 50, true, true)
+}, 10, true, true)
 
 
 
@@ -198,37 +187,28 @@ function layoutUpdated() {
         return
     }
 
-    // console.log("Updating nodes and links");
-    d3.select(refGNodes.value)
-        // .call(layouter.updateNodes.bind(layouter))
-        .call((sel) => layouter?.graph2d.renderNodes(sel, {
-            mouseenter: (d: Node2d) => {
-                if (!isSelected.value) return;
-                const id = d.data?.id;
-                console.log("Mouse enter", id, d);
-                if (id) {
-                    userInteractions.addHoveredNode(id)
-                    // console.log("Updating nodes", userInteractions.hoveredNodeIds);
-                    throttledUpdateUserInteractions()
-                }
-            },
-            mouseleave: (d: Node2d) => {
-                if (!isSelected.value) return;
+    d3.select(refGRoot.value)
+        .call(sel => layouter?.renderAll(sel, {
+            nodesEvents: {
+                mouseenter: (d: Node2d) => {
+                    if (!isSelected.value) return;
+                    const id = d.data?.id;
+                    if (id) {
+                        userInteractions.addHoveredNode(id)
+                        throttledUpdateUserInteractions()
+                    }
+                },
+                mouseleave: (d: Node2d) => {
+                    if (!isSelected.value) return;
 
-                const id = d.data?.id;
-                if (id) {
-                    userInteractions.removeHoveredNode(id)
-                    // console.log("Updating nodes", userInteractions.hoveredNodeIds);
-                    throttledUpdateUserInteractions()
-                }
-            },
+                    const id = d.data?.id;
+                    if (id) {
+                        userInteractions.removeHoveredNode(id)
+                        throttledUpdateUserInteractions()
+                    }
+                },
+            }
         }))
-
-    d3.select(refGLinks.value)
-        .call(sel => layouter?.graph2d.renderLinks(sel))
-
-    d3.select(refGLabels.value)
-        .call(sel => layouter?.graph2d.renderLabels(sel))
 
     // console.log("BBox", bBox.value, refGRoot.value)
     bBox.value = refGRoot.value?.getBBox() ?? null
