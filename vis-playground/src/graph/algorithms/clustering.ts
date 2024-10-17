@@ -15,18 +15,25 @@ export class Clusterer {
      * @param channels The channels to consider for the connected component.
      * @returns The connected component of the node.
      */
-    getConnectedComponent(nodeId?: string | CommunicationNode, channels?: CommunicationChannel[]): CommunicationNode[] {
+    getConnectedComponent(nodeId?: string | CommunicationNode, channels?: CommunicationChannel[], nodes?: (string | CommunicationNode)[]): CommunicationNode[] {
         if (nodeId === undefined) {
             return [];
         }
         
         const node = this.commGraph.getNode(nodeId)!;
+
+        const relevantNodeIds = new Set((nodes?.map(node => this.commGraph.getNode(node)!) ?? this.commGraph.nodes).map(node => node.id));
+
         const visited = new Set<string>();
         const queue = [node];
 
         while (queue.length > 0) {
             const currentNode = queue.shift()!;
             if (visited.has(currentNode.id)) {
+                continue;
+            }
+
+            if (!relevantNodeIds.has(currentNode.id)) {
                 continue;
             }
 
@@ -55,7 +62,7 @@ export class Clusterer {
                 continue;
             }
             
-            const component = this.getConnectedComponent(node);
+            const component = this.getConnectedComponent(node, undefined, nodes);
             components.push(component);
             component.forEach(node => visited.add(node.id));
         }

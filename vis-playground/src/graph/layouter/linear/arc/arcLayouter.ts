@@ -10,7 +10,7 @@ import { CommonSettings } from "../../settings/commonSettings";
 export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
 
     layout(isUpdate = false) {
-        const ctx = this.settings.getContext(this.graph2d);
+        const ctx = this.settings.getContext({ graph2d: this.graph2d });
 
         const sorter = this.settings.sorting.getSorter(this.commGraph);
         const nodes = sorter.getSorting2dNodes(this.graph2d)

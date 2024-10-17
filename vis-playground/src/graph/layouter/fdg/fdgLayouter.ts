@@ -13,7 +13,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
     simulation?: d3.Simulation<AbstractNode2d, AbstractConnection2d>;
 
     layout(isUpdate = false) {
-        const ctx = this.settings.getContext(this.graph2d);
+        const ctx = this.settings.getContext({ graph2d: this.graph2d });
 
         if (this.simulation) {
             // console.log("Stopping simulation");

@@ -24,6 +24,8 @@ export class FlowSorter extends Sorter {
 
         if (nodes.length == 0) return []
 
+        const nodeIdsToInclude = new Set(nodes.map(node => node.id))
+
         this.topoligicalSorter.startNodeSelectionSorter = this.startNodeSelectionSorter
         this.topoligicalSorter.secondarySorting = this.secondarySorting
 
@@ -47,8 +49,9 @@ export class FlowSorter extends Sorter {
             if (sortedSet.has(node)) return
 
             // Get all parents and all children of the node
-            const parents = node.getPredecessors()
-            const children = node.getSuccessors()
+            // Filter to only include the given nodes
+            const parents = node.getPredecessors().filter(parent => nodeIdsToInclude.has(parent.id))
+            const children = node.getSuccessors().filter(child => nodeIdsToInclude.has(child.id))
 
             const nodesGen = genMap.get(node)!
 
@@ -95,7 +98,7 @@ export class FlowSorter extends Sorter {
         // so we do the visiting for each connected component separately, starting with the smallest one
 
         // Get the connected components
-        const connectedComponents = this.clusterer.getConnectedComponents().sort((a, b) => a.length - b.length)
+        const connectedComponents = this.clusterer.getConnectedComponents(nodes).sort((a, b) => a.length - b.length)
 
         // Visit each connected component
         connectedComponents.forEach(component => {

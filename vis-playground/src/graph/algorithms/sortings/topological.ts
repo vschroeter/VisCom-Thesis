@@ -208,7 +208,8 @@ export class TopologicalSorter extends Sorter {
                 if (!adaptedGenerationMap.has(node)) adaptedGenerationMap.set(node, genNr)
 
                 // Get all parents of the node
-                const parents = mapNodeToItsParents.get(node)!
+                const parents = mapNodeToItsParents.get(node)
+                if (!parents) continue
                 for (const parent of parents) {
                     if (!adaptedGenerationMap.has(parent)) adaptedGenerationMap.set(parent, genNr - 1)
                     else adaptedGenerationMap.set(parent, Math.min(adaptedGenerationMap.get(parent)!, genNr - 1))

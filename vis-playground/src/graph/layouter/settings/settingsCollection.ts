@@ -11,6 +11,8 @@ import { CommonSettings } from "./commonSettings";
 import { SpaceFillingCurveLayouter } from "../linear/spaceFilling/spaceFillingLayouter";
 import { SpaceFillingLayouterSettings } from "../linear/spaceFilling/spaceFillingSettings";
 import { DagreLayouter } from "../dagre/dagreLayouter";
+import { ViscomLayouter } from "../viscom/viscomLayouter";
+import { ViscomLayouterSettings } from "../viscom/viscomSettings";
 
 export const layouterMapping: Record<string, { label: string, layouter: typeof GraphLayouter<any>, settings: typeof GraphLayouterSettings }> = {
     "fdg": {
@@ -22,6 +24,11 @@ export const layouterMapping: Record<string, { label: string, layouter: typeof G
         label: "Radial Layouts",
         layouter: RadialLayouter,
         settings: RadialLayouterSettings,
+    },
+    "viscom": {
+        label: "VisCom Layouts",
+        layouter: ViscomLayouter,
+        settings: ViscomLayouterSettings
     },
     "arc": {
         label: "Arc Layouts",

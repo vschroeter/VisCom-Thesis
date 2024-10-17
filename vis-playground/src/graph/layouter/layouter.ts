@@ -187,8 +187,15 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             return adaptedWeight;
         }
 
-        const wMultiplier = 2;
-        const minW = 0.1;
+        
+        const getWidth = (l: AbstractConnection2d) => {
+            const minW = 0.1;
+            const maxW = 3;
+            const wMultiplier = 2;
+            const weight = NodeToNodeConnection.getCombinedWeight(this.commGraph.getConnectionsBetweenNodes(l.source.data?.id, l.target.data?.id));
+
+            return Math.min(maxW, Math.max(minW, weight * wMultiplier));
+        }
 
         selection.selectAll('path.arrow')
             // .data(this.graph2d?.links)
@@ -198,10 +205,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('d', (d: AbstractConnection2d) => d.getArrowPath())
             .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
             .attr('stroke-width', (l) => {
-                // const weight = l.data?.weight ?? 1;
-                const weight = NodeToNodeConnection.getCombinedWeight(this.commGraph.getConnectionsBetweenNodes(l.source.data?.id, l.target.data?.id));
-
-                return Math.max(minW, weight * wMultiplier);
+                return getWidth(l);
             })
             .attr('fill', 'none')
             .attr('opacity', opacityGetter)
@@ -214,17 +218,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('d', (d: AbstractConnection2d) => d.getSvgPath())
             .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
             .attr('stroke-width', (l) => {
-                // const weight = l.data?.weight ?? 1;
-
-                const weight = NodeToNodeConnection.getCombinedWeight(this.commGraph.getConnectionsBetweenNodes(l.source.data?.id, l.target.data?.id));
-                
-                // console.log({
-                //     connection: `${l.source.data?.id} -> ${l.target.data?.id}`,
-                //     apiWeight: weight,
-                //     conns: 
-                // });
-
-                return Math.max(minW, weight * wMultiplier);
+                return getWidth(l);
             })
             .attr('fill', 'none')
             .attr('opacity', opacityGetter)

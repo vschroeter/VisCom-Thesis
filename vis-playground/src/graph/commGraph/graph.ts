@@ -370,7 +370,10 @@ export class CommunicationGraph<NodeData = any> {
     }
   }
 
-  getNode(nodeID: string | CommunicationNode<NodeData>): CommunicationNode<NodeData> | undefined {
+  getNode(nodeID?: string | CommunicationNode<NodeData>): CommunicationNode<NodeData> | undefined {
+    if (nodeID === undefined) {
+      return undefined;
+    }
     if (typeof nodeID === 'string') {
       return this.nodesById.get(nodeID);
     }

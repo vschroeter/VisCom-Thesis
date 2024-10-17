@@ -12,7 +12,7 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
 
 
     layout(isUpdate = false) {
-        const ctx = this.settings.getContext(this.graph2d);
+        const ctx = this.settings.getContext({ graph2d: this.graph2d });
 
         const radius = this.settings.size.radius.getValue(ctx) ?? 5;
         

@@ -99,10 +99,20 @@ export class GraphLayouterSettings {
         return json;
     }
 
-    getContext(graph2d: Graph2d): Record<string, any> {
+    getContext({ graph2d, nodes, links }:
+        {
+            graph2d?: Graph2d;
+            nodes?: AbstractNode2d[];
+            links?: AbstractConnection2d[];
+        }
+    ): Record<string, any> {
+
+        const n = nodes ?? graph2d?.nodes ?? [];
+        const l = links ?? graph2d?.links ?? [];
+
         return {
-            n: graph2d.nodes.length,
-            l: graph2d.links.length,
+            n: n.length,
+            l: l.length,
         };
     }
 }
