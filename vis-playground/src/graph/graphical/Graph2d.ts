@@ -3,7 +3,7 @@ import { GraphLayouter } from "../layouter/layouter";
 import { GraphLayouterSettings } from "../layouter/settings/settings";
 import { MouseEvents } from "../visualizations/interactions";
 import { Connection2d, Connection2dData } from "./Connection2d";
-import { Node2d } from "./Node2d";
+import { Node2d, Node2dData } from "./Node2d";
 
 import * as d3 from 'd3';
 
@@ -51,22 +51,50 @@ export class Graph2d {
         return graph;
     }
 
+    static createFromNodesAndLinks(nodes: Node2dData[], links: Connection2dData[], layouter?: GraphLayouter<any>): Graph2d {
+
+        const graph = new Graph2d(layouter);
+
+        nodes.forEach(node => graph.createNode2d(node));
+
+        links.forEach(link => graph.createLink2d(link));
+
+        return graph;
+
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Node and link creation
     ////////////////////////////////////////////////////////////////////////////
 
-    createNode2d(node: CommunicationNode): Node2d {
+    addNode2d(node: Node2d | Node2d[]): void {
+        if (Array.isArray(node)) {
+            node.forEach(n => this.addNode2d(n));
+            return;
+        }
+        this.nodes.push(node);
+        this.mapIdToNode2d.set(node.id, node);
+    }
+
+    addLink2d(link: Connection2d | Connection2d[]): void {
+        if (Array.isArray(link)) {
+            link.forEach(l => this.addLink2d(l));
+            return;
+        }
+        this.links.push(link);
+    }
+
+    createNode2d<T extends Node2dData>(node: T): Node2d<T> {
         const node2d = new Node2d(node);
         // node2d.score = commGraph.ranking.getScoreOfNode(node) ?? 0;
         node2d.score = node.score ?? 0;
-        node2d.communities = node.graph?.communities;
-        this.mapIdToNode2d.set(node.id, node2d);
-        this.nodes.push(node2d);
-
+        node2d.communities = node.communities;
+        
+        this.addNode2d(node2d);
         return node2d;
     }
 
-    createLink2d(link: Connection2dData): Connection2d {
+    createLink2d<T extends Connection2dData>(link: T): Connection2d<T> {
         const source = this.mapIdToNode2d.get(link.fromId);
         const target = this.mapIdToNode2d.get(link.toId);
 
@@ -74,8 +102,8 @@ export class Graph2d {
             throw new Error("Source or target not found");
         }
 
-        const conn = new Connection2d(source, target, link);
-        this.links.push(conn);
+        const conn = new Connection2d<T>(source, target, link);
+        this.addLink2d(conn);
         return conn;
     }
 

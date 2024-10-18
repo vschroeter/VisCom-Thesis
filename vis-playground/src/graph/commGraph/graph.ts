@@ -189,6 +189,8 @@ export class CommunicationGraph<NodeData = any> {
         // topicMap.all.get(topicId)!.push(node);
       });
     });
+    
+    this.communities.initDefaultCommunities(this.nodes.map(node => node.id));
 
     this._updateLinks();
   }
@@ -504,6 +506,28 @@ export class CommunicationGraph<NodeData = any> {
     // Filter out all links that are not internal
     allLinks.forEach((link) => {
       if (nodes.some(node => node.id === link.fromId) && nodes.some(node => node.id === link.toId)) {
+        links.push(link);
+      }
+    });
+
+    return links;
+  }
+
+  getAllExternalLinksBetweenNodeGroups(nodeGroup1: CommunicationNode[], nodeGroup2: CommunicationNode[], channels?: CommunicationChannel[] | string[]): CommunicationLink[] {
+    const links: CommunicationLink[] = [];
+
+    const commChannels = this.getChannels(channels);
+
+    const allLinks = this.getAllLinks(commChannels);
+
+    const group1Ids = new Set(nodeGroup1.map(node => node.id));
+    const group2Ids = new Set(nodeGroup2.map(node => node.id));
+
+    // Only keep the links that are between the two node groups
+    allLinks.forEach((link) => {
+      if (group1Ids.has(link.fromId) && group2Ids.has(link.toId) && !group1Ids.has(link.toId)) {
+        links.push(link);
+      } else if (group2Ids.has(link.fromId) && group1Ids.has(link.toId) && !group2Ids.has(link.toId)) {
         links.push(link);
       }
     });

@@ -56,7 +56,7 @@ export interface Connection2dData {
     weight?: number;
 }
 
-export class Connection2d {
+export class Connection2d<T extends Connection2dData = Connection2dData> {
 
     /** The points that make up the connection */
     points: (Point2D | EllipticArc | Anchor2d)[] = []
@@ -65,7 +65,7 @@ export class Connection2d {
     curveStyle: CurveStyle = "linear"
 
     /** The data of the link */
-    data: Connection2dData
+    data: T
 
     /** The source node of the connection */
     source: Node2d
@@ -79,7 +79,7 @@ export class Connection2d {
     constructor(
         source: Node2d,
         target: Node2d,
-        data: Connection2dData,
+        data: T,
     ) {
         this.source = source
         this.target = target

@@ -9,6 +9,17 @@ export class NodeCommunity {
 export class NodeCommunities {
     communities: NodeCommunity[] = [];
 
+    /**
+     * Set all nodes to a community
+     * @param nodeIds 
+     * @returns 
+     */
+    initDefaultCommunities(nodeIds: string[]) {
+        this.communities = [new NodeCommunity()];
+        this.communities[0].nodeIds = nodeIds;
+    }
+
+
     getCommunitiesOfNode(nodeId?: string): number[] {
         if (!nodeId) {
             return [];

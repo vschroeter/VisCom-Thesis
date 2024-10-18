@@ -1,3 +1,4 @@
+import { RadialLayouterSettings } from "../linear/radial/radialSettings";
 import { LinearSortingSettings } from "../settings/linearSettings";
 import { GraphLayouterSettings, Param, Setting } from "../settings/settings";
 
@@ -19,13 +20,13 @@ export class SizeSettings extends Setting {
 }
 
 
-export class ViscomLayouterSettings extends GraphLayouterSettings {
-    size = new SizeSettings();
-    sorting = new LinearSortingSettings
-        ();
+export class ViscomLayouterSettings extends RadialLayouterSettings {
+    // size = new SizeSettings();
+    // sorting = new LinearSortingSettings
+    //     ();
 
-    constructor(type: string, name?: string) {
-        super(type, name);
-    }
+    // constructor(type: string, name?: string) {
+    //     super(type, name);
+    // }
 }
 

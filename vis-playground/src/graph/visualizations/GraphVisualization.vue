@@ -191,6 +191,7 @@ function layoutUpdated() {
         .call(sel => layouter?.renderAll(sel, {
             nodesEvents: {
                 mouseenter: (d: Node2d) => {
+                    return;
                     if (!isSelected.value) return;
                     const id = d.data?.id;
                     if (id) {
@@ -199,6 +200,7 @@ function layoutUpdated() {
                     }
                 },
                 mouseleave: (d: Node2d) => {
+                    return;
                     if (!isSelected.value) return;
 
                     const id = d.data?.id;

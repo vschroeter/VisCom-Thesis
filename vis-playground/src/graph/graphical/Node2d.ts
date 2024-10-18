@@ -6,21 +6,22 @@ import { Vector2D } from './Vector2d';
 
 export interface Node2dData {
   id: string;
-  score: number;
-  successorCount: number;
-  predecessorCount: number;
-  outDegree: number;
-  inDegree: number;
+  score?: number;
+  successorCount?: number;
+  predecessorCount?: number;
+  outDegree?: number;
+  inDegree?: number;
+  communities?: NodeCommunities;
 }
 
-export class Node2d { // <NodeData>
+export class Node2d<T extends Node2dData = Node2dData> { // <NodeData>
   
   // Center of the node
   center: Point2D;
 
   // The (abstract communication graph's node) data of the node
   // data?: CommunicationNode // NodeData;
-  data: Node2dData;
+  data: T;
 
   // The id of the node
   get id() {
@@ -45,6 +46,18 @@ export class Node2d { // <NodeData>
   // Reference to the node communities
   communities?: NodeCommunities;
 
+  // Whether the node should be filled
+  filled: boolean = true;
+
+  // The stroke width of the node
+  strokeWidth: number = 1;
+
+  // The stroke color of the node
+  stroke?: string;
+
+  // The stroke opacity of the node
+  strokeOpacity?: number = 1;
+
   // X coordinate of the node's center
   get x() {
     return this.center.x;
@@ -64,7 +77,7 @@ export class Node2d { // <NodeData>
     this.center.y = value;
   }
 
-  constructor(data: Node2dData, center?: Point2D | null) {
+  constructor(data: T, center?: Point2D | null) {
     this.center = center || new Point2D(0, 0);
     this.data = data;
   }

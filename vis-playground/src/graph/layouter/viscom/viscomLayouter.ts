@@ -8,38 +8,59 @@ import { GraphLayouter } from "../layouter";
 import { RadialLayouter } from "../linear/radial/radialLayouter";
 import { RadialLayouterSettings } from "../linear/radial/radialSettings";
 import { MouseEvents } from "src/graph/visualizations/interactions";
+import { Connection2dData } from "src/graph/graphical/Connection2d";
 
 
-class ViscomHyperNode {
+class ViscomHyperNode extends Node2d {
 
-    layouter: ViscomLayouter;
-    subLayouter: RadialLayouter;
+    parentLayouter: ViscomLayouter;
+    layouter: RadialLayouter;
     // center: Point2D = new Point2D(0, 0);
     // nodes: Node2d[];
     radius: number = 0;
+    innerRadius: number = 0;
 
-    constructor(layouter: ViscomLayouter, nodes: CommunicationNode[]) {
+    constructor(parentLayouter: ViscomLayouter, nodes: CommunicationNode[], id: string) {
 
-        this.layouter = layouter;
-        this.subLayouter = new RadialLayouter({
-            commGraph: layouter.commGraph,
-            settings: new RadialLayouterSettings("radial"),
-            commonSettings: layouter.commonSettings,
+        super({id: id})
+
+        this.parentLayouter = parentLayouter;
+
+        this.layouter = new RadialLayouter({
+            commGraph: parentLayouter.commGraph,
+            // settings: new RadialLayouterSettings("radial"),
+            settings: parentLayouter.settings,
+            commonSettings: parentLayouter.commonSettings,
             nodes: nodes,
-            userInteractions: layouter.userInteractions
+            userInteractions: parentLayouter.userInteractions
         });
+        this.layouter.center = this.center;
 
-        this.radius = this.subLayouter.getRadius();
+        this.innerRadius = this.layouter.getRadius();
+        this.radius = this.innerRadius * 1.1 + 20;
+
+        this.filled = false;
+        this.strokeWidth = 4;
+        this.stroke = "gray";
+        this.strokeOpacity = 0.3;
         console.log("New hypernode", this, nodes);
     }
 
-    get center() {
-        return this.subLayouter.center;
-    }
+    // get center() {
+    //     return this.subLayouter.center;
+    // }
 
     layout() {
-        this.subLayouter.layout();
+        this.layouter.layout();
     }
+}
+
+export interface ViscomHyperLinkData extends Connection2dData {
+    fromId: string;
+    toId: string;
+    
+    fromCommNodeId: string;
+    toCommNodeId: string;
 
 }
 
@@ -53,18 +74,36 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
 
         const hyperNodes: ViscomHyperNode[] = [];
         // Create a hypernode for each community
-        this.commGraph.communities.communities.forEach(community => {
+        this.commGraph.communities.communities.forEach((community, i) => {
             const nodesInComm = community.nodeIds.map(id => this.commGraph.getNode(id)!);
-            const hyperNode = new ViscomHyperNode(this, nodesInComm);
+            const hyperNode = new ViscomHyperNode(this, nodesInComm, i.toString());
             hyperNodes.push(hyperNode);
         });
 
-        // this.commGraph.communities.communities.forEach(community => {
-        //     const nodesInComm = community.nodeIds.map(id => this.graph2d.getNode(id)!);
-        //     const hyperNode = new ViscomHyperNode(this, nodesInComm);
-        //     hyperNodes.push(hyperNode);
-        // });
+        const graph2d = new Graph2d();
+        this.graph2d = graph2d;
 
+        graph2d.addNode2d(hyperNodes);
+
+        // Now get the links between the hypernodes
+        const hyperLinks: Connection2d<ViscomHyperLinkData>[] = [];
+        hyperNodes.forEach((hn1, i) => {
+            hyperNodes.forEach((hn2, j) => {
+                if (j > i) {
+
+                    const nodesInHn1 = hn1.layouter.nodes;
+                    const nodesInHn2 = hn2.layouter.nodes;
+
+                    const externalLinks = this.commGraph.getAllExternalLinksBetweenNodeGroups(nodesInHn1, nodesInHn2)
+                    console.log("External links", externalLinks);
+                    externalLinks.forEach(link => {
+                        const l2d = graph2d.createLink2d<ViscomHyperLinkData>({ fromId: hn1.id, toId: hn2.id, fromCommNodeId: link.fromId, toCommNodeId: link.toId });
+                        hyperLinks.push(l2d);
+                    })
+                }
+            });
+        });
+        
 
         // Place hypernodes on a circle
         const angleStep = 2 * Math.PI / hyperNodes.length;
@@ -91,14 +130,18 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
 
     renderAll(selection: d3.Selection<SVGGElement | any, any, any, any>, events?: { nodesEvents?: MouseEvents<Node2d>; linksEvents?: MouseEvents<Node2d>; labelsEvents?: MouseEvents<Node2d>; }): void {
         console.log("Render all viscom layouter", this, this.hyperNodes);
+
+        super.renderAll(selection, events);
+
         // Create a group for each hypernode
         selection.selectAll("g.hypernode")
             .data(this.hyperNodes)
             .join("g")
             .classed("hypernode", true)
             .each((hyperNode, i, g) => {
-                hyperNode.subLayouter.renderAll(d3.select(g[i]), events);
+                hyperNode.layouter.renderAll(d3.select(g[i]), events);
             })
+        
     }
 
 }

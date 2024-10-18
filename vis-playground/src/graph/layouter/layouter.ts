@@ -151,6 +151,10 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('r', d => d.radius)
             // .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
             .attr('fill', d => {
+                if (!d.filled) {
+                    return 'none';
+                }
+
                 if (Math.abs(scoreExtent[0]) == Infinity || Math.abs(scoreExtent[1]) == Infinity || scoreExtent[0] == scoreExtent[1]) {
                     return this.commonSettings.nodeColor.getValue(d) ?? "red";
                 }
@@ -160,22 +164,23 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
                 return nodeRankingColorScheme(scale(d.score));
 
             })
-            // .attr('stroke', 'white')
             .attr('stroke', d => {
 
+                const color = d.stroke ?? "white";
+
                 if (!d.communities) {
-                    return 'white';
+                    return color;
                 }
 
                 const communities = d.communities.getCommunitiesOfNode(d.id);
 
                 if (communities.length === 0) {
-                    return 'white';
+                    return color;
                 }
 
                 const totalCommunityCount = d.communities.countOfCommunities;
                 if (totalCommunityCount === 0) {
-                    return 'white';
+                    return color;
                 }
 
                 const colors = communities.map(community => {
@@ -193,7 +198,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
                 // return communitiesColorScheme(positionOfNodeCommunity);
             })
-            .attr('stroke-width', 2)
+            .attr('stroke-width', d => d.strokeWidth)
+            .attr('stroke-opacity', d => d.strokeOpacity ?? 1)
             .attr('opacity', d => {
 
                 if (this.userInteractions.somethingIsSelectedOrFocusedOrHovered) {

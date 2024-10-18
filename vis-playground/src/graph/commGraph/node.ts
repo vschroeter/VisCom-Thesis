@@ -24,6 +24,10 @@ export class CommunicationNode<NodeData = any> {
   /** The score of the node */
   score = 0;
 
+  get communities() {
+    return this.graph?.communities;
+  }
+
   get degree() {
     return this.inDegree + this.outDegree;
   }
