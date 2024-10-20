@@ -40,9 +40,9 @@ class ViscomHyperNode extends Node2d {
         this.radius = this.innerRadius * 1.1 + 20;
 
         this.filled = false;
-        this.strokeWidth = 4;
-        this.stroke = "gray";
-        this.strokeOpacity = 0.3;
+        // this.strokeWidth = 4;
+        // this.stroke = "gray";
+        // this.strokeOpacity = 0.3;
         console.log("New hypernode", this, nodes);
     }
 

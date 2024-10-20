@@ -7,7 +7,7 @@ import { GraphLayouterSettings } from "./settings/settings";
 
 import * as d3 from 'd3';
 
-export interface GraphLayouterArgs<T extends GraphLayouterSettings> {
+export interface GraphLayouterConstructorArgs<T extends GraphLayouterSettings> {
     // nodes: Node2d[];
     nodes: CommunicationNode[];
     // links: Connection2d[];
@@ -17,13 +17,59 @@ export interface GraphLayouterArgs<T extends GraphLayouterSettings> {
     userInteractions: UserInteractions;
 }
 
+export class RenderArgs {
+    commonSettings: CommonSettings;
+    userInteractions: UserInteractions;
+    nodeScoring: NodeScoring;
+    nodeFillColorGetter: (n: Node2d) => string;
+
+    constructor(commonSettings: CommonSettings, userInteractions: UserInteractions, nodeScoring: NodeScoring, nodeFillColorGetter: (n: Node2d) => string) {
+        this.commonSettings = commonSettings;
+        this.userInteractions = userInteractions;
+        this.nodeScoring = nodeScoring;
+        this.nodeFillColorGetter = nodeFillColorGetter;
+    }
+}
+
+export class NodeScoring {
+    extent: [number, number] = [0, 0];
+    colorScheme: (t: number) => string = d3.interpolateRdYlGn;
+
+    getColor(value: number) {
+        if (!this.isExtentValid()) {
+            return "red";
+        }
+
+        const scale = d3.scaleLinear().domain(this.extent).range([0, 1]);
+        return this.colorScheme(scale(value));
+    }
+
+    getExtent(nodes: Node2d[]) {
+        this.extent = d3.extent(nodes, d => d.score) as [number, number];
+    }
+
+    isExtentValid() {
+        return this.extent[0] !== this.extent[1] && Math.abs(this.extent[0]) !== Infinity && Math.abs(this.extent[1]) !== Infinity;
+    }
+}
+
 export class GraphLayouter<T extends GraphLayouterSettings> {
 
     settings: T;
-    commonSettings: CommonSettings;
-    userInteractions: UserInteractions;
-    commGraph: CommunicationGraph;
     graph2d: Graph2d;
+
+    renderArgs: RenderArgs;
+    get commonSettings() {
+        return this.renderArgs.commonSettings;
+    }
+    get userInteractions() {
+        return this.renderArgs.userInteractions;
+    }
+    // commonSettings: CommonSettings;
+    // userInteractions: UserInteractions;
+    // nodeScoring: NodeScoring = new NodeScoring();
+
+    commGraph: CommunicationGraph;
     nodes: CommunicationNode[] = [];
 
     center: Point2D = new Point2D(0, 0);
@@ -34,12 +80,17 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     protected events: { [key: string]: ((this: GraphLayouter<any>) => void) } = {};
 
-    constructor(layouterArgs: GraphLayouterArgs<T>) {
+    constructor(layouterArgs: GraphLayouterConstructorArgs<T>) {
         this.commGraph = layouterArgs.commGraph;
         this.settings = layouterArgs.settings;
         // this.graph2d = new Graph2d(this.commGraph);
-        this.commonSettings = layouterArgs.commonSettings;
-        this.userInteractions = layouterArgs.userInteractions;
+        this.renderArgs = new RenderArgs(
+            layouterArgs.commonSettings,
+            layouterArgs.userInteractions,
+            new NodeScoring(),
+            (n) => layouterArgs.commonSettings.nodeColor.getValue(n)?.toString() ?? "red");
+        // this.commonSettings = layouterArgs.commonSettings;
+        // this.userInteractions = layouterArgs.userInteractions;
         this.nodes = layouterArgs.nodes;
         // this.links = layouterArgs.links;
 
@@ -73,6 +124,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     updateLayout(isUpdate: boolean = false): void {
         this.updateGraphByCommonSettings();
+        this.updateStyle();
         this.layout(isUpdate);
     }
 
@@ -81,13 +133,15 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     getFilteredLinks() {
-        console.log("Filtering links", this.commonSettings.hideLinksThreshold.getValue());
-        const filteredLinks = this.graph2d.links.filter(l => {
-            const weight = l.data?.weight ?? 1;
-            return weight > (this.commonSettings.hideLinksThreshold.getValue() ?? 0.25);
-        })
-        // console.log("Filtered links", filteredLinks);
-        return filteredLinks;
+        // Filtering already done at initialization 
+        return this.graph2d.links;
+        // console.log("Filtering links", this.commonSettings.hideLinksThreshold.getValue());
+        // const filteredLinks = this.graph2d.links.filter(l => {
+        //     const weight = l.data?.weight ?? 1;
+        //     return weight > (this.commonSettings.hideLinksThreshold.getValue() ?? 0.25);
+        // })
+        // // console.log("Filtered links", filteredLinks);
+        // return filteredLinks;
     }
 
     reset() {
@@ -122,9 +176,71 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     // Render methods
     ////////////////////////////////////////////////////////////////////////////
 
-    selectGroup(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, className: string) {        
+    selectGroup(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, className: string) {
         selection.selectAll(`g.${className}`).data([0]).join("g").classed(className, true);
         return selection.select<SVGGElement | null>(`g.${className}`);
+    }
+
+    updateStyle() {
+
+        // Get the node score extent
+        const scoring = this.renderArgs.nodeScoring;
+        scoring.extent = d3.extent(this.nodes2d, d => d.score) as [number, number];
+        const validScores = scoring.isExtentValid();
+
+        // Set the score colors of the nodes
+        this.nodes2d.forEach(node => {
+            // node.updateStyleFill((n) => this.commonSettings.nodeColor.getValue(n), this.nodeScoring.extent);
+
+            if (!validScores) {
+                const v = this.commonSettings.nodeColor.getValue(node)?.toString() ?? "red";
+                node.updateStyleFill(v);
+                return;
+            }
+
+            node.updateStyleFill(scoring.getColor(node.score));
+        })
+
+        // Update the opacities based on the user interactions
+        const userInteractions = this.userInteractions;
+        this.nodes2d.forEach(node => {
+            let opacity = 1;
+            if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
+                if (userInteractions.isHovered(node)) {
+                    opacity = 1;
+                } else {
+                    opacity = 0.2;
+                }
+            }
+            node.updateStyleOpacity(opacity);
+        })
+
+        // Update the node stroke based on the communities
+        this.nodes2d.forEach(node => {
+            if (!node.communities) {
+                return;
+            }
+
+            const communities = node.communities.getCommunitiesOfNode(node.id);
+
+            if (communities.length === 0) {
+                return;
+            }
+
+            const totalCommunityCount = node.communities.countOfCommunities;
+            if (totalCommunityCount === 0) {
+                return;
+            }
+
+            const colors = communities.map(community => {
+                const positionOfNodeCommunity = community / totalCommunityCount;
+                return d3.hsl(d3.interpolateSinebow(positionOfNodeCommunity));
+            });
+
+            // Get the average color of all communities
+            const averageColor = d3.hsl(d3.mean(colors, c => c.h)!, d3.mean(colors, c => c.s)!, d3.mean(colors, c => c.l)!);
+            node.updateStyleStroke(averageColor.formatRgb());
+        })
     }
 
     renderAll(selection: d3.Selection<SVGGElement | any, any, any, any>, events?: {
@@ -138,89 +254,24 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     renderNodes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
-        const communitiesColorScheme = d3.interpolateSinebow;
-        const nodeRankingColorScheme = d3.interpolateRdYlGn;
-
-        const scoreExtent = d3.extent(this.nodes, d => d.score) as [number, number];
-
-        const nodes = selection.selectAll('circle')
+        const nodes = selection.selectAll('g.node')
             .data(this.graph2d.nodes)
-            .join('circle')
-            .attr('cx', (d: Node2d) => d.x)
-            .attr('cy', (d: Node2d) => d.y)
-            .attr('r', d => d.radius)
-            // .attr('fill', d => this.commonSettings.nodeColor.getValue(d) ?? "red")
-            .attr('fill', d => {
-                if (!d.filled) {
-                    return 'none';
-                }
-
-                if (Math.abs(scoreExtent[0]) == Infinity || Math.abs(scoreExtent[1]) == Infinity || scoreExtent[0] == scoreExtent[1]) {
-                    return this.commonSettings.nodeColor.getValue(d) ?? "red";
-                }
-
-                const scale = d3.scaleLinear().domain(scoreExtent).range([0, 1]);
-
-                return nodeRankingColorScheme(scale(d.score));
-
-            })
-            .attr('stroke', d => {
-
-                const color = d.stroke ?? "white";
-
-                if (!d.communities) {
-                    return color;
-                }
-
-                const communities = d.communities.getCommunitiesOfNode(d.id);
-
-                if (communities.length === 0) {
-                    return color;
-                }
-
-                const totalCommunityCount = d.communities.countOfCommunities;
-                if (totalCommunityCount === 0) {
-                    return color;
-                }
-
-                const colors = communities.map(community => {
-                    const positionOfNodeCommunity = community / totalCommunityCount;
-                    return d3.hsl(communitiesColorScheme(positionOfNodeCommunity));
-                });
-
-                // console.log(colors);
-                // Get the average color of all communities
-                const averageColor = d3.hsl(d3.mean(colors, c => c.h)!, d3.mean(colors, c => c.s)!, d3.mean(colors, c => c.l)!);
-                return averageColor.formatRgb();
-
-                // // Position on color scheme between 0 and 1
-                // const positionOfNodeCommunity = communities[0] / totalCommunityCount;
-
-                // return communitiesColorScheme(positionOfNodeCommunity);
-            })
-            .attr('stroke-width', d => d.strokeWidth)
-            .attr('stroke-opacity', d => d.strokeOpacity ?? 1)
-            .attr('opacity', d => {
-
-                if (this.userInteractions.somethingIsSelectedOrFocusedOrHovered) {
-
-                    // if (this.userInteractions.)) {
-                    //     return 1;
-                    // }
-
-                    if (this.userInteractions.isHovered(d)) {
-                        return 1;
-                    }
-
-                    return 0.2;
-                }
-
-                return 1;
-
-            })
-        // .on('mouseenter', (e, d) => {
-        //     console.log("Mouse enter", d, e);
-        // })
+            .join(
+                // enter => enter.append('g').classed('node', true).call(d => d.datum().enter(d)),
+                enter => enter.append('g').classed('node', true).each((d, i, g) => {
+                    // console.log("Enter", d, i, g);
+                    d.enter(d3.select(g[i]));
+                }),
+                // update => update.call(d => d.datum().update(d)),
+                update => update.each((d, i, g) => {
+                    d.update(d3.select(g[i]));
+                }),
+                // exit => exit.call(d => d.datum().exit(d))                
+                exit => exit.each((d, i, g) => {
+                    d.exit(d3.select(g[i]));
+                })
+            )
+        
 
         if (events?.click) nodes.on("click", (e, d) => events.click?.(d, e))
         if (events?.mouseleave) nodes.on("mouseleave", (e, d) => events.mouseleave?.(d, e))

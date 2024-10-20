@@ -1,7 +1,7 @@
 import * as dagreD3 from 'dagre-d3';
 
 import { CommunicationGraph, CommunicationLink, CommunicationNode } from "src/graph/commGraph";
-import { GraphLayouter, GraphLayouterArgs } from "../layouter";
+import { GraphLayouter, GraphLayouterConstructorArgs } from "../layouter";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import * as d3 from "d3";
@@ -13,7 +13,7 @@ import { UserInteractions } from 'src/graph/visualizations/interactions';
 
 export class DagreLayouter extends GraphLayouter<GraphLayouterSettings> {
 
-  constructor(layouterArgs: GraphLayouterArgs<GraphLayouterSettings>) {
+  constructor(layouterArgs: GraphLayouterConstructorArgs<GraphLayouterSettings>) {
     super(layouterArgs);
     this.calculateMetrics = false;
   }

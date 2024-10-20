@@ -175,6 +175,7 @@ const throttledUpdateUserInteractions = useThrottleFn(() => {
     if (!isSelected.value) {
         return;
     }
+    layouter?.updateStyle();
     layoutUpdated()
 }, 10, true, true)
 
@@ -191,22 +192,22 @@ function layoutUpdated() {
         .call(sel => layouter?.renderAll(sel, {
             nodesEvents: {
                 mouseenter: (d: Node2d) => {
-                    return;
+                    // return;
                     if (!isSelected.value) return;
                     const id = d.data?.id;
                     if (id) {
                         userInteractions.addHoveredNode(id)
-                        throttledUpdateUserInteractions()
+                        // throttledUpdateUserInteractions()
                     }
                 },
                 mouseleave: (d: Node2d) => {
-                    return;
+                    // return;
                     if (!isSelected.value) return;
 
                     const id = d.data?.id;
                     if (id) {
                         userInteractions.removeHoveredNode(id)
-                        throttledUpdateUserInteractions()
+                        // throttledUpdateUserInteractions()
                     }
                 },
             }
