@@ -400,6 +400,7 @@ export class CommunicationGraph<NodeData = any> {
     node: string | CommunicationNode<NodeData>,
     direction: CommunicationDirection,
     channels?: CommunicationChannel[] | string[] | string,
+    threshold?: number
   ): CommunicationLink[] {
     const links: CommunicationLink[] = [];
 
@@ -420,6 +421,10 @@ export class CommunicationGraph<NodeData = any> {
 
               const weight = this.getTopicWeight(channel.type, link.data.topic.id);
               // const w = link.data.topic.weight;
+
+              if (threshold && weight < threshold) {
+                return;
+              }
 
               links.push(
                 new CommunicationLink(
@@ -450,8 +455,9 @@ export class CommunicationGraph<NodeData = any> {
   getOutgoingLinks(
     nodeID: string | CommunicationNode<NodeData>,
     channels?: CommunicationChannel[] | string[],
+    threshold?: number
   ): CommunicationLink[] {
-    return this.getLinksAccordingToDirection(nodeID, 'outgoing', channels);
+    return this.getLinksAccordingToDirection(nodeID, 'outgoing', channels, threshold);
   }
 
   /**
@@ -463,8 +469,9 @@ export class CommunicationGraph<NodeData = any> {
   getIncomingLinks(
     nodeID: string | CommunicationNode<NodeData>,
     channels?: CommunicationChannel[] | string[],
+    threshold?: number
   ): CommunicationLink[] {
-    return this.getLinksAccordingToDirection(nodeID, 'incoming', channels);
+    return this.getLinksAccordingToDirection(nodeID, 'incoming', channels, threshold);
   }
 
   /**
@@ -473,9 +480,9 @@ export class CommunicationGraph<NodeData = any> {
    * @returns List of links
    */
   getAllLinks(
-    channels?: CommunicationChannel[] | string[],
+    channels?: CommunicationChannel[] | string[], threshold?: number
   ): CommunicationLink[] {
-    return this.getAllLinksOfNodes(this.nodes, channels);
+    return this.getAllLinksOfNodes(this.nodes, channels, threshold);
   }
 
   /**
@@ -484,24 +491,24 @@ export class CommunicationGraph<NodeData = any> {
    * @param channels The communicaiton channel(s) to consider. If not set, all channels are considered.
    * @returns List of links
    */
-  getAllLinksOfNodes(nodes: CommunicationNode[], channels?: CommunicationChannel[] | string[]): CommunicationLink[] {
+  getAllLinksOfNodes(nodes: CommunicationNode[], channels?: CommunicationChannel[] | string[], threshold?: number): CommunicationLink[] {
     const links: CommunicationLink[] = [];
 
     const commChannels = this.getChannels(channels);
 
     nodes.forEach((node) => {
-      links.push(...this.getOutgoingLinks(node.id, commChannels));
+      links.push(...this.getOutgoingLinks(node.id, commChannels, threshold));
     });
 
     return links;
   }
 
-  getAllInternalLinksOfNodes(nodes: CommunicationNode[], channels?: CommunicationChannel[] | string[]): CommunicationLink[] {
+  getAllInternalLinksOfNodes(nodes: CommunicationNode[], channels?: CommunicationChannel[] | string[], threshold?: number): CommunicationLink[] {
     const links: CommunicationLink[] = [];
 
     const commChannels = this.getChannels(channels);
 
-    const allLinks = this.getAllLinks(commChannels);
+    const allLinks = this.getAllLinks(commChannels, threshold);
 
     // Filter out all links that are not internal
     allLinks.forEach((link) => {
@@ -513,12 +520,12 @@ export class CommunicationGraph<NodeData = any> {
     return links;
   }
 
-  getAllExternalLinksBetweenNodeGroups(nodeGroup1: CommunicationNode[], nodeGroup2: CommunicationNode[], channels?: CommunicationChannel[] | string[]): CommunicationLink[] {
+  getAllExternalLinksBetweenNodeGroups(nodeGroup1: CommunicationNode[], nodeGroup2: CommunicationNode[], channels?: CommunicationChannel[] | string[], threshold?: number): CommunicationLink[] {
     const links: CommunicationLink[] = [];
 
     const commChannels = this.getChannels(channels);
 
-    const allLinks = this.getAllLinks(commChannels);
+    const allLinks = this.getAllLinks(commChannels, threshold);
 
     const group1Ids = new Set(nodeGroup1.map(node => node.id));
     const group2Ids = new Set(nodeGroup2.map(node => node.id));

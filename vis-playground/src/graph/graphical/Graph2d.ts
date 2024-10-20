@@ -40,13 +40,15 @@ export class Graph2d {
         commNodes.forEach(node => graph.createNode2d(node));
 
         // Create links
-        const links = commGraph.getAllInternalLinksOfNodes(commNodes)
+        const links = commGraph.getAllInternalLinksOfNodes(commNodes, undefined, layouter?.commonSettings.hideLinksThreshold.getValue() ?? 0)
         const mergedLinks = CommunicationLink.mergeLinks(links);
-        const filteredLinks = mergedLinks.filter(link => {
-            return link.weight > (layouter?.commonSettings.hideLinksThreshold.getValue(link) ?? 0);  
-        })
+        // const filteredLinks = mergedLinks.filter(link => {
+        //     return link.weight > (layouter?.commonSettings.hideLinksThreshold.getValue(link) ?? 0);  
+        // })
         // console.log("Links", links, mergedLinks, filteredLinks);
+        // console.log("Links", links, mergedLinks);
         mergedLinks.forEach(link => graph.createLink2d(link));
+        // filteredLinks.forEach(link => graph.createLink2d(link));
 
         return graph;
     }
