@@ -12,7 +12,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
     simulation?: d3.Simulation<Node2d, Connection2d>;
 
-    layout(isUpdate = false) {
+    override layout(isUpdate = false) {
         const ctx = this.settings.getContext({ graph2d: this.graph2d });
 
         if (this.simulation) {

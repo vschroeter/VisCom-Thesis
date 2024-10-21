@@ -6,7 +6,7 @@ import { MetricDefinition } from "./collection";
 import intersect, { Intersection } from 'path-intersection';
 
 export class EdgeCrossingsCalculator extends MetricCalculator {
-    static displayedMetrics: MetricDefinition[] = [
+    static override displayedMetrics: MetricDefinition[] = [
         { key: "totalEdgeCrossings", optimum: "lowerIsBetter", label: "Total Edge Crossings", abbreviation: "EC", description: "The total count of edge crossings in the graph", normalizing: "none" },
     ];
 
@@ -23,7 +23,7 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
         this.totalEdgeCrossings = 0;
     }
 
-    async calculate() {
+    override async calculate() {
         await this.calculateEdgeCrossings();
     }
 

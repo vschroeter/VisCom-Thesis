@@ -17,14 +17,14 @@ export class DifferenceSourceScoreSorter extends Sorter {
         return outgoingNodes.length - incomingNodes.length
     }
 
-    protected sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
+    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
         return nodes.sort((a, b) => this.getScore(a.id) - this.getScore(b.id)).reverse();
     }
 }
 
 
 export class WeightedSourceScoreSorter extends DifferenceSourceScoreSorter {
-    getScore(nodeId: string): number {
+    override getScore(nodeId: string): number {
         const score = super.getScore(nodeId);
         return score / (Math.abs(score) + 1);
     }

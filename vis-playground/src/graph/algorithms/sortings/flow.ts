@@ -9,14 +9,14 @@ export class FlowSorter extends Sorter {
     clusterer: Clusterer
     topoligicalSorter: TopologicalSorter
 
-    constructor(public commGraph: CommunicationGraph) {
+    constructor(commGraph: CommunicationGraph) {
         super(commGraph);
 
         this.clusterer = new Clusterer(commGraph);
         this.topoligicalSorter = new TopologicalSorter(commGraph);
     }
 
-    protected sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
+    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
 
         if (this.startNodeSelectionSorter) {
             nodes = this.startNodeSelectionSorter.getSorting(nodes);

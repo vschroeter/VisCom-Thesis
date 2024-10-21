@@ -17,7 +17,7 @@ class ViscomHyperNode extends Node2d {
     layouter: RadialLayouter;
     // center: Point2D = new Point2D(0, 0);
     // nodes: Node2d[];
-    radius: number = 0;
+    // radius: number = 0;
     innerRadius: number = 0;
 
     constructor(parentLayouter: ViscomLayouter, nodes: CommunicationNode[], id: string) {
@@ -70,7 +70,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
 
     hyperNodes: ViscomHyperNode[] = [];
 
-    layout(isUpdate = false) {
+    override layout(isUpdate = false) {
 
         const hyperNodes: ViscomHyperNode[] = [];
         // Create a hypernode for each community
@@ -128,20 +128,20 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
     }
 
 
-    renderAll(selection: d3.Selection<SVGGElement | any, any, any, any>, events?: { nodesEvents?: MouseEvents<Node2d>; linksEvents?: MouseEvents<Node2d>; labelsEvents?: MouseEvents<Node2d>; }): void {
-        console.log("Render all viscom layouter", this, this.hyperNodes);
+    // renderAll(selection: d3.Selection<SVGGElement | any, any, any, any>, events?: { nodesEvents?: MouseEvents<Node2d>; linksEvents?: MouseEvents<Node2d>; labelsEvents?: MouseEvents<Node2d>; }): void {
+    //     console.log("Render all viscom layouter", this, this.hyperNodes);
 
-        super.renderAll(selection, events);
+    //     super.renderAll(selection, events);
 
-        // Create a group for each hypernode
-        selection.selectAll("g.hypernode")
-            .data(this.hyperNodes)
-            .join("g")
-            .classed("hypernode", true)
-            .each((hyperNode, i, g) => {
-                hyperNode.layouter.renderAll(d3.select(g[i]), events);
-            })
+    //     // Create a group for each hypernode
+    //     selection.selectAll("g.hypernode")
+    //         .data(this.hyperNodes)
+    //         .join("g")
+    //         .classed("hypernode", true)
+    //         .each((hyperNode, i, g) => {
+    //             hyperNode.layouter.renderAll(d3.select(g[i]), events);
+    //         })
         
-    }
+    // }
 
 }

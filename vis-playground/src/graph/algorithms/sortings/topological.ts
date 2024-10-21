@@ -12,7 +12,7 @@ export class TopologicalSorter extends Sorter {
 
     clusterer: Clusterer
 
-    constructor(public commGraph: CommunicationGraph) {
+    constructor(commGraph: CommunicationGraph) {
         super(commGraph);
 
         this.clusterer = new Clusterer(commGraph);
@@ -234,7 +234,7 @@ export class TopologicalSorter extends Sorter {
         return adaptedGenerationList
     }
 
-    sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
+    override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
 
         if (this.startNodeSelectionSorter) {
             nodes = this.startNodeSelectionSorter.getSorting(nodes);

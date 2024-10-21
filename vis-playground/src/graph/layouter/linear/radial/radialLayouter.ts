@@ -15,7 +15,7 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
         return this.settings.size.radius.getValue(this.settings.getContext({ graph2d: this.graph2d })) ?? 5;
     }
 
-    layout(isUpdate = false) {
+    override layout(isUpdate = false) {
         const radius = this.getRadius();
         
         const sorter = this.settings.sorting.getSorter(this.commGraph);

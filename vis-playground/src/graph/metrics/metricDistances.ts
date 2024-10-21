@@ -3,7 +3,7 @@ import { MetricCalculator } from "./base";
 import { MetricDefinition } from "./collection";
 
 export class EdgeLengthCalculator extends MetricCalculator {
-    static displayedMetrics: MetricDefinition[] = [
+    static override displayedMetrics: MetricDefinition[] = [
         { key: "totalEdgeLength", optimum: "lowerIsBetter", label: "Total Edge Length", abbreviation: "EL", description: "The total length of all edges in the graph", normalizing: "byLongerLayoutSide" },
     ];
 
@@ -27,7 +27,7 @@ export class EdgeLengthCalculator extends MetricCalculator {
 }
 
 export class NodeDistanceCalculator extends MetricCalculator {
-    static displayedMetrics: MetricDefinition[] = [
+    static override displayedMetrics: MetricDefinition[] = [
         { key: "neighboredNodeDistance", optimum: "lowerIsBetter", label: "Neighbored Node Distance", abbreviation: "ND", description: "The total distance between all neighbored nodes in the graph", normalizing: "byLongerLayoutSide" },
     ];
 

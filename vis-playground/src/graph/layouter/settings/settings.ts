@@ -402,7 +402,7 @@ export class Param<T = number> { //
 
 export class ParamWithNodeContext extends Param {
 
-    static tooltip: string[] = [...Param.tooltip,
+    static override tooltip: string[] = [...Param.tooltip,
         "You can use the following node params:",
         "- cs: Number of successors",
         "- cp: Number of predecessors",
@@ -412,9 +412,9 @@ export class ParamWithNodeContext extends Param {
         "- cl: Number of links",
     ]
 
-    tooltip: string[] = ParamWithNodeContext.tooltip;
+    override tooltip: string[] = ParamWithNodeContext.tooltip;
 
-    getValue(node?: Node2d, context?: Record<string, any>): number | undefined {
+    override getValue(node?: Node2d, context?: Record<string, any>): number | undefined {
         let ctx: Record<string, any> = {
             cs: 1,
             cp: 1,
@@ -450,16 +450,16 @@ export class ParamWithNodeContext extends Param {
 
 export class ParamWithLinkContext extends Param {
 
-    static tooltip: string[] = [...Param.tooltip,
+    static override tooltip: string[] = [...Param.tooltip,
         "You can use the following link params:",
         "- ct: Number of connections on the target node",
         "- cs: Number of connections on the source node",
         "- cd: Number of connections on both nodes (sum of degrees)",
     ]
 
-    tooltip: string[] = ParamWithLinkContext.tooltip;
+    override tooltip: string[] = ParamWithLinkContext.tooltip;
 
-    getValue(link?: Connection2d, context?: Record<string, any>): number | undefined {
+    override getValue(link?: Connection2d, context?: Record<string, any>): number | undefined {
         let ctx: Record<string, any> = {
             ct: 1,
             cs: 1,
@@ -483,7 +483,7 @@ export class ParamWithLinkContext extends Param {
 
 export class ParamChoice<T extends string> extends Param<string> {
 
-    choices: T[];
+    override choices: T[];
 
     constructor({
         key,

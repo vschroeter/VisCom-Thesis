@@ -5,6 +5,7 @@ import { EllipticArc } from "./EllipticArc";
 import { Point2D } from "./Point2d";
 
 import * as d3 from "d3"
+import { SvgRenderable } from "./Renderable";
 
 export type CurveStyle = "linear" | "basis" | "natural" | d3.CurveFactory
 
@@ -56,7 +57,7 @@ export interface Connection2dData {
     weight?: number;
 }
 
-export class Connection2d<T extends Connection2dData = Connection2dData> {
+export class Connection2d<T extends Connection2dData = Connection2dData> extends SvgRenderable {
 
     /** The points that make up the connection */
     points: (Point2D | EllipticArc | Anchor2d)[] = []
@@ -72,20 +73,29 @@ export class Connection2d<T extends Connection2dData = Connection2dData> {
     /** The target node of the connection */
     target: Node2d
 
-    
+
     arrow: Arrow2D = new Arrow2D()
-    
-    
+
+    opacity: number = 1
+    stroke?: string
+    strokeWidth: number = 1
+
+
     constructor(
         source: Node2d,
         target: Node2d,
         data: T,
     ) {
+        super('g', 'connection2d');
+
         this.source = source
         this.target = target
         this.data = data
+
+        this.updateCallbacks.push(...[this.renderPath, this.renderStyleOpacity, this.renderStyleStroke])
+
     }
-    
+
     /** The weight of the connection */
     get weight() {
         return this.data.weight ?? 1
@@ -198,4 +208,56 @@ export class Connection2d<T extends Connection2dData = Connection2dData> {
         return tempPath.getTotalLength()
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Style update methods
+    ////////////////////////////////////////////////////////////////////////////
+
+    //++++ Path ++++//
+    renderPath(selection: d3.Selection<any, any, any, any>) {
+        this.selectSubElement('path.link').attr('d', this.getSvgPath())
+        this.selectSubElement('path.arrow').attr('d', this.getArrowPath())
+    }
+
+    //++++ Opacity ++++//
+
+    renderStyleOpacity(selection: d3.Selection<any, any, any, any>) {
+        selection.attr('opacity', this.opacity);
+    }
+    updateStyleOpacity(opacity: number) {
+        this.checkValueAndAddUpdateCallback([
+            { currentValuePath: 'opacity', newValue: opacity },
+        ], this.renderStyleOpacity);
+    }
+
+    //++++ Stroke ++++//
+
+    private applyStrokeAttributs(selection: d3.Selection<any, any, any, any>) {
+        selection
+            .attr('stroke', this.stroke ?? "black")
+            .attr('stroke-width', this.strokeWidth)
+    }
+
+    renderStyleStroke(selection: d3.Selection<any, any, any, any>) {
+        this.applyStrokeAttributs(this.selectSubElement('path.link'));
+        this.applyStrokeAttributs(this.selectSubElement('path.arrow'));
+    }
+
+    updateStyleStroke(stroke?: string, strokeWidth?: number) {
+        this.checkValueAndAddUpdateCallback([
+            { currentValuePath: 'stroke', newValue: stroke },
+            { currentValuePath: 'strokeWidth', newValue: strokeWidth },
+        ], this.renderStyleStroke);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Render methods
+    ////////////////////////////////////////////////////////////////////////////
+
+    override addSubElements(): void {
+        this.addSubElement('path', 'link')
+            .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
+        this.addSubElement('path', 'arrow')
+            .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
+    }
 }

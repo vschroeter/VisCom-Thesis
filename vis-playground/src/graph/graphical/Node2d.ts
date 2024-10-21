@@ -8,6 +8,7 @@ import { StrokeStyle } from './StrokeStyle';
 import { Vector2D } from './Vector2d';
 
 import * as d3 from 'd3';
+import { SvgRenderable } from './Renderable';
 
 export interface Node2dData {
   id: string;
@@ -19,7 +20,7 @@ export interface Node2dData {
   communities?: NodeCommunities;
 }
 
-export class Node2d<T extends Node2dData = Node2dData> { // <NodeData>
+export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { // <NodeData>
 
   // Center of the node
   center: Point2D;
@@ -63,8 +64,6 @@ export class Node2d<T extends Node2dData = Node2dData> { // <NodeData>
   // The opacity of the node
   opacity: number = 1;
 
-  updateCallbacks: ((selection: d3.Selection<any, any, any, any>) => void)[] = [];
-
   // X coordinate of the node's center
   get x() {
     return this.center.x;
@@ -85,6 +84,9 @@ export class Node2d<T extends Node2dData = Node2dData> { // <NodeData>
   }
 
   constructor(data: T, center?: Point2D | null) {
+
+    super("circle", "node2d");
+
     this.center = center || new Point2D(0, 0);
     this.data = data;
 
@@ -130,103 +132,66 @@ export class Node2d<T extends Node2dData = Node2dData> { // <NodeData>
 
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Stype update methods
-  ////////////////////////////////////////////////////////////////////////////
-
-  private checkAndAddUpdate(oldValueField: string, newValue?: any, updateCallback?: (selection: d3.Selection<any, any, any, any>) => void) {
-    if (newValue === undefined) {
-      return;
-    }
-
-    if (_.get(this, oldValueField) !== newValue) {
-      _.set(this, oldValueField, newValue);
-
-      if (updateCallback) {
-        // Check if callback is already in the list
-        if (!this.updateCallbacks.includes(updateCallback)) {
-          this.updateCallbacks.push(updateCallback);
-        }
-      }
-    }
-  }
-
   //++++ Fill ++++//
 
-  renderStyleFill(selection: d3.Selection<any, any, any, any>) {
-    selection.attr('fill', this.fill);
+  renderStyleFill() {
+    // console.log('[NODE] renderStyleFill', this.fill, this.selectElement());
+    this.selectElement().attr('fill', this.fill);
   }
 
   updateStyleFill(fill: string) {
-    this.checkAndAddUpdate('fill', fill, this.renderStyleFill);
+    this.checkValueAndAddUpdateCallback([{
+      currentValuePath: 'fill', newValue: fill
+    }], this.renderStyleFill);
   }
 
   //++++ Stroke ++++//
 
-  renderStyleStroke(selection: d3.Selection<any, any, any, any>) {
-    selection
+  renderStyleStroke() {
+    // console.log('[NODE] renderStyleStroke', this.strokeStyle);
+    this.selectElement()
       .attr('stroke', this.strokeStyle.stroke ?? "white")
       .attr('stroke-width', this.strokeStyle.strokeWidth)
       .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
-    
+
     const x = 5;
   }
 
   updateStyleStroke(stroke?: string, strokeWidth?: number, strokeOpacity?: number) {
-    this.checkAndAddUpdate('strokeStyle.stroke', stroke, this.renderStyleStroke);
-    this.checkAndAddUpdate('strokeStyle.strokeWidth', strokeWidth, this.renderStyleStroke);
-    this.checkAndAddUpdate('strokeStyle.strokeOpacity', strokeOpacity, this.renderStyleStroke);
+    this.checkValueAndAddUpdateCallback([
+      { currentValuePath: 'strokeStyle.stroke', newValue: stroke },
+      { currentValuePath: 'strokeStyle.strokeWidth', newValue: strokeWidth },
+      { currentValuePath: 'strokeStyle.strokeOpacity', newValue: strokeOpacity }
+    ], this.renderStyleFill);
   }
 
   //++++ Opacity ++++//
 
-  renderStyleOpacity(selection: d3.Selection<any, any, any, any>) {
-    selection.attr('opacity', this.opacity);
+  renderStyleOpacity() {
+    // console.log('[NODE] renderStyleOpacity', this.opacity);
+    this.selectElement().attr('opacity', this.opacity);
   }
   updateStyleOpacity(opacity: number) {
-    this.checkAndAddUpdate('opacity', opacity, this.renderStyleOpacity);
+    this.checkValueAndAddUpdateCallback([
+      { currentValuePath: 'opacity', newValue: opacity }
+    ], this.renderStyleOpacity);
   }
 
   //++++ Position and size ++++//
 
-  renderPositionAndSize(selection: d3.Selection<any, any, any, any>) {
-    selection
+  renderPositionAndSize() {
+    // console.log('[NODE] renderPositionAndSize', this.x, this.y, this.radius);
+    this.selectElement()
       .attr('cx', this.x)
       .attr('cy', this.y)
       .attr('r', this.radius);
   }
   updatePositionAndSize(x: number, y: number, radius: number) {
-    this.checkAndAddUpdate('x', x, this.renderPositionAndSize);
-    this.checkAndAddUpdate('y', y, this.renderPositionAndSize);
-    this.checkAndAddUpdate('radius', radius, this.renderPositionAndSize);
-  }
-
-
-  ////////////////////////////////////////////////////////////////////////////
-  // Render methods
-  ////////////////////////////////////////////////////////////////////////////
-
-  enter(selection: d3.Selection<SVGGElement | any, any, any, any>): void {
-    selection.append('circle')
-
-
-    this.update(selection);
-  }
-
-  exit(selection: d3.Selection<SVGGElement | any, any, any, any>): void {
-    selection.remove();
-  }
-
-  update(selection: d3.Selection<SVGGElement | any, any, any, any>): void {
-    // console.log(`Update node with ${this.updateCallbacks.length} callbacks`);
-    const nodeSelection = selection.selectAll('circle');
-    // this.updateCallbacks.forEach(callback => callback(nodeSelection));
-
-    // Call all update callbacks
-    this.updateCallbacks.forEach(callback => nodeSelection.call(callback.bind(this)));
-
-    // Clear the update callbacks
-    this.updateCallbacks = [];
+    this.checkValueAndAddUpdateCallback([
+      { currentValuePath: 'x', newValue: x },
+      { currentValuePath: 'y', newValue: y },
+      { currentValuePath: 'radius', newValue: radius }
+    ], this.renderPositionAndSize);
   }
 
 }
