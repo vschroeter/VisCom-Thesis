@@ -14,11 +14,18 @@ export class Arrow2D {
     width: number = 10
     height: number = 10
     filled: boolean = false
+    // closed: boolean = true
 
     static readonly normalPoints = [
         new Point2D(1, -0.5),
         new Point2D(0, 0),
         new Point2D(1, 0.5),
+    ]
+
+    static readonly narrowPoints = [
+        new Point2D(1, -0.25),
+        new Point2D(0, 0),
+        new Point2D(1, 0.25),
     ]
 
     set size(size: number) {
@@ -31,7 +38,12 @@ export class Arrow2D {
         const startPoint = anchor.anchorPoint
         const direction = anchor.direction
 
-        const scaledPoints = Arrow2D.normalPoints.map(p => p.scale(this.width, this.height))
+        const points = Array.from(Arrow2D.narrowPoints);
+        // if (this.closed) {
+        //     points.push(points[0])
+        // }
+
+        const scaledPoints = points.map(p => p.scale(this.width, this.height))
         const rotatedPoints = scaledPoints.map(p => p.rotate(-direction.degBetween(), { x: 0, y: 0 }))
 
         const path = d3.line<Point2D>()
@@ -219,6 +231,14 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
     //++++ Path ++++//
     renderPath(selection: d3.Selection<any, any, any, any>) {
         this.selectSubElement('path.link').attr('d', this.getSvgPath())
+
+        // Check the length of the connection and scale down the arrow if necessary
+        const length = this.length
+
+        const baseSize = 5 * this.strokeWidth;
+        const size = Math.min(baseSize, length / 2 * 0.6)
+        this.arrow.size = size
+        
         this.selectSubElement('path.arrow').attr('d', this.getArrowPath())
     }
 
@@ -239,11 +259,12 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
         selection
             .attr('stroke', this.stroke ?? "black")
             .attr('stroke-width', this.strokeWidth)
+        return selection
     }
 
     renderStyleStroke(selection: d3.Selection<any, any, any, any>) {
         this.applyStrokeAttributs(this.selectSubElement('path.link'));
-        this.applyStrokeAttributs(this.selectSubElement('path.arrow'));
+        this.applyStrokeAttributs(this.selectSubElement('path.arrow')).attr('fill', this.stroke ?? "none");
     }
 
     updateStyleStroke(stroke?: string, strokeWidth?: number) {
@@ -260,7 +281,9 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
     override addSubElements(): void {
         this.addSubElement('path', 'link')
             .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
+            // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
         this.addSubElement('path', 'arrow')
+            // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
             .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
     }
 }
