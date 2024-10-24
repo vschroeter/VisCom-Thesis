@@ -92,6 +92,9 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
         this.target = target
         this.data = data
 
+        this.source.emitter.on("positionUpdated", () => this.addUpdateCallback(this.renderPath))
+        this.target.emitter.on("positionUpdated", () => this.addUpdateCallback(this.renderPath))
+
         this.updateCallbacks.push(...[this.renderPath, this.renderStyleOpacity, this.renderStyleStroke])
 
     }

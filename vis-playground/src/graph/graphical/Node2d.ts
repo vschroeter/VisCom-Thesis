@@ -9,6 +9,7 @@ import { Vector2D } from './Vector2d';
 
 import * as d3 from 'd3';
 import { SvgRenderable } from './Renderable';
+import mitt from 'mitt';
 
 export interface Node2dData {
   id: string;
@@ -35,7 +36,14 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
   }
 
   // The radius of the node. Can also have an abstract meaning for non-circular nodes.
-  radius: number = 10;
+  private _radius: number = 10;
+  get radius() {
+    return this._radius;
+  }
+  set radius(value: number) {
+    this.updatePositionAndSize(undefined, undefined, this.radius);
+    // this._radius = value;
+  }
 
   // x velocity of the node (for force-directed simulations)
   vx: number = 0;
@@ -71,7 +79,8 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
 
   // Set the x coordinate of the node's center
   set x(value: number) {
-    this.center.x = value;
+    this.updatePositionAndSize(value);
+    // this.center.x = value;
   }
 
   // Y coordinate of the node's center
@@ -80,8 +89,13 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
   }
   // Set the y coordinate of the node's center
   set y(value: number) {
-    this.center.y = value;
+    this.updatePositionAndSize(undefined, value);
+    // this.center.y = value;
   }
+
+  emitter = mitt<{
+    positionUpdated: void
+  }>();
 
   constructor(data: T, center?: Point2D | null) {
 
@@ -153,8 +167,6 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
       .attr('stroke', this.strokeStyle.stroke ?? "white")
       .attr('stroke-width', this.strokeStyle.strokeWidth)
       .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
-
-    const x = 5;
   }
 
   updateStyleStroke(stroke?: string, strokeWidth?: number, strokeOpacity?: number) {
@@ -186,12 +198,15 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
       .attr('cy', this.y)
       .attr('r', this.radius);
   }
-  updatePositionAndSize(x: number, y: number, radius: number) {
-    this.checkValueAndAddUpdateCallback([
-      { currentValuePath: 'x', newValue: x },
-      { currentValuePath: 'y', newValue: y },
-      { currentValuePath: 'radius', newValue: radius }
+  updatePositionAndSize(x?: number, y?: number, radius?: number) {
+    const updated = this.checkValueAndAddUpdateCallback([
+      { currentValuePath: 'center.x', newValue: x },
+      { currentValuePath: 'center.y', newValue: y },
+      { currentValuePath: '_radius', newValue: radius }
     ], this.renderPositionAndSize);
+    if (updated) {
+      this.emitter.emit("positionUpdated");
+    }
   }
 
 }

@@ -27,6 +27,7 @@ export class SvgRenderable {
         const selector = this.svgElement + (this.svgClass !== "" ? ("." + this.svgClass) : "");
         const element = (selection ?? this.parentSelection)?.select(selector);
         if (!element) {
+            console.error("Element not found", selector, selection, this.parentSelection);
             throw new Error("Element not found");
         }
         return element;
@@ -59,8 +60,8 @@ export class SvgRenderable {
             valueSetter?: (value: any) => void
             newValue: any
         }[],
-        updateCallback?: SvgUpdateCallback) {
-
+        updateCallback?: SvgUpdateCallback): boolean {
+        let changed = false;
         values.forEach(value => {
 
             if (value.newValue === undefined) {
@@ -79,6 +80,7 @@ export class SvgRenderable {
                 } else {
                     value.valueSetter!(value.newValue);
                 }
+                changed = true;
 
                 if (updateCallback) {
                     // Check if callback is already in the list
@@ -88,6 +90,14 @@ export class SvgRenderable {
                 }
             }
         });
+        return changed;
+    }
+
+    protected addUpdateCallback(callback: SvgUpdateCallback, checkIfExist = true) {
+        if (checkIfExist && (this.updateCallbacks.includes(callback, this.updateCallbacks.length - 1) || this.updateCallbacks.includes(callback))) {
+            return;
+        }
+        this.updateCallbacks.push(callback);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -127,7 +137,7 @@ export class SvgRenderable {
         if (this.svgClass !== "") {
             this.renderableSelection.classed(this.svgClass, true);
         }
-        
+
         this.addSubElements();
         // console.log("enter", this.renderableSelection)
 
@@ -147,6 +157,7 @@ export class SvgRenderable {
      * @param selection The parent selection containing the renderable
      */
     update(selection: d3.Selection<SVGGElement | any, any, any, any>): void {
+        this.parentSelection = selection;
         const element = this.selectElement(selection);
 
         // Call all update callbacks

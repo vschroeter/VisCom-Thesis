@@ -120,6 +120,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         this.nodes2d.forEach(node => {
             node.radius = this.commonSettings.nodeSize.getValue(node) ?? 10;
         });
+        this.updateStyle();
     }
 
     updateLayout(isUpdate: boolean = false): void {
@@ -153,7 +154,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             node.fx = null;
             node.fy = null;
         });
-
+        this.updateStyle();
         this.layout();
     }
 
@@ -250,10 +251,12 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         const wMultiplier = 2;
 
         const stroke = this.commonSettings.linkColor.getValue()?.toString() ?? "black";
+        const strokeWithoutAlpha = d3.color(stroke)?.copy({ opacity: 1 })?.toString() ?? "black";
+        const alpha = d3.color(stroke)?.opacity ?? 1;
 
         this.connections2d.forEach(link => {
             const weight = link.weight;
-            let opacity = Math.max(0.05, weight);
+            let opacity = Math.min(Math.max(0.05, weight)) * alpha;
             const width = Math.min(maxW, Math.max(minW, weight * wMultiplier));
             
             if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
@@ -261,13 +264,13 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
                 const endNode = link.target;
 
                 if (userInteractions.isHovered(startNode) || userInteractions.isHovered(endNode)) {
-                    opacity = 1;
+                    opacity = alpha;
                 } else {
                     opacity *= 0.2;
                 }
             }
             link.updateStyleOpacity(opacity);
-            link.updateStyleStroke(stroke, width);
+            link.updateStyleStroke(strokeWithoutAlpha, width);
         })
     }
 
@@ -330,74 +333,6 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         if (events?.click) links.on("click", (e, d) => events.click?.(d, e))
         if (events?.mouseleave) links.on("mouseleave", (e, d) => events.mouseleave?.(d, e))
         if (events?.mouseenter) links.on("mouseenter", (e, d) => events.mouseenter?.(d, e))
-
-        // const weightOfLink = (l: Connection2d) => {
-        //     return l.data?.weight ?? 1;
-        // }
-
-        // const opacityGetter = (d: Connection2d) => {
-        //     const weight = weightOfLink(d);
-        //     // const adaptedWeight = Math.max(0.2, Math.sqrt(weight));
-        //     const adaptedWeight = Math.max(0.05, weight);
-        //     if (this.userInteractions.somethingIsSelectedOrFocusedOrHovered) {
-
-        //         const startNode = d.source;
-        //         const endNode = d.target;
-        //         // if (this.userInteractions.)) {
-        //         //     return 1;
-        //         // }
-
-        //         if (this.userInteractions.isHovered(startNode) || this.userInteractions.isHovered(endNode)) {
-        //             return 1;
-        //         }
-
-        //         return 0.4 * adaptedWeight;
-        //     }
-
-        //     return adaptedWeight;
-        // }
-
-
-        // const getWidth = (l: Connection2d) => {
-        //     const minW = 0.1;
-        //     const maxW = 3;
-        //     const wMultiplier = 2;
-        //     // const weight = NodeToNodeConnection.getCombinedWeight(this.commGraph.getConnectionsBetweenNodes(l.source.data?.id, l.target.data?.id));
-        //     const weight = weightOfLink(l);
-
-        //     return Math.min(maxW, Math.max(minW, weight * wMultiplier));
-        // }
-
-        // // TODO: Rendering is done twice on user interaction
-
-        // const filteredLinks = this.getFilteredLinks();
-
-        // selection.selectAll('path.arrow')
-        //     // .data(this.graph2d?.links)
-        //     .data(filteredLinks)
-        //     .join('path')
-        //     .classed('arrow', true)
-        //     .attr('d', (d: Connection2d) => d.getArrowPath())
-        //     .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
-        //     .attr('stroke-width', (l) => {
-        //         return getWidth(l);
-        //     })
-        //     .attr('fill', 'none')
-        //     .attr('opacity', opacityGetter)
-
-        // selection.selectAll('path.link')
-        //     // .data(this.graph2d?.links)
-        //     .data(filteredLinks)
-        //     .join('path')
-        //     .classed('link', true)
-        //     .attr('d', (d: Connection2d) => d.getSvgPath())
-        //     .attr('stroke', (l) => this.commonSettings.linkColor.getValue(l) ?? "black")
-        //     .attr('stroke-width', (l) => {
-        //         return getWidth(l);
-        //     })
-        //     .attr('fill', 'none')
-        //     .attr('opacity', opacityGetter)
-
     }
 
     renderLabels(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
