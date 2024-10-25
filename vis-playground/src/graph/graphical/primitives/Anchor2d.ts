@@ -10,7 +10,7 @@ export class Anchor {
 
   constructor(anchorPoint: Point, direction: Vector) {
     this.anchorPoint = anchorPoint;
-    this.direction = direction.normalize();
+    this.direction = direction.length > 0 ? direction.normalize() : direction;
   }
 
   /**

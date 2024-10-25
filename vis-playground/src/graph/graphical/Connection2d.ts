@@ -120,8 +120,10 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
     /** The start point of the connection (either the first defined point or the source node) */
     get startPoint(): Point {
         if (this.points.length == 0) {
+            if (this.source == this.target) {
+                return this.source.center
+            }
             return this.source.getAnchor(this.target.center).anchorPoint;
-            // return this.source.center
         }
 
         if (this.points[0] instanceof EllipticArc) {
@@ -138,8 +140,10 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
     /** The end point of the connection (either the last defined point or the target node) */
     get endPoint(): Point {
         if (this.points.length == 0) {
+            if (this.source == this.target) {
+                return this.source.center
+            }
             return this.target.getAnchor(this.source.center).anchorPoint;
-            // return this.target.center
         }
 
         const lastPoint = this.points[this.points.length - 1]
@@ -211,9 +215,11 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
 
     getArrowPath(): string {
         // return this.arrow.getSvgPath(this.target.getAnchor(this.source.center))
-        let targetAnchor = this.target.getAnchor(this.source.center);
+        let targetAnchor: Anchor2d;
         if (this.points.length > 0 && this.points[this.points.length - 1] instanceof Anchor2d) {
             targetAnchor = this.points[this.points.length - 1] as Anchor2d
+        } else {
+            targetAnchor = this.target.getAnchor(this.source.center);
         }
         return this.arrow.getSvgPath(targetAnchor)
     }
@@ -239,7 +245,7 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
         const baseSize = 5 * this.strokeWidth;
         const size = Math.min(baseSize, length / 2 * 0.6)
         this.arrow.size = size
-        
+
         this.selectSubElement('path.arrow').attr('d', this.getArrowPath())
     }
 
@@ -282,7 +288,7 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
     override addSubElements(): void {
         this.addSubElement('path', 'link')
             .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
-            // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
+        // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
         this.addSubElement('path', 'arrow')
             // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
             .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)

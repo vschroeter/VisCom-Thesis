@@ -8,7 +8,7 @@ import { StrokeStyle } from './primitives/StrokeStyle';
 import * as d3 from 'd3';
 import { SvgRenderable } from './Renderable';
 import mitt from 'mitt';
-import { Point, Vector } from '2d-geometry';
+import { Circle, Point, Vector } from '2d-geometry';
 
 export interface Node2dData {
   id: string;
@@ -42,6 +42,11 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
   set radius(value: number) {
     this.updatePositionAndSize(undefined, undefined, this.radius);
     // this._radius = value;
+  }
+
+  // The circle object representing the node
+  get circle() {
+    return new Circle(this.center, this.radius);
   }
 
   // x velocity of the node (for force-directed simulations)
@@ -139,8 +144,13 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
     // The anchor point is the intersection of the circle and the vector
 
     const direction = vector;
-    const anchorPoint = this.center.translate(direction.normalize().multiply(this.radius));
-
+    // console.log('[NODE] getAnchor', direction, this);
+    let anchorPoint: Point;
+    if (direction.length == 0) {
+      anchorPoint = this.center;
+    } else {
+      anchorPoint = this.center.translate(direction.normalize().multiply(this.radius));
+    }
     return new Anchor2d(anchorPoint, direction);
 
   }
