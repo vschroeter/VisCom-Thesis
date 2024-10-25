@@ -365,13 +365,6 @@ function fetchNodeRanking(generatorId?: string, graph?: CommunicationGraph) {
             graph?.setNodeScoringByList(rankList)
             // graph?.communities.setCommunitiesByList(data)
         })
-
-
-    return fetch(`${url}?${params.toString()}`)
-        .then(response => response.json())
-        .then((data) => {
-            console.log(data)
-        })
 }
 
 ////////////////////////////////////////////////////////////////////////////

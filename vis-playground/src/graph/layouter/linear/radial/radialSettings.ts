@@ -23,6 +23,8 @@ export class RadialLayouterSettings extends GraphLayouterSettings {
     size = new SizeSettings();
     sorting = new LinearSortingSettings();
 
+    
+
     constructor(type: string, name?: string) {
         super(type, name);
     }

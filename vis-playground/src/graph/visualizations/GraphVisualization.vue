@@ -55,7 +55,7 @@ import { CommunicationGraph, CommunicationNode } from 'src/graph/commGraph';
 import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
 import MetricOverview from './MetricOverview.vue';
-import { EllipticArc } from '../graphical/EllipticArc';
+import { EllipticArc } from '../graphical/';
 import { Node2d, Point2D, Vector2D } from '../graphical';
 import { useDebounceFn, useThrottleFn, watchDebounced } from '@vueuse/core';
 import { layouterMapping } from '../layouter/settings/settingsCollection';

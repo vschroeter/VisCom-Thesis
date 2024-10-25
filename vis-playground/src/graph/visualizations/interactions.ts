@@ -27,6 +27,7 @@ export class UserInteractions {
 
     addHoveredNode(nodeId: string) {
         this.hoveredNodeIds.add(nodeId)
+        console.log("Hovered nodes", this.hoveredNodeIds)
         this.emitter.emit("update")
     }
 

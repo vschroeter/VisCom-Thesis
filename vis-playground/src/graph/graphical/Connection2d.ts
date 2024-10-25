@@ -1,8 +1,8 @@
 import { CommunicationLink } from "../commGraph";
-import { Node2d } from "./Node2d";
-import { Anchor2d } from "./Anchor2d";
-import { EllipticArc } from "./EllipticArc";
-import { Point2D } from "./Point2d";
+import { Node2d } from "./";
+import { Anchor2d } from "./";
+import { EllipticArc } from "./";
+import { Point2D } from "./";
 
 import * as d3 from "d3"
 import { SvgRenderable } from "./Renderable";

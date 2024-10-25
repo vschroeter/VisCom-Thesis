@@ -2,10 +2,10 @@ import _ from 'lodash';
 import { CommunicationNode } from '../commGraph';
 import { NodeCommunities } from '../commGraph/community';
 import { RenderArgs } from '../layouter/layouter';
-import { Anchor2d } from './Anchor2d';
-import { Point2D } from './Point2d';
-import { StrokeStyle } from './StrokeStyle';
-import { Vector2D } from './Vector2d';
+import { Anchor2d } from './';
+import { Point2D } from './';
+import { StrokeStyle } from './primitives/StrokeStyle';
+import { Vector2D } from './';
 
 import * as d3 from 'd3';
 import { SvgRenderable } from './Renderable';
