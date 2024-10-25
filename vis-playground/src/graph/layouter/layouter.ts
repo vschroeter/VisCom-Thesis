@@ -1,5 +1,6 @@
+import { Point } from "2d-geometry";
 import { CommunicationGraph, CommunicationNode, NodeToNodeConnection } from "../commGraph";
-import { Connection2d, Node2d, Point2D } from "../graphical";
+import { Connection2d, Node2d } from "../graphical";
 import { Graph2d } from "../graphical/Graph2d";
 import { MouseEvents, UserInteractions } from "../visualizations/interactions";
 import { CommonSettings } from "./settings/commonSettings";
@@ -72,7 +73,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     commGraph: CommunicationGraph;
     nodes: CommunicationNode[] = [];
 
-    center: Point2D = new Point2D(0, 0);
+    center: Point = new Point(0, 0);
 
     // nodes: Node2d[] = [];
     // links: Connection2d[] = [];

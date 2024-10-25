@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      2d-geometry:
+        specifier: ^3.0.0
+        version: 3.0.0
       '@quasar/extras':
         specifier: ^1.16.4
         version: 1.16.12
@@ -92,6 +95,10 @@ importers:
         version: 1.8.27(typescript@5.3.3)
 
 packages:
+
+  2d-geometry@3.0.0:
+    resolution: {integrity: sha512-6yF9p89QaGywFsC70LJgvFTBjS3O7aq3EV43of+m7QbF+Z/wMiIST6i5UFpZ+iT1mWSiSzoXzOq0yp42idWX8g==}
+    engines: {node: '>=4.2.4'}
 
   '@babel/code-frame@7.25.9':
     resolution: {integrity: sha512-z88xeGxnzehn2sqZ8UdGQEvYErF1odv2CftxInpSYJt6uHuPe9YjahKZITGs3l5LeI9d2ROG+obuDAoSlqbNfQ==}
@@ -3002,6 +3009,8 @@ packages:
     engines: {node: '>= 14'}
 
 snapshots:
+
+  2d-geometry@3.0.0: {}
 
   '@babel/code-frame@7.25.9':
     dependencies:

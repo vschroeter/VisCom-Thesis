@@ -1,4 +1,4 @@
-import { Point2D } from "./Point2d";
+import { Point } from "2d-geometry";
 
 
 
@@ -51,10 +51,10 @@ export class EllipticArc {
     _sweep: 0 | 1 = 1;
 
     // The start point of the arc. If not set, the arc will start at the current / last point of the path. 
-    _start?: Point2D;
+    _start?: Point;
 
     // The end point of the arc
-    _end?: Point2D;
+    _end?: Point;
 
     /**
      * Creates an instance of EllipticArc.
@@ -68,8 +68,8 @@ export class EllipticArc {
      * @param sweep If true, the arc will be drawn in a "positive-angle" direction, i.e., the arc will be drawn in the direction of increasing angles.
      */
     constructor(
-        start?: Point2D,
-        end?: Point2D,
+        start?: Point,
+        end?: Point,
         rx?: number,
         ry?: number,
         rotation: number = 0,
@@ -96,12 +96,12 @@ export class EllipticArc {
         return this;
     }
 
-    startPoint(start: Point2D): EllipticArc {
+    startPoint(start: Point): EllipticArc {
         this._start = start.clone();
         return this;
     }
 
-    endPoint(end: Point2D): EllipticArc {
+    endPoint(end: Point): EllipticArc {
         this._end = end.clone();
         return this;
     }
@@ -185,7 +185,7 @@ export class EllipticArc {
         if (rx === 0 || ry === 0) {
             // Treat as a straight line and stop further processing
             return {
-                center: new Point2D((x1 + x2) / 2, (y1 + y2) / 2),
+                center: new Point((x1 + x2) / 2, (y1 + y2) / 2),
                 startAngle: 0,
                 deltaAngle: 0,
                 endAngle: 0,
@@ -312,7 +312,7 @@ export class EllipticArc {
         // const globalTheta1Degrees = globalTheta1 * (180 / Math.PI);
 
         return {
-            center: new Point2D(cx, cy),
+            center: new Point(cx, cy),
             rx: rx,
             ry: ry,
             deltaAngleDeg: deltaThetaDegrees,

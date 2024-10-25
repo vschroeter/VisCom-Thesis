@@ -1,6 +1,6 @@
-import { Point2D, Vector2D } from "src/graph/graphical"
-
+import { Point, Vector } from '2d-geometry';
 import * as d3 from 'd3'
+import { deg2rad } from 'src/graph/graphical/primitives/util';
 
 export class LSystem {
     static MAX_ORDER = 7;
@@ -98,16 +98,16 @@ export class LSystem {
 
 export class LSystemState {
 
-    currentPosition: Point2D
-    currentDirection: Vector2D
+    currentPosition: Point
+    currentDirection: Vector
 
     
-    points: Point2D[] = []    
+    points: Point[] = []    
 
     constructor(
         public lSystem: LSystem,
-        startPosition: Point2D = new Point2D(0, 0),
-        startDirection: Vector2D = new Vector2D(1, 0)
+        startPosition: Point = new Point(0, 0),
+        startDirection: Vector = new Vector(1, 0)
     ) {
         this.currentPosition = startPosition
         this.currentDirection = startDirection
@@ -134,12 +134,13 @@ export class LSystemState {
     }
 
     goForward(length: number) {
-        this.currentPosition = this.currentPosition.add(this.currentDirection.multiply(length))
+        this.currentPosition = this.currentPosition.translate(this.currentDirection.multiply(length))
         this.addCurrentPositionToPoints()
     }
 
-    turn(degrees: number) {
-        this.currentDirection = this.currentDirection.rotateDeg(degrees)
+    turnDegrees(degrees: number) {
+        this.currentDirection = this.currentDirection.rotate(-deg2rad(degrees))
+
     }
 }
 
@@ -152,7 +153,7 @@ export class SpaceFillingCurve {
     lSystem: LSystem;
     lState: LSystemState;
 
-    public points: Point2D[] = [];
+    public points: Point[] = [];
 
     public xExtent: [number, number] = [0, 0];
     public yExtent: [number, number] = [0, 0];
@@ -175,7 +176,7 @@ export class SpaceFillingCurve {
     getPointAtUnitInterval(t: number, 
         xTransformer: (x: number) => number = x => x,
         yTransformer: (y: number) => number = y => y
-    ): Point2D {
+    ): Point {
         if (t < 0 || t > 1) {
             throw new Error("t must be in [0, 1]");
         }
@@ -197,10 +198,10 @@ export class SpaceFillingCurve {
         const x = xTransformer(pointLow.x + part * (pointHigh.x - pointLow.x));
         const y = yTransformer(pointLow.y + part * (pointHigh.y - pointLow.y));
 
-        return new Point2D(x, y);
+        return new Point(x, y);
     }
 
-    getPointAtIndex(index: number, clamp = true): Point2D {
+    getPointAtIndex(index: number, clamp = true): Point {
         if (clamp) {
             index = Math.max(0, Math.min(this.points.length - 1, index));
         }
@@ -226,8 +227,8 @@ const lHilbert = new LSystem({
     },
     moveRules: {
         'F': (state: LSystemState) => state.goForward(1),
-        '+': (state: LSystemState) => state.turn(90),
-        '-': (state: LSystemState) => state.turn(-90),
+        '+': (state: LSystemState) => state.turnDegrees(90),
+        '-': (state: LSystemState) => state.turnDegrees(-90),
 
     }
 })
@@ -242,8 +243,8 @@ const lPeano = new LSystem({
     },
     moveRules: {
         'F': (state: LSystemState) => state.goForward(1),
-        '+': (state: LSystemState) => state.turn(90),
-        '-': (state: LSystemState) => state.turn(-90),
+        '+': (state: LSystemState) => state.turnDegrees(90),
+        '-': (state: LSystemState) => state.turnDegrees(-90),
 
     }
 })
@@ -258,8 +259,8 @@ const lMoore = new LSystem({
     },
     moveRules: {
         'F': (state: LSystemState) => state.goForward(1),
-        '+': (state: LSystemState) => state.turn(90),
-        '-': (state: LSystemState) => state.turn(-90),
+        '+': (state: LSystemState) => state.turnDegrees(90),
+        '-': (state: LSystemState) => state.turnDegrees(-90),
     }
 })
 
@@ -275,8 +276,8 @@ const lGosper = new LSystem({
     moveRules: {
         'F': (state: LSystemState) => state.goForward(1),
         'G': (state: LSystemState) => state.goForward(1),
-        '+': (state: LSystemState) => state.turn(60),
-        '-': (state: LSystemState) => state.turn(-60),
+        '+': (state: LSystemState) => state.turnDegrees(60),
+        '-': (state: LSystemState) => state.turnDegrees(-60),
 
     }
 })
@@ -290,8 +291,8 @@ const lSierpinskiCurve = new LSystem({
     },
     moveRules: {
         'F': (state: LSystemState) => state.goForward(1),
-        '+': (state: LSystemState) => state.turn(45),
-        '-': (state: LSystemState) => state.turn(-45),
+        '+': (state: LSystemState) => state.turnDegrees(45),
+        '-': (state: LSystemState) => state.turnDegrees(-45),
 
     }
 })
@@ -306,8 +307,8 @@ const lSierpinskiArrowhead = new LSystem({
     },
     moveRules: {
         'F': (state: LSystemState) => state.goForward(1),
-        '+': (state: LSystemState) => state.turn(60),
-        '-': (state: LSystemState) => state.turn(-60),
+        '+': (state: LSystemState) => state.turnDegrees(60),
+        '-': (state: LSystemState) => state.turnDegrees(-60),
 
     }
 })

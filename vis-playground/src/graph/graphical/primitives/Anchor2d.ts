@@ -1,16 +1,16 @@
-import { Point2D } from './Point2d';
-import { Vector2D } from './Vector2d';
 
-export class Anchor2d {
+import { Point, Vector } from "2d-geometry";
+
+export class Anchor {
   /** The point, where the anchor is located */
-  anchorPoint: Point2D;
+  anchorPoint: Point;
 
   /** The direction, in which the anchor is pointing. This is orthogonal to the edge at the anchor point */
-  direction: Vector2D;
+  direction: Vector;
 
-  constructor(anchorPoint: Point2D, direction: Vector2D) {
+  constructor(anchorPoint: Point, direction: Vector) {
     this.anchorPoint = anchorPoint;
-    this.direction = direction.unity();
+    this.direction = direction.normalize();
   }
 
   /**
@@ -23,7 +23,7 @@ export class Anchor2d {
    * const point = anchor.getPointInDirection(10);
    * console.log(point); // Point2D { x: 10, y: 0 }
    */
-  getPointInDirection(distance: number): Point2D {
-    return this.anchorPoint.add(this.direction.multiply(distance));
+  getPointInDirection(distance: number): Point {
+    return this.anchorPoint.translate(this.direction.multiply(distance));
   }
 }

@@ -1,5 +1,5 @@
-import { Node2d, Point2D } from "../graphical";
-import * as d3 from 'd3';
+// import { Node2d, Point2D } from "../graphical";
+// import * as d3 from 'd3';
 
 // class NodeSvg<NodeData> extends Node2d<NodeData> {
 //     constructor(center: Point2D, data: NodeData) {

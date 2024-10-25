@@ -1,7 +1,7 @@
 import { GraphLayouter } from "../../layouter";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
-import { Node2d, Point2D, Vector2D } from "src/graph/graphical";
+import { Node2d } from "src/graph/graphical";
 import { EllipticArc } from "src/graph/graphical/";
 import { CommonSettings } from "../../settings/commonSettings";
 import { LSystem, SpaceFillingCurve } from "./lSystem";

@@ -2,10 +2,11 @@ import { CommunicationLink } from "../commGraph";
 import { Node2d } from "./";
 import { Anchor2d } from "./";
 import { EllipticArc } from "./";
-import { Point2D } from "./";
+// import { Point } from "./";
 
 import * as d3 from "d3"
 import { SvgRenderable } from "./Renderable";
+import { Point } from "2d-geometry";
 
 export type CurveStyle = "linear" | "basis" | "natural" | d3.CurveFactory
 
@@ -17,15 +18,15 @@ export class Arrow2D {
     // closed: boolean = true
 
     static readonly normalPoints = [
-        new Point2D(1, -0.5),
-        new Point2D(0, 0),
-        new Point2D(1, 0.5),
+        new Point(1, -0.5),
+        new Point(0, 0),
+        new Point(1, 0.5),
     ]
 
     static readonly narrowPoints = [
-        new Point2D(1, -0.25),
-        new Point2D(0, 0),
-        new Point2D(1, 0.25),
+        new Point(1, -0.25),
+        new Point(0, 0),
+        new Point(1, 0.25),
     ]
 
     set size(size: number) {
@@ -44,9 +45,9 @@ export class Arrow2D {
         // }
 
         const scaledPoints = points.map(p => p.scale(this.width, this.height))
-        const rotatedPoints = scaledPoints.map(p => p.rotate(-direction.degBetween(), { x: 0, y: 0 }))
+        const rotatedPoints = scaledPoints.map(p => p.rotate(direction.slope, { x: 0, y: 0 }))
 
-        const path = d3.line<Point2D>()
+        const path = d3.line<Point>()
             .x(d => d.x + startPoint.x)
             .y(d => d.y + startPoint.y)
             .curve(d3.curveLinear)
@@ -72,7 +73,7 @@ export interface Connection2dData {
 export class Connection2d<T extends Connection2dData = Connection2dData> extends SvgRenderable {
 
     /** The points that make up the connection */
-    points: (Point2D | EllipticArc | Anchor2d)[] = []
+    points: (Point | EllipticArc | Anchor2d)[] = []
 
     /** The style of the curve */
     curveStyle: CurveStyle = "linear"
@@ -117,7 +118,7 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
     }
 
     /** The start point of the connection (either the first defined point or the source node) */
-    get startPoint(): Point2D {
+    get startPoint(): Point {
         if (this.points.length == 0) {
             return this.source.getAnchor(this.target.center).anchorPoint;
             // return this.source.center
@@ -135,7 +136,7 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
     }
 
     /** The end point of the connection (either the last defined point or the target node) */
-    get endPoint(): Point2D {
+    get endPoint(): Point {
         if (this.points.length == 0) {
             return this.target.getAnchor(this.source.center).anchorPoint;
             // return this.target.center
@@ -170,14 +171,14 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
 
     /** The path generator to use for the line */
     get pathGenerator() {
-        const pointLine = d3.line<Point2D>()
+        const pointLine = d3.line<Point>()
             .x(d => d.x)
             .y(d => d.y)
             .curve(this.curveFactory)
 
-        return (points: (Point2D | EllipticArc | Anchor2d)[]) => {
+        return (points: (Point | EllipticArc | Anchor2d)[]) => {
             let path = ""
-            let currentPoints: Point2D[] = []
+            let currentPoints: Point[] = []
             points.forEach((point, i) => {
                 if (point instanceof EllipticArc) {
                     if (currentPoints.length > 0) {
@@ -185,7 +186,7 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
                         currentPoints = []
                     }
                     path += point.getSvgPath() + " "
-                } else if (point instanceof Point2D) {
+                } else if (point instanceof Point) {
                     currentPoints.push(point)
                 } else if (point instanceof Anchor2d) {
                     currentPoints.push(point.anchorPoint)

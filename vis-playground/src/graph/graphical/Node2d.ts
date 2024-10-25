@@ -3,13 +3,12 @@ import { CommunicationNode } from '../commGraph';
 import { NodeCommunities } from '../commGraph/community';
 import { RenderArgs } from '../layouter/layouter';
 import { Anchor2d } from './';
-import { Point2D } from './';
 import { StrokeStyle } from './primitives/StrokeStyle';
-import { Vector2D } from './';
 
 import * as d3 from 'd3';
 import { SvgRenderable } from './Renderable';
 import mitt from 'mitt';
+import { Point, Vector } from '2d-geometry';
 
 export interface Node2dData {
   id: string;
@@ -24,7 +23,7 @@ export interface Node2dData {
 export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { // <NodeData>
 
   // Center of the node
-  center: Point2D;
+  center: Point;
 
   // The (abstract communication graph's node) data of the node
   // data?: CommunicationNode // NodeData;
@@ -97,11 +96,11 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
     positionUpdated: void
   }>();
 
-  constructor(data: T, center?: Point2D | null) {
+  constructor(data: T, center?: Point | null) {
 
     super("circle", "node2d");
 
-    this.center = center || new Point2D(0, 0);
+    this.center = center || new Point(0, 0);
     this.data = data;
 
     this.updateCallbacks.push(...[this.renderStyleFill, this.renderStyleStroke, this.renderStyleOpacity, this.renderPositionAndSize]);
@@ -117,18 +116,18 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
    * Get the anchor of the node directed towards a given point
    * @param point The point, towards which the anchor should be directed
    */
-  getAnchor(point: Point2D): Anchor2d;
+  getAnchor(point: Point): Anchor2d;
   /**
    * Get the anchor of the node directed towards a given vector
    * @param vector The vector originating from the node's center, towards which the anchor should be directed
    */
-  getAnchor(vector: Vector2D): Anchor2d;
-  getAnchor(param: Point2D | Vector2D): Anchor2d {
+  getAnchor(vector: Vector): Anchor2d;
+  getAnchor(param: Point | Vector): Anchor2d {
 
-    let vector: Vector2D | null = null;
-    if (param instanceof Point2D) {
-      vector = new Vector2D(param.x - this.center.x, param.y - this.center.y);
-    } else if (param instanceof Vector2D) {
+    let vector: Vector | null = null;
+    if (param instanceof Point) {
+      vector = new Vector(param.x - this.center.x, param.y - this.center.y);
+    } else if (param instanceof Vector) {
       vector = param;
     }
 
@@ -140,7 +139,7 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
     // The anchor point is the intersection of the circle and the vector
 
     const direction = vector;
-    const anchorPoint = this.center.add(direction.unity().multiply(this.radius));
+    const anchorPoint = this.center.translate(direction.normalize().multiply(this.radius));
 
     return new Anchor2d(anchorPoint, direction);
 

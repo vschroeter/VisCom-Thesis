@@ -1,10 +1,10 @@
 import { GraphLayouter } from "../../layouter";
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
-import { Node2d, Point2D, Vector2D } from "src/graph/graphical";
 import { ArcLayouterSettings } from "./arcSettings";
 import { EllipticArc } from "src/graph/graphical";
 import { CommonSettings } from "../../settings/commonSettings";
+import { Vector } from "2d-geometry";
 
 
 export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
@@ -13,7 +13,7 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
         const ctx = this.settings.getContext({ graph2d: this.graph2d });
 
         const sorter = this.settings.sorting.getSorter(this.commGraph);
-        const nodes = sorter.getSorting2dNodes(this.graph2d)
+        const nodes = sorter.getSorting2dNodes(this.graph2d);
 
         // Place nodes on a straight line down
         nodes.forEach((node, i) => {
@@ -32,7 +32,7 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
             const xDelta = distance * 0.7;
 
             const direction = source.y < target.y ? "down" : "up";
-            const anchorDirection = direction == "down" ? new Vector2D(1, 0) : new Vector2D(-1, 0);
+            const anchorDirection = direction == "down" ? new Vector(1, 0) : new Vector(-1, 0);
 
             const startAnchor = source.getAnchor(anchorDirection);
             const endAnchor = target.getAnchor(anchorDirection);
@@ -41,7 +41,7 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
             const endPoint = endAnchor.anchorPoint.clone();
 
             link.points = [
-                // new Point2D(source.x, source.y),
+                // new Point(source.x, source.y),
                 startAnchor,
                 new EllipticArc()
                     .radius(xDelta / 2)

@@ -2,7 +2,7 @@ import { CommunicationGraph, CommunicationLink, CommunicationNode } from "src/gr
 import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import * as d3 from "d3";
-import { Connection2d, Node2d, Point2D } from "src/graph/graphical";
+import { Connection2d, Node2d} from "src/graph/graphical";
 import { ViscomLayouterSettings } from "./viscomSettings";
 import { GraphLayouter } from "../layouter";
 import { RadialLayouter } from "../linear/radial/radialLayouter";
