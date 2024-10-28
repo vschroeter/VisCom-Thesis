@@ -1,4 +1,4 @@
-import { Point } from "2d-geometry";
+import { Circle, Point, Segment, Shape, ShapeTag } from "2d-geometry";
 import { CommunicationGraph, CommunicationNode, NodeToNodeConnection } from "../commGraph";
 import { Connection2d, Node2d } from "../graphical";
 import { Graph2d } from "../graphical/Graph2d";
@@ -58,6 +58,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     settings: T;
     graph2d: Graph2d;
+
+    debugShapes: Shape[] = [];
 
     renderArgs: RenderArgs;
     get commonSettings() {
@@ -259,7 +261,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             const weight = link.weight;
             let opacity = Math.min(Math.max(0.05, weight)) * alpha;
             const width = Math.min(maxW, Math.max(minW, weight * wMultiplier));
-            
+
             if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
                 const startNode = link.source;
                 const endNode = link.target;
@@ -283,6 +285,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         this.renderLinks(this.selectGroup(selection, 'links'), events?.linksEvents);
         this.renderNodes(this.selectGroup(selection, 'nodes'), events?.nodesEvents);
         this.renderLabels(this.selectGroup(selection, 'labels'), events?.labelsEvents);
+        this.renderDebuggingShapes(selection);
     }
 
     renderNodes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
@@ -343,5 +346,55 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .attr('x', (d: Node2d) => d.x + 10)
             .attr('y', (d: Node2d) => d.y)
             .text((d: Node2d) => d.data?.id ?? "")
+    }
+
+    renderDebuggingShapes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
+        selection.selectAll('g.debug')
+            .data(this.debugShapes)
+            .join('g').classed('debug', true)
+            .each((shape, i, g) => {
+                const d = d3.select(g[i]);
+                d.selectAll('*').remove();
+
+                switch (shape.tag) {
+                    // case ShapeTag.Segment: {
+                    //     drawSegment(shape as Segment); break
+                    // }
+                    case ShapeTag.Circle: {
+                        const c = shape as Circle;
+                        d.append('circle')
+                            .attr('cx', c.center.x)
+                            .attr('cy', c.center.y)
+                            .attr('r', c.r)
+                            .attr('fill', 'none')
+                            .attr('stroke', c._data?.stroke ?? 'blue')
+                            .attr('stroke-width', 0.25)
+
+                        break;
+                    }
+                    case ShapeTag.Segment: {
+                        d.append('line')
+                            .attr('x1', (shape as Segment).start.x)
+                            .attr('y1', (shape as Segment).start.y)
+                            .attr('x2', (shape as Segment).end.x)
+                            .attr('y2', (shape as Segment).end.y)
+                            .attr('stroke', shape._data?.stroke ?? 'green')
+                            .attr('stroke-width', 0.25)
+
+                        break;
+                    }
+                    case ShapeTag.Point: {
+                        const p = shape as Point;
+                        d.append('circle')
+                            .attr('cx', p.x)
+                            .attr('cy', p.y)
+                            .attr('r', 0.5)
+                            .attr('fill', p._data?.fill ?? 'green')
+                            .attr('stroke', 'none')
+                        break;
+                    }
+                }
+
+            })
     }
 }

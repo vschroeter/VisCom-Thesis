@@ -25,10 +25,10 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
     }
 
     getPositionForRad(rad: number, radius?: number, centerTranslation?: { x: number, y: number }): Point {
-        
+
         const radius_ = radius ?? this.getRadius();
         const centerTranslation_ = centerTranslation ?? this.center;
-        
+
         const x = centerTranslation_.x + radius_ * Math.cos(rad);
         const y = centerTranslation_.y + radius_ * Math.sin(rad);
 
@@ -37,10 +37,10 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
 
     override layout(isUpdate = false) {
         const radius = this.getRadius();
-        
+
         const sorter = this.settings.sorting.getSorter(this.commGraph);
         const nodes = sorter.getSorting2dNodes(this.graph2d)
-        
+
         // Get the nodes position on the interval [0, 1]
         const continuumMap = new Map<Node2d, number>();
         nodes.forEach((node, i) => {
@@ -58,12 +58,12 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
             const pos = this.getPositionForRad(angle);
             node.x = pos.x;
             node.y = pos.y;
-            console.log("Set node position", node.id, pos, node.circle);
+            // console.log("Set node position", node.id, pos, node.circle);
         });
 
-        console.log("Placed nodes on circle", nodes);
+        // console.log("Placed nodes on circle", nodes);
 
-        
+
 
         // // Adapt to the center
         // this.adaptNodesByCenterTranslation();
@@ -75,7 +75,6 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
         // Forward links from node a to b, where b is a successor of a in the sorted list
         // Backward links from node a to b, where b is a predecessor of a in the sorted list
 
-
         this.getFilteredLinks().forEach(link => {
             // return;
             const startNode = link.source;
@@ -85,9 +84,15 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                 return;
             }
 
-            if (startNode.id == "1" && endNode.id == "4") {
-                console.log("Link", link);
-            }
+            // if (startNode.id == "1" && endNode.id == "4") {
+            //     console.log("Link", link);
+            // }
+
+            const startIndex = nodes.indexOf(startNode);
+            const endIndex = nodes.indexOf(endNode);
+
+            // If the end node is directly after or before the start node, we can draw a more direct link
+            const isDirectLink = Math.abs(startIndex - endIndex) == 1 || Math.abs(startIndex - endIndex) == nodes.length - 1;
 
             const startAngleDeg = radToDeg(angleRadMap.get(startNode)!);
             const startAngleRad = angleRadMap.get(startNode)!;
@@ -121,19 +126,38 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
             //    --> again, we could use a threshold to decide if we treet it as a forward or backward link
 
             // Links below the threshold are forward links
+            // const forwardBackwardThreshold = 180;
             const forwardBackwardThreshold = 270;
 
             const isForwardLink = angleDiffForwardDeg <= forwardBackwardThreshold;
 
-            console.log({
-                startNode: startNode.id,
-                endNode: endNode.id,
-                // isForwardLink,
-                // startAngle,
-                // endAngle,
-                angleDiff: angleDiffDeg,
-                angleDiffForward: angleDiffForwardDeg,
-            })
+            // console.log({
+            //     startNode: startNode.id,
+            //     endNode: endNode.id,
+            //     // isForwardLink,
+            //     // startAngle,
+            //     // endAngle,
+            //     angleDiff: angleDiffDeg,
+            //     angleDiffForward: angleDiffForwardDeg,
+            // })
+
+            /* 
+            The following constants are given:
+            - center = center of the radial layout circle
+            - radialLayoutCircle = new Circle(center, radius)
+            - startPoint = startNode.center
+            - endPoint = endNode.center
+            - midPoint = mid points between start and end point == (startPoint + endPoint) / 2
+            - radialMidPoint = getPositionOnCircle(startAngle + angleDiffForward / 2)
+            */
+
+            // Given Constants
+            const center = this.center;
+            const radialLayoutCircle = new Circle(center, radius);
+            const startPoint = startNode.center;
+            const endPoint = endNode.center;
+            const midPoint = new Segment(startPoint, endPoint).middle();
+            const radialMidPoint = this.getPositionForRad(startAngleRad + angleDiffForwardRad / 2);
 
 
             if (isForwardLink) {
@@ -143,14 +167,6 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                 - arcStartAnchor: The point on the circle where the link starts
                 - arcEndAnchor: The point on the circle where the link ends
                 - arcRadius: The radius of the circle
-
-                The following constants are given:
-                - center = center of the radial layout circle
-                - radialLayoutCircle = new Circle(center, radius)
-                - startPoint = startNode.center
-                - endPoint = endNode.center
-                - midPoint = mid points between start and end point == (startPoint + endPoint) / 2
-                - radialMidPoint = getPositionOnCircle(startAngle + angleDiffForward / 2)
 
                 We want outgoing and incoming arcs to be different, so we have to distinguish between the two cases.
                 To do so, we define an asymmetric angle delta (so != 180°) for which the connection line should be (nearly) straight.
@@ -198,93 +214,277 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                     .direction("clockwise")
                 */
 
-                // Given Constants
-                const center = this.center;
-                const radialLayoutCircle = new Circle(center, radius);
-                const startPoint = startNode.center;
-                const endPoint = endNode.center;
-                const midPoint = new Segment(startPoint, endPoint).middle();
-                const radialMidPoint = this.getPositionForRad(startAngleRad + angleDiffForwardRad / 2);
 
-                // Calculate the straight line information
-                const straightLineAtDegreeDelta = 120;
-                const straightLineAtRadDelta = degToRad(straightLineAtDegreeDelta);
+                // If we have a direct link, we instead draw a circular arc with the same radius as the radial layout circle
+                if (isDirectLink) {
 
-                const straightLinePoint = this.getPositionForRad(startAngleRad + straightLineAtRadDelta);
-                console.log({
-                    startNode,
-                    endNode,
-                    startAngle: startAngleRad,
-                    endAngle: endAngleRad,
-                    straightLinePoint
-                });
-                const vectorToStraightLinePoint = new Vector(startPoint, straightLinePoint);
-                const orthogonalVector = vectorToStraightLinePoint.rotate90CW();
+                    const intersectionsStart = radialLayoutCircle.intersect(startNode.circle);
+                    const intersectionsEnd = radialLayoutCircle.intersect(endNode.circle);
+
+                    // Get the intersections, that are closer to the other circle
+                    const sDist0 = intersectionsStart[0].distanceTo(endNode.center);
+                    const sDist1 = intersectionsStart[1].distanceTo(endNode.center);
+                    const eDist0 = intersectionsEnd[0].distanceTo(startNode.center);
+                    const eDist1 = intersectionsEnd[1].distanceTo(startNode.center);
+
+                    const intersectionStart = sDist0 < sDist1 ? intersectionsStart[0] : intersectionsStart[1];
+                    const intersectionEnd = eDist0 < eDist1 ? intersectionsEnd[0] : intersectionsEnd[1];
+
+                    // Get the anchors
+                    const tangentInStartIntersection = new Vector(center, intersectionStart).normalize().rotate90CW();
+                    const tangentInEndIntersection = new Vector(center, intersectionEnd).normalize().rotate90CCW();
+
+                    const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection)
+                    const endAnchor = new Anchor(intersectionEnd, tangentInEndIntersection);
+
+                    const arc = new EllipticArc()
+                        .radius(radius)
+                        .startPoint(startAnchor.anchorPoint)
+                        .endPoint(endAnchor.anchorPoint)
+                        .largeArc(0)
+                        .direction("clockwise");
+
+                    link.points = [
+                        startAnchor,
+                        arc,
+                        endAnchor
+                    ];
+                } else {
+
+
+                    // Calculate the straight line information
+                    const straightLineAtDegreeDelta = 135;
+                    const straightLineAtRadDelta = degToRad(straightLineAtDegreeDelta);
+
+
+                    // If our endNode is exactly this straight line threshold away from the start node, we can draw a straight line
+                    if (Math.abs(angleDiffForwardDeg - straightLineAtDegreeDelta) < 1) {
+                        const startAnchor = startNode.getAnchor(endNode.center);
+                        const endAnchor = endNode.getAnchor(startNode.center);
+
+                        link.points = [
+                            startAnchor,
+                            endAnchor
+                        ];
+                        return;
+                    }
+
+
+                    const straightLinePoint = this.getPositionForRad(startAngleRad + straightLineAtRadDelta);
+
+                    const vectorToStraightLinePoint = new Vector(startPoint, straightLinePoint);
+                    const orthogonalVector = vectorToStraightLinePoint.rotate90CW();
+
+                    // We have to rotate the vectors by 90° to get the normal vectors for the lines --> we can just take the inverted results of before
+                    const lineToStraightLinePoint = new Line(startPoint, orthogonalVector);
+                    const lineToStraightLinePointOrthogonal = new Line(startPoint, vectorToStraightLinePoint);
+
+                    // Calculate the center of the arc
+                    const radialMidPointLine = new Line(midPoint, radialMidPoint);
+                    const arcCenter = lineToStraightLinePointOrthogonal.intersect(radialMidPointLine)[0];
+
+                    // console.log({
+                    //     arcCenter,
+                    //     startPoint,
+                    //     angleDiffForwardDeg,
+                    // });
+                    // Calculate the radius of the arc
+                    const arcRadius = new Vector(arcCenter, startPoint).length;
+
+                    // Calculate the arc points
+                    const arcCircle = new Circle(arcCenter, arcRadius);
+                    const intersectionsStart = arcCircle.intersect(startNode.circle);
+                    const intersectionsEnd = arcCircle.intersect(endNode.circle);
+
+                    // console.log({
+                    //     arcCircle,
+                    //     startNodeCircle: startNode.circle,
+                    //     endNodeCircle: endNode.circle,
+                    //     intersectionsStart,
+                    //     intersectionsEnd
+                    // });
+
+                    const intersectionStart = radialLayoutCircle.contains(intersectionsStart[0]) ? intersectionsStart[0] : intersectionsStart[1];
+                    const intersectionEnd = radialLayoutCircle.contains(intersectionsEnd[0]) ? intersectionsEnd[0] : intersectionsEnd[1];
+
+                    // Get the anchors
+                    // The vectore are a 90° rotation of the vector from the arc center to the intersection point.
+                    let tangentInStartIntersection; Vector;
+                    let tangentInEndIntersection; Vector;
+
+                    // The rotation depends on the curvature of the link, so we have to distinguish between the two cases
+                    if (angleDiffForwardDeg > straightLineAtDegreeDelta) {
+                        tangentInStartIntersection = new Vector(arcCenter, intersectionStart).normalize().rotate90CW();
+                        tangentInEndIntersection = new Vector(arcCenter, intersectionEnd).normalize().rotate90CCW();
+                    } else {
+                        tangentInStartIntersection = new Vector(arcCenter, intersectionStart).normalize().rotate90CCW();
+                        tangentInEndIntersection = new Vector(arcCenter, intersectionEnd).normalize().rotate90CW();
+                    }
+
+
+                    const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection)
+                    const endAnchor = new Anchor(intersectionEnd, tangentInEndIntersection);
+
+                    // Construct the arc
+                    const direction = angleDiffForwardDeg > straightLineAtDegreeDelta ? "clockwise" : "counter-clockwise";
+
+                    const arc = new EllipticArc()
+                        .radius(arcRadius)
+                        .startPoint(startAnchor.anchorPoint)
+                        .endPoint(endAnchor.anchorPoint)
+                        .largeArc(0)
+                        .direction(direction);
+
+                    link.points = [
+                        startAnchor,
+                        arc,
+                        endAnchor
+                    ];
+                }
+            }
+            // If it is a backward link
+            else {
+                /** 
+                For a backward link, we want a circular arc that is outside the circle.
+                The outside arc is calculated in a similar way as the inside arc.
+                The main differences are:
+                - There is no breaking point (straight line threshold) where we have a switch in the curvature, outside circular arcs are always convex. 
+                  However, there again is a configurable threshold parameter for the angle delta, where the circular arc should be drawn. 
+                - The centers of the circular arcs are directly on this threshold line, so there is no orthogonal line.
+
+                A outside circle arc is defined by the following:
+                - arcStartAnchor: The point on the circle where the link starts
+                - arcEndAnchor: The point on the circle where the link ends
+                - arcRadius: The radius of the circle
+
+                We set the backwardLineAngleDelta as parameter. 
+                This is the angle delta for a reference line from our node to the point on the radial layout circle.
+                All center points of the circular arcs are on this line.
+
+                E.g.:
+                - backwardLineAngleDelta = 70°
+                This backwardLineAngleDelta should be below 180°.
                 
-                // We have to rotate the vectors by 90° to get the normal vectors for the lines --> we can just take the inverted results of before
-                const lineToStraightLinePoint = new Line(startPoint, orthogonalVector);
-                const lineToStraightLinePointOrthogonal = new Line(startPoint, vectorToStraightLinePoint);
+                - referenceLinePoint = getPositionOnCircle(startAngle + backwardLineAngleDelta)
+                - referenceLine = new Line(startPoint, referenceLinePoint)
 
-                // Calculate the center of the arc
-                const radialMidPointLine = new Line(midPoint, radialMidPoint);
-                const arcCenter = lineToStraightLinePointOrthogonal.intersect(radialMidPointLine)[0];
+                We can now calculate the center point of the circular arc. 
+                They are the intersection of the reference line with the line from the radialMidPoint to the center of the radial layout circle.
+                The same intersection point is created, if we intersect the reference line with the targetBackReferenceLine.
+                - targetBackReferenceLinePoint = getPositionOnCircle(endAngle - backwardLineAngleDelta)
+                - targetBackReferenceLine = new Line(endPoint, targetBackReferenceLinePoint)
 
-                // Calculate the radius of the arc
-                const arcRadius = new Vector(arcCenter, startPoint).length;
+                - arcCenter = referenceLine.intersection(targetBackReferenceLine)
 
-                // Calculate the arc points
+                With that, we can calculate the radius of the circular arc:
+                - arcRadius = new Vector(arcCenter, startPoint).length()
+                - arcCircle = new Circle(arcCenter, arcRadius)
+
+                Now we want to get the anchor points. 
+                Because we want convex circle arcs outside the radial layout circle, the anchor points should be orthogonal to both reference lines.
+                For the start node, the anchor is rotated 90° counter-clockwise, for the end node, the anchor is rotated 90° clockwise.
+                However, we again can retreive them by intersecting the node circles with the arc circle and get the intersections points that are outside the radial layout circle.
+                - intersectionsStart = arcCircle.intersection(startCircle)
+                - intersectionsEnd = arcCircle.intersection(endCircle)
+
+                Because there are two intersections, we have to decide which one to take.
+                - intersectionStart = intersectionsStart[0] if !radialLayoutCircle.contains(intersectionsStart[1]) else intersectionsStart[0]
+                - intersectionEnd = intersectionsEnd[0] if !radialLayoutCircle.contains(intersectionsEnd[1]) else intersectionsEnd[0]
+
+                We get the anchors:
+                - startAnchor = startNode.getAnchor(intersectionStart)
+                - endAnchor = endNode.getAnchor(intersectionEnd)
+
+                Then we can construct the arc
+                - arc = new EllipticArc()
+                    .radius(arcRadius)
+                    .startPoint(startAnchor.anchorPoint)
+                    .endPoint(endAnchor.anchorPoint)
+                    .direction("clockwise")
+                */
+
+                /**
+                 * We set the backwardLineAngleDelta as parameter. 
+                 * This is the angle delta for a reference line from our target node to the point on the radial layout circle.
+                 * All center points of the circular arcs to this target node will be on this line.
+                 */
+                const backwardLineAtDegreeDelta = 120;
+                const backwardLineAtRadDelta = degToRad(backwardLineAtDegreeDelta);
+                const referenceLinePoint = this.getPositionForRad(endAngleRad + backwardLineAtRadDelta);
+                const referenceLine = new Line(endPoint, referenceLinePoint);
+
+                /** 
+                * We can now calculate the center point of the circular arc. 
+                * They are the intersection of the reference line with the line from the radialMidPoint to the center of the radial layout circle.
+                * The same intersection point is created, if we intersect the reference line with the targetBackReferenceLine.
+                */
+                const targetBackReferenceLinePoint = this.getPositionForRad(startAngleRad - backwardLineAtRadDelta);
+                const targetBackReferenceLine = new Line(startPoint, targetBackReferenceLinePoint);
+
+                /**
+                 * With the intersection, we can get the arc circle.
+                 */
+                const intersections = referenceLine.intersect(targetBackReferenceLine);
+                // If there is no intersection, we have a node that is directly on the reference line
+                // In this case take the mid point between the two nodes.
+                // Otherwise take the intersection point
+                const arcCenter = intersections.length == 0 ? midPoint : referenceLine.intersect(targetBackReferenceLine)[0];
+                const arcRadius = new Vector(arcCenter, endPoint).length;
                 const arcCircle = new Circle(arcCenter, arcRadius);
+
+                
+                // if (true) {
+                //     const referenceSegment = new Segment(endPoint, referenceLinePoint);
+                //     referenceSegment._data = { stroke: "green" };
+                //     const targetBackReferenceSegment = new Segment(startPoint, targetBackReferenceLinePoint);
+                //     targetBackReferenceSegment._data = { stroke: "red" };
+
+                //     this.debugShapes.push(arcCenter);
+                //     this.debugShapes.push(arcCircle);
+                //     this.debugShapes.push(referenceSegment);
+                //     this.debugShapes.push(targetBackReferenceSegment);
+                // }
+
                 const intersectionsStart = arcCircle.intersect(startNode.circle);
                 const intersectionsEnd = arcCircle.intersect(endNode.circle);
 
-                console.log({
-                    arcCircle,
-                    startNodeCircle: startNode.circle,
-                    endNodeCircle: endNode.circle,
-                    intersectionsStart,
-                    intersectionsEnd
-                });
-
-                const intersectionStart = radialLayoutCircle.contains(intersectionsStart[0]) ? intersectionsStart[0] : intersectionsStart[1];
-                const intersectionEnd = radialLayoutCircle.contains(intersectionsEnd[0]) ? intersectionsEnd[0] : intersectionsEnd[1];
+                const intersectionStart = radialLayoutCircle.contains(intersectionsStart[0]) ? intersectionsStart[1] : intersectionsStart[0];
+                const intersectionEnd = radialLayoutCircle.contains(intersectionsEnd[0]) ? intersectionsEnd[1] : intersectionsEnd[0];
 
                 // Get the anchors
-                // The vectore are a 90° rotation of the vector from the arc center to the intersection point.
-                let tangentInStartIntersection; Vector;
-                let tangentInEndIntersection; Vector;
-                
-                // The rotation depends on the curvature of the link, so we have to distinguish between the two cases
-                if (angleDiffForwardDeg > straightLineAtDegreeDelta) {
-                    tangentInStartIntersection = new Vector(arcCenter, intersectionStart).normalize().rotate90CW();
-                    tangentInEndIntersection = new Vector(arcCenter, intersectionEnd).normalize().rotate90CCW();
-                } else {
-                    tangentInStartIntersection = new Vector(arcCenter, intersectionStart).normalize().rotate90CCW();
-                    tangentInEndIntersection = new Vector(arcCenter, intersectionEnd).normalize().rotate90CW();
-                }
-
+                const tangentInStartIntersection = new Vector(arcCenter, intersectionStart).normalize().rotate90CCW();
+                const tangentInEndIntersection = new Vector(arcCenter, intersectionEnd).normalize().rotate90CW();
 
                 const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection)
                 const endAnchor = new Anchor(intersectionEnd, tangentInEndIntersection);
-                
+
                 // Construct the arc
-                const direction = angleDiffForwardDeg > straightLineAtDegreeDelta ? "clockwise" : "counter-clockwise";
+
+                // Always counter-clockwise since it is outside the circle
+                const direction = "counter-clockwise";
+
+                // We have to distinguish between the two cases:
+                // 1.) The angle difference is below the threshold --> take the short arc
+                // 2.) The angle difference is above the threshold --> take the long arc
+                const largeArc = angleDiffBackwardDeg > backwardLineAtDegreeDelta ? 1 : 0;
 
                 const arc = new EllipticArc()
                     .radius(arcRadius)
                     .startPoint(startAnchor.anchorPoint)
                     .endPoint(endAnchor.anchorPoint)
-                    .largeArc(0)
+                    .largeArc(largeArc)
                     .direction(direction);
-                
+
                 link.points = [
                     startAnchor,
                     arc,
                     endAnchor
-                ];                
+                ];
+
             }
 
 
-            
+
 
         })
 
