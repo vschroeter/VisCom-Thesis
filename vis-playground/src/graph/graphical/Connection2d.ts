@@ -93,6 +93,7 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
     stroke?: string
     strokeWidth: number = 1
 
+    maxWidth = 10
 
     constructor(
         source: Node2d,
@@ -110,6 +111,26 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
 
         this.updateCallbacks.push(...[this.renderPath, this.renderStyleOpacity, this.renderStyleStroke])
 
+    }
+
+    requireUpdate({
+        path = false,
+        stroke = false,
+        opacity = false,
+    }: {
+        path?: boolean,
+        stroke?: boolean,
+        opacity?: boolean,
+    } = {path: true, stroke: true, opacity: true}) {
+        if (path) {
+            this.addUpdateCallback(this.renderPath)
+        }
+        if (stroke) {
+            this.addUpdateCallback(this.renderStyleStroke)
+        }
+        if (opacity) {
+            this.addUpdateCallback(this.renderStyleOpacity)
+        }
     }
 
     /** The weight of the connection */

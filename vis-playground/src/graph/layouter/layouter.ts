@@ -132,6 +132,18 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         this.layout(isUpdate);
     }
 
+    protected markConnectionsAsUpdateRequired() {
+        this.connections2d.forEach(link => {
+            link.requireUpdate();
+        });
+    }
+
+    protected markNodesAsUpdateRequired() {
+        this.nodes2d.forEach(node => {
+            node.requireUpdate();
+        });
+    }
+
     layout(isUpdate = false): void {
         throw new Error("Method not implemented.");
     }

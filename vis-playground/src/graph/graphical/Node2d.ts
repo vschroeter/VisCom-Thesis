@@ -111,6 +111,30 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
     this.updateCallbacks.push(...[this.renderStyleFill, this.renderStyleStroke, this.renderStyleOpacity, this.renderPositionAndSize]);
   }
 
+  requireUpdate({
+    position = false,
+    fill = false,
+    stroke = false,
+    opacity = false,
+  }: {
+    position?: boolean,
+    fill?: boolean,
+    stroke?: boolean,
+    opacity?: boolean,
+  } = {position: true, fill: true, stroke: true, opacity: true}) {
+    if (position) {
+      this.addUpdateCallback(this.renderPositionAndSize)
+    }
+    if (fill) {
+      this.addUpdateCallback(this.renderStyleFill)
+    }
+    if (stroke) {
+      this.addUpdateCallback(this.renderStyleStroke)
+    }
+    if (opacity) {
+      this.addUpdateCallback(this.renderStyleOpacity)
+    }
+  }
 
   ////////////////////////////////////////////////////////////////////////////
   // Anchor methods

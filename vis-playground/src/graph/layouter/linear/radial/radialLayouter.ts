@@ -36,6 +36,7 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
     }
 
     override layout(isUpdate = false) {
+        console.log("Layouting radial layouter");
         const radius = this.getRadius();
 
         const sorter = this.settings.sorting.getSorter(this.commGraph);
@@ -70,6 +71,11 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
 
 
         // Calculate the links
+
+        const forwardBackwardThreshold = this.settings.edges.forwardBackwardThreshold.getValue(this.settings.getContext({ graph2d: this.graph2d })) ?? 270;
+        const straightForwardlineAtDegreeDelta = this.settings.edges.straightForwardlineAtDegreeDelta.getValue(this.settings.getContext({ graph2d: this.graph2d })) ?? 135;
+        const backwardLineCurvature = this.settings.edges.backwardLineCurvature.getValue(this.settings.getContext({ graph2d: this.graph2d })) ?? 120;
+
 
         // We distinguish between two types of links:
         // Forward links from node a to b, where b is a successor of a in the sorted list
@@ -127,7 +133,6 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
 
             // Links below the threshold are forward links
             // const forwardBackwardThreshold = 180;
-            const forwardBackwardThreshold = 270;
 
             const isForwardLink = angleDiffForwardDeg <= forwardBackwardThreshold;
 
@@ -237,28 +242,31 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                     const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection)
                     const endAnchor = new Anchor(intersectionEnd, tangentInEndIntersection);
 
+                    const straightEndPartForArrow = endAnchor.getPointInDirection(link.maxWidth);
+
                     const arc = new EllipticArc()
                         .radius(radius)
                         .startPoint(startAnchor.anchorPoint)
-                        .endPoint(endAnchor.anchorPoint)
+                        // .endPoint(endAnchor.anchorPoint)
+                        .endPoint(straightEndPartForArrow)
                         .largeArc(0)
                         .direction("clockwise");
 
                     link.points = [
                         startAnchor,
                         arc,
+                        straightEndPartForArrow,
                         endAnchor
                     ];
                 } else {
 
 
                     // Calculate the straight line information
-                    const straightLineAtDegreeDelta = 135;
-                    const straightLineAtRadDelta = degToRad(straightLineAtDegreeDelta);
+                    const straightLineAtRadDelta = degToRad(straightForwardlineAtDegreeDelta);
 
 
                     // If our endNode is exactly this straight line threshold away from the start node, we can draw a straight line
-                    if (Math.abs(angleDiffForwardDeg - straightLineAtDegreeDelta) < 1) {
+                    if (Math.abs(angleDiffForwardDeg - straightForwardlineAtDegreeDelta) < 1) {
                         const startAnchor = startNode.getAnchor(endNode.center);
                         const endAnchor = endNode.getAnchor(startNode.center);
 
@@ -295,7 +303,9 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                     const arcCircle = new Circle(arcCenter, arcRadius);
                     const intersectionsStart = arcCircle.intersect(startNode.circle);
                     const intersectionsEnd = arcCircle.intersect(endNode.circle);
-
+                    const intersectionStart = radialLayoutCircle.contains(intersectionsStart[0]) ? intersectionsStart[0] : intersectionsStart[1];
+                    const intersectionEnd = radialLayoutCircle.contains(intersectionsEnd[0]) ? intersectionsEnd[0] : intersectionsEnd[1];
+                    
                     // console.log({
                     //     arcCircle,
                     //     startNodeCircle: startNode.circle,
@@ -304,8 +314,6 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                     //     intersectionsEnd
                     // });
 
-                    const intersectionStart = radialLayoutCircle.contains(intersectionsStart[0]) ? intersectionsStart[0] : intersectionsStart[1];
-                    const intersectionEnd = radialLayoutCircle.contains(intersectionsEnd[0]) ? intersectionsEnd[0] : intersectionsEnd[1];
 
                     // Get the anchors
                     // The vectore are a 90° rotation of the vector from the arc center to the intersection point.
@@ -313,7 +321,7 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                     let tangentInEndIntersection; Vector;
 
                     // The rotation depends on the curvature of the link, so we have to distinguish between the two cases
-                    if (angleDiffForwardDeg > straightLineAtDegreeDelta) {
+                    if (angleDiffForwardDeg > straightForwardlineAtDegreeDelta) {
                         tangentInStartIntersection = new Vector(arcCenter, intersectionStart).normalize().rotate90CW();
                         tangentInEndIntersection = new Vector(arcCenter, intersectionEnd).normalize().rotate90CCW();
                     } else {
@@ -321,23 +329,33 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                         tangentInEndIntersection = new Vector(arcCenter, intersectionEnd).normalize().rotate90CW();
                     }
 
-
                     const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection)
                     const endAnchor = new Anchor(intersectionEnd, tangentInEndIntersection);
 
+                    // const endNodeWithArrowCircle = new Circle(endNode.center, endNode.radius + link.maxWidth * 10);
+                    // const intersectionsEndWithArrowOffset = arcCircle.intersect(endNodeWithArrowCircle);
+                    // const intersectionsEndWithArrow = intersectionsEndWithArrowOffset.filter(intersection => endNode.circle.contains(intersection));
+                    
+                    // The end anchor itself is not sufficient, because the arrow drawn in the orthogonal direction of the arc will be off at its end.
+                    // So we do not want to draw our arc up to the end anchor, but a bit shorter, and connect the rest by a straight line.
+                    // For that we take the max width of the link as max width of the arrow and calculate the intersection of the circle with the end node circle.
+                    const straightEndPartForArrow = endAnchor.getPointInDirection(link.maxWidth);
+
                     // Construct the arc
-                    const direction = angleDiffForwardDeg > straightLineAtDegreeDelta ? "clockwise" : "counter-clockwise";
+                    const direction = angleDiffForwardDeg > straightForwardlineAtDegreeDelta ? "clockwise" : "counter-clockwise";
 
                     const arc = new EllipticArc()
                         .radius(arcRadius)
                         .startPoint(startAnchor.anchorPoint)
-                        .endPoint(endAnchor.anchorPoint)
+                        // .endPoint(endAnchor.anchorPoint)
+                        .endPoint(straightEndPartForArrow)
                         .largeArc(0)
                         .direction(direction);
 
                     link.points = [
                         startAnchor,
                         arc,
+                        straightEndPartForArrow,
                         endAnchor
                     ];
                 }
@@ -408,10 +426,13 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                  * This is the angle delta for a reference line from our target node to the point on the radial layout circle.
                  * All center points of the circular arcs to this target node will be on this line.
                  */
-                const backwardLineAtDegreeDelta = 120;
-                const backwardLineAtRadDelta = degToRad(backwardLineAtDegreeDelta);
+                const backwardLineAtRadDelta = degToRad(backwardLineCurvature);
                 const referenceLinePoint = this.getPositionForRad(endAngleRad + backwardLineAtRadDelta);
-                const referenceLine = new Line(endPoint, referenceLinePoint);
+
+                // If backwardLineAtRadDelta == 0  we have to get the tangent to the circle at the end point
+                const referenceLine = backwardLineAtRadDelta == 0 ?
+                    new Line(endPoint, new Vector(endPoint, center).rotate90CW()) :
+                    new Line(endPoint, referenceLinePoint);
 
                 /** 
                 * We can now calculate the center point of the circular arc. 
@@ -419,7 +440,9 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                 * The same intersection point is created, if we intersect the reference line with the targetBackReferenceLine.
                 */
                 const targetBackReferenceLinePoint = this.getPositionForRad(startAngleRad - backwardLineAtRadDelta);
-                const targetBackReferenceLine = new Line(startPoint, targetBackReferenceLinePoint);
+                const targetBackReferenceLine = backwardLineAtRadDelta == 0 ?
+                    new Line(startPoint, new Vector(startPoint, center).rotate90CCW()) :
+                    new Line(startPoint, targetBackReferenceLinePoint);
 
                 /**
                  * With the intersection, we can get the arc circle.
@@ -458,6 +481,8 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                 const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection)
                 const endAnchor = new Anchor(intersectionEnd, tangentInEndIntersection);
 
+                const straightEndPartForArrow = endAnchor.getPointInDirection(link.maxWidth);
+
                 // Construct the arc
 
                 // Always counter-clockwise since it is outside the circle
@@ -466,18 +491,19 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                 // We have to distinguish between the two cases:
                 // 1.) The angle difference is below the threshold --> take the short arc
                 // 2.) The angle difference is above the threshold --> take the long arc
-                const largeArc = angleDiffBackwardDeg > backwardLineAtDegreeDelta ? 1 : 0;
+                const largeArc = angleDiffBackwardDeg > backwardLineCurvature ? 1 : 0;
 
                 const arc = new EllipticArc()
                     .radius(arcRadius)
                     .startPoint(startAnchor.anchorPoint)
-                    .endPoint(endAnchor.anchorPoint)
+                    .endPoint(straightEndPartForArrow)
                     .largeArc(largeArc)
                     .direction(direction);
 
                 link.points = [
                     startAnchor,
                     arc,
+                    straightEndPartForArrow,
                     endAnchor
                 ];
 
@@ -488,6 +514,7 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
 
         })
 
+        this.markConnectionsAsUpdateRequired();
 
         // this.emitEvent("update");
         this.emitEvent("end");
