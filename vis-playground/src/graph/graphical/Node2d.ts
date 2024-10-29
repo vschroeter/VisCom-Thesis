@@ -40,8 +40,7 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
     return this._radius;
   }
   set radius(value: number) {
-    this.updatePositionAndSize(undefined, undefined, this.radius);
-    // this._radius = value;
+    this.updatePositionAndSize(undefined, undefined, value);
   }
 
   // The circle object representing the node

@@ -188,30 +188,55 @@ function layoutUpdated() {
         return
     }
 
-    d3.select(refGRoot.value)
-        .call(sel => layouter?.renderAll(sel, {
-            nodesEvents: {
-                mouseenter: (d: Node2d) => {
-                    // return;
-                    if (!isSelected.value) return;
-                    const id = d.data?.id;
-                    if (id) {
-                        userInteractions.addHoveredNode(id)
-                        // throttledUpdateUserInteractions()
-                    }
-                },
-                mouseleave: (d: Node2d) => {
-                    // return;
-                    if (!isSelected.value) return;
+    layouter.setParentGroup(d3.select(refGRoot.value));
+    layouter.renderAll({
+        nodesEvents: {
+            mouseenter: (d: Node2d) => {
+                // return;
+                if (!isSelected.value) return;
+                const id = d.data?.id;
+                if (id) {
+                    userInteractions.addHoveredNode(id)
+                    // throttledUpdateUserInteractions()
+                }
+            },
+            mouseleave: (d: Node2d) => {
+                // return;
+                if (!isSelected.value) return;
 
-                    const id = d.data?.id;
-                    if (id) {
-                        userInteractions.removeHoveredNode(id)
-                        // throttledUpdateUserInteractions()
-                    }
-                },
-            }
-        }))
+                const id = d.data?.id;
+                if (id) {
+                    userInteractions.removeHoveredNode(id)
+                    // throttledUpdateUserInteractions()
+                }
+            },
+        }
+    });
+
+    // d3.select(refGRoot.value)
+    //     .call(sel => layouter?.renderAll(sel, {
+    //         nodesEvents: {
+    //             mouseenter: (d: Node2d) => {
+    //                 // return;
+    //                 if (!isSelected.value) return;
+    //                 const id = d.data?.id;
+    //                 if (id) {
+    //                     userInteractions.addHoveredNode(id)
+    //                     // throttledUpdateUserInteractions()
+    //                 }
+    //             },
+    //             mouseleave: (d: Node2d) => {
+    //                 // return;
+    //                 if (!isSelected.value) return;
+
+    //                 const id = d.data?.id;
+    //                 if (id) {
+    //                     userInteractions.removeHoveredNode(id)
+    //                     // throttledUpdateUserInteractions()
+    //                 }
+    //             },
+    //         }
+    //     }))
 
     // console.log("BBox", bBox.value, refGRoot.value)
     bBox.value = refGRoot.value?.getBBox() ?? null
@@ -258,7 +283,7 @@ onMounted(() => {
 
     watch(commGraph, (newVal) => {
         //updateSimulation();
-        console.log("[GViz] Graph updated", commGraph.value, commGraph.value instanceof CommunicationGraph);
+        // console.log("[GViz] Graph updated", commGraph.value, commGraph.value instanceof CommunicationGraph);
         if (!settings.value) {
             console.error("No settings found for ", props.settingId, settingsCollection);
             return

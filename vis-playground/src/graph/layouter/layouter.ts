@@ -61,6 +61,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     debugShapes: Shape[] = [];
 
+    gParent: d3.Selection<SVGGElement | null, unknown, null, undefined> | null = null;
+
     renderArgs: RenderArgs;
     get commonSettings() {
         return this.renderArgs.commonSettings;
@@ -189,13 +191,30 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     ////////////////////////////////////////////////////////////////////////////
+    // D3 Selection methods
+    ////////////////////////////////////////////////////////////////////////////
+
+    selectGroup(className: string) {
+        const selector = `g.${className}`
+        const parent = this.gParent;
+        if (!parent) {
+            throw new Error("Parent group not set");
+        }
+        parent.selectChildren(selector).data([0]).join("g").classed(className, true);
+        return parent.select<SVGGElement | null>(selector);
+    }
+
+    setParentGroup(group: d3.Selection<any, any, any, any>) {
+        this.gParent = group;
+    }
+
+
+
+    ////////////////////////////////////////////////////////////////////////////
     // Render methods
     ////////////////////////////////////////////////////////////////////////////
 
-    selectGroup(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, className: string) {
-        selection.selectAll(`g.${className}`).data([0]).join("g").classed(className, true);
-        return selection.select<SVGGElement | null>(`g.${className}`);
-    }
+
 
     updateStyle() {
 
@@ -289,19 +308,31 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         })
     }
 
-    renderAll(selection: d3.Selection<SVGGElement | any, any, any, any>, events?: {
+
+
+    renderAll(events?: {
         nodesEvents?: MouseEvents<Node2d>,
         linksEvents?: MouseEvents<Connection2d>,
         labelsEvents?: MouseEvents<Node2d>
     }) {
-        this.renderLinks(this.selectGroup(selection, 'links'), events?.linksEvents);
-        this.renderNodes(this.selectGroup(selection, 'nodes'), events?.nodesEvents);
-        this.renderLabels(this.selectGroup(selection, 'labels'), events?.labelsEvents);
-        this.renderDebuggingShapes(selection);
+        if (!this.gParent) {
+            throw new Error("Parent group not set");
+        }
+
+        const parent = this.gParent;
+
+        this.renderLinks(this.selectGroup('links'), events?.linksEvents);
+        this.renderNodes(this.selectGroup('nodes'), events?.nodesEvents);
+        this.renderLabels(this.selectGroup('labels'), events?.labelsEvents);
+        this.renderDebuggingShapes(parent);
     }
 
     renderNodes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
-        const nodes = selection.selectAll('g.node')
+        // Get the current classname of this object
+        const className = this.constructor.name.toLowerCase();
+        // console.log("Render nodes", className, selection, selection.selectChildren('g.node').size(), this.graph2d.nodes);
+
+        const nodes = selection.selectChildren('g.node')
             .data(this.graph2d.nodes)
             .join(
                 // enter => enter.append('g').classed('node', true).call(d => d.datum().enter(d)),
@@ -311,14 +342,15 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
                 }),
                 // update => update.call(d => d.datum().update(d)),
                 update => update.each((d, i, g) => {
+                    // console.log("Update", d, i, g);
                     d.update(d3.select(g[i]));
                 }),
                 // exit => exit.call(d => d.datum().exit(d))                
                 exit => exit.each((d, i, g) => {
+                    // console.log("Exit", d, i, g);
                     d.exit(d3.select(g[i]));
                 })
             )
-
 
         if (events?.click) nodes.on("click", (e, d) => events.click?.(d, e))
         if (events?.mouseleave) nodes.on("mouseleave", (e, d) => events.mouseleave?.(d, e))
@@ -327,7 +359,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     renderLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Connection2d>) {
 
-        const links = selection.selectAll('g.link')
+        const links = selection.selectChildren('g.link')
             .data(this.graph2d.links)
             .join(
                 // enter => enter.append('g').classed('node', true).call(d => d.datum().enter(d)),
@@ -352,7 +384,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     renderLabels(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
-        selection.selectAll('text')
+        selection.selectChildren('text')
             .data(this.graph2d.nodes)
             .join('text')
             .attr('x', (d: Node2d) => d.x + 10)
@@ -361,12 +393,12 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     renderDebuggingShapes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
-        selection.selectAll('g.debug')
+        selection.selectChildren('g.debug')
             .data(this.debugShapes)
             .join('g').classed('debug', true)
             .each((shape, i, g) => {
                 const d = d3.select(g[i]);
-                d.selectAll('*').remove();
+                d.selectChildren('*').remove();
 
                 switch (shape.tag) {
                     // case ShapeTag.Segment: {
