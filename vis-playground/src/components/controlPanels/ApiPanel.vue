@@ -174,8 +174,6 @@ const generators = computed(() => {
         return []
     }
 
-
-
     return Array.from(generateMethods.value?.generators.values()).sort((a, b) => {
         if (a.isStoredDataset == b.isStoredDataset) {
             return a.key.localeCompare(b.key)

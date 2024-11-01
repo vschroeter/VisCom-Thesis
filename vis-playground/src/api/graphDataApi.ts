@@ -13,7 +13,7 @@ export interface ApiLink {
 
 export interface ApiNode {
     id: string;
-    data?: object;
+    commgraph_centrality?: number;
 }
 
 export interface ApiGraph {
@@ -42,7 +42,9 @@ export function parseGraphData(
 
     dNodes.forEach((node) => {
         const dId = node.id ?? null;
-        const dData = node.data ?? null;
+        const dData = {
+            commgraph_centrality: node.commgraph_centrality
+        }
         if (dId === null) {
             throw new Error('nodeID not found in node' + JSON.stringify(node));
         }

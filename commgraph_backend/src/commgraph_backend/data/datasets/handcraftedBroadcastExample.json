@@ -419,6 +419,10 @@
                     "type": "std_msgs/msg/String"
                 },
                 {
+                    "name": "/motor",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
                     "name": "/params_updated",
                     "type": "std_msgs/msg/String"
                 },

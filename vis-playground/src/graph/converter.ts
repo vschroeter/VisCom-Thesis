@@ -11,6 +11,7 @@ export function convertGraphToCommGraph(graph: Graph<any, ApiGraphData>): Commun
 
   graph.forEachNode((node) => {
     const commNode = new CommunicationNode(node.id.toString());
+    commNode.score = node.data.commgraph_centrality ?? 0;
     commNodesMap.set(node.id.toString(), commNode);
   });
 
