@@ -11,8 +11,21 @@
     //     "url": "http://localhost:8080",
     //     "webRoot": "${workspaceFolder}"
     // },
+    // {
+    //   "type": "msedge",
+    //   "request": "launch",
+    //   "name": "Quasar App: chrome",
+    //   "url": "http://localhost:9000",
+    //   // To properly reflect changes after HMR with Vite
+    //   "enableContentValidation": false,
+    //   "webRoot": "${workspaceFolder}/vis-playground/src",
+    //   // No need to configure sourcemap explicitly for vite.
+    //   "sourceMapPathOverrides": {
+    //     "webpack://package-name/./src/*": "${webRoot}/*"
+    //   }
+    // },
     {
-      "type": "chrome",
+      "type": "msedge",
       "request": "launch",
       "name": "Quasar App: chrome",
       "url": "http://localhost:9000",
@@ -21,7 +34,7 @@
       "webRoot": "${workspaceFolder}/vis-playground/src",
       // No need to configure sourcemap explicitly for vite.
       "sourceMapPathOverrides": {
-        "webpack://package-name/./src/*": "${webRoot}/*"
+        "webpack://vis-playground/./src/*": "${webRoot}/*"
       }
     },
     {

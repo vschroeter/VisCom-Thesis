@@ -90,15 +90,16 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                 return;
             }
 
-            // if (startNode.id == "1" && endNode.id == "4") {
-            //     console.log("Link", link);
-            // }
+            if (startNode.id == "c2" && endNode.id == "b0") {
+                console.log("Link", link);
+            }
 
             const startIndex = nodes.indexOf(startNode);
             const endIndex = nodes.indexOf(endNode);
 
             // If the end node is directly after or before the start node, we can draw a more direct link
-            const isDirectLink = Math.abs(startIndex - endIndex) == 1 || Math.abs(startIndex - endIndex) == nodes.length - 1;
+            // const isDirectLink = Math.abs(startIndex - endIndex) == 1 || Math.abs(startIndex - endIndex) == nodes.length - 1;
+            const isDirectLink = (endIndex - startIndex) == 1 || (startIndex - endIndex) == nodes.length - 1;
 
             const startAngleDeg = radToDeg(angleRadMap.get(startNode)!);
             const startAngleRad = angleRadMap.get(startNode)!;
@@ -247,15 +248,15 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                     const arc = new EllipticArc()
                         .radius(radius)
                         .startPoint(startAnchor.anchorPoint)
-                        // .endPoint(endAnchor.anchorPoint)
-                        .endPoint(straightEndPartForArrow)
+                        .endPoint(endAnchor.anchorPoint)
+                        // .endPoint(straightEndPartForArrow)
                         .largeArc(0)
                         .direction("clockwise");
 
                     link.points = [
                         startAnchor,
                         arc,
-                        straightEndPartForArrow,
+                        // straightEndPartForArrow,
                         endAnchor
                     ];
                 } else {
@@ -347,15 +348,15 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                     const arc = new EllipticArc()
                         .radius(arcRadius)
                         .startPoint(startAnchor.anchorPoint)
-                        // .endPoint(endAnchor.anchorPoint)
-                        .endPoint(straightEndPartForArrow)
+                        .endPoint(endAnchor.anchorPoint)
+                        // .endPoint(straightEndPartForArrow)
                         .largeArc(0)
                         .direction(direction);
 
                     link.points = [
                         startAnchor,
                         arc,
-                        straightEndPartForArrow,
+                        // straightEndPartForArrow,
                         endAnchor
                     ];
                 }
@@ -496,14 +497,15 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
                 const arc = new EllipticArc()
                     .radius(arcRadius)
                     .startPoint(startAnchor.anchorPoint)
-                    .endPoint(straightEndPartForArrow)
+                    .endPoint(endAnchor.anchorPoint)
+                    // .endPoint(straightEndPartForArrow)
                     .largeArc(largeArc)
                     .direction(direction);
 
                 link.points = [
                     startAnchor,
                     arc,
-                    straightEndPartForArrow,
+                    // straightEndPartForArrow,
                     endAnchor
                 ];
 

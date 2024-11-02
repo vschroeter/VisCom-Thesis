@@ -182,7 +182,7 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
 
   renderStyleFill() {
     // console.log('[NODE] renderStyleFill', this.fill, this.selectElement());
-    this.selectElement().attr('fill', this.fill);
+    this.selectElement().attr('fill', this.filled ? this.fill : 'none');
   }
 
   updateStyleFill(fill: string) {

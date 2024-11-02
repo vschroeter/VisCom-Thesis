@@ -1,3 +1,4 @@
+import { CommFlowSorter } from "./commFlow";
 import { FlowSorter } from "./flow";
 import { BreadthFirstSorter, ChildrenCountSorter, DegreeSorter, DepthFirstSorter, IdSorter, RandomSorter } from "./simple";
 import { Sorter } from "./sorting";
@@ -39,6 +40,13 @@ export const sortingMethods: SortingMapping[] = [
         key: "flowSorting",
         label: "Flow Sorting",
         sorter: FlowSorter,
+        hasStartNodeSelection: true,
+        hasSecondarySorting: true,
+    },
+    {
+        key: "commFlowSorting",
+        label: "Communication Flow Sorting",
+        sorter: CommFlowSorter,
         hasStartNodeSelection: true,
         hasSecondarySorting: true,
     },

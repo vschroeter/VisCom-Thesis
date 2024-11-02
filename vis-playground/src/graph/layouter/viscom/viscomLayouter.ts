@@ -39,6 +39,8 @@ class ViscomHyperNode extends Node2d {
         this.innerRadius = this.layouter.getRadius();
         this.radius = this.innerRadius * 1.1 + 20;
 
+        this.strokeStyle.stroke = "gray";
+        this.strokeStyle.strokeWidth = 4;
         this.filled = false;
 
         // this.strokeWidth = 4;
@@ -124,8 +126,22 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         hyperNodes.forEach(hn => hn.layout());
         this.hyperNodes = hyperNodes;
 
+        this.updateStyle();
+
         // this.emitEvent("update");
         this.emitEvent("end");
+
+        // Print all nodes and links
+        console.log("nodes", this.commGraph.nodes);
+
+        const links = this.commGraph.getAllLinks(undefined, 0.2);
+        const merged = CommunicationLink.mergeLinks(links);
+
+        console.log("links", this.commGraph.getAllLinks(undefined, 0.2).map(l => `${l.fromId} -> ${l.toId}: ${l.weight}`));
+        console.log("merged", merged.map(l => `${l.fromId} -> ${l.toId}: ${l.weight}`));
+
+        this.getFilteredLinks
+
     }
 
     override updateStyle(): void {
@@ -142,7 +158,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             throw new Error("Parent group is not set");
         }
 
-        super.renderAll(events);
+        super.renderAll();
 
         parent.selectChildren("g.hypernode")
             .data(this.hyperNodes).join("g")
@@ -153,47 +169,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             })
 
         this.hyperNodes.forEach(hn => hn.layouter.renderAll(events));
-        
-        // // Create a group for each hypernode
-        // selection.selectAll("g>g.hypernode")
-        //     .data(this.hyperNodes)
-        //     .join("g")
-        //     // .join(
-        //     //     // enter => enter.append('g').classed('node', true).call(d => d.datum().enter(d)),
-        //     //     enter => enter.append('g').classed('hypernode', true).each((d, i, g) => {
-        //     //         // console.log("Enter", d, i, g);
-        //     //         d.layouter.renderAll(d3.select(g[i]));
-        //     //     }),
-        //     //     // update => update.call(d => d.datum().update(d)),
-        //     //     update => update.each((d, i, g) => {
-        //     //         d.layouter.renderAll(d3.select(g[i]));
-        //     //     }),
-        //     //     // exit => exit.call(d => d.datum().exit(d))                
-        //     //     exit => exit.each((d, i, g) => {
-        //     //         d.layouter.renderAll(d3.select(g[i]));
-        //     //     })
-        //     // )
-        //     .classed("hypernode", true)
-        //     .each((hyperNode, i, g) => {
-        //         console.log("Render hypernode" + i, hyperNode, g, g[i]);
-        //         hyperNode.layouter.renderAll(d3.select(g[i]), events);
-        //     })
+
     }
-
-    // renderAll(selection: d3.Selection<SVGGElement | any, any, any, any>, events?: { nodesEvents?: MouseEvents<Node2d>; linksEvents?: MouseEvents<Node2d>; labelsEvents?: MouseEvents<Node2d>; }): void {
-    //     console.log("Render all viscom layouter", this, this.hyperNodes);
-
-    //     super.renderAll(selection, events);
-
-    //     // Create a group for each hypernode
-    //     selection.selectAll("g.hypernode")
-    //         .data(this.hyperNodes)
-    //         .join("g")
-    //         .classed("hypernode", true)
-    //         .each((hyperNode, i, g) => {
-    //             hyperNode.layouter.renderAll(d3.select(g[i]), events);
-    //         })
-
-    // }
 
 }

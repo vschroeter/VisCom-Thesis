@@ -281,7 +281,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         // the width based on the weight
 
         const minW = 0.1;
-        const maxW = 3;
+        const maxW = 5;
         const wMultiplier = 2;
 
         const stroke = this.commonSettings.linkColor.getValue()?.toString() ?? "black";
@@ -290,7 +290,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
         this.connections2d.forEach(link => {
             const weight = link.weight;
-            let opacity = Math.min(Math.max(0.05, weight)) * alpha;
+            let opacity = Math.min(Math.max(0.01, weight), 1) * alpha;
             const width = Math.min(maxW, Math.max(minW, weight * wMultiplier));
 
             if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {

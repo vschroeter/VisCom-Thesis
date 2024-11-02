@@ -19,7 +19,7 @@ export class Clusterer {
         if (nodeId === undefined) {
             return [];
         }
-        
+
         const node = this.commGraph.getNode(nodeId)!;
 
         const relevantNodeIds = new Set((nodes?.map(node => this.commGraph.getNode(node)!) ?? this.commGraph.nodes).map(node => node.id));
@@ -52,7 +52,7 @@ export class Clusterer {
      * Get the connected components of the graph.
      * @returns The connected components of the graph.
      */
-    getConnectedComponents(nodes?: CommunicationNode[]): CommunicationNode[][] {
+    getConnectedComponents(nodes?: CommunicationNode[], channels?: CommunicationChannel[]): CommunicationNode[][] {
         nodes = nodes ?? this.commGraph.nodes;
         const visited = new Set<string>();
         const components: CommunicationNode[][] = [];
@@ -61,8 +61,8 @@ export class Clusterer {
             if (visited.has(node.id)) {
                 continue;
             }
-            
-            const component = this.getConnectedComponent(node, undefined, nodes);
+
+            const component = this.getConnectedComponent(node, channels, nodes);
             components.push(component);
             component.forEach(node => visited.add(node.id));
         }

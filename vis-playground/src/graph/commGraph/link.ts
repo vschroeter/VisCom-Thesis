@@ -95,6 +95,18 @@ export class CommunicationLink {
     this.weight = weight;
   }
 
+  static copyFromLink(link: CommunicationLink): CommunicationLink {
+    return new CommunicationLink(
+      link.topic,
+      link.fromId,
+      link.toId,
+      link.channel,
+      link.direction,
+      link.graph,
+      link.weight
+    );
+  }
+
   /** The source node of the link */
   get fromNode(): CommunicationNode {
     return this.graph.nodesById.get(this.fromId)!;
@@ -116,7 +128,7 @@ export class CommunicationLink {
       }
       const mapToIdToLink = mapFromIdToToIdToLink.get(link.fromId)!;
       if (!mapToIdToLink.has(link.toId)) {
-        mapToIdToLink.set(link.toId, link);
+        mapToIdToLink.set(link.toId, CommunicationLink.copyFromLink(link));
       } else {
         const existingLink = mapToIdToLink.get(link.toId)!;
         existingLink.weight += link.weight;
@@ -130,6 +142,60 @@ export class CommunicationLink {
     });
 
     return mergedLinks;
+  }
+  
+  /**
+   * Combine the in and out links of a node into a single link.
+   * The weights of the links are combined by taking the difference of the in and out links.
+   * @param links 
+   */
+  static combineInAndOutLinks(links: CommunicationLink[]): CommunicationLink[] {
+
+    const combinedLinks: CommunicationLink[] = [];
+
+    const mapFromIdToToIdToLink = new Map<string, Map<string, CommunicationLink>>();
+    links.forEach(link => {
+      if (!mapFromIdToToIdToLink.has(link.fromId)) {
+        mapFromIdToToIdToLink.set(link.fromId, new Map());
+      }
+      const mapToIdToLink = mapFromIdToToIdToLink.get(link.fromId)!;
+      if (!mapToIdToLink.has(link.toId)) {
+        mapToIdToLink.set(link.toId, CommunicationLink.copyFromLink(link));
+      } else {
+        const existingLink = mapToIdToLink.get(link.toId)!;
+        existingLink.weight += link.weight;
+      }
+    })
+
+    const mergedLinks: CommunicationLink[] = [];
+    mapFromIdToToIdToLink.forEach(mapToIdToLink => {
+      mapToIdToLink.forEach(link => {
+        mergedLinks.push(link);
+      });
+    });
+
+    // For each link check if there is a link in the opposite direction.
+    // If there is, combine the weights of the links.
+    const epsilon = 0.0001;
+    while (mergedLinks.length > 0) {
+      const link = mergedLinks.pop()!;
+      const oppositeLink = mapFromIdToToIdToLink.get(link.toId)?.get(link.fromId);
+      if (oppositeLink) {
+        const weight = link.weight - oppositeLink.weight;
+        if (weight > epsilon) {
+          link.weight = weight;
+          combinedLinks.push(link);
+        } else if (weight < -epsilon) {
+          oppositeLink.weight = -weight;
+          combinedLinks.push(oppositeLink);
+        }
+        mergedLinks.splice(mergedLinks.indexOf(oppositeLink), 1);
+      } else {
+        combinedLinks.push(link);
+      }
+    }
+
+    return combinedLinks;
   }
 
 }
