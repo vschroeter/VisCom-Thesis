@@ -2,6 +2,7 @@ import { mapKeyToSortingMethod, sortingMethods } from "src/graph/algorithms/sort
 import { GraphLayouterSettings, Param, ParamChoice, Setting } from "./settings"
 import { Sorter } from "src/graph/algorithms/sortings/sorting";
 import { CommunicationGraph } from "src/graph/commGraph";
+import { CommonSettings } from "./commonSettings";
 
 export class LinearSortingSettings extends Setting {
 
@@ -49,24 +50,24 @@ export class LinearSortingSettings extends Setting {
         });
     }
 
-    protected instantiateSorter(sortingKey: string, commGraph: CommunicationGraph, reversed: boolean = false): Sorter {
+    protected instantiateSorter(sortingKey: string, commGraph: CommunicationGraph, commonSettings: CommonSettings, reversed: boolean = false): Sorter {
         const sorterCls = mapKeyToSortingMethod.get(sortingKey)!.sorter;
-        return new sorterCls(commGraph, reversed);
+        return new sorterCls(commGraph, commonSettings, reversed);
     }
 
-    getSorter(commGraph: CommunicationGraph): Sorter {
+    getSorter(commGraph: CommunicationGraph, commonSettings: CommonSettings): Sorter {
         if (this.sorting.textValue === undefined) {
             throw new Error("No sorting method selected.");
         }
 
         const reversed = this.reversed.getValue()!;
 
-        const sorter = this.instantiateSorter(this.sorting.textValue, commGraph, reversed);
+        const sorter = this.instantiateSorter(this.sorting.textValue, commGraph, commonSettings, reversed);
         if (this.startNodeSelection.textValue !== undefined) {
-            sorter.startNodeSelectionSorter = this.instantiateSorter(this.startNodeSelection.textValue, commGraph, reversed);
+            sorter.startNodeSelectionSorter = this.instantiateSorter(this.startNodeSelection.textValue, commGraph, commonSettings, reversed);
         }
         if (this.secondLevelSorting.textValue !== undefined) {
-            sorter.secondarySorting = this.instantiateSorter(this.secondLevelSorting.textValue, commGraph, reversed);
+            sorter.secondarySorting = this.instantiateSorter(this.secondLevelSorting.textValue, commGraph, commonSettings, reversed);
         }
         return sorter;
     }

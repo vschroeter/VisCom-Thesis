@@ -132,6 +132,8 @@ export class CommunicationGraph<NodeData = any> {
    */
   hiddenTopics: RegExp[] = [];
 
+  // hiddenLinksThreshold: number = 0;
+
   constructor(
     nodes: CommunicationNode<NodeData>[],
     channels: CommunicationChannel[],

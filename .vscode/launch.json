@@ -34,8 +34,21 @@
       "webRoot": "${workspaceFolder}/vis-playground/src",
       // No need to configure sourcemap explicitly for vite.
       "sourceMapPathOverrides": {
-        "webpack://vis-playground/./src/*": "${webRoot}/*"
+        "webpack:///vis-playground/src/*": "${webRoot}/*"
       }
+    },
+    // {
+    //   "type": "msedge",
+    //   "request": "launch",
+    //   "name": "Quasar App: Test",
+    //   "url": "http://localhost:8080",
+    //   // To properly reflect changes after HMR with Vite
+    //   "enableContentValidation": false,
+    //   "webRoot": "${workspaceFolder}/quasar-project/src",
+    //   // No need to configure sourcemap explicitly for vite.
+    //   "sourceMapPathOverrides": {
+    //     "webpack:///quasar-project/src/*": "${webRoot}/*"
+    //   }
     },
     {
       "name": "Python CommGraph Test",

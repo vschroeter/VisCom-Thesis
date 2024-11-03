@@ -9,7 +9,7 @@ export class NodeToNodeConnection {
   toId: string;
   weight: number;
   topic: CommunicationTopic;
-  
+
   constructor(from: string, to: string, topic: CommunicationTopic, weight: number) {
     this.fromId = from;
     this.toId = to;
@@ -25,7 +25,7 @@ export class NodeToNodeConnection {
 export class NodeToNodeConnections {
   fromId: string;
   toId: string;
-  
+
   connections: NodeToNodeConnection[] = [];
 
   get topics(): CommunicationTopic[] {
@@ -143,7 +143,7 @@ export class CommunicationLink {
 
     return mergedLinks;
   }
-  
+
   /**
    * Combine the in and out links of a node into a single link.
    * The weights of the links are combined by taking the difference of the in and out links.
@@ -174,14 +174,30 @@ export class CommunicationLink {
       });
     });
 
-    // For each link check if there is a link in the opposite direction.
-    // If there is, combine the weights of the links.
-    const epsilon = 0.0001;
-    while (mergedLinks.length > 0) {
-      const link = mergedLinks.pop()!;
-      const oppositeLink = mapFromIdToToIdToLink.get(link.toId)?.get(link.fromId);
-      if (oppositeLink) {
+    const combinedLinksMap = new Map<string, Map<string, CommunicationLink>>();
+
+    mergedLinks.forEach(link => {
+      if (!combinedLinksMap.has(link.fromId)) {
+        combinedLinksMap.set(link.fromId, new Map());
+      }
+
+      combinedLinksMap.get(link.fromId)!.set(link.toId, CommunicationLink.copyFromLink(link));
+    })
+
+    
+    const epsilon = 0.001;
+    mergedLinks.forEach(_link => {
+      const link = combinedLinksMap.get(_link.fromId)?.get(_link.toId);
+      const oppositeLink = combinedLinksMap.get(_link.toId)?.get(_link.fromId);
+
+      if (!link && !oppositeLink) {
+        return;
+      }
+
+      if (link && oppositeLink) {
+
         const weight = link.weight - oppositeLink.weight;
+
         if (weight > epsilon) {
           link.weight = weight;
           combinedLinks.push(link);
@@ -189,13 +205,33 @@ export class CommunicationLink {
           oppositeLink.weight = -weight;
           combinedLinks.push(oppositeLink);
         }
-        mergedLinks.splice(mergedLinks.indexOf(oppositeLink), 1);
-      } else {
-        combinedLinks.push(link);
+      
+        combinedLinksMap.get(link.fromId)?.delete(link.toId);
+        combinedLinksMap.get(link.toId)?.delete(link.fromId);
+        return;
       }
-    }
+
+      if (!link && oppositeLink) {
+        combinedLinks.push(oppositeLink!);
+        combinedLinksMap.get(oppositeLink.fromId)?.delete(oppositeLink.toId);
+        return;
+      }
+
+      if (!oppositeLink && link) {
+        combinedLinks.push(link);
+        combinedLinksMap.get(link.fromId)?.delete(link.toId);
+        return;
+      }
+
+    });
+
+    // console.log("Combined links", combinedLinks.sort((a, b) => a.fromId.localeCompare(b.fromId) || a.toId.localeCompare(b.toId)).map(l => `${l.fromId} -> ${l.toId}: ${l.weight}`));
 
     return combinedLinks;
+  }
+
+  static filterLinksByWeight(links: CommunicationLink[], minWeight: number): CommunicationLink[] {
+    return links.filter(link => link.weight >= minWeight);
   }
 
 }
@@ -204,5 +240,5 @@ export class ChannelGraphLinkData {
   constructor(
     public topic: CommunicationTopic,
     public channel: CommunicationChannel,
-  ) {}
+  ) { }
 }

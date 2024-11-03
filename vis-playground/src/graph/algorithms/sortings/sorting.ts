@@ -1,6 +1,7 @@
 import { Graph2d } from "src/graph/graphical/Graph2d";
 import { CommunicationGraph, CommunicationNode } from "../../commGraph";
 import { Node2d } from "src/graph/graphical";
+import { CommonSettings } from "src/graph/layouter/settings/commonSettings";
 
 export class Sorter {
 
@@ -10,10 +11,12 @@ export class Sorter {
 
     startNodeSelectionSorter?: Sorter;
 
+    commonSettings: CommonSettings;
 
 
-    constructor(public commGraph: CommunicationGraph, reversed: boolean = false) {
+    constructor(public commGraph: CommunicationGraph, commonSettings: CommonSettings, reversed: boolean = false) {
         this.reverse = reversed;
+        this.commonSettings = commonSettings;
     }
 
     protected sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {

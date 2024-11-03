@@ -39,7 +39,7 @@ export class RadialLayouter extends GraphLayouter<RadialLayouterSettings> {
         console.log("Layouting radial layouter");
         const radius = this.getRadius();
 
-        const sorter = this.settings.sorting.getSorter(this.commGraph);
+        const sorter = this.settings.sorting.getSorter(this.commGraph, this.commonSettings);
         const nodes = sorter.getSorting2dNodes(this.graph2d)
 
         // Get the nodes position on the interval [0, 1]

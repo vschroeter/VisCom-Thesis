@@ -193,7 +193,7 @@
                     "type": "std_msgs/msg/String"
                 },
                 {
-                    "name": "/manager",
+                    "name": "IGNORE/manager",
                     "type": "std_msgs/msg/Empty"
                 }
             ],

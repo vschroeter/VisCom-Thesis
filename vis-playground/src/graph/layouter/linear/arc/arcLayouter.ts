@@ -12,7 +12,7 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
     override layout(isUpdate = false) {
         const ctx = this.settings.getContext({ graph2d: this.graph2d });
 
-        const sorter = this.settings.sorting.getSorter(this.commGraph);
+        const sorter = this.settings.sorting.getSorter(this.commGraph, this.commonSettings);
         const nodes = sorter.getSorting2dNodes(this.graph2d);
 
         // Place nodes on a straight line down

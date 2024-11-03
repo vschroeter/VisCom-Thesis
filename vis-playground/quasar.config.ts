@@ -47,7 +47,7 @@ export default configure((/* ctx */) => {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
         node: 'node20'
       },
-      devTool: 'source-map',
+      devtool: 'source-map',
 
       vueRouterMode: 'hash', // available values: 'hash', 'history'
       // vueRouterBase,

@@ -13,7 +13,7 @@ export class SpaceFillingCurveLayouter extends GraphLayouter<SpaceFillingLayoute
     override layout(isUpdate = false) {
         const ctx = this.settings.getContext({ graph2d: this.graph2d });
 
-        const sorter = this.settings.sorting.getSorter(this.commGraph);
+        const sorter = this.settings.sorting.getSorter(this.commGraph, this.commonSettings);
         const nodes = sorter.getSorting2dNodes(this.graph2d)
 
         const order = this.settings.curve.order.getValue(ctx) ?? 2;

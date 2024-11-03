@@ -2,6 +2,7 @@ import { CommunicationChannel, CommunicationGraph, CommunicationNode } from "src
 import { Sorter } from "./sorting";
 import { Clusterer } from "../clustering";
 import { IdSorter } from "./simple";
+import { CommonSettings } from "src/graph/layouter/settings/commonSettings";
 
 export type TopologicalGeneration = {
     nodes: CommunicationNode[],
@@ -12,8 +13,8 @@ export class TopologicalSorter extends Sorter {
 
     clusterer: Clusterer
 
-    constructor(commGraph: CommunicationGraph) {
-        super(commGraph);
+    constructor(commGraph: CommunicationGraph, commonSettings: CommonSettings) {
+        super(commGraph, commonSettings);
 
         this.clusterer = new Clusterer(commGraph);
     }
@@ -244,7 +245,7 @@ export class TopologicalSorter extends Sorter {
 
         const generations = this.getTopologicalGenerations(nodes[0], undefined, nodes);
 
-        const innerSorter = this.secondarySorting ?? new IdSorter(this.commGraph);
+        const innerSorter = this.secondarySorting ?? new IdSorter(this.commGraph, this.commonSettings);
         const sortedNodes = generations.map(gen => innerSorter.getSorting(gen.nodes)).flat()
         return sortedNodes
     }

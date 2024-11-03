@@ -3,17 +3,18 @@ import { Sorter } from "./sorting";
 import { Clusterer } from "../clustering";
 import { IdSorter } from "./simple";
 import { TopologicalSorter } from "./topological";
+import { CommonSettings } from "src/graph/layouter/settings/commonSettings";
 
 export class FlowSorter extends Sorter {
 
     clusterer: Clusterer
     topoligicalSorter: TopologicalSorter
 
-    constructor(commGraph: CommunicationGraph) {
-        super(commGraph);
+    constructor(commGraph: CommunicationGraph, commonSettings: CommonSettings) {
+        super(commGraph, commonSettings);
 
         this.clusterer = new Clusterer(commGraph);
-        this.topoligicalSorter = new TopologicalSorter(commGraph);
+        this.topoligicalSorter = new TopologicalSorter(commGraph, commonSettings);
     }
 
     protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
