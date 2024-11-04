@@ -65,13 +65,21 @@ export interface ViscomHyperLinkData extends Connection2dData {
     fromCommNodeId: string;
     toCommNodeId: string;
 
+    weight: number;
 }
 
 
 export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
+// export class ViscomLayouter extends RadialLayouter<ViscomLayouterSettings> {
 
 
     hyperNodes: ViscomHyperNode[] = [];
+
+    hyperRadius: number = 0;
+
+    // override getRadius(): number {
+    //     return this.hyperRadius;
+    // }
 
     override layout(isUpdate = false) {
 
@@ -97,16 +105,23 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
                     const nodesInHn1 = hn1.layouter.nodes;
                     const nodesInHn2 = hn2.layouter.nodes;
 
-                    const externalLinks = this.commGraph.getAllExternalLinksBetweenNodeGroups(nodesInHn1, nodesInHn2)
+                    const externalLinks = this.commGraph.getAllExternalLinksBetweenNodeGroups(nodesInHn1, nodesInHn2, undefined, this.commonSettings.hideLinksThreshold.getValue())
+                    const mergedLinks = CommunicationLink.mergeLinks(externalLinks);
                     console.log("External links", externalLinks);
-                    externalLinks.forEach(link => {
-                        const l2d = graph2d.createLink2d<ViscomHyperLinkData>({ fromId: hn1.id, toId: hn2.id, fromCommNodeId: link.fromId, toCommNodeId: link.toId });
+                    mergedLinks.forEach(link => {
+                        const l2d = graph2d.createLink2d<ViscomHyperLinkData>({ fromId: hn1.id, toId: hn2.id, fromCommNodeId: link.fromId, toCommNodeId: link.toId, weight: link.weight });
                         hyperLinks.push(l2d);
                     })
                 }
             });
         });
 
+        // const hyperGraph = CommunicationGraph.createMergedGraph(
+        //     {
+        //         originalGraph: this.commGraph,
+        //         communities: this.commGraph.communities.communities
+        //     }
+        // )
 
         // Place hypernodes on a circle
         const angleStep = 2 * Math.PI / hyperNodes.length;
@@ -114,6 +129,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         // Circle have the max radius of all hypernodes
         const maxRadius = Math.max(...hyperNodes.map(hn => hn.radius));
         const hyperRadius = maxRadius * 2;
+        this.hyperRadius = hyperRadius;
 
         console.log("Max radius", maxRadius);
 
@@ -129,19 +145,8 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         this.updateStyle();
 
         // this.emitEvent("update");
+        // super.layout(isUpdate);
         this.emitEvent("end");
-
-        // Print all nodes and links
-        console.log("nodes", this.commGraph.nodes);
-
-        const links = this.commGraph.getAllLinks(undefined, 0.2);
-        const merged = CommunicationLink.mergeLinks(links);
-
-        console.log("links", this.commGraph.getAllLinks(undefined, 0.2).map(l => `${l.fromId} -> ${l.toId}: ${l.weight}`));
-        console.log("merged", merged.map(l => `${l.fromId} -> ${l.toId}: ${l.weight}`));
-
-        this.getFilteredLinks
-
     }
 
     override updateStyle(): void {

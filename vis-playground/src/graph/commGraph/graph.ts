@@ -191,7 +191,7 @@ export class CommunicationGraph<NodeData = any> {
         // topicMap.all.get(topicId)!.push(node);
       });
     });
-    
+
     this.communities.initDefaultCommunities(this.nodes.map(node => node.id));
 
     this._updateLinks();
@@ -532,13 +532,48 @@ export class CommunicationGraph<NodeData = any> {
     const group1Ids = new Set(nodeGroup1.map(node => node.id));
     const group2Ids = new Set(nodeGroup2.map(node => node.id));
 
+    const linksInGroup1 = allLinks.filter(link => group1Ids.has(link.fromId) && group1Ids.has(link.toId));
+    const linksInGroup2 = allLinks.filter(link => group2Ids.has(link.fromId) && group2Ids.has(link.toId));
+
+    const mapLinksInGroup1: Map<string, Map<string, CommunicationLink>> = new Map();
+    const mapLinksInGroup2: Map<string, Map<string, CommunicationLink>> = new Map();
+
+    linksInGroup1.forEach((link) => {
+      if (!mapLinksInGroup1.has(link.fromId)) {
+        mapLinksInGroup1.set(link.fromId, new Map());
+      }
+      mapLinksInGroup1.get(link.fromId)!.set(link.toId, link);
+    });
+
+    linksInGroup2.forEach((link) => {
+      if (!mapLinksInGroup2.has(link.fromId)) {
+        mapLinksInGroup2.set(link.fromId, new Map());
+      }
+      mapLinksInGroup2.get(link.fromId)!.set(link.toId, link);
+    });
+
+    const linkIsInsideGroup1 = (link: CommunicationLink) => {
+      return mapLinksInGroup1.has(link.fromId) && mapLinksInGroup1.get(link.fromId)!.has(link.toId);
+    }
+
+    const linkIsInsideGroup2 = (link: CommunicationLink) => {
+      return mapLinksInGroup2.has(link.fromId) && mapLinksInGroup2.get(link.fromId)!.has(link.toId);
+    }
+
+    const linkIsBetweenGroups = (link: CommunicationLink) => {
+      return ((group1Ids.has(link.fromId) && group2Ids.has(link.toId)) || (group2Ids.has(link.fromId) && group1Ids.has(link.toId))) && !linkIsInsideGroup1(link) && !linkIsInsideGroup2(link);
+    }
+
     // Only keep the links that are between the two node groups
     allLinks.forEach((link) => {
-      if (group1Ids.has(link.fromId) && group2Ids.has(link.toId) && !group1Ids.has(link.toId)) {
-        links.push(link);
-      } else if (group2Ids.has(link.fromId) && group1Ids.has(link.toId) && !group2Ids.has(link.toId)) {
+      if (linkIsBetweenGroups(link)) {
         links.push(link);
       }
+      // if (group1Ids.has(link.fromId) && group2Ids.has(link.toId) && !group1Ids.has(link.toId)) {
+      //   links.push(link);
+      // } else if (group2Ids.has(link.fromId) && group1Ids.has(link.toId) && !group2Ids.has(link.toId)) {
+      //   links.push(link);
+      // }
     });
 
     return links;
@@ -632,5 +667,46 @@ export class CommunicationGraph<NodeData = any> {
     });
     return [minScore, maxScore];
   }
+
+  ////////////////////////////////////////////////////////////////////////////
+  // Graph Creation Methods
+  ////////////////////////////////////////////////////////////////////////////
+
+  // static createMergedHyperGraph({
+  //   originalGraph,
+  //   communities,
+  // }: {
+  //   originalGraph: CommunicationGraph;
+  //   communities: NodeCommunities;
+  // }): CommunicationGraph {
+
+  //   /** 
+  //     The merged graph contains a hypernode for each community
+  //     In the merging process, we do the following:
+  //     - Create a hypernode for each community
+  //     - Add the nodes of the community to the hypernode (sum up the scores)
+  //     - Add the links between the hypernodes based on the links between the nodes in the communities
+  //   */
+    
+  //   const hyperNodes: CommunicationNode[] = [];
+
+  //   // Create a hypernode for each community
+  //   communities.communities.forEach((community, i) => {
+  //     const nodesInComm = community.nodeIds.map(id => originalGraph.getNode(id)!);
+  //     const hyperNode = new HyperNode(`__hypernode_${i}`);
+  //     hyperNode.topics = [];
+  //     hyperNode.data = {
+  //       communityId: i,
+  //     };
+  //   });
+
+
+  //   const mergedGraph = new CommunicationGraph(
+  //     hyperNodes,
+  //     originalGraph.channels,
+  //   );
+
+  //   return mergedGraph;
+  // }
 
 }
