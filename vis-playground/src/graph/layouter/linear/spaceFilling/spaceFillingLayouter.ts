@@ -13,35 +13,38 @@ export class SpaceFillingCurveLayouter extends GraphLayouter<SpaceFillingLayoute
     override layout(isUpdate = false) {
         const ctx = this.settings.getContext({ graph2d: this.graph2d });
 
-        const sorter = this.settings.sorting.getSorter(this.commGraph, this.commonSettings);
-        const nodes = sorter.getSorting2dNodes(this.graph2d)
+        // const sorter = this.settings.sorting.getSorter(this.commGraph, this.commonSettings);
+        // const nodes = sorter.getSorting2dNodes(this.graph2d)
 
-        const order = this.settings.curve.order.getValue(ctx) ?? 2;
-        const curveType = this.settings.curve.curveType.getValue() ?? "Hilbert";
-        // const order = 2
-        // const curveType = "Hilbert";
-        const lSystem = LSystem.get(curveType);
+        // const order = this.settings.curve.order.getValue(ctx) ?? 2;
+        // const curveType = this.settings.curve.curveType.getValue() ?? "Hilbert";
+        // // const order = 2
+        // // const curveType = "Hilbert";
+        // const lSystem = LSystem.get(curveType);
 
-        const spaceFillingAlg = new SpaceFillingCurve(lSystem, order);
+        // const spaceFillingAlg = new SpaceFillingCurve(lSystem, order);
 
 
-        const nodeUnitPositions = new Map<Node2d, number>();
+        // const nodeUnitPositions = new Map<Node2d, number>();
 
-        // Assign nodes a number in interval [0, 1]
-        nodes.forEach((node, i) => {
-            nodeUnitPositions.set(node, i / (nodes.length));
-        })
+        // // Assign nodes a number in interval [0, 1]
+        // nodes.forEach((node, i) => {
+        //     nodeUnitPositions.set(node, i / (nodes.length));
+        // })
 
-        // Get the positions of the nodes on the curve
-        nodes.forEach(node => {
-            const position = nodeUnitPositions.get(node)!;
-            const point = spaceFillingAlg.getPointAtUnitInterval(position,
-                (x) => x * 10 * (this.settings.size.size.getValue() ?? 20),
-                (y) => y * 10 * (this.settings.size.size.getValue() ?? 20)
-            );
-            node.x = point.x;
-            node.y = point.y;
-        });
+        // // Get the positions of the nodes on the curve
+        // nodes.forEach(node => {
+        //     const position = nodeUnitPositions.get(node)!;
+        //     const point = spaceFillingAlg.getPointAtUnitInterval(position,
+        //         (x) => x * 10 * (this.settings.size.size.getValue() ?? 20),
+        //         (y) => y * 10 * (this.settings.size.size.getValue() ?? 20)
+        //     );
+        //     node.x = point.x;
+        //     node.y = point.y;
+        // });
+
+
+
 
         // // Adapt the links
         // const links = this.graph2d.links;

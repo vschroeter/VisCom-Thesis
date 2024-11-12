@@ -16,6 +16,8 @@ self_driving_json = [d for d in ds if "0026nodes" in d][0]
 
 # print(ds)
 
+
+
 graph = RosMetaSysGraphGenerator.read_graph_from_file(self_driving_json)
 # graph = convert_normal_graph_to_commgraph(nx.karate_club_graph())
 for link in convert_to_weighted_graph(graph).edges(data=True):

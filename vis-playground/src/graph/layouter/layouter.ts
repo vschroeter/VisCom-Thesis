@@ -7,6 +7,7 @@ import { CommonSettings } from "./settings/commonSettings";
 import { GraphLayouterSettings } from "./settings/settings";
 
 import * as d3 from 'd3';
+import { VisGraph } from "../visGraph/visGraph";
 
 export interface GraphLayouterConstructorArgs<T extends GraphLayouterSettings> {
     // nodes: Node2d[];
@@ -57,7 +58,8 @@ export class NodeScoring {
 export class GraphLayouter<T extends GraphLayouterSettings> {
 
     settings: T;
-    graph2d: Graph2d;
+    // graph2d: Graph2d;
+    visGraph: VisGraph;
 
     debugShapes: Shape[] = [];
 
@@ -99,15 +101,19 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         this.nodes = layouterArgs.nodes;
         // this.links = layouterArgs.links;
 
-        this.graph2d = Graph2d.createFromCommNodes(this.commGraph, this.nodes, this);
+        this.visGraph = VisGraph.fromCommGraph(this.commGraph, layouterArgs.commonSettings);
+
+        // this.graph2d = Graph2d.createFromCommNodes(this.commGraph, this.nodes, this);
     }
 
     get nodes2d(): Node2d[] {
-        return this.graph2d.nodes;
+        // return this.graph2d.nodes;
+        return this.visGraph.allGraphicalNodes;
     }
 
     get connections2d(): Connection2d[] {
-        return this.graph2d.links;
+        // return this.graph2d.links;
+        return this.visGraph.allGraphicalConnections;
     }
 
     adaptNodesByCenterTranslation() {
@@ -130,7 +136,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     updateLayout(isUpdate: boolean = false): void {
         this.updateGraphByCommonSettings();
-        this.updateStyle();
+        // this.updateStyle();
         this.layout(isUpdate);
     }
 
@@ -152,7 +158,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     getFilteredLinks() {
         // Filtering already done at initialization 
-        return this.graph2d.links;
+        // return this.graph2d.links;
+        return this.visGraph.allGraphicalConnections;
         // console.log("Filtering links", this.commonSettings.hideLinksThreshold.getValue());
         // const filteredLinks = this.graph2d.links.filter(l => {
         //     const weight = l.data?.weight ?? 1;
@@ -333,7 +340,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         // console.log("Render nodes", className, selection, selection.selectChildren('g.node').size(), this.graph2d.nodes);
 
         const nodes = selection.selectChildren('g.node')
-            .data(this.graph2d.nodes)
+            .data(this.visGraph.allGraphicalNodes)
             .join(
                 // enter => enter.append('g').classed('node', true).call(d => d.datum().enter(d)),
                 enter => enter.append('g').classed('node', true).each((d, i, g) => {
@@ -360,7 +367,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     renderLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Connection2d>) {
 
         const links = selection.selectChildren('g.link')
-            .data(this.graph2d.links)
+            .data(this.visGraph.allGraphicalConnections)
             .join(
                 // enter => enter.append('g').classed('node', true).call(d => d.datum().enter(d)),
                 enter => enter.append('g').classed('link', true).each((d, i, g) => {
@@ -385,11 +392,11 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     renderLabels(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
         selection.selectChildren('text')
-            .data(this.graph2d.nodes)
+            .data(this.visGraph.allGraphicalNodes)
             .join('text')
             .attr('x', (d: Node2d) => d.x + 10)
             .attr('y', (d: Node2d) => d.y)
-            .text((d: Node2d) => d.data?.id ?? "")
+            .text((d: Node2d) => d.id ?? "")
     }
 
     renderDebuggingShapes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {

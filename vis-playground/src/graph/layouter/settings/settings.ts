@@ -1,6 +1,7 @@
 import mitt from "mitt";
 import { Connection2d, Node2d } from "../../graphical";
 import { Graph2d } from "../../graphical/Graph2d";
+import { VisGraph } from "src/graph/visGraph/visGraph";
 
 const evaluateExpression = (expression: string, context: Record<string, any>): any => {
     const keys = Object.keys(context);
@@ -99,16 +100,16 @@ export class GraphLayouterSettings {
         return json;
     }
 
-    getContext({ graph2d, nodes, links }:
+    getContext({ visGraph, nodes, links }:
         {
-            graph2d?: Graph2d;
+            visGraph?: VisGraph;
             nodes?: Node2d[];
             links?: Connection2d[];
         }
     ): Record<string, any> {
 
-        const n = nodes ?? graph2d?.nodes ?? [];
-        const l = links ?? graph2d?.links ?? [];
+        const n = nodes ?? visGraph?.allLayoutNodes ?? [];
+        const l = links ?? visGraph?.getAllConnections() ?? [];
 
         return {
             n: n.length,
@@ -425,12 +426,12 @@ export class ParamWithNodeContext extends Param {
         };
 
         if (node) {
-            const cs = node.data?.successorCount ?? 0;
-            const cp = node.data?.predecessorCount ?? 0;
+            const cs = node.layoutNode.successorCount ?? 0;
+            const cp = node.layoutNode.predecessorCount ?? 0;
             const cn = cs + cp;
 
-            const co = node.data?.outDegree ?? 0;
-            const ci = node.data?.inDegree ?? 0;
+            const co = node.layoutNode.outDegree ?? 0;
+            const ci = node.layoutNode.inDegree ?? 0;
             const cl = co + ci;
 
             context = {
@@ -469,8 +470,8 @@ export class ParamWithLinkContext extends Param {
         ctx = { ...ctx, ...context };
 
         if (link) {
-            const countTargetConnections = (link.target.data?.successorCount ?? 1) + (link.target.data?.predecessorCount ?? 1) - 1;
-            const countSourceConnections = (link.source.data?.predecessorCount ?? 1) + (link.source.data?.successorCount ?? 1) - 1;
+            const countTargetConnections = (link.target.successorCount ?? 1) + (link.target.predecessorCount ?? 1) - 1;
+            const countSourceConnections = (link.source.predecessorCount ?? 1) + (link.source.successorCount ?? 1) - 1;
             ctx.ct = countTargetConnections;
             ctx.cs = countSourceConnections;
             ctx.cd = countSourceConnections + countTargetConnections;

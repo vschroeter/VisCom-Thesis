@@ -194,7 +194,7 @@ function layoutUpdated() {
             mouseenter: (d: Node2d) => {
                 // return;
                 if (!isSelected.value) return;
-                const id = d.data?.id;
+                const id = d?.id;
                 if (id) {
                     userInteractions.addHoveredNode(id)
                     // throttledUpdateUserInteractions()
@@ -204,7 +204,7 @@ function layoutUpdated() {
                 // return;
                 if (!isSelected.value) return;
 
-                const id = d.data?.id;
+                const id = d?.id;
                 if (id) {
                     userInteractions.removeHoveredNode(id)
                     // throttledUpdateUserInteractions()
@@ -212,31 +212,6 @@ function layoutUpdated() {
             },
         }
     });
-
-    // d3.select(refGRoot.value)
-    //     .call(sel => layouter?.renderAll(sel, {
-    //         nodesEvents: {
-    //             mouseenter: (d: Node2d) => {
-    //                 // return;
-    //                 if (!isSelected.value) return;
-    //                 const id = d.data?.id;
-    //                 if (id) {
-    //                     userInteractions.addHoveredNode(id)
-    //                     // throttledUpdateUserInteractions()
-    //                 }
-    //             },
-    //             mouseleave: (d: Node2d) => {
-    //                 // return;
-    //                 if (!isSelected.value) return;
-
-    //                 const id = d.data?.id;
-    //                 if (id) {
-    //                     userInteractions.removeHoveredNode(id)
-    //                     // throttledUpdateUserInteractions()
-    //                 }
-    //             },
-    //         }
-    //     }))
 
     // console.log("BBox", bBox.value, refGRoot.value)
     bBox.value = refGRoot.value?.getBBox() ?? null

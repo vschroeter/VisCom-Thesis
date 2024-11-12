@@ -1,23 +1,25 @@
-import { CommunicationChannel, CommunicationGraph, CommunicationNode } from "src/graph/commGraph";
+import { CommunicationChannel, CommunicationGraph } from "src/graph/commGraph";
 import { Sorter } from "./sorting";
 import { Clusterer } from "../clustering";
 import { IdSorter } from "./simple";
 import { TopologicalSorter } from "./topological";
 import { CommonSettings } from "src/graph/layouter/settings/commonSettings";
+import { VisGraph } from "src/graph/visGraph/visGraph";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
 
 export class FlowSorter extends Sorter {
 
     clusterer: Clusterer
     topoligicalSorter: TopologicalSorter
 
-    constructor(commGraph: CommunicationGraph, commonSettings: CommonSettings) {
-        super(commGraph, commonSettings);
+    constructor(visGraph: VisGraph, commonSettings: CommonSettings) {
+        super(visGraph, commonSettings);
 
-        this.clusterer = new Clusterer(commGraph);
-        this.topoligicalSorter = new TopologicalSorter(commGraph, commonSettings);
+        this.clusterer = new Clusterer(visGraph);
+        this.topoligicalSorter = new TopologicalSorter(visGraph, commonSettings);
     }
 
-    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
 
         if (this.startNodeSelectionSorter) {
             nodes = this.startNodeSelectionSorter.getSorting(nodes);
@@ -32,20 +34,20 @@ export class FlowSorter extends Sorter {
 
         const topoGens = this.topoligicalSorter.getTopologicalGenerations(nodes[0], undefined, nodes);
 
-        const genMap = new Map<CommunicationNode, number>()
+        const genMap = new Map<LayoutNode, number>()
         topoGens.forEach(gen => {
             gen.nodes.forEach(node => {
                 genMap.set(node, gen.generation)
             })
         })
 
-        const sorted: CommunicationNode[] = []
-        const sortedSet = new Set<CommunicationNode>()
+        const sorted: LayoutNode[] = []
+        const sortedSet = new Set<LayoutNode>()
 
         // console.log("!!!FLOW SORTING")
         // return topoSorting
 
-        const visitNode = (node: CommunicationNode, currentlyVisited = new Set<CommunicationNode>()) => {
+        const visitNode = (node: LayoutNode, currentlyVisited = new Set<LayoutNode>()) => {
             // If the node is already sorted, we dont need to visit it again
             if (sortedSet.has(node)) return
 

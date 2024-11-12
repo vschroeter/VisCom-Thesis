@@ -1,11 +1,13 @@
-import { CommunicationChannel, CommunicationGraph, CommunicationNode } from "src/graph/commGraph";
+import { CommunicationChannel, CommunicationGraph } from "src/graph/commGraph";
 import { Sorter } from "./sorting";
 import { Clusterer } from "../clustering";
 import { IdSorter } from "./simple";
 import { CommonSettings } from "src/graph/layouter/settings/commonSettings";
+import { VisGraph } from "src/graph/visGraph/visGraph";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
 
 export type TopologicalGeneration = {
-    nodes: CommunicationNode[],
+    nodes: LayoutNode[],
     generation: number
 }
 
@@ -13,45 +15,45 @@ export class TopologicalSorter extends Sorter {
 
     clusterer: Clusterer
 
-    constructor(commGraph: CommunicationGraph, commonSettings: CommonSettings) {
-        super(commGraph, commonSettings);
+    constructor(visGraph: VisGraph, commonSettings: CommonSettings) {
+        super(visGraph, commonSettings);
 
-        this.clusterer = new Clusterer(commGraph);
+        this.clusterer = new Clusterer(visGraph);
     }
 
-    getTopologicalGenerations(startNode?: CommunicationNode, channels?: CommunicationChannel[], nodes?: (string | CommunicationNode)[]): TopologicalGeneration[] {
+    getTopologicalGenerations(startNode?: LayoutNode, channels?: CommunicationChannel[], nodes?: (string | LayoutNode)[]): TopologicalGeneration[] {
         // Get the connection component that this node belongs to or use the given nodes
         // const component = nodes ?? this.getConnectedComponent(startNode, includeServiceConnections)
 
         if (nodes) {
-            nodes = nodes.map(node => this.commGraph.getNode(node)!) as CommunicationNode[]
+            nodes = nodes.map(node => this.visGraph.getNode(node)!) as LayoutNode[]
         }
 
-        const component = (nodes as CommunicationNode[]) ?? this.clusterer.getConnectedComponent(startNode, channels)
+        const component = (nodes as LayoutNode[]) ?? this.clusterer.getConnectedComponent(startNode, channels)
 
         if (component.length == 0) return []
 
-        const mapVisitedNodeToIteration = new Map<CommunicationNode, number>()
-        const nonVisitedNodes = new Set<CommunicationNode>(component)
+        const mapVisitedNodeToIteration = new Map<LayoutNode, number>()
+        const nonVisitedNodes = new Set<LayoutNode>(component)
 
-        const mapNodeToItsParents = new Map<CommunicationNode, Set<CommunicationNode>>()
-        const mapNodeToItsSiblings = new Map<CommunicationNode, Set<CommunicationNode>>()
+        const mapNodeToItsParents = new Map<LayoutNode, Set<LayoutNode>>()
+        const mapNodeToItsSiblings = new Map<LayoutNode, Set<LayoutNode>>()
 
-        let currentNode: CommunicationNode | null = startNode ?? component[0]
+        let currentNode: LayoutNode | null = startNode ?? component[0]
         let currentIteration = 0
 
         // Repeat until all nodes are visited
         while (nonVisitedNodes.size > 0) {
 
-            const queue: CommunicationNode[] = [currentNode].filter(node => node !== null) as CommunicationNode[]
+            const queue: LayoutNode[] = [currentNode].filter(node => node !== null) as LayoutNode[]
 
             // Repeat until the queue is empty
             while (queue.length > 0) {
                 const node = queue.shift()!
                 if (mapVisitedNodeToIteration.has(node)) continue
 
-                if (!mapNodeToItsParents.has(node)) mapNodeToItsParents.set(node, new Set<CommunicationNode>())
-                if (!mapNodeToItsSiblings.has(node)) mapNodeToItsSiblings.set(node, new Set<CommunicationNode>())
+                if (!mapNodeToItsParents.has(node)) mapNodeToItsParents.set(node, new Set<LayoutNode>())
+                if (!mapNodeToItsSiblings.has(node)) mapNodeToItsSiblings.set(node, new Set<LayoutNode>())
 
                 // Mark current node as visited
                 mapVisitedNodeToIteration.set(node, currentIteration)
@@ -65,8 +67,8 @@ export class TopologicalSorter extends Sorter {
 
                 // Save the parent node for each successor node if they were not visited yet
                 for (const successorNode of successorNodes) {
-                    if (!mapNodeToItsParents.has(successorNode)) mapNodeToItsParents.set(successorNode, new Set<CommunicationNode>())
-                    if (!mapNodeToItsSiblings.has(successorNode)) mapNodeToItsSiblings.set(successorNode, new Set<CommunicationNode>())
+                    if (!mapNodeToItsParents.has(successorNode)) mapNodeToItsParents.set(successorNode, new Set<LayoutNode>())
+                    if (!mapNodeToItsSiblings.has(successorNode)) mapNodeToItsSiblings.set(successorNode, new Set<LayoutNode>())
 
                     // If the successor node was already visited in the same iteration  
                     if (mapVisitedNodeToIteration.has(successorNode) && mapVisitedNodeToIteration.get(successorNode) == currentIteration) {
@@ -82,7 +84,7 @@ export class TopologicalSorter extends Sorter {
                         else {
                             let hasCycle = false
                             const ancestors = new Set(mapNodeToItsParents.get(node)!)
-                            const checkedAncestors = new Set<CommunicationNode>()
+                            const checkedAncestors = new Set<LayoutNode>()
 
                             // Repeat until there are no ancestors left
                             while (ancestors.size > 0) {
@@ -119,11 +121,11 @@ export class TopologicalSorter extends Sorter {
 
 
         // From the parent and sibling map we can now create the generations
-        const generationMap = new Map<CommunicationNode, number>()
-        const nonAssignedNodes = new Set<CommunicationNode>(component)
-        const gen0nodes: Set<CommunicationNode> = new Set<CommunicationNode>()
+        const generationMap = new Map<LayoutNode, number>()
+        const nonAssignedNodes = new Set<LayoutNode>(component)
+        const gen0nodes: Set<LayoutNode> = new Set<LayoutNode>()
 
-        const components = this.clusterer.getConnectedComponents(nodes as CommunicationNode[]);
+        const components = this.clusterer.getConnectedComponents(nodes as LayoutNode[]);
 
         // Check the generation 0 nodes for each component,
         // otherwise there could be a deadlock between sibling nodes
@@ -187,7 +189,7 @@ export class TopologicalSorter extends Sorter {
             const node = item[0]
             const genNr = item[1]
             if (!generations.has(genNr)) {
-                generations.set(genNr, { nodes: new Array<CommunicationNode>(), generation: genNr })
+                generations.set(genNr, { nodes: new Array<LayoutNode>(), generation: genNr })
             }
             generations.get(genNr)!.nodes.push(node)
         });
@@ -198,7 +200,7 @@ export class TopologicalSorter extends Sorter {
         // increase every generation of parent nodes that dont have intermediately children.
         // Thus we have less distance between the nodes
 
-        const adaptedGenerationMap = new Map<CommunicationNode, number>()
+        const adaptedGenerationMap = new Map<LayoutNode, number>()
 
         // Iterate over all generations in reverse order
         for (let i = generationList.length - 1; i >= 0; i--) {
@@ -224,7 +226,7 @@ export class TopologicalSorter extends Sorter {
             const node = item[0]
             const genNr = item[1]
             if (!adaptedGenerations.has(genNr)) {
-                adaptedGenerations.set(genNr, { nodes: new Array<CommunicationNode>(), generation: genNr })
+                adaptedGenerations.set(genNr, { nodes: new Array<LayoutNode>(), generation: genNr })
             }
             adaptedGenerations.get(genNr)!.nodes.push(node)
         });
@@ -235,7 +237,7 @@ export class TopologicalSorter extends Sorter {
         return adaptedGenerationList
     }
 
-    override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
+    override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
 
         if (this.startNodeSelectionSorter) {
             nodes = this.startNodeSelectionSorter.getSorting(nodes);
@@ -245,7 +247,7 @@ export class TopologicalSorter extends Sorter {
 
         const generations = this.getTopologicalGenerations(nodes[0], undefined, nodes);
 
-        const innerSorter = this.secondarySorting ?? new IdSorter(this.commGraph, this.commonSettings);
+        const innerSorter = this.secondarySorting ?? new IdSorter(this.visGraph, this.commonSettings);
         const sortedNodes = generations.map(gen => innerSorter.getSorting(gen.nodes)).flat()
         return sortedNodes
     }

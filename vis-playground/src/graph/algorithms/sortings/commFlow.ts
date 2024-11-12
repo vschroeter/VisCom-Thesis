@@ -5,9 +5,11 @@ import { IdSorter } from "./simple";
 import { TopologicalSorter } from "./topological";
 import { WeightedTopologicalSorter } from "./weightedTopological";
 import { CommonSettings } from "src/graph/layouter/settings/commonSettings";
+import { VisGraph } from "src/graph/visGraph/visGraph";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
 
 export type TopologicalGeneration = {
-    nodes: CommunicationNode[],
+    nodes: LayoutNode[],
     generation: number
 }
 
@@ -16,14 +18,14 @@ export class CommFlowSorter extends Sorter {
     clusterer: Clusterer
     topoligical: WeightedTopologicalSorter
 
-    constructor(commGraph: CommunicationGraph, commonSettings: CommonSettings) {
-        super(commGraph, commonSettings);
+    constructor(visGraph: VisGraph, commonSettings: CommonSettings) {
+        super(visGraph, commonSettings);
 
-        this.clusterer = new Clusterer(commGraph);
-        this.topoligical = new WeightedTopologicalSorter(commGraph, commonSettings);
+        this.clusterer = new Clusterer(visGraph);
+        this.topoligical = new WeightedTopologicalSorter(visGraph, commonSettings);
     }
 
-    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
 
         /**
         Communication flow sorting does not work like the normal flow sorting.
@@ -69,7 +71,7 @@ export class CommFlowSorter extends Sorter {
         const mapNodeToParentsCycleFree = this.topoligical.getCycleFreeParentMap(nodes);
 
         // Create the childMap based on the parentMap
-        const mapNodeToChildrenCycleFree = new Map<CommunicationNode, Map<CommunicationNode, number>>()
+        const mapNodeToChildrenCycleFree = new Map<LayoutNode, Map<LayoutNode, number>>()
 
         mapNodeToParentsCycleFree.forEach((parentAndWeights, node) => {
             parentAndWeights.forEach((weight, parent) => {
@@ -80,7 +82,7 @@ export class CommFlowSorter extends Sorter {
             })
         })
 
-        const successorsOfNode = (node: CommunicationNode) => {            
+        const successorsOfNode = (node: LayoutNode) => {            
             if (!mapNodeToChildrenCycleFree.has(node)) return []
 
             const childrenAndWeights = mapNodeToChildrenCycleFree.get(node)!
@@ -88,7 +90,7 @@ export class CommFlowSorter extends Sorter {
             return Array.from(childrenAndWeights).sort((a, b) => b[1] - a[1]).map(item => item[0])
         }
 
-        const predecessorsOfNode = (node: CommunicationNode) => {
+        const predecessorsOfNode = (node: LayoutNode) => {
             if (!mapNodeToParentsCycleFree.has(node)) return []
 
             const parentsAndWeights = mapNodeToParentsCycleFree.get(node)!
@@ -99,20 +101,20 @@ export class CommFlowSorter extends Sorter {
         console.log("TopoGens", topoGens)
 
 
-        const genMap = new Map<CommunicationNode, number>()
+        const genMap = new Map<LayoutNode, number>()
         topoGens.forEach(gen => {
             gen.nodes.forEach(node => {
                 genMap.set(node, gen.generation)
             })
         })
 
-        const sorted: CommunicationNode[] = []
-        const sortedSet = new Set<CommunicationNode>()
+        const sorted: LayoutNode[] = []
+        const sortedSet = new Set<LayoutNode>()
 
         // console.log("!!!FLOW SORTING")
         // return topoSorting
 
-        const visitNode = (node: CommunicationNode, currentlyVisited = new Set<CommunicationNode>()) => {
+        const visitNode = (node: LayoutNode, currentlyVisited = new Set<LayoutNode>()) => {
             // If the node is already sorted, we dont need to visit it again
             if (sortedSet.has(node)) return
 

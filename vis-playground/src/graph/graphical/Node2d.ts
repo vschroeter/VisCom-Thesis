@@ -2,16 +2,19 @@ import _ from 'lodash';
 import { CommunicationNode } from '../commGraph';
 import { NodeCommunities } from '../commGraph/community';
 import { RenderArgs } from '../layouter/layouter';
-import { Anchor2d } from './';
+import { Anchor } from './';
 import { StrokeStyle } from './primitives/StrokeStyle';
 
 import * as d3 from 'd3';
 import { SvgRenderable } from './Renderable';
 import mitt from 'mitt';
 import { Circle, Point, Vector } from '2d-geometry';
+import { LayoutNode } from '../visGraph/layoutNode';
 
 export interface Node2dData {
   id: string;
+  x?: number;
+  y?: number;
   score?: number;
   successorCount?: number;
   predecessorCount?: number;
@@ -20,18 +23,22 @@ export interface Node2dData {
   communities?: NodeCommunities;
 }
 
-export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { // <NodeData>
+// export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { // <NodeData>
+export class Node2d extends SvgRenderable { // <NodeData>
 
   // Center of the node
   center: Point;
 
   // The (abstract communication graph's node) data of the node
   // data?: CommunicationNode // NodeData;
-  data: T;
+  // data: T;
+
+  // The related layout node defining this node's properties
+  layoutNode: LayoutNode
 
   // The id of the node
   get id() {
-    return this.data.id;
+    return this.layoutNode.id;
   }
 
   // The radius of the node. Can also have an abstract meaning for non-circular nodes.
@@ -100,12 +107,15 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
     positionUpdated: void
   }>();
 
-  constructor(data: T, center?: Point | null) {
+  constructor(layoutNode: LayoutNode) {
 
     super("circle", "node2d");
 
-    this.center = center || new Point(0, 0);
-    this.data = data;
+    this.center = new Point(0, 0);
+    // this.center.x = data.x ?? 0;
+    // this.center.y = data.y ?? 0;
+
+    this.layoutNode = layoutNode;
 
     this.updateCallbacks.push(...[this.renderStyleFill, this.renderStyleStroke, this.renderStyleOpacity, this.renderPositionAndSize]);
   }
@@ -135,48 +145,48 @@ export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { /
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Anchor methods
-  ////////////////////////////////////////////////////////////////////////////
+  // ////////////////////////////////////////////////////////////////////////////
+  // // Anchor methods
+  // ////////////////////////////////////////////////////////////////////////////
 
 
-  /**
-   * Get the anchor of the node directed towards a given point
-   * @param point The point, towards which the anchor should be directed
-   */
-  getAnchor(point: Point): Anchor2d;
-  /**
-   * Get the anchor of the node directed towards a given vector
-   * @param vector The vector originating from the node's center, towards which the anchor should be directed
-   */
-  getAnchor(vector: Vector): Anchor2d;
-  getAnchor(param: Point | Vector): Anchor2d {
+  // /**
+  //  * Get the anchor of the node directed towards a given point
+  //  * @param point The point, towards which the anchor should be directed
+  //  */
+  // getAnchor(point: Point): Anchor2d;
+  // /**
+  //  * Get the anchor of the node directed towards a given vector
+  //  * @param vector The vector originating from the node's center, towards which the anchor should be directed
+  //  */
+  // getAnchor(vector: Vector): Anchor2d;
+  // getAnchor(param: Point | Vector): Anchor2d {
 
-    let vector: Vector | null = null;
-    if (param instanceof Point) {
-      vector = new Vector(param.x - this.center.x, param.y - this.center.y);
-    } else if (param instanceof Vector) {
-      vector = param;
-    }
+  //   let vector: Vector | null = null;
+  //   if (param instanceof Point) {
+  //     vector = new Vector(param.x - this.center.x, param.y - this.center.y);
+  //   } else if (param instanceof Vector) {
+  //     vector = param;
+  //   }
 
-    if (!vector) {
-      throw new Error("Invalid parameter type");
-    }
+  //   if (!vector) {
+  //     throw new Error("Invalid parameter type");
+  //   }
 
-    // For the abstract circle node, the direction is the same as the vector
-    // The anchor point is the intersection of the circle and the vector
+  //   // For the abstract circle node, the direction is the same as the vector
+  //   // The anchor point is the intersection of the circle and the vector
 
-    const direction = vector;
-    // console.log('[NODE] getAnchor', direction, this);
-    let anchorPoint: Point;
-    if (direction.length == 0) {
-      anchorPoint = this.center;
-    } else {
-      anchorPoint = this.center.translate(direction.normalize().multiply(this.radius));
-    }
-    return new Anchor2d(anchorPoint, direction);
+  //   const direction = vector;
+  //   // console.log('[NODE] getAnchor', direction, this);
+  //   let anchorPoint: Point;
+  //   if (direction.length == 0) {
+  //     anchorPoint = this.center;
+  //   } else {
+  //     anchorPoint = this.center.translate(direction.normalize().multiply(this.radius));
+  //   }
+  //   return new Anchor2d(anchorPoint, direction);
 
-  }
+  // }
 
   //++++ Fill ++++//
 

@@ -1,27 +1,28 @@
 import { CommunicationGraph, CommunicationNode } from "src/graph/commGraph";
 import { Sorter } from "./sorting";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
 
 export class RandomSorter extends Sorter {
-    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
         return nodes.sort(() => Math.random() - 0.5);
     }
 }
 
 export class IdSorter extends Sorter {
-    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {        
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {        
         return nodes.sort((a, b) => a.id.localeCompare(b.id));        
     }
 }
 
 
 export class DegreeSorter extends Sorter {
-    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {        
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {        
         return nodes.sort((a, b) => a.degree - b.degree).reverse();      
     }
 }
 
 export class ChildrenCountSorter extends Sorter {
-    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {        
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {        
         return nodes.sort((a, b) => a.getSuccessors().length - b.getSuccessors().length).reverse();
     }
 }
@@ -29,13 +30,13 @@ export class ChildrenCountSorter extends Sorter {
 
 
 export class BreadthFirstSorter extends Sorter {
-    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
 
         if (this.startNodeSelectionSorter) {
             nodes = this.startNodeSelectionSorter.getSorting(nodes);
         }
-        const visited = new Set<CommunicationNode>();
-        const sorted: CommunicationNode[] = [];
+        const visited = new Set<LayoutNode>();
+        const sorted: LayoutNode[] = [];
 
         while (nodes.length > 0) {
             const nextNode = nodes.shift()!;
@@ -61,15 +62,15 @@ export class BreadthFirstSorter extends Sorter {
 }
 
 export class DepthFirstSorter extends Sorter {
-    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
 
         if (this.startNodeSelectionSorter) {
             nodes = this.startNodeSelectionSorter.getSorting(nodes);
         }
-        const visited = new Set<CommunicationNode>();
-        const sorted: CommunicationNode[] = [];
+        const visited = new Set<LayoutNode>();
+        const sorted: LayoutNode[] = [];
 
-        const visit = (node: CommunicationNode) => {
+        const visit = (node: LayoutNode) => {
             if (visited.has(node)) {
                 return;
             }

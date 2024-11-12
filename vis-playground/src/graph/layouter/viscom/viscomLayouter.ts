@@ -83,6 +83,14 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
 
     override layout(isUpdate = false) {
 
+
+        // Transform visgraph to hypergraph
+        
+
+
+
+
+
         const hyperNodes: ViscomHyperNode[] = [];
         // Create a hypernode for each community
         this.commGraph.communities.communities.forEach((community, i) => {

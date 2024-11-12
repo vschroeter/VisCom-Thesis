@@ -1,12 +1,14 @@
-import { CommunicationChannel, CommunicationGraph, CommunicationLink, CommunicationNode } from "src/graph/commGraph";
+import { CommunicationChannel, CommunicationGraph, CommunicationLink } from "src/graph/commGraph";
 import { Sorter } from "./sorting";
 import { Clusterer } from "../clustering";
 import { IdSorter } from "./simple";
 import { TopologicalSorter } from "./topological";
 import { CommonSettings } from "src/graph/layouter/settings/commonSettings";
+import { VisGraph } from "src/graph/visGraph/visGraph";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
 
 export type TopologicalGeneration = {
-    nodes: CommunicationNode[],
+    nodes: LayoutNode[],
     generation: number
 }
 
@@ -15,50 +17,50 @@ export class WeightedTopologicalSorter extends Sorter {
     clusterer: Clusterer
     topoligicalSorter: TopologicalSorter
 
-    constructor(commGraph: CommunicationGraph, commonSettings: CommonSettings) {
-        super(commGraph, commonSettings);
+    constructor(visGraph: VisGraph, commonSettings: CommonSettings) {
+        super(visGraph, commonSettings);
 
-        this.clusterer = new Clusterer(commGraph);
-        this.topoligicalSorter = new TopologicalSorter(commGraph, commonSettings);
+        this.clusterer = new Clusterer(visGraph);
+        this.topoligicalSorter = new TopologicalSorter(visGraph, commonSettings);
     }
 
-    getCycleFreeParentMap(nodes?: CommunicationNode[], channels?: CommunicationChannel[]): Map<CommunicationNode, Map<CommunicationNode, number>> {
-        const mapNodeToItsParents = new Map<CommunicationNode, Map<CommunicationNode, number>>()
+    getCycleFreeParentMap(nodes?: LayoutNode[], channels?: CommunicationChannel[]): Map<LayoutNode, Map<LayoutNode, number>> {
+        const mapNodeToItsParents = new Map<LayoutNode, Map<LayoutNode, number>>()
 
         if (nodes) {
-            nodes = nodes.map(node => this.commGraph.getNode(node)!) as CommunicationNode[]
+            nodes = nodes.map(node => this.visGraph.getNode(node)!) as LayoutNode[]
         } else {
-            nodes = this.commGraph.nodes;
+            nodes = this.visGraph.nodes;
         }
 
-        const mapNodeToItsAncestors = new Map<CommunicationNode, Set<CommunicationNode>>()
-        const mapNodeToItsChildren = new Map<CommunicationNode, Set<CommunicationNode>>()
+        const mapNodeToItsAncestors = new Map<LayoutNode, Set<LayoutNode>>()
+        const mapNodeToItsChildren = new Map<LayoutNode, Set<LayoutNode>>()
 
         // Get all merged connections and sort them by their weight
-        const allLinks = this.commGraph.getAllLinksOfNodes(nodes, channels)
-        const mergedLinks = CommunicationLink.mergeLinks(allLinks)
+        const allLinks = this.visGraph.getAllConnectionsOfNodes(nodes, channels)
+        // const mergedLinks = CommunicationLink.mergeLinks(allLinks)
 
         // TODO: ist es schlimm, dass hier Broadcast Connections mit denselben Gewichten komplett rausgefiltert werden? Vllt doch Sibling-Konzept wieder einführen?
-        const combinedLinks = CommunicationLink.filterLinksByWeight(CommunicationLink.combineInAndOutLinks(allLinks), this.commonSettings.hideLinksThreshold.getValue() ?? 0);
+        // const combinedLinks = CommunicationLink.filterLinksByWeight(CommunicationLink.combineInAndOutLinks(allLinks), this.commonSettings.hideLinksThreshold.getValue() ?? 0);
 
         // console.log("All links", allLinks);
         // console.log("Merged links", mergedLinks);
         // console.log("Combined links", combinedLinks);
 
         // Sort links by weight in descending order
-        const sortedLinks = combinedLinks.sort((a, b) => {
+        const sortedLinks = allLinks.sort((a, b) => {
 
             if (Math.abs(a.weight - b.weight) < 0.01) {
                 // If the weights are equal, we sort by the score of the fromNode in descending order.
                 // This way we make sure, that the links from a node with a higher score are visited first.
 
-                if (Math.abs(a.fromNode.score - b.fromNode.score) < 0.01) {
+                if (Math.abs(a.source.score - b.source.score) < 0.01) {
                     // If the scores are equal, we sort by the id of the fromNode in ascending order.
                     // This way we make sure, that the links from a node with a lower id are visited first.
-                    return b.toNode.score - a.toNode.score;
+                    return b.target.score - a.target.score;
                 }
 
-                return b.fromNode.score - a.fromNode.score;
+                return b.source.score - a.source.score;
             }
 
             return b.weight - a.weight
@@ -71,13 +73,15 @@ export class WeightedTopologicalSorter extends Sorter {
         while (sortedLinks.length > 0) {
             const link = sortedLinks.shift()!;
 
-            const fromNode = link.fromNode
-            const toNode = link.toNode
+            const fromNode = link.source
+            const toNode = link.target
 
-            if (!mapNodeToItsParents.has(toNode)) mapNodeToItsParents.set(toNode, new Map<CommunicationNode, number>())
-            if (!mapNodeToItsAncestors.has(toNode)) mapNodeToItsAncestors.set(toNode, new Set<CommunicationNode>())
-            if (!mapNodeToItsAncestors.has(fromNode)) mapNodeToItsAncestors.set(fromNode, new Set<CommunicationNode>())
-            if (!mapNodeToItsChildren.has(fromNode)) mapNodeToItsChildren.set(fromNode, new Set<CommunicationNode>())
+            if (fromNode == toNode) continue;
+
+            if (!mapNodeToItsParents.has(toNode)) mapNodeToItsParents.set(toNode, new Map<LayoutNode, number>())
+            if (!mapNodeToItsAncestors.has(toNode)) mapNodeToItsAncestors.set(toNode, new Set<LayoutNode>())
+            if (!mapNodeToItsAncestors.has(fromNode)) mapNodeToItsAncestors.set(fromNode, new Set<LayoutNode>())
+            if (!mapNodeToItsChildren.has(fromNode)) mapNodeToItsChildren.set(fromNode, new Set<LayoutNode>())
 
             // We have to check, if the toNode is already an ancestor of the fromNode.
             // In this case we have a cycle. This cycle gets ignored.
@@ -101,7 +105,7 @@ export class WeightedTopologicalSorter extends Sorter {
 
             while (childrenToVisit.length > 0) {
                 const child = childrenToVisit.shift()!
-                if (!mapNodeToItsAncestors.has(child)) mapNodeToItsAncestors.set(child, new Set<CommunicationNode>())
+                if (!mapNodeToItsAncestors.has(child)) mapNodeToItsAncestors.set(child, new Set<LayoutNode>())
                 newAncestors.forEach(ancestor => mapNodeToItsAncestors.get(child)!.add(ancestor))
                 if (mapNodeToItsChildren.has(child)) {
                     childrenToVisit.push(...Array.from(mapNodeToItsChildren.get(child)!))
@@ -110,25 +114,25 @@ export class WeightedTopologicalSorter extends Sorter {
         }
 
         // Get all nodes of the component that are not visited yet
-        const nonVisitedNodes = new Set<CommunicationNode>(nodes)
+        const nonVisitedNodes = new Set<LayoutNode>(nodes)
         Array.from(mapNodeToItsParents.keys()).forEach(node => nonVisitedNodes.delete(node))
 
         // If there are still non visited nodes, we have to add them to the parent map with an empty parent set
         nonVisitedNodes.forEach(node => {
-            if (!mapNodeToItsParents.has(node)) mapNodeToItsParents.set(node, new Map<CommunicationNode, number>())
+            if (!mapNodeToItsParents.has(node)) mapNodeToItsParents.set(node, new Map<LayoutNode, number>())
         });
 
         return mapNodeToItsParents
     }
 
-    getWeightedTopologicalGenerations(nodes?: CommunicationNode[], channels?: CommunicationChannel[]): TopologicalGeneration[] {
+    getWeightedTopologicalGenerations(nodes?: LayoutNode[], channels?: CommunicationChannel[]): TopologicalGeneration[] {
         // Get the connection component that this node belongs to or use the given nodes
         // const component = nodes ?? this.getConnectedComponent(startNode, includeServiceConnections)
 
         const allGenerations = new Array<TopologicalGeneration>()
 
         if (nodes) {
-            nodes = nodes.map(node => this.commGraph.getNode(node)!) as CommunicationNode[]
+            nodes = nodes.map(node => this.visGraph.getNode(node)!) as LayoutNode[]
         }
 
         const components = this.clusterer.getConnectedComponents(nodes, channels)
@@ -139,9 +143,9 @@ export class WeightedTopologicalSorter extends Sorter {
             const mapNodeToItsParentsCycleFree = this.getCycleFreeParentMap(component, channels);
             
             // From the parent map we can now create the generations
-            const generationMap = new Map<CommunicationNode, number>()
-            const nonAssignedNodes = new Set<CommunicationNode>(component)
-            const gen0nodes: Set<CommunicationNode> = new Set<CommunicationNode>()
+            const generationMap = new Map<LayoutNode, number>()
+            const nonAssignedNodes = new Set<LayoutNode>(component)
+            const gen0nodes: Set<LayoutNode> = new Set<LayoutNode>()
 
             // Check the generation 0 nodes for each component,
             // otherwise there could be a deadlock between sibling nodes
@@ -206,7 +210,7 @@ export class WeightedTopologicalSorter extends Sorter {
                 const node = item[0]
                 const genNr = item[1]
                 if (!generations.has(genNr)) {
-                    generations.set(genNr, { nodes: new Array<CommunicationNode>(), generation: genNr })
+                    generations.set(genNr, { nodes: new Array<LayoutNode>(), generation: genNr })
                 }
                 generations.get(genNr)!.nodes.push(node)
             });
@@ -217,7 +221,7 @@ export class WeightedTopologicalSorter extends Sorter {
             // increase every generation of parent nodes that don't have intermediately children.
             // Thus we have less distance between the nodes
 
-            const adaptedGenerationMap = new Map<CommunicationNode, number>()
+            const adaptedGenerationMap = new Map<LayoutNode, number>()
 
             // Iterate over all generations in reverse order
             for (let i = generationList.length - 1; i >= 0; i--) {
@@ -243,7 +247,7 @@ export class WeightedTopologicalSorter extends Sorter {
                 const node = item[0]
                 const genNr = item[1]
                 if (!adaptedGenerations.has(genNr)) {
-                    adaptedGenerations.set(genNr, { nodes: new Array<CommunicationNode>(), generation: genNr })
+                    adaptedGenerations.set(genNr, { nodes: new Array<LayoutNode>(), generation: genNr })
                 }
                 adaptedGenerations.get(genNr)!.nodes.push(node)
             });
@@ -271,12 +275,12 @@ export class WeightedTopologicalSorter extends Sorter {
         return mergedGenerations
     }
 
-    protected override sortingImplementation(nodes: CommunicationNode[]): CommunicationNode[] {
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
         if (nodes.length == 0) return []
 
         const generations = this.getWeightedTopologicalGenerations(nodes);
 
-        const innerSorter = this.secondarySorting ?? new IdSorter(this.commGraph, this.commonSettings);
+        const innerSorter = this.secondarySorting ?? new IdSorter(this.visGraph, this.commonSettings);
         const sortedNodes = generations.map(gen => innerSorter.getSorting(gen.nodes)).flat()
         return sortedNodes
     }

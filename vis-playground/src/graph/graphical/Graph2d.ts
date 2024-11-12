@@ -1,6 +1,8 @@
 import { CommunicationGraph, CommunicationLink, CommunicationNode } from "../commGraph";
 import { GraphLayouter } from "../layouter/layouter";
 import { GraphLayouterSettings } from "../layouter/settings/settings";
+import { VisGraph } from "../visGraph/visGraph";
+import { LayoutNode } from "../visGraph/layoutNode";
 import { MouseEvents } from "../visualizations/interactions";
 import { Connection2d, Connection2dData } from "./Connection2d";
 import { Node2d, Node2dData } from "./Node2d";
@@ -53,6 +55,18 @@ export class Graph2d {
         return graph;
     }
 
+    static createFromVisGraph(visGraph: VisGraph) {
+
+        const graph = new Graph2d();
+
+        visGraph.nodes.forEach(node => graph.createNode2dFromVisNode(node));
+
+        visGraph.getAllConnections().forEach(connection => graph.createLink2d(connection));
+
+        return graph;
+
+    }
+
     static createFromNodesAndLinks(nodes: Node2dData[], links: Connection2dData[], layouter?: GraphLayouter<any>): Graph2d {
 
         const graph = new Graph2d(layouter);
@@ -91,6 +105,18 @@ export class Graph2d {
         // node2d.score = commGraph.ranking.getScoreOfNode(node) ?? 0;
         node2d.score = node.score ?? 0;
         node2d.communities = node.communities;
+        
+        this.addNode2d(node2d);
+        return node2d;
+    }
+
+    createNode2dFromVisNode(node: LayoutNode): Node2d<LayoutNode> {
+        const node2d = new Node2d(node);
+        // node2d.score = commGraph.ranking.getScoreOfNode(node) ?? 0;
+        node2d.score = node.score ?? 0;
+        node2d.radius = node.radius ?? 10;
+
+        // node2d.communities = node.communities;
         
         this.addNode2d(node2d);
         return node2d;

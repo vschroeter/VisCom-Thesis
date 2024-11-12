@@ -3,6 +3,7 @@ import { GraphLayouterSettings, Param, ParamChoice, Setting } from "./settings"
 import { Sorter } from "src/graph/algorithms/sortings/sorting";
 import { CommunicationGraph } from "src/graph/commGraph";
 import { CommonSettings } from "./commonSettings";
+import { VisGraph } from "src/graph/visGraph/visGraph";
 
 export class LinearSortingSettings extends Setting {
 
@@ -50,24 +51,26 @@ export class LinearSortingSettings extends Setting {
         });
     }
 
-    protected instantiateSorter(sortingKey: string, commGraph: CommunicationGraph, commonSettings: CommonSettings, reversed: boolean = false): Sorter {
+    // protected instantiateSorter(sortingKey: string, commGraph: CommunicationGraph, commonSettings: CommonSettings, reversed: boolean = false): Sorter {
+    protected instantiateSorter(sortingKey: string, visGraph: VisGraph, commonSettings: CommonSettings, reversed: boolean = false): Sorter {
         const sorterCls = mapKeyToSortingMethod.get(sortingKey)!.sorter;
-        return new sorterCls(commGraph, commonSettings, reversed);
+        return new sorterCls(visGraph, commonSettings, reversed);
     }
 
-    getSorter(commGraph: CommunicationGraph, commonSettings: CommonSettings): Sorter {
+    // getSorter(commGraph: CommunicationGraph, commonSettings: CommonSettings): Sorter {
+    getSorter(visGraph: VisGraph, commonSettings: CommonSettings): Sorter {
         if (this.sorting.textValue === undefined) {
             throw new Error("No sorting method selected.");
         }
 
         const reversed = this.reversed.getValue()!;
 
-        const sorter = this.instantiateSorter(this.sorting.textValue, commGraph, commonSettings, reversed);
+        const sorter = this.instantiateSorter(this.sorting.textValue, visGraph, commonSettings, reversed);
         if (this.startNodeSelection.textValue !== undefined) {
-            sorter.startNodeSelectionSorter = this.instantiateSorter(this.startNodeSelection.textValue, commGraph, commonSettings, reversed);
+            sorter.startNodeSelectionSorter = this.instantiateSorter(this.startNodeSelection.textValue, visGraph, commonSettings, reversed);
         }
         if (this.secondLevelSorting.textValue !== undefined) {
-            sorter.secondarySorting = this.instantiateSorter(this.secondLevelSorting.textValue, commGraph, commonSettings, reversed);
+            sorter.secondarySorting = this.instantiateSorter(this.secondLevelSorting.textValue, visGraph, commonSettings, reversed);
         }
         return sorter;
     }

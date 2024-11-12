@@ -1,12 +1,14 @@
 import { CommunicationLink } from "../commGraph";
 import { Node2d } from "./";
-import { Anchor2d } from "./";
+import { Anchor } from "./";
 import { EllipticArc } from "./";
 // import { Point } from "./";
 
 import * as d3 from "d3"
 import { SvgRenderable } from "./Renderable";
 import { Point } from "2d-geometry";
+import { LayoutConnection } from "../visGraph/layoutConnection";
+import { LayoutNode } from "../visGraph/layoutNode";
 
 export type CurveStyle = "linear" | "basis" | "natural" | d3.CurveFactory
 
@@ -34,7 +36,7 @@ export class Arrow2D {
         this.height = size
     }
 
-    getSvgPath(anchor: Anchor2d) {
+    getSvgPath(anchor: Anchor) {
 
         const startPoint = anchor.anchorPoint
         const direction = anchor.direction
@@ -70,21 +72,23 @@ export interface Connection2dData {
     weight?: number;
 }
 
-export class Connection2d<T extends Connection2dData = Connection2dData> extends SvgRenderable {
+// export class Connection2d<T extends Connection2dData = Connection2dData> extends SvgRenderable {
+export class Connection2d extends SvgRenderable {
 
     /** The points that make up the connection */
-    points: (Point | EllipticArc | Anchor2d)[] = []
+    points: (Point | EllipticArc | Anchor)[] = []
 
     /** The style of the curve */
     curveStyle: CurveStyle = "linear"
 
     /** The data of the link */
-    data: T
+    // data: T
+    layoutConnection: LayoutConnection;
 
     /** The source node of the connection */
-    source: Node2d
+    source: LayoutNode
     /** The target node of the connection */
-    target: Node2d
+    target: LayoutNode
 
 
     arrow: Arrow2D = new Arrow2D()
@@ -96,18 +100,16 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
     maxWidth = 10
 
     constructor(
-        source: Node2d,
-        target: Node2d,
-        data: T,
+        layoutConnection: LayoutConnection,
     ) {
         super('g', 'connection2d');
 
-        this.source = source
-        this.target = target
-        this.data = data
+        this.layoutConnection = layoutConnection
+        this.source = layoutConnection.source
+        this.target = layoutConnection.target
 
-        this.source.emitter.on("positionUpdated", () => this.addUpdateCallback(this.renderPath))
-        this.target.emitter.on("positionUpdated", () => this.addUpdateCallback(this.renderPath))
+        // this.source.emitter.on("positionUpdated", () => this.addUpdateCallback(this.renderPath))
+        // this.target.emitter.on("positionUpdated", () => this.addUpdateCallback(this.renderPath))
 
         this.updateCallbacks.push(...[this.renderPath, this.renderStyleOpacity, this.renderStyleStroke])
 
@@ -135,7 +137,7 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
 
     /** The weight of the connection */
     get weight() {
-        return this.data.weight ?? 1
+        return this.layoutConnection.weight ?? 1
     }
 
     /** The start point of the connection (either the first defined point or the source node) */
@@ -151,8 +153,8 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
             return (this.points[0] as EllipticArc)._start ?? this.source.center
         }
 
-        if (this.points[0] instanceof Anchor2d) {
-            return (this.points[0] as Anchor2d).anchorPoint
+        if (this.points[0] instanceof Anchor) {
+            return (this.points[0] as Anchor).anchorPoint
         }
 
         return this.points[0]
@@ -173,7 +175,7 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
             return lastPoint._end ?? this.target.center
         }
 
-        if (lastPoint instanceof Anchor2d) {
+        if (lastPoint instanceof Anchor) {
             return lastPoint.anchorPoint
         }
 
@@ -201,7 +203,7 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
             .y(d => d.y)
             .curve(this.curveFactory)
 
-        return (points: (Point | EllipticArc | Anchor2d)[]) => {
+        return (points: (Point | EllipticArc | Anchor)[]) => {
             let path = ""
             let currentPoints: Point[] = []
             points.forEach((point, i) => {
@@ -213,7 +215,7 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
                     path += point.getSvgPath() + " "
                 } else if (point instanceof Point) {
                     currentPoints.push(point)
-                } else if (point instanceof Anchor2d) {
+                } else if (point instanceof Anchor) {
                     currentPoints.push(point.anchorPoint)
                 }
             });
@@ -236,9 +238,9 @@ export class Connection2d<T extends Connection2dData = Connection2dData> extends
 
     getArrowPath(): string {
         // return this.arrow.getSvgPath(this.target.getAnchor(this.source.center))
-        let targetAnchor: Anchor2d;
-        if (this.points.length > 0 && this.points[this.points.length - 1] instanceof Anchor2d) {
-            targetAnchor = this.points[this.points.length - 1] as Anchor2d
+        let targetAnchor: Anchor;
+        if (this.points.length > 0 && this.points[this.points.length - 1] instanceof Anchor) {
+            targetAnchor = this.points[this.points.length - 1] as Anchor
         } else {
             targetAnchor = this.target.getAnchor(this.source.center);
         }

@@ -1,10 +1,12 @@
 import { CommunicationChannel, CommunicationGraph, CommunicationNode } from "../commGraph";
+import { VisGraph } from "../visGraph/visGraph";
+import { LayoutNode } from "../visGraph/layoutNode";
 
 
 
 export class Clusterer {
 
-    constructor(public commGraph: CommunicationGraph) {
+    constructor(public visGraph: VisGraph) {
 
     }
 
@@ -15,14 +17,14 @@ export class Clusterer {
      * @param channels The channels to consider for the connected component.
      * @returns The connected component of the node.
      */
-    getConnectedComponent(nodeId?: string | CommunicationNode, channels?: CommunicationChannel[], nodes?: (string | CommunicationNode)[]): CommunicationNode[] {
+    getConnectedComponent(nodeId?: string | LayoutNode, channels?: CommunicationChannel[], nodes?: (string | LayoutNode)[]): LayoutNode[] {
         if (nodeId === undefined) {
             return [];
         }
 
-        const node = this.commGraph.getNode(nodeId)!;
+        const node = this.visGraph.getNode(nodeId)!;
 
-        const relevantNodeIds = new Set((nodes?.map(node => this.commGraph.getNode(node)!) ?? this.commGraph.nodes).map(node => node.id));
+        const relevantNodeIds = new Set((nodes?.map(node => this.visGraph.getNode(node)!) ?? this.visGraph.nodes).map(node => node.id));
 
         const visited = new Set<string>();
         const queue = [node];
@@ -45,17 +47,17 @@ export class Clusterer {
             queue.push(...succ, ...pred);
         }
 
-        return Array.from(visited).map(id => this.commGraph.getNode(id)!);
+        return Array.from(visited).map(id => this.visGraph.getNode(id)!);
     }
 
     /**
      * Get the connected components of the graph.
      * @returns The connected components of the graph.
      */
-    getConnectedComponents(nodes?: CommunicationNode[], channels?: CommunicationChannel[]): CommunicationNode[][] {
-        nodes = nodes ?? this.commGraph.nodes;
+    getConnectedComponents(nodes?: LayoutNode[], channels?: CommunicationChannel[]): LayoutNode[][] {
+        nodes = nodes ?? this.visGraph.nodes;
         const visited = new Set<string>();
-        const components: CommunicationNode[][] = [];
+        const components: LayoutNode[][] = [];
 
         for (const node of nodes) {
             if (visited.has(node.id)) {

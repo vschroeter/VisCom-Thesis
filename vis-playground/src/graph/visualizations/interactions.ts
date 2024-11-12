@@ -2,6 +2,10 @@ import mitt from "mitt"
 import { Node2d } from "../graphical"
 
 
+interface NodeWithId {
+    id: string
+}
+
 export interface MouseEvents<EventData> {
     mouseenter?: (d: EventData, e: MouseEvent) => void,
     mouseleave?: (d: EventData, e: MouseEvent) => void,
@@ -62,25 +66,19 @@ export class UserInteractions {
     }
 
 
-    isHovered(nodeId: string | Node2d): boolean {
-        if (nodeId instanceof Node2d) {
-            nodeId = nodeId.data?.id ?? ""
-        }
-        return this.hoveredNodeIds.has(nodeId)
+    isHovered(nodeId: string | NodeWithId): boolean {
+        const _nodeId = (nodeId as NodeWithId).id ?? nodeId
+        return this.hoveredNodeIds.has(_nodeId)
     }
 
-    isSelected(nodeId: string | Node2d): boolean {
-        if (nodeId instanceof Node2d) {
-            nodeId = nodeId.data?.id ?? ""
-        }
-        return this.selectedNodeIds.has(nodeId)
+    isSelected(nodeId: string | NodeWithId): boolean {
+        const _nodeId = (nodeId as NodeWithId).id ?? nodeId
+        return this.selectedNodeIds.has(_nodeId)
     }
 
-    isFocused(nodeId: string | Node2d): boolean {
-        if (nodeId instanceof Node2d) {
-            nodeId = nodeId.data?.id ?? ""
-        }
-        return this.focusedNodeId === nodeId
+    isFocused(nodeId: string | NodeWithId): boolean {
+        const _nodeId = (nodeId as NodeWithId).id ?? nodeId
+        return this.focusedNodeId === _nodeId
     }
 
 

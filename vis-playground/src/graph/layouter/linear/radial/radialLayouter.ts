@@ -6,8 +6,12 @@ import * as d3 from "d3";
 import { Connection2d, EllipticArc, Node2d } from "src/graph/graphical";
 import { RadialLayouterSettings } from "./radialSettings";
 import { CommonSettings } from "../../settings/commonSettings";
-import { Circle, Line, Point, Segment, Vector } from "2d-geometry";
-import { Anchor } from "src/graph/graphical/primitives/Anchor2d";
+import { Circle, Line, Point, PointLike, Segment, Vector } from "2d-geometry";
+import { Anchor } from "src/graph/graphical/primitives/Anchor";
+import { VisGraph } from "src/graph/visGraph/visGraph";
+import { BasePositioner } from "src/graph/visGraph/layouterComponents/positioner";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
+import { BasicPrecalculator } from "src/graph/visGraph/layouterComponents/precalculator";
 
 export function radToDeg(rad: number) {
     return rad * 180 / Math.PI;
@@ -17,11 +21,59 @@ export function degToRad(deg: number) {
     return deg * Math.PI / 180;
 }
 
+export class RadialPositioner extends BasePositioner {
+
+    radius: number;
+    center: Point;
+    
+    constructor(radius = 100) {
+        super();
+        this.radius = radius;
+        this.center = new Point(0, 0);
+    }
+
+    getPositionForRad(rad: number, radius?: number, centerTranslation?: PointLike): Point {
+
+        const radius_ = radius ?? this.radius
+        // const centerTranslation_ = centerTranslation ?? this.center;
+        const centerTranslation_ = centerTranslation ?? this.center;
+
+        const x = centerTranslation_.x + radius_ * Math.cos(rad);
+        const y = centerTranslation_.y + radius_ * Math.sin(rad);
+
+        return new Point(x, y);
+    }
+
+    override positionChildren(parentNode: LayoutNode): void {
+        const nodes = parentNode.children;
+        const continuumMap = new Map<LayoutNode, number>();
+        nodes.forEach((node, i) => {
+            continuumMap.set(node, i / nodes.length);
+        });
+
+
+        // Place nodes on a circle with radius
+        const angleRadMap = new Map<LayoutNode, number>();
+        // const angleRadStep = 2 * Math.PI / nodes.length;
+        nodes.forEach((node, i) => {
+            const placement = continuumMap.get(node)!;
+            const angle = placement * 2 * Math.PI;
+            angleRadMap.set(node, angle);
+            const pos = this.getPositionForRad(angle);
+            node.x = pos.x;
+            node.y = pos.y;
+            // console.log("Set node position", node.id, pos, node.circle);
+        });
+
+        parentNode.radius = this.radius;
+    }
+}
+
 export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSettings> extends GraphLayouter<T> {
 
 
     getRadius() {
-        return this.settings.size.radius.getValue(this.settings.getContext({ graph2d: this.graph2d })) ?? 5;
+        return this.settings.size.radius.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 5;
     }
 
     getPositionForRad(rad: number, radius?: number, centerTranslation?: { x: number, y: number }): Point {
@@ -36,39 +88,61 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
     }
 
     override layout(isUpdate = false) {
-        console.log("Layouting radial layouter");
-        const radius = this.getRadius();
 
-        const sorter = this.settings.sorting.getSorter(this.commGraph, this.commonSettings);
-        const nodes = sorter.getSorting2dNodes(this.graph2d)
+
+        // const visGraph = VisGraph.fromCommGraph(this.commGraph, this.commonSettings);
+
+        // this.visGraph
+
+
+        this.visGraph.setPrecalculator(new BasicPrecalculator({sizeMultiplier: 10}));
+        this.visGraph.setPositioner(new RadialPositioner(this.getRadius()));
+        const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
+        this.visGraph.setSorter(sorter);
+        // visGraph.setConnector(new BezierConnector()); // vllt. erst später mit Parametern
+        this.visGraph.layout();
+
+        // this.graph2d = Graph2d.createFromVisGraph(this.visGraph);
+
+        console.log("Layouted radial layouter");
+        
+        this.markConnectionsAsUpdateRequired();
+        // this.emitEvent("update");
+        this.emitEvent("end");
+
+        // const radius = this.getRadius();
+
+        // const nodes = sorter.getSorting2dNodes(this.graph2d)
+        // const nodes = sorter.getSorting()
 
         // Get the nodes position on the interval [0, 1]
-        const continuumMap = new Map<Node2d, number>();
-        nodes.forEach((node, i) => {
-            continuumMap.set(node, i / nodes.length);
-        });
+        // const continuumMap = new Map<Node2d, number>();
+        // nodes.forEach((node, i) => {
+        //     continuumMap.set(node, i / nodes.length);
+        // });
 
 
-        // Place nodes on a circle with radius
-        const angleRadMap = new Map<Node2d, number>();
-        // const angleRadStep = 2 * Math.PI / nodes.length;
-        nodes.forEach((node, i) => {
-            const placement = continuumMap.get(node)!;
-            const angle = placement * 2 * Math.PI;
-            angleRadMap.set(node, angle);
-            const pos = this.getPositionForRad(angle);
-            node.x = pos.x;
-            node.y = pos.y;
-            // console.log("Set node position", node.id, pos, node.circle);
-        });
+        // // Place nodes on a circle with radius
+        // const angleRadMap = new Map<Node2d, number>();
+        // // const angleRadStep = 2 * Math.PI / nodes.length;
+        // nodes.forEach((node, i) => {
+        //     const placement = continuumMap.get(node)!;
+        //     const angle = placement * 2 * Math.PI;
+        //     angleRadMap.set(node, angle);
+        //     const pos = this.getPositionForRad(angle);
+        //     node.x = pos.x;
+        //     node.y = pos.y;
+        //     // console.log("Set node position", node.id, pos, node.circle);
+        // });
 
-        // console.log("Placed nodes on circle", nodes);
+        // // console.log("Placed nodes on circle", nodes);
 
 
 
         // // Adapt to the center
         // this.adaptNodesByCenterTranslation();
 
+        return;
 
         // Calculate the links
 
