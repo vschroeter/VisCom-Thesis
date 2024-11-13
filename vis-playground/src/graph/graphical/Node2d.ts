@@ -65,7 +65,10 @@ export class Node2d extends SvgRenderable { // <NodeData>
   fy: number | null = null;
 
   // The score of the node (e.g. for ranking the significance of nodes)
-  score: number = 0;
+  // score: number = 0;
+  get score() {
+    return this.layoutNode.score;
+  }
 
   // Reference to the node communities
   communities?: NodeCommunities;

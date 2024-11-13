@@ -68,8 +68,7 @@ export class LayoutNode {
     // The layer of the node (for layered layouting). Leaf nodes have layer 0.
     // layer: number = 0;
 
-
-
+    hasGraphicalRepresentation: boolean = true;
 
 
     constructor(graph: VisGraph, id: string) {
@@ -268,7 +267,7 @@ export class LayoutNode {
     node2d: Node2d | undefined;
 
     createGraphicalElements() {
-        if (!this.node2d) {
+        if (this.hasGraphicalRepresentation && !this.node2d) {
             this.node2d = new Node2d(this);
         }
 

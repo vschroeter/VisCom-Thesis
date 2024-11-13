@@ -49,6 +49,7 @@ export class VisGraph {
         this.commonSettings = commonSettings;
         this.userInteractions = userInteractions;
 
+        this.rootNode.hasGraphicalRepresentation = false;
         this.addNode(this.rootNode);
     }
 
@@ -362,8 +363,8 @@ export class VisGraph {
                 node.updateStyleFill(v);
                 return;
             }
-
-            node.updateStyleFill(scoring.getColor(node.score));
+            const v = scoring.getColor(node.score);
+            node.updateStyleFill(v);
         })
 
         // Update the node stroke based on the communities

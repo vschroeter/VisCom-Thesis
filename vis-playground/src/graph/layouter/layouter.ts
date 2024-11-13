@@ -101,7 +101,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         this.nodes = layouterArgs.nodes;
         // this.links = layouterArgs.links;
 
-        this.visGraph = VisGraph.fromCommGraph(this.commGraph, layouterArgs.commonSettings);
+        this.visGraph = VisGraph.fromCommGraph(this.commGraph, layouterArgs.commonSettings, this.userInteractions);
 
         // this.graph2d = Graph2d.createFromCommNodes(this.commGraph, this.nodes, this);
     }
@@ -224,7 +224,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
 
     updateStyle() {
-
+        this.visGraph.updateGraphicalStyle();
+        return;
         // Get the node score extent
         const scoring = this.renderArgs.nodeScoring;
         scoring.extent = d3.extent(this.nodes2d, d => d.score) as [number, number];
