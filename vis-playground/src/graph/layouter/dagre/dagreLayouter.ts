@@ -1,14 +1,10 @@
 import * as dagreD3 from 'dagre-d3';
 
-import { CommunicationGraph, CommunicationLink, CommunicationNode } from "src/graph/commGraph";
 import { GraphLayouter, GraphLayouterConstructorArgs } from "../layouter";
-import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import * as d3 from "d3";
-import { Connection2d, Node2d } from "src/graph/graphical";
-import { CommonSettings } from "../settings/commonSettings";
+import { Node2d } from "src/graph/graphical";
 import { GraphLayouterSettings } from '../settings/settings';
-import { UserInteractions } from 'src/graph/visualizations/interactions';
 
 
 export class DagreLayouter extends GraphLayouter<GraphLayouterSettings> {
@@ -36,11 +32,11 @@ export class DagreLayouter extends GraphLayouter<GraphLayouterSettings> {
       // .setDefaultNodeLabel(function () { return {}; })
       .setDefaultEdgeLabel(function () { return {}; });
 
-    this.graph2d.nodes.forEach(n => {
+    this.visGraph.allLayoutNodes.forEach(n => {
       g.setNode(n.id ?? "0", { label: n.id,  });
     })
 
-    this.graph2d.links.forEach(l => {
+    this.visGraph.allLayoutConnections.forEach(l => {
       g.setEdge(l.source.id ?? "0", l.target.id ?? "0");
     })
 

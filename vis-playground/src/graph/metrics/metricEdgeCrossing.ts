@@ -1,5 +1,5 @@
 import { Connection2d } from "../graphical";
-import { Graph2d } from "../graphical/Graph2d";
+import { VisGraph } from "../visGraph/visGraph";
 import { MetricCalculator } from "./base";
 import { MetricDefinition } from "./collection";
 
@@ -15,7 +15,7 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
 
 
 
-    constructor(graph: Graph2d) {
+    constructor(graph: VisGraph) {
         super(graph);
 
         console.log("Calculating edge crossings");
@@ -28,7 +28,7 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
     }
 
     async calculateEdgeCrossings() {
-        const links = this.graph.links;
+        const links = this.graph.allLayoutConnections;
 
         const chunkSize = 100;
         let c = 0;
@@ -37,7 +37,7 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
             const link1 = links[i];
             for (let j = i + 1; j < links.length; j++) {
                 const link2 = links[j];
-                const intersections = this.getIntersections(link1, link2);
+                const intersections = this.getIntersections(link1.connection2d, link2.connection2d);
                 // if (intersections.length > 0) console.log(intersections, link1.startPoint, link2.startPoint, link1.endPoint, link2.endPoint);
                 this.totalEdgeCrossings += intersections.length;
                 c++;
@@ -51,7 +51,11 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
 
     }
 
-    getIntersections(link1: Connection2d, links2: Connection2d, filterOutStartAndEndTouchings: boolean = true): Intersection[] {
+    getIntersections(link1?: Connection2d, links2?: Connection2d, filterOutStartAndEndTouchings: boolean = true): Intersection[] {
+        if (!link1 || !links2) {
+            return [];
+        }
+        
         const path1 = link1.getSvgPath();
         const path2 = links2.getSvgPath();
 

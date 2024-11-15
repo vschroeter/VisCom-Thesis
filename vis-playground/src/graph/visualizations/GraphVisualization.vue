@@ -46,22 +46,20 @@
 
 <script setup lang="ts">
 
-import { computed, onMounted, onUpdated, reactive, ref, toValue, watch } from 'vue'
+import { computed, onMounted, onUpdated, ref, watch } from 'vue'
 import { useGraphStore } from 'src/stores/graph-store';
 
 import * as d3 from 'd3'
-import { Graph2d } from 'src/graph/graphical/Graph2d';
 import { CommunicationGraph, CommunicationNode } from 'src/graph/commGraph';
 import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
 import MetricOverview from './MetricOverview.vue';
-import { EllipticArc } from '../graphical/';
 import { Node2d } from '../graphical';
-import { useDebounceFn, useThrottleFn, watchDebounced } from '@vueuse/core';
+import { useThrottleFn, watchDebounced } from '@vueuse/core';
 import { layouterMapping } from '../layouter/settings/settingsCollection';
 import { CommonSettings } from '../layouter/settings/commonSettings';
-import { LSystem, LSystemState, SpaceFillingCurve } from '../layouter/linear/spaceFilling/lSystem';
 import { UserInteractions } from './interactions';
+import { VisGraph } from '../visGraph/visGraph';
 // import { HilbertAlgorithm, HilbertCurve } from '../layouter/linear/spaceFilling/hilbertCurveLayouter';
 // import { MooreCurve } from '../layouter/linear/spaceFilling/mooreCurveLayouter';
 
@@ -114,7 +112,6 @@ const interactiveRef = svgInteractiveRef(refSVG, refGZoom, undefined, undefined)
 
 const commGraph = computed(() => graphStore.graph);
 
-// let graph2d: Graph2d | null = null
 let layouter: GraphLayouter<any> | null = null
 
 ///++++ Metric stuff ++++///
@@ -168,7 +165,7 @@ const iconButtonDivWidth = computed(() => {
 
 const throttledUpdate1000 = useThrottleFn(() => {
     layoutUpdated()
-}, 1000)
+}, 200)
 
 
 const throttledUpdateUserInteractions = useThrottleFn(() => {
@@ -182,8 +179,6 @@ const throttledUpdateUserInteractions = useThrottleFn(() => {
 
 
 function layoutUpdated() {
-    // console.log("[GViz] Layout updated", layouter, graph2d);
-
     if (!layouter) {
         return
     }
@@ -229,9 +224,9 @@ function layoutFinished() {
     }
 }
 
-async function calculateMetrics(graph?: Graph2d | null) {
+async function calculateMetrics(graph?: VisGraph | null) {
     if (!graph) {
-        graph = layouter?.graph2d;
+        graph = layouter?.visGraph;
     }
     if (!graph) {
         console.error("No graph found for metrics calculation");
@@ -275,16 +270,12 @@ onMounted(() => {
         if (commGraph.value.nodes.length === 0) {
             return
         }
-        // graph2d = new Graph2d(toValue(commGraph.value) as CommunicationGraph);
-        // layouter = new cls(graph2d, settings.value, settingsCollection.commonSettings as CommonSettings, userInteractions);
         layouter = new cls({
             commGraph: commGraph.value as CommunicationGraph,
             settings: settings.value,
             commonSettings: settingsCollection.commonSettings as CommonSettings,
             userInteractions: userInteractions,
             nodes: commGraph.value.nodes as CommunicationNode[],
-            // links: graph2d.links,
-            // nodes: graph2d.nodes2d,
         });
 
         watchDebounced(settings, (newVal) => {

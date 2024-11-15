@@ -1,17 +1,12 @@
 import { GraphLayouter } from "../../layouter";
-import { Graph2d } from "src/graph/graphical/Graph2d";
 
-import { Node2d } from "src/graph/graphical";
-import { EllipticArc } from "src/graph/graphical/";
-import { CommonSettings } from "../../settings/commonSettings";
-import { LSystem, SpaceFillingCurve } from "./lSystem";
 import { SpaceFillingLayouterSettings } from "./spaceFillingSettings";
 
 
 export class SpaceFillingCurveLayouter extends GraphLayouter<SpaceFillingLayouterSettings> {
 
     override layout(isUpdate = false) {
-        const ctx = this.settings.getContext({ graph2d: this.graph2d });
+        const ctx = this.settings.getContext({ visGraph: this.visGraph });
 
         // const sorter = this.settings.sorting.getSorter(this.commGraph, this.commonSettings);
         // const nodes = sorter.getSorting2dNodes(this.graph2d)

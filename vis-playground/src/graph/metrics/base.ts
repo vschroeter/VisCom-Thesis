@@ -1,9 +1,6 @@
-import { Graph2d } from "../graphical/Graph2d";
-
 import * as d3 from "d3";
 import { MetricDefinition } from "./collection";
-
- 
+import { VisGraph } from "../visGraph/visGraph";
 
 export class MetricCalculator {
 
@@ -16,12 +13,12 @@ export class MetricCalculator {
     }
 
     async calculate() {
-    
+
     }
 
 
     /** Reference to the graph */
-    graph: Graph2d;
+    graph: VisGraph;
 
     /** Width of the layout */
     layoutWidth: number;
@@ -69,12 +66,12 @@ export class MetricCalculator {
     }
 
 
-    constructor(graph: Graph2d) {
+    constructor(graph: VisGraph) {
         this.graph = graph;
 
         // Get size of the layout
-        const xNodeExtent = d3.extent(this.graph.nodes, d => d.x) as [number, number];
-        const yNodeExtent = d3.extent(this.graph.nodes, d => d.y) as [number, number];
+        const xNodeExtent = d3.extent(this.graph.allLayoutNodes, d => d.x) as [number, number];
+        const yNodeExtent = d3.extent(this.graph.allLayoutNodes, d => d.y) as [number, number];
         this.layoutWidth = xNodeExtent[1] - xNodeExtent[0];
         this.layoutHeight = yNodeExtent[1] - yNodeExtent[0];
 

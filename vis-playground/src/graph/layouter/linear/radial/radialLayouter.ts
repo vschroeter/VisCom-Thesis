@@ -1,14 +1,9 @@
-import { CommunicationGraph, CommunicationLink, CommunicationNode } from "src/graph/commGraph";
 import { GraphLayouter } from "../../layouter";
-import { Graph2d } from "src/graph/graphical/Graph2d";
 
-import * as d3 from "d3";
-import { Connection2d, EllipticArc, Node2d } from "src/graph/graphical";
+import { EllipticArc } from "src/graph/graphical";
 import { RadialLayouterSettings } from "./radialSettings";
-import { CommonSettings } from "../../settings/commonSettings";
 import { Circle, Line, Point, PointLike, Segment, Vector } from "2d-geometry";
 import { Anchor } from "src/graph/graphical/primitives/Anchor";
-import { VisGraph } from "src/graph/visGraph/visGraph";
 import { BasePositioner } from "src/graph/visGraph/layouterComponents/positioner";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { BasicPrecalculator } from "src/graph/visGraph/layouterComponents/precalculator";

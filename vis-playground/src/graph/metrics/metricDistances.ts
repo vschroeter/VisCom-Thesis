@@ -1,4 +1,4 @@
-import { Graph2d } from "../graphical/Graph2d";
+import { VisGraph } from "../visGraph/visGraph";
 import { MetricCalculator } from "./base";
 import { MetricDefinition } from "./collection";
 
@@ -14,14 +14,14 @@ export class EdgeLengthCalculator extends MetricCalculator {
         return this.totalEdgeLength / this.shorterSide;
     }
 
-    constructor(graph: Graph2d) {
+    constructor(graph: VisGraph) {
         super(graph);
         console.log("Calculating edge length");
 
         // Calculate the total edge length
         this.totalEdgeLength = 0;
-        this.graph.links.forEach(link => {
-            this.totalEdgeLength += link.length;
+        this.graph.allLayoutConnections.forEach(link => {
+            this.totalEdgeLength += link.connection2d?.length ?? 0;
         });
     }
 }
@@ -34,7 +34,7 @@ export class NodeDistanceCalculator extends MetricCalculator {
     /** The average distance between all nodes in the graph */
     neighboredNodeDistance: number;
 
-    constructor(graph: Graph2d) {
+    constructor(graph: VisGraph) {
         super(graph);
 
         console.log("Calculating node distance");
@@ -43,7 +43,7 @@ export class NodeDistanceCalculator extends MetricCalculator {
         this.neighboredNodeDistance = 0;
 
         // Calculate the total distance between all neighbored nodes
-        this.graph.links.forEach(link => {
+        this.graph.allLayoutConnections.forEach(link => {
             const source = link.source;
             const target = link.target;
             this.neighboredNodeDistance += Math.sqrt((source.x - target.x) ** 2 + (source.y - target.y) ** 2)

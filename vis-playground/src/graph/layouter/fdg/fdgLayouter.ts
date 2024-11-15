@@ -1,25 +1,9 @@
-import { CommunicationGraph, CommunicationLink, CommunicationNode } from "src/graph/commGraph";
 import { GraphLayouter } from "../layouter";
 import { FdgLayouterSettings } from "./fdgSettings";
-import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import * as d3 from "d3";
-import { Connection2d, Node2d } from "src/graph/graphical";
-import { CommonSettings } from "../settings/commonSettings";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
-
-
-// export class SimulatedLayoutNode extends LayoutNode {
-//     // x velocity of the node (for force-directed simulations)
-//     vx: number = 0;
-//     // y velocity of the node (for force-directed simulations)
-//     vy: number = 0;
-//     // fixed x position of the node (for force-directed simulations)
-//     fx: number | null = null;
-//     // fixed y position of the node (for force-directed simulations
-//     fy: number | null = null;
-// }
 
 export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 

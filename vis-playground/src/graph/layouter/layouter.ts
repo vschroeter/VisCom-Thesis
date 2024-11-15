@@ -1,7 +1,6 @@
 import { Circle, Point, Segment, Shape, ShapeTag } from "2d-geometry";
-import { CommunicationGraph, CommunicationNode, NodeToNodeConnection } from "../commGraph";
+import { CommunicationGraph, CommunicationNode } from "../commGraph";
 import { Connection2d, Node2d } from "../graphical";
-import { Graph2d } from "../graphical/Graph2d";
 import { MouseEvents, UserInteractions } from "../visualizations/interactions";
 import { CommonSettings } from "./settings/commonSettings";
 import { GraphLayouterSettings } from "./settings/settings";
@@ -59,7 +58,6 @@ export class NodeScoring {
 export class GraphLayouter<T extends GraphLayouterSettings> {
 
     settings: T;
-    // graph2d: Graph2d;
     visGraph: VisGraph;
 
     debugShapes: Shape[] = [];
@@ -91,7 +89,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     constructor(layouterArgs: GraphLayouterConstructorArgs<T>) {
         this.commGraph = layouterArgs.commGraph;
         this.settings = layouterArgs.settings;
-        // this.graph2d = new Graph2d(this.commGraph);
+
         this.renderArgs = new RenderArgs(
             layouterArgs.commonSettings,
             layouterArgs.userInteractions,
@@ -100,20 +98,16 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         // this.commonSettings = layouterArgs.commonSettings;
         // this.userInteractions = layouterArgs.userInteractions;
         this.nodes = layouterArgs.nodes;
-        // this.links = layouterArgs.links;
 
         this.visGraph = VisGraph.fromCommGraph(this.commGraph, layouterArgs.commonSettings, this.userInteractions);
 
-        // this.graph2d = Graph2d.createFromCommNodes(this.commGraph, this.nodes, this);
     }
 
     get nodes2d(): Node2d[] {
-        // return this.graph2d.nodes;
         return this.visGraph.allGraphicalNodes;
     }
 
     get connections2d(): Connection2d[] {
-        // return this.graph2d.links;
         return this.visGraph.allGraphicalConnections;
     }
 
@@ -124,20 +118,12 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         });
     }
 
-    createGraph2d() {
-        return new Graph2d(this);
-    }
-
     updateGraphByCommonSettings() {
-        // this.nodes2d.forEach(node => {
-        //     node.radius = this.commonSettings.nodeSize.getValue(node) ?? 10;
-        // });
         this.updateStyle();
     }
 
     updateLayout(isUpdate: boolean = false): void {
         this.updateGraphByCommonSettings();
-        // this.updateStyle();
         this.layout(isUpdate);
     }
 
@@ -157,27 +143,10 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         throw new Error("Method not implemented.");
     }
 
-    getFilteredLinks() {
-        // Filtering already done at initialization 
-        // return this.graph2d.links;
-        return this.visGraph.allGraphicalConnections;
-        // console.log("Filtering links", this.commonSettings.hideLinksThreshold.getValue());
-        // const filteredLinks = this.graph2d.links.filter(l => {
-        //     const weight = l.data?.weight ?? 1;
-        //     return weight > (this.commonSettings.hideLinksThreshold.getValue() ?? 0.25);
-        // })
-        // // console.log("Filtered links", filteredLinks);
-        // return filteredLinks;
-    }
-
     reset() {
         this.nodes2d.forEach(node => {
             node.x = 0;
             node.y = 0;
-            // node.vx = 0;
-            // node.vy = 0;
-            // node.fx = null;
-            // node.fy = null;
         });
         this.updateStyle();
         this.layout();
@@ -339,7 +308,6 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     renderNodes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
         // Get the current classname of this object
         const className = this.constructor.name.toLowerCase();
-        // console.log("Render nodes", className, selection, selection.selectChildren('g.node').size(), this.graph2d.nodes);
 
         const nodes = selection.selectChildren('g.node')
             .data(this.visGraph.allGraphicalNodes)

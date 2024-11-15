@@ -1,9 +1,7 @@
 import { GraphLayouter } from "../../layouter";
-import { Graph2d } from "src/graph/graphical/Graph2d";
 
 import { ArcLayouterSettings } from "./arcSettings";
 import { EllipticArc } from "src/graph/graphical";
-import { CommonSettings } from "../../settings/commonSettings";
 import { Vector } from "2d-geometry";
 import { BasePositioner } from "src/graph/visGraph/layouterComponents/positioner";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";

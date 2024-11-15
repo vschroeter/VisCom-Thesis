@@ -1,11 +1,11 @@
 import { useDebounceFn } from "@vueuse/core";
-import { Graph2d } from "../graphical/Graph2d";
 import { MetricCalculator } from "./base";
 import { EdgeLengthCalculator, NodeDistanceCalculator } from "./metricDistances";
 
 import * as d3 from "d3";
 import mitt from "mitt";
 import { EdgeCrossingsCalculator } from "./metricEdgeCrossing";
+import { VisGraph } from "../visGraph/visGraph";
 
 export type MetricNormalization =
     "none" | "byMinimum" | "byMaximum" | "byAverage" | "byMedian" | "byShorterLayoutSide" | "byLongerLayoutSide"
@@ -77,7 +77,7 @@ export class MetricsCollection {
      * @param settingId The setting id of the visualization
      * @param graph The graph to calculate the metrics. If undefined, the metrics are initialized with pending state
      */
-    async calculateMetrics(settingId: number, graph: Graph2d) {
+    async calculateMetrics(settingId: number, graph: VisGraph) {
         // return;
         
         // Calculate all absolute metrics for the given graph of the given setting 
@@ -98,7 +98,7 @@ export class MetricsCollection {
         if (ignoreIfExisting && this.getMetricsResults(settingId).results.length > 0) {
             return;
         }
-        const metricCalculators = MetricsCollection.metricsToCalculate.map(metric => new metric(Graph2d.createEmptyGraph()));
+        const metricCalculators = MetricsCollection.metricsToCalculate.map(metric => new metric(new VisGraph()));
         this.getMetricsResults(settingId).update(metricCalculators);
     }
 

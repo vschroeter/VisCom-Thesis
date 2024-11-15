@@ -30,7 +30,7 @@ export class WeightedTopologicalSorter extends Sorter {
         if (nodes) {
             nodes = nodes.map(node => this.visGraph.getNode(node)!) as LayoutNode[]
         } else {
-            nodes = this.visGraph.nodes;
+            nodes = this.visGraph.allLayoutNodes;
         }
 
         const mapNodeToItsAncestors = new Map<LayoutNode, Set<LayoutNode>>()

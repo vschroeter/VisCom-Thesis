@@ -24,7 +24,7 @@ export class Clusterer {
 
         const node = this.visGraph.getNode(nodeId)!;
 
-        const relevantNodeIds = new Set((nodes?.map(node => this.visGraph.getNode(node)!) ?? this.visGraph.nodes).map(node => node.id));
+        const relevantNodeIds = new Set((nodes?.map(node => this.visGraph.getNode(node)!) ?? this.visGraph.allLayoutNodes).map(node => node.id));
 
         const visited = new Set<string>();
         const queue = [node];
@@ -55,7 +55,7 @@ export class Clusterer {
      * @returns The connected components of the graph.
      */
     getConnectedComponents(nodes?: LayoutNode[], channels?: CommunicationChannel[]): LayoutNode[][] {
-        nodes = nodes ?? this.visGraph.nodes;
+        nodes = nodes ?? this.visGraph.allLayoutNodes;
         const visited = new Set<string>();
         const components: LayoutNode[][] = [];
 

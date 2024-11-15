@@ -6,11 +6,11 @@ import * as d3 from "d3";
 import { LayoutConnection, VisLink } from "./layoutConnection";
 import { LayoutNode } from "./layoutNode";
 import { Sorter } from "../algorithms/sortings/sorting";
-import { LineConnector } from "./layouterComponents/connector";
 import { Connection2d, Node2d } from "../graphical";
 import { BasicPrecalculator } from "./layouterComponents/precalculator";
 import { BasePositioner } from "./layouterComponents/positioner";
 import { UserInteractions } from "../visualizations/interactions";
+import { BaseConnector } from "./layouterComponents/connector";
 
 export type LayoutNodeOrId = LayoutNode | string;
 
@@ -38,14 +38,14 @@ export class NodeScoring {
 
 export class VisGraph {
 
-    commonSettings: CommonSettings;
+    commonSettings?: CommonSettings;
     userInteractions?: UserInteractions;
 
     ////////////////////////////////////////////////////////////////////////////
     // Creation methods
     ////////////////////////////////////////////////////////////////////////////
 
-    constructor(commonSettings: CommonSettings, userInteractions?: UserInteractions) {
+    constructor(commonSettings?: CommonSettings, userInteractions?: UserInteractions) {
         this.commonSettings = commonSettings;
         this.userInteractions = userInteractions;
 
@@ -252,7 +252,7 @@ export class VisGraph {
         }
     }
 
-    setConnector(connector: LineConnector | ((node: LayoutNode) => LineConnector)) {
+    setConnector(connector: BaseConnector | ((node: LayoutNode) => BaseConnector)) {
         if (typeof connector === "function") {
             this.allLayoutNodes.forEach(node => {
                 node.connector = connector(node);
@@ -362,7 +362,7 @@ export class VisGraph {
             // node.updateStyleFill((n) => this.commonSettings.nodeColor.getValue(n), this.nodeScoring.extent);
 
             if (!validScores) {
-                const v = this.commonSettings.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
+                const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
                 node.updateStyleFill(v);
                 return;
             }
@@ -418,7 +418,7 @@ export class VisGraph {
         const maxW = 5;
         const wMultiplier = 2;
 
-        const stroke = this.commonSettings.linkColor.getValue()?.toString() ?? "black";
+        const stroke = this.commonSettings?.linkColor.getValue()?.toString() ?? "black";
         const strokeWithoutAlpha = d3.color(stroke)?.copy({ opacity: 1 })?.toString() ?? "black";
         const alpha = d3.color(stroke)?.opacity ?? 1;
 

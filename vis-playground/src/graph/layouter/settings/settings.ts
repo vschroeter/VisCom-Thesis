@@ -1,6 +1,5 @@
 import mitt from "mitt";
 import { Connection2d, Node2d } from "../../graphical";
-import { Graph2d } from "../../graphical/Graph2d";
 import { VisGraph } from "src/graph/visGraph/visGraph";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
