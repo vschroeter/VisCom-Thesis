@@ -4,15 +4,24 @@ import { LinearSortingSettings } from "../../settings/linearSettings";
 export class SizeSettings extends Setting {
     nodeDistance = new Param({
         key: "nodeDistance",
+        label: "Node distance",
         optional: false,
         defaultValue: "40",
+    });
+
+    verticalOrientation = new Param<boolean>({
+        key: "verticalOrientation",
+        label: "Is vertical",
+        optional: false,
+        type: "boolean",
+        defaultValue: "true",
     });
 
     constructor() {
         super({
             key: "size",
-            label: "Size",
-            description: "Size settings for the radial layout.",
+            label: "Size and Orientation",
+            description: "Size and orientation settings for the radial layout.",
             optional: false,
         });
     }
