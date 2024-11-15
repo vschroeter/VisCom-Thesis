@@ -362,7 +362,7 @@ export class VisGraph {
             // node.updateStyleFill((n) => this.commonSettings.nodeColor.getValue(n), this.nodeScoring.extent);
 
             if (!validScores) {
-                const v = this.commonSettings.nodeColor.getValue(node)?.toString() ?? "red";
+                const v = this.commonSettings.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
                 node.updateStyleFill(v);
                 return;
             }

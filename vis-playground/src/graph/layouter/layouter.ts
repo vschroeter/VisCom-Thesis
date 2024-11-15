@@ -8,6 +8,7 @@ import { GraphLayouterSettings } from "./settings/settings";
 
 import * as d3 from 'd3';
 import { VisGraph } from "../visGraph/visGraph";
+import { LayoutNode } from "../visGraph/layoutNode";
 
 export interface GraphLayouterConstructorArgs<T extends GraphLayouterSettings> {
     // nodes: Node2d[];
@@ -23,9 +24,9 @@ export class RenderArgs {
     commonSettings: CommonSettings;
     userInteractions: UserInteractions;
     nodeScoring: NodeScoring;
-    nodeFillColorGetter: (n: Node2d) => string;
+    nodeFillColorGetter: (n: LayoutNode) => string;
 
-    constructor(commonSettings: CommonSettings, userInteractions: UserInteractions, nodeScoring: NodeScoring, nodeFillColorGetter: (n: Node2d) => string) {
+    constructor(commonSettings: CommonSettings, userInteractions: UserInteractions, nodeScoring: NodeScoring, nodeFillColorGetter: (n: LayoutNode) => string) {
         this.commonSettings = commonSettings;
         this.userInteractions = userInteractions;
         this.nodeScoring = nodeScoring;
@@ -128,9 +129,9 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     updateGraphByCommonSettings() {
-        this.nodes2d.forEach(node => {
-            node.radius = this.commonSettings.nodeSize.getValue(node) ?? 10;
-        });
+        // this.nodes2d.forEach(node => {
+        //     node.radius = this.commonSettings.nodeSize.getValue(node) ?? 10;
+        // });
         this.updateStyle();
     }
 
@@ -173,10 +174,10 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         this.nodes2d.forEach(node => {
             node.x = 0;
             node.y = 0;
-            node.vx = 0;
-            node.vy = 0;
-            node.fx = null;
-            node.fy = null;
+            // node.vx = 0;
+            // node.vy = 0;
+            // node.fx = null;
+            // node.fy = null;
         });
         this.updateStyle();
         this.layout();
@@ -236,7 +237,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             // node.updateStyleFill((n) => this.commonSettings.nodeColor.getValue(n), this.nodeScoring.extent);
 
             if (!validScores) {
-                const v = this.commonSettings.nodeColor.getValue(node)?.toString() ?? "red";
+                const v = this.commonSettings.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
                 node.updateStyleFill(v);
                 return;
             }

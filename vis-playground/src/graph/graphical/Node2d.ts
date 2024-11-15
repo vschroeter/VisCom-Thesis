@@ -54,16 +54,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
   get circle() {
     return new Circle(this.center, this.radius);
   }
-
-  // x velocity of the node (for force-directed simulations)
-  vx: number = 0;
-  // y velocity of the node (for force-directed simulations)
-  vy: number = 0;
-  // fixed x position of the node (for force-directed simulations)
-  fx: number | null = null;
-  // fixed y position of the node (for force-directed simulations
-  fy: number | null = null;
-
+  
   // The score of the node (e.g. for ranking the significance of nodes)
   // score: number = 0;
   get score() {

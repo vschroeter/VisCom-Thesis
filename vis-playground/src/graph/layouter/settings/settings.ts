@@ -2,6 +2,8 @@ import mitt from "mitt";
 import { Connection2d, Node2d } from "../../graphical";
 import { Graph2d } from "../../graphical/Graph2d";
 import { VisGraph } from "src/graph/visGraph/visGraph";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
+import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
 const evaluateExpression = (expression: string, context: Record<string, any>): any => {
     const keys = Object.keys(context);
@@ -415,7 +417,7 @@ export class ParamWithNodeContext extends Param {
 
     override tooltip: string[] = ParamWithNodeContext.tooltip;
 
-    override getValue(node?: Node2d, context?: Record<string, any>): number | undefined {
+    override getValue(node?: LayoutNode, context?: Record<string, any>): number | undefined {
         let ctx: Record<string, any> = {
             cs: 1,
             cp: 1,
@@ -426,12 +428,12 @@ export class ParamWithNodeContext extends Param {
         };
 
         if (node) {
-            const cs = node.layoutNode.successorCount ?? 0;
-            const cp = node.layoutNode.predecessorCount ?? 0;
+            const cs = node.successorCount ?? 0;
+            const cp = node.predecessorCount ?? 0;
             const cn = cs + cp;
 
-            const co = node.layoutNode.outDegree ?? 0;
-            const ci = node.layoutNode.inDegree ?? 0;
+            const co = node.outDegree ?? 0;
+            const ci = node.inDegree ?? 0;
             const cl = co + ci;
 
             context = {
@@ -460,7 +462,7 @@ export class ParamWithLinkContext extends Param {
 
     override tooltip: string[] = ParamWithLinkContext.tooltip;
 
-    override getValue(link?: Connection2d, context?: Record<string, any>): number | undefined {
+    override getValue(link?: LayoutConnection, context?: Record<string, any>): number | undefined {
         let ctx: Record<string, any> = {
             ct: 1,
             cs: 1,

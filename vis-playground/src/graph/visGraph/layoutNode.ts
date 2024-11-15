@@ -29,9 +29,18 @@ export class LayoutNode {
     // Child nodes, if any
     children: LayoutNode[] = [];
 
-    // The index of the node in the parent's children list
+
+    _index = -1;
+    // The index of the node in the parent's children list or the manually set index
     get index(): number {
+        if (this._index >= 0) {
+            return this._index;
+        }
         return this.parent?.children.indexOf(this) ?? -1;
+    }
+    // Set the node's index manually. If not set, the index is determined by the parent's children list.
+    set index(index: number) {
+        this._index = index;
     }
 
     // Type of VisNode (TODO: Maybe we dont need this or make it more flexible)
@@ -51,7 +60,7 @@ export class LayoutNode {
     // sizeCalculated: boolean = false;
 
     // The precalculator for the node (e.g. for calculating the size of the node)
-    precalculator?: BasicPrecalculator;
+    precalculator?: BasicPrecalculator = new BasicPrecalculator();
 
     // The positioner for the node (for positioning the children of the node during the layouting process)
     positioner?: BasePositioner;

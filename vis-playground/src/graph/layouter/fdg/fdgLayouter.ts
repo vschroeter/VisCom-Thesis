@@ -6,41 +6,56 @@ import { Graph2d } from "src/graph/graphical/Graph2d";
 import * as d3 from "d3";
 import { Connection2d, Node2d } from "src/graph/graphical";
 import { CommonSettings } from "../settings/commonSettings";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
+import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
+
+// export class SimulatedLayoutNode extends LayoutNode {
+//     // x velocity of the node (for force-directed simulations)
+//     vx: number = 0;
+//     // y velocity of the node (for force-directed simulations)
+//     vy: number = 0;
+//     // fixed x position of the node (for force-directed simulations)
+//     fx: number | null = null;
+//     // fixed y position of the node (for force-directed simulations
+//     fy: number | null = null;
+// }
 
 export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
-    simulation?: d3.Simulation<Node2d, Connection2d>;
+    simulation?: d3.Simulation<LayoutNode, LayoutConnection>;
 
     override layout(isUpdate = false) {
-        const ctx = this.settings.getContext({ graph2d: this.graph2d });
+        const ctx = this.settings.getContext({ visGraph: this.visGraph });
 
         if (this.simulation) {
             // console.log("Stopping simulation");
             this.simulation.stop();
         }
 
-        const simulation = d3.forceSimulation(this.graph2d.nodes).alpha(1) //.alphaTarget(0.3);
+        const simulation = d3.forceSimulation(this.visGraph.allLayoutNodes).alpha(1) //.alphaTarget(0.3);
         simulation.stop();
         this.simulation = simulation;
 
         simulation.on("tick", () => {
+            this.visGraph.layout();
             this.emitEvent("update");
         });
         simulation.on("end", () => {
+            this.visGraph.layout();
             this.emitEvent("end");
         });
 
         if (this.settings.forceManyBody.active) {
             // console.log("Adding force many body", this.settings.forceManyBody.strength.getValue());
-            simulation.force("charge", d3.forceManyBody<Node2d>().strength(d =>
+            simulation.force("charge", d3.forceManyBody<LayoutNode>().strength(d =>
                 this.settings.forceManyBody.strength.getValue(d, ctx) ?? -20)
             )
         }
 
         if (this.settings.forceLink.active) {
             // console.log("Adding force link", this.settings.forceLink.distance.getValue(), this.settings.forceLink.strength.getValue());
-            const force = d3.forceLink(this.getFilteredLinks())
+            const force = d3.forceLink(this.visGraph.allLayoutConnections)
             if (this.settings.forceLink.strength.active) {
                 force.strength(d => this.settings.forceLink.strength.getValue(d, ctx) ?? 1)
             }
@@ -62,7 +77,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
         if (this.settings.forceCollide.active) {
             // console.log("Adding force collide", this.settings.forceCollide.radius.getValue(), this.settings.forceCollide.strength.getValue());
-            simulation.force("collide", d3.forceCollide<Node2d>().radius(
+            simulation.force("collide", d3.forceCollide<LayoutNode>().radius(
                 d => this.settings.forceCollide.radius.getValue(d, ctx) ?? 5
             ).strength(
                 this.settings.forceCollide.strength.getValue(ctx) ?? 0.5
