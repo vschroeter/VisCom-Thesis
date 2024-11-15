@@ -1,4 +1,4 @@
-import { Point, Vector } from "2d-geometry";
+import { Circle, Point, Vector } from "2d-geometry";
 import { CommunicationChannel, CommunicationGraph, CommunicationLink, CommunicationNode, CommunicationTopic } from "../commGraph";
 import { CommonSettings } from "../layouter/settings/commonSettings";
 
@@ -8,7 +8,7 @@ import { LayoutConnection } from "./layoutConnection";
 import { Sorter } from "../algorithms/sortings/sorting";
 import { BasicPrecalculator } from "./layouterComponents/precalculator";
 import { BasePositioner } from "./layouterComponents/positioner";
-import { LineConnector } from "./layouterComponents/connector";
+import { BaseConnector } from "./layouterComponents/connector";
 import { Anchor, Node2d } from "../graphical";
 
 
@@ -28,6 +28,11 @@ export class LayoutNode {
 
     // Child nodes, if any
     children: LayoutNode[] = [];
+
+    // The index of the node in the parent's children list
+    get index(): number {
+        return this.parent?.children.indexOf(this) ?? -1;
+    }
 
     // Type of VisNode (TODO: Maybe we dont need this or make it more flexible)
     nodeType: "normal" | "community" | "stronglyCoupled" | "broadcasting" | "similarConnections" = "normal";
@@ -55,7 +60,7 @@ export class LayoutNode {
     sorter?: Sorter;
 
     // The connector for the node
-    connector?: LineConnector;
+    connector?: BaseConnector;
 
     // // List of connections, that are waiting for this node to be layouted
     // connectionsWaitingForLayout: VisConnection[] = [];
@@ -120,6 +125,11 @@ export class LayoutNode {
     get y(): number { return this.center.y; }
     set x(x: number) { this.center.x = x; }
     set y(y: number) { this.center.y = y; }
+
+    // The circle object representing the node
+    get circle() {
+        return new Circle(this.center, this.radius);
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // Connection methods
@@ -225,40 +235,16 @@ export class LayoutNode {
         _positioner?.positionChildren(this);
     }
 
-    connectChildren(connector?: LineConnector) {
-        if (this.children.length == 0) return;
-
+    connect(connector?: BaseConnector) {
         const _connector = connector ?? this.connector;
         if (!_connector) {
             return;
         }
 
+        this.outConnections.forEach(connection => {
+            _connector.layoutConnection(connection);
+        });
     }
-
-    // layout() {
-    //     // TODO: verschiedene Precalculator erlauben
-
-    //     if (this.children.length > 0) {
-
-    //         // If a sorter is defined, we sort the children first
-    //         if (this.sorter) {
-    //             this.children = this.sorter.getSorting(this.children);
-    //         }
-
-    //         // If the node has children, we have to layout them first
-    //         this.children.forEach(child => {
-    //             child.layout();
-    //         });
-
-    //         // After the children are finished, we can layout this node
-    //         this.positioner?.positionChildren(this);
-    //     }
-
-    //     // Calculate the size of the node (only important for child nodes)
-    //     this.precalculator?.precalculate(this, this.visGraph);
-
-    //     this.layouted = true;
-    // }
 
     ////////////////////////////////////////////////////////////////////////////
     // Rendering methods
@@ -281,6 +267,9 @@ export class LayoutNode {
         this.node2d?.updatePositionAndSize(this.center.x, this.center.y, this.radius);
         // this.node2d?.update();
 
+        this.outConnections.forEach(connection => {
+            connection.updatePoints();
+        });
     }
 
 }

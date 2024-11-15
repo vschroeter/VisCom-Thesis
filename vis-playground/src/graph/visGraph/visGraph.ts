@@ -110,7 +110,7 @@ export class VisGraph {
      * Get the nodes of the graph in its hierarchical layers.
      * @param reversed If true, the nodes are returned in reversed order (thus, beginning with leaf nodes)
      */
-    getLayeredLayoutNode(reversed: boolean = false): LayoutNode[][] {
+    getLayeredLayoutNodes(reversed: boolean = false): LayoutNode[][] {
 
         const layers: LayoutNode[][] = [];
 
@@ -136,6 +136,7 @@ export class VisGraph {
         if (_parentNode !== node) {
             _parentNode.children.push(node);           
         }
+        node.parent = _parentNode;
         this.mapIdToLayoutNode.set(node.id, node);
     }
 
@@ -285,7 +286,7 @@ export class VisGraph {
         // 3. Position the child nodes, using the specified positioner
         // After everything is finished, we connect the child nodes, using the specified connector
 
-        const layers = this.getLayeredLayoutNode(true);
+        const layers = this.getLayeredLayoutNodes(true);
 
         layers.forEach(layer => {
             layer.forEach(node => {
@@ -301,7 +302,9 @@ export class VisGraph {
 
         layers.forEach(layer => {
             layer.forEach(node => {
-                node.connectChildren();
+                if (node.parent) {
+                    node.connect();
+                }
             });
         });
 

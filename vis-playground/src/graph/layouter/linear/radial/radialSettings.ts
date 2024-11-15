@@ -26,8 +26,8 @@ export class EdgeSettings extends Setting {
         defaultValue: 270,
     });
 
-    straightForwardlineAtDegreeDelta = new Param({
-        key: "straightForwardlineAtDegreeDelta",
+    straightForwardLineAtDegreeDelta = new Param({
+        key: "straightForwardLineAtDegreeDelta",
         description: "The threshold angle in the radial layout for forward edges to be drawn as straight lines (in degree). Lines above this threshold will be drawn as concave curves, lines below this threshold will be drawn as convex curves.",
         optional: false,
         defaultValue: 135,

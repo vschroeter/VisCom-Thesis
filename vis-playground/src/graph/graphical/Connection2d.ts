@@ -7,10 +7,8 @@ import { EllipticArc } from "./";
 import * as d3 from "d3"
 import { SvgRenderable } from "./Renderable";
 import { Point } from "2d-geometry";
-import { LayoutConnection } from "../visGraph/layoutConnection";
+import { CurveStyle, LayoutConnection, LayoutConnectionPoint } from "../visGraph/layoutConnection";
 import { LayoutNode } from "../visGraph/layoutNode";
-
-export type CurveStyle = "linear" | "basis" | "natural" | d3.CurveFactory
 
 export class Arrow2D {
 
@@ -75,15 +73,18 @@ export interface Connection2dData {
 // export class Connection2d<T extends Connection2dData = Connection2dData> extends SvgRenderable {
 export class Connection2d extends SvgRenderable {
 
-    /** The points that make up the connection */
-    points: (Point | EllipticArc | Anchor)[] = []
-
-    /** The style of the curve */
-    curveStyle: CurveStyle = "linear"
-
-    /** The data of the link */
-    // data: T
+    
+    /** The defining layout connection */
     layoutConnection: LayoutConnection;
+    
+    // /** The points defining the connection */
+    get points(): LayoutConnectionPoint[] {
+        return this.layoutConnection.points
+    }
+
+    get curveStyle(): CurveStyle {
+        return this.layoutConnection.curveStyle
+    }
 
     /** The source node of the connection */
     source: LayoutNode
@@ -270,6 +271,10 @@ export class Connection2d extends SvgRenderable {
         this.arrow.size = size
 
         this.selectSubElement('path.arrow').attr('d', this.getArrowPath())
+    }
+
+    updatePath() {
+        this.addUpdateCallback(this.renderPath)
     }
 
     //++++ Opacity ++++//
