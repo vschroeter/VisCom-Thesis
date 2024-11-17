@@ -40,6 +40,10 @@ export class NodeCommunities {
         });
     }
 
+    getAsIdLists(): string[][] {
+        return this.communities.map(community => community.nodeIds);
+    }
+
     get countOfCommunities(): number {
         return this.communities.length;
     }

@@ -512,6 +512,14 @@ export class RadialCurvedConnector {
         const intersectionsStart = arcCircle.intersect(startNode.circle);
         const intersectionsEnd = arcCircle.intersect(endNode.circle);
 
+        console.log({
+            startNode,
+            endNode,
+            parent,
+            arcCircle,
+            intersectionsStart,
+            intersectionsEnd
+        });
         const intersectionStart = radialLayoutCircle.contains(intersectionsStart[0]) ? intersectionsStart[1] : intersectionsStart[0];
         const intersectionEnd = radialLayoutCircle.contains(intersectionsEnd[0]) ? intersectionsEnd[1] : intersectionsEnd[0];
 

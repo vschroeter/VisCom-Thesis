@@ -11,6 +11,7 @@ import { BasePositioner } from "./layouterComponents/positioner";
 import { BaseConnector } from "./layouterComponents/connector";
 import { Anchor, Node2d } from "../graphical";
 
+export type InstanceOrGetter<T> = T | ((node: LayoutNode) => T);
 
 export class LayoutNode {
 
@@ -60,16 +61,16 @@ export class LayoutNode {
     // sizeCalculated: boolean = false;
 
     // The precalculator for the node (e.g. for calculating the size of the node)
-    precalculator?: BasicPrecalculator = new BasicPrecalculator();
+    precalculator?: InstanceOrGetter<BasicPrecalculator> = new BasicPrecalculator();
 
     // The positioner for the node (for positioning the children of the node during the layouting process)
-    positioner?: BasePositioner;
+    positioner?: InstanceOrGetter<BasePositioner>;
 
     // The sorter for the node (for sorting the children of the node before layouting)
-    sorter?: Sorter;
+    sorter?: InstanceOrGetter<Sorter>;
 
     // The connector for the node
-    connector?: BaseConnector;
+    connector?: InstanceOrGetter<BaseConnector>;
 
     // // List of connections, that are waiting for this node to be layouted
     // connectionsWaitingForLayout: VisConnection[] = [];
@@ -220,16 +221,22 @@ export class LayoutNode {
     ////////////////////////////////////////////////////////////////////////////
     // Layouting methods
     ////////////////////////////////////////////////////////////////////////////
+    protected getInstance<T>(instanceOrGetter: InstanceOrGetter<T>): T {
+        if (instanceOrGetter instanceof Function) {
+            return instanceOrGetter(this);
+        }
+        return instanceOrGetter;
+    }
 
     precalculate(precalculator?: BasicPrecalculator) {
-        const _precalculator = precalculator ?? this.precalculator;
+        const _precalculator = this.getInstance(precalculator ?? this.precalculator);
         _precalculator?.precalculate(this, this.visGraph);
     }
 
     sortChildren(sorter?: Sorter) {
         if (this.children.length == 0) return;
 
-        const _sorter = sorter ?? this.sorter;
+        const _sorter = this.getInstance(sorter ?? this.sorter);
         if (!_sorter) {
             return;
         }
@@ -240,12 +247,12 @@ export class LayoutNode {
     positionChildren(positioner?: BasePositioner) {
         if (this.children.length == 0) return;
 
-        const _positioner = positioner ?? this.positioner;
+        const _positioner = this.getInstance(positioner ?? this.positioner);
         _positioner?.positionChildren(this);
     }
 
     connect(connector?: BaseConnector) {
-        const _connector = connector ?? this.connector;
+        const _connector = this.getInstance(connector ?? this.connector);
         if (!_connector) {
             return;
         }

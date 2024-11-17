@@ -5,10 +5,11 @@ import * as d3 from "d3";
 import { Connection2d, Node2d } from "src/graph/graphical";
 import { ViscomLayouterSettings } from "./viscomSettings";
 import { GraphLayouter } from "../layouter";
-import { RadialLayouter } from "../linear/radial/radialLayouter";
+import { RadialCurvedConnector, RadialLayouter, RadialPositioner } from "../linear/radial/radialLayouter";
 import { RadialLayouterSettings } from "../linear/radial/radialSettings";
 import { MouseEvents } from "src/graph/visualizations/interactions";
 import { Connection2dData } from "src/graph/graphical/Connection2d";
+import { BasicPrecalculator } from "src/graph/visGraph/layouterComponents/precalculator";
 
 
 class ViscomHyperNode extends Node2d {
@@ -86,75 +87,100 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
 
         // Transform visgraph to hypergraph
         
+        this.visGraph.combineCommunities(this.commGraph.communities.getAsIdLists());
+        console.log("Combined communities", this.visGraph, this.commGraph.communities.getAsIdLists());
+
+        this.visGraph.setPrecalculator(new BasicPrecalculator({ sizeMultiplier: 10 }));
+
+        const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
+        this.visGraph.setSorter(sorter);
+
+        this.visGraph.setPositioner((node) => {
+            const radius = this.settings.size.radius.getValue(this.settings.getContext({ nodes: node.children })) ?? 100;
+            console.log("Radius", node, radius);
+            return new RadialPositioner(radius);
+        })
+
+        const forwardBackwardThreshold = this.settings.edges.forwardBackwardThreshold.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 270;
+        const straightForwardLineAtDegreeDelta = this.settings.edges.straightForwardLineAtDegreeDelta.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 135;
+        const backwardLineCurvature = this.settings.edges.backwardLineCurvature.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 120;
+
+        this.visGraph.setConnector(new RadialCurvedConnector({
+            forwardBackwardThreshold,
+            straightForwardLineAtDegreeDelta,
+            backwardLineCurvature
+        }));
+
+
+        this.visGraph.layout();
+        this.emitEvent("end");
 
 
 
+        // const hyperNodes: ViscomHyperNode[] = [];
+        // // Create a hypernode for each community
+        // this.commGraph.communities.communities.forEach((community, i) => {
+        //     const nodesInComm = community.nodeIds.map(id => this.commGraph.getNode(id)!);
+        //     const hyperNode = new ViscomHyperNode(this, nodesInComm, `__hypernode_${i}`);
+        //     hyperNodes.push(hyperNode);
+        // });
 
+        // const graph2d = new Graph2d();
+        // this.graph2d = graph2d;
 
-        const hyperNodes: ViscomHyperNode[] = [];
-        // Create a hypernode for each community
-        this.commGraph.communities.communities.forEach((community, i) => {
-            const nodesInComm = community.nodeIds.map(id => this.commGraph.getNode(id)!);
-            const hyperNode = new ViscomHyperNode(this, nodesInComm, `__hypernode_${i}`);
-            hyperNodes.push(hyperNode);
-        });
+        // graph2d.addNode2d(hyperNodes);
 
-        const graph2d = new Graph2d();
-        this.graph2d = graph2d;
+        // // Now get the links between the hypernodes
+        // const hyperLinks: Connection2d<ViscomHyperLinkData>[] = [];
+        // hyperNodes.forEach((hn1, i) => {
+        //     hyperNodes.forEach((hn2, j) => {
+        //         if (j > i) {
 
-        graph2d.addNode2d(hyperNodes);
+        //             const nodesInHn1 = hn1.layouter.nodes;
+        //             const nodesInHn2 = hn2.layouter.nodes;
 
-        // Now get the links between the hypernodes
-        const hyperLinks: Connection2d<ViscomHyperLinkData>[] = [];
-        hyperNodes.forEach((hn1, i) => {
-            hyperNodes.forEach((hn2, j) => {
-                if (j > i) {
+        //             const externalLinks = this.commGraph.getAllExternalLinksBetweenNodeGroups(nodesInHn1, nodesInHn2, undefined, this.commonSettings.hideLinksThreshold.getValue())
+        //             const mergedLinks = CommunicationLink.mergeLinks(externalLinks);
+        //             console.log("External links", externalLinks);
+        //             mergedLinks.forEach(link => {
+        //                 const l2d = graph2d.createLink2d<ViscomHyperLinkData>({ fromId: hn1.id, toId: hn2.id, fromCommNodeId: link.fromId, toCommNodeId: link.toId, weight: link.weight });
+        //                 hyperLinks.push(l2d);
+        //             })
+        //         }
+        //     });
+        // });
 
-                    const nodesInHn1 = hn1.layouter.nodes;
-                    const nodesInHn2 = hn2.layouter.nodes;
+        // // const hyperGraph = CommunicationGraph.createMergedGraph(
+        // //     {
+        // //         originalGraph: this.commGraph,
+        // //         communities: this.commGraph.communities.communities
+        // //     }
+        // // )
 
-                    const externalLinks = this.commGraph.getAllExternalLinksBetweenNodeGroups(nodesInHn1, nodesInHn2, undefined, this.commonSettings.hideLinksThreshold.getValue())
-                    const mergedLinks = CommunicationLink.mergeLinks(externalLinks);
-                    console.log("External links", externalLinks);
-                    mergedLinks.forEach(link => {
-                        const l2d = graph2d.createLink2d<ViscomHyperLinkData>({ fromId: hn1.id, toId: hn2.id, fromCommNodeId: link.fromId, toCommNodeId: link.toId, weight: link.weight });
-                        hyperLinks.push(l2d);
-                    })
-                }
-            });
-        });
+        // // Place hypernodes on a circle
+        // const angleStep = 2 * Math.PI / hyperNodes.length;
 
-        // const hyperGraph = CommunicationGraph.createMergedGraph(
-        //     {
-        //         originalGraph: this.commGraph,
-        //         communities: this.commGraph.communities.communities
-        //     }
-        // )
+        // // Circle have the max radius of all hypernodes
+        // const maxRadius = Math.max(...hyperNodes.map(hn => hn.radius));
+        // const hyperRadius = maxRadius * 2;
+        // this.hyperRadius = hyperRadius;
 
-        // Place hypernodes on a circle
-        const angleStep = 2 * Math.PI / hyperNodes.length;
+        // console.log("Max radius", maxRadius);
 
-        // Circle have the max radius of all hypernodes
-        const maxRadius = Math.max(...hyperNodes.map(hn => hn.radius));
-        const hyperRadius = maxRadius * 2;
-        this.hyperRadius = hyperRadius;
+        // hyperNodes.forEach((hn, i) => {
+        //     hn.center.x = hyperRadius * Math.cos(i * angleStep);
+        //     hn.center.y = hyperRadius * Math.sin(i * angleStep);
+        // });
 
-        console.log("Max radius", maxRadius);
+        // // Layout the nodes
+        // hyperNodes.forEach(hn => hn.layout());
+        // this.hyperNodes = hyperNodes;
 
-        hyperNodes.forEach((hn, i) => {
-            hn.center.x = hyperRadius * Math.cos(i * angleStep);
-            hn.center.y = hyperRadius * Math.sin(i * angleStep);
-        });
-
-        // Layout the nodes
-        hyperNodes.forEach(hn => hn.layout());
-        this.hyperNodes = hyperNodes;
-
-        this.updateStyle();
+        // this.updateStyle();
 
         // this.emitEvent("update");
         // super.layout(isUpdate);
-        this.emitEvent("end");
+        // this.emitEvent("end");
     }
 
     override updateStyle(): void {

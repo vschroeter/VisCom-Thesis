@@ -135,8 +135,8 @@ export class VisGraph {
         const _parentNode = parentNode ?? this.rootNode;
         if (_parentNode !== node) {
             _parentNode.children.push(node);           
+            node.parent = _parentNode;
         }
-        node.parent = _parentNode;
         this.mapIdToLayoutNode.set(node.id, node);
     }
 
@@ -229,56 +229,30 @@ export class VisGraph {
 
 
     setPrecalculator(precalculator: BasicPrecalculator | ((node: LayoutNode) => BasicPrecalculator)) {
-        if (typeof precalculator === "function") {
-            this.allLayoutNodes.forEach(node => {
-                node.precalculator = precalculator(node);
-            });
-        } else {
-            this.allLayoutNodes.forEach(node => {
-                node.precalculator = precalculator;
-            })
-        }
+        this.allLayoutNodes.forEach(node => {
+            node.precalculator = precalculator;
+        })
     }
 
     setPositioner(positioner: BasePositioner | ((node: LayoutNode) => BasePositioner)) {
-        if (typeof positioner === "function") {
-            this.allLayoutNodes.forEach(node => {
-                node.positioner = positioner(node);
-            });
-        } else {
-            this.allLayoutNodes.forEach(node => {
-                node.positioner = positioner;
-            })
-        }
+        this.allLayoutNodes.forEach(node => {
+            node.positioner = positioner;
+        })
     }
 
     setConnector(connector: BaseConnector | ((node: LayoutNode) => BaseConnector)) {
-        if (typeof connector === "function") {
-            this.allLayoutNodes.forEach(node => {
-                node.connector = connector(node);
-            });
-        } else {
-            this.allLayoutNodes.forEach(node => {
-                node.connector = connector;
-            })
-        }
+        this.allLayoutNodes.forEach(node => {
+            node.connector = connector;
+        })
     }
 
     setSorter(sorter: Sorter | ((node: LayoutNode) => Sorter)) {
-        if (typeof sorter === "function") {
-            this.allLayoutNodes.forEach(node => {
-                node.sorter = sorter(node);
-            });
-        } else {
-            this.allLayoutNodes.forEach(node => {
-                node.sorter = sorter;
-            })
-        }
+        this.allLayoutNodes.forEach(node => {
+            node.sorter = sorter;
+        })
     }
 
     layout() {
-        // this.rootNode.layout();
-
         // We layout the graph bottom-up, beginning with the leaf nodes without children
         // For each layer, we do the following:
         // 1. Calculate the size of the nodes, using the specified precalculators
@@ -447,10 +421,36 @@ export class VisGraph {
     ////////////////////////////////////////////////////////////////////////////
     // Hierarchy methods
     ////////////////////////////////////////////////////////////////////////////
+    private _hyperNodeId = 0;
+
+    getNewHyperNodeId() {
+        return `__hypernode_${this._hyperNodeId++}`;
+    }
+
+    moveNodesToParent(nodes: LayoutNode[], parentNode: LayoutNode) {
+        nodes.forEach(node => {
+            const oldParent = node.parent;
+            if (oldParent) {
+                oldParent.children.splice(oldParent.children.indexOf(node), 1);
+            }
+            node.parent = parentNode;
+            parentNode.children.push(node);
+        });        
+    }
+
+    combineNodesIntoHyperNode(nodes: LayoutNode[], parentNode: LayoutNode = this.rootNode) {
+        const hyperNode = new LayoutNode(this, this.getNewHyperNodeId());
+        this.addNode(hyperNode, parentNode);
+        this.moveNodesToParent(nodes, hyperNode);
+    }
 
     // The given communities are combined into hypernodes
-    combineCommunities() {
-
+    combineCommunities(communityNodeIds: (LayoutNode | string)[][], parentNode: LayoutNode = this.rootNode) {
+        const communities = communityNodeIds.map(community => community.map(node => this.getNode(node)));
+        
+        communities.forEach(nodes => {
+            this.combineNodesIntoHyperNode(nodes, parentNode);
+        });
     }
 
     // If a node only has connections to a single other node in this layer, we can add it as subnode

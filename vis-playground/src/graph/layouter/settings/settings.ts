@@ -104,8 +104,8 @@ export class GraphLayouterSettings {
     getContext({ visGraph, nodes, links }:
         {
             visGraph?: VisGraph;
-            nodes?: Node2d[];
-            links?: Connection2d[];
+            nodes?: LayoutNode[];
+            links?: LayoutConnection[];
         }
     ): Record<string, any> {
 
