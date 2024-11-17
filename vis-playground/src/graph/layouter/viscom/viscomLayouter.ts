@@ -96,8 +96,18 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         this.visGraph.setSorter(sorter);
 
         this.visGraph.setPositioner((node) => {
-            const radius = this.settings.size.radius.getValue(this.settings.getContext({ nodes: node.children })) ?? 100;
-            console.log("Radius", node, radius);
+            // const radius = this.settings.size.radius.getValue(this.settings.getContext({ nodes: node.children })) ?? 100;
+            // console.log("Radius", node, radius);
+
+            const countChildren = node.children.length;
+
+            // Get the max radius of the child nodes
+            const maxChildRadius = Math.max(...node.children.map(n => n.radius));
+            const radiusFactor = 2;
+
+            const circumference = countChildren * (maxChildRadius * 2) * radiusFactor;
+            const radius = circumference / (2 * Math.PI);
+
             return new RadialPositioner(radius);
         })
 

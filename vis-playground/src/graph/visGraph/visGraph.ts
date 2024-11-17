@@ -128,7 +128,8 @@ export class VisGraph {
     }
 
     get allLayoutNodes(): LayoutNode[] {
-        return Array.from(this.mapIdToLayoutNode.values());
+        // return Array.from(this.mapIdToLayoutNode.values());
+        return Array.from(this.getLayeredLayoutNodes(false).flat());
     }
 
     addNode(node: LayoutNode, parentNode?: LayoutNode) {
@@ -258,11 +259,19 @@ export class VisGraph {
         // 1. Calculate the size of the nodes, using the specified precalculators
         // 2. Sort the child nodes, using the specified sorter
         // 3. Position the child nodes, using the specified positioner
-        // After everything is finished, we connect the child nodes, using the specified connector
+        
+        // Before we start connecting the nodes, we need to propagate the position of parent nodes,
+        // as each positioner positions the child nodes relative to (0,0). 
+        // If a parent is placed at a specific position, this position is applied to each child node.
+        // After everything is finished, we connect the child nodes, using the specified connector.
 
-        const layers = this.getLayeredLayoutNodes(true);
 
-        layers.forEach(layer => {
+
+        const botUpLayers = this.getLayeredLayoutNodes(true);
+        const topDownLayers = this.getLayeredLayoutNodes(false);
+
+        // Position the nodes and calculate the size
+        botUpLayers.forEach(layer => {
             layer.forEach(node => {
 
                 if (node.children.length > 0) {
@@ -274,7 +283,15 @@ export class VisGraph {
             });
         });
 
-        layers.forEach(layer => {
+        // Propagate the positions of the parent nodes
+        topDownLayers.forEach(layer => {
+            layer.forEach(node => {
+                node.propagatePositionToChildNodes();
+            });
+        });
+        
+        // Connect the nodes
+        botUpLayers.forEach(layer => {
             layer.forEach(node => {
                 if (node.parent) {
                     node.connect();

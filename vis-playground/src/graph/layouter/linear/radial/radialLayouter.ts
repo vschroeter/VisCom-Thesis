@@ -145,10 +145,14 @@ export class RadialCurvedConnector {
         // Links below the threshold are forward links
         const isForwardLink = angleDiffForwardDeg <= this.forwardBackwardThreshold;
 
-        if (isForwardLink) {
-            connection.points = this.getForwardLink(startNode, endNode, parent);
-        } else {
-            connection.points = this.getBackwardLink(startNode, endNode, parent);
+        try {
+            if (isForwardLink) {
+                connection.points = this.getForwardLink(startNode, endNode, parent);
+            } else {
+                connection.points = this.getBackwardLink(startNode, endNode, parent);
+            }
+        } catch (e) {
+            console.error("Error in layouting connection", e);
         }
     }
 
@@ -243,6 +247,14 @@ export class RadialCurvedConnector {
 
             const intersectionsStart = radialLayoutCircle.intersect(startNode.circle);
             const intersectionsEnd = radialLayoutCircle.intersect(endNode.circle);
+
+            // console.log({
+            //     intersectionsStart,
+            //     intersectionsEnd,
+            //     radialLayoutCircle,
+            //     startNode,
+            //     endNode
+            // });
 
             // Get the intersections, that are closer to the mid point between the two nodes
             const sDist0 = intersectionsStart[0].distanceTo(radialMidPoint);

@@ -244,6 +244,12 @@ export class LayoutNode {
         this.children = _sorter.getSorting(this.children);
     }
 
+    propagatePositionToChildNodes() {
+        this.children.forEach(child => {
+            child.center = child.center.translate(this.center);
+        });
+    }
+
     positionChildren(positioner?: BasePositioner) {
         if (this.children.length == 0) return;
 
