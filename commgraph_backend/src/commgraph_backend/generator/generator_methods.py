@@ -84,7 +84,7 @@ generator_methods_config = {
             },
         ],
         "description": "Generates a random graph using the Erdős-Rényi model.",
-        "method": get_generator_output(CommGraphGenerator().generate),
+        "method": get_generator_output(get_nx_to_commgraph_method(CommGraphGenerator().generate)),
     },
     "zacharys_karate_club": {
         "params": [],
