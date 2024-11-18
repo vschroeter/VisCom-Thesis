@@ -19,12 +19,25 @@ export function degToRad(deg: number) {
 
 export class RadialPositioner extends BasePositioner {
 
+    // The radius to place the child nodes
     radius: number;
+
+    // The outer radius that the parent node gets 
+    outerRadius: number;
+
+    // The center of the circle
     center: Point;
 
-    constructor(radius = 100) {
+    constructor({
+        radius = 100,
+        outerRadius,
+    }: {
+        radius?: number;
+        outerRadius?: number;
+    } = {}) {
         super();
         this.radius = radius;
+        this.outerRadius = outerRadius ?? radius;
         this.center = new Point(0, 0);
     }
 
@@ -60,7 +73,8 @@ export class RadialPositioner extends BasePositioner {
             // console.log("Set node position", node.id, pos, node.circle);
         });
 
-        parentNode.radius = this.radius;
+        parentNode.radius = this.outerRadius;
+        parentNode.innerRadius = this.radius;
     }
 }
 
@@ -231,9 +245,10 @@ export class RadialCurvedConnector {
         const angleDiffBackwardDeg = 360 - angleDiffForwardDeg;
         const angleDiffBackwardRad = degToRad(angleDiffBackwardDeg);
 
-        const radius = parent.radius;
+        const radius = parent.innerRadius;
         const center = parent.center;
-        const radialLayoutCircle = parent.circle;
+        // const radialLayoutCircle = parent.circle;
+        const radialLayoutCircle = parent.innerCircle;
         const startPoint = startNode.center;
         const endPoint = endNode.center;
         const midPoint = new Segment(startPoint, endPoint).middle();
@@ -248,19 +263,11 @@ export class RadialCurvedConnector {
             const intersectionsStart = radialLayoutCircle.intersect(startNode.circle);
             const intersectionsEnd = radialLayoutCircle.intersect(endNode.circle);
 
-            // console.log({
-            //     intersectionsStart,
-            //     intersectionsEnd,
-            //     radialLayoutCircle,
-            //     startNode,
-            //     endNode
-            // });
-
             // Get the intersections, that are closer to the mid point between the two nodes
-            const sDist0 = intersectionsStart[0].distanceTo(radialMidPoint);
-            const sDist1 = intersectionsStart[1].distanceTo(radialMidPoint);
-            const eDist0 = intersectionsEnd[0].distanceTo(radialMidPoint);
-            const eDist1 = intersectionsEnd[1].distanceTo(radialMidPoint);
+            const sDist0 = intersectionsStart[0].distanceTo(radialMidPoint)[0];
+            const sDist1 = intersectionsStart[1].distanceTo(radialMidPoint)[0];
+            const eDist0 = intersectionsEnd[0].distanceTo(radialMidPoint)[0];
+            const eDist1 = intersectionsEnd[1].distanceTo(radialMidPoint)[0];
 
             const intersectionStart = sDist0 < sDist1 ? intersectionsStart[0] : intersectionsStart[1];
             const intersectionEnd = eDist0 < eDist1 ? intersectionsEnd[0] : intersectionsEnd[1];
@@ -332,15 +339,35 @@ export class RadialCurvedConnector {
         const arcCircle = new Circle(arcCenter, arcRadius);
         const intersectionsStart = arcCircle.intersect(startNode.circle);
         const intersectionsEnd = arcCircle.intersect(endNode.circle);
-        const intersectionStart = radialLayoutCircle.contains(intersectionsStart[0]) ? intersectionsStart[0] : intersectionsStart[1];
-        const intersectionEnd = radialLayoutCircle.contains(intersectionsEnd[0]) ? intersectionsEnd[0] : intersectionsEnd[1];
 
+        // Get the intersections, that are closer to the mid point between the two nodes
+        // const sDist0 = intersectionsStart[0].distanceTo(midPoint)[0];
+        // const sDist1 = intersectionsStart[1].distanceTo(midPoint)[0];
+        // const eDist0 = intersectionsEnd[0].distanceTo(midPoint)[0];
+        // const eDist1 = intersectionsEnd[1].distanceTo(midPoint)[0];
+
+        const sDist0 = intersectionsStart[0].distanceTo(radialMidPoint)[0];
+        const sDist1 = intersectionsStart[1].distanceTo(radialMidPoint)[0];
+        const eDist0 = intersectionsEnd[0].distanceTo(radialMidPoint)[0];
+        const eDist1 = intersectionsEnd[1].distanceTo(radialMidPoint)[0];
+
+        const intersectionStart = sDist0 < sDist1 ? intersectionsStart[0] : intersectionsStart[1];
+        const intersectionEnd = eDist0 < eDist1 ? intersectionsEnd[0] : intersectionsEnd[1];
+
+        // console.log(startNode.id, endNode.id);
         // console.log({
-        //     arcCircle,
-        //     startNodeCircle: startNode.circle,
-        //     endNodeCircle: endNode.circle,
         //     intersectionsStart,
-        //     intersectionsEnd
+        //     intersectionsEnd,
+        //     radialLayoutCircle,
+        //     radialMidPoint,
+        //     startNode,
+        //     endNode,
+        //     intersectionStart,
+        //     intersectionEnd,
+        //     sDist0,
+        //     sDist1,
+        //     eDist0,
+        //     eDist1
         // });
 
 
@@ -407,13 +434,17 @@ export class RadialCurvedConnector {
         // Forward diff = if b < a, then diff is angleDiff + 360 (since we cross the circle's 0° point)
         const angleDiffForwardDeg = angleDiffDeg < 0 ? angleDiffDeg + 360 : angleDiffDeg;
         const angleDiffBackwardDeg = 360 - angleDiffForwardDeg;
+        const angleDiffForwardRad = degToRad(angleDiffForwardDeg);
+        const angleDiffBackwardRad = degToRad(angleDiffBackwardDeg);
 
-        const radius = parent.radius;
+        // const radius = parent.radius;
+        const radius = parent.innerRadius;
         const center = parent.center;
         const radialLayoutCircle = parent.circle;
         const startPoint = startNode.center;
         const endPoint = endNode.center;
         const midPoint = new Segment(startPoint, endPoint).middle();
+        const radialMidPoint = RadialPositioner.getPositionForRad(startAngleRad - angleDiffBackwardRad / 2, radius, center);
 
         /** 
         For a backward link, we want a circular arc that is outside the circle.
@@ -532,8 +563,15 @@ export class RadialCurvedConnector {
             intersectionsStart,
             intersectionsEnd
         });
-        const intersectionStart = radialLayoutCircle.contains(intersectionsStart[0]) ? intersectionsStart[1] : intersectionsStart[0];
-        const intersectionEnd = radialLayoutCircle.contains(intersectionsEnd[0]) ? intersectionsEnd[1] : intersectionsEnd[0];
+
+        // Get the intersections, that are closer to the mid point between the two nodes
+        const sDist0 = intersectionsStart[0].distanceTo(radialMidPoint)[0];
+        const sDist1 = intersectionsStart[1].distanceTo(radialMidPoint)[0];
+        const eDist0 = intersectionsEnd[0].distanceTo(radialMidPoint)[0];
+        const eDist1 = intersectionsEnd[1].distanceTo(radialMidPoint)[0];
+
+        const intersectionStart = sDist0 < sDist1 ? intersectionsStart[0] : intersectionsStart[1];
+        const intersectionEnd = eDist0 < eDist1 ? intersectionsEnd[0] : intersectionsEnd[1];
 
         // Get the anchors
         const tangentInStartIntersection = new Vector(arcCenter, intersectionStart).normalize().rotate90CCW();
@@ -593,7 +631,7 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
 
     override layout(isUpdate = false) {
         this.visGraph.setPrecalculator(new BasicPrecalculator({ sizeMultiplier: 10 }));
-        this.visGraph.setPositioner(new RadialPositioner(this.getRadius()));
+        this.visGraph.setPositioner(new RadialPositioner({ radius: this.getRadius() }));
 
         const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
         this.visGraph.setSorter(sorter);

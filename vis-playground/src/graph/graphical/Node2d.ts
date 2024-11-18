@@ -68,7 +68,9 @@ export class Node2d extends SvgRenderable { // <NodeData>
   fill: string = 'red';
 
   // Whether the node should be filled
-  filled: boolean = true;
+  get filled(): boolean {
+    return this.layoutNode.filled;
+  }
 
   // The stroke style of the node
   strokeStyle: StrokeStyle = new StrokeStyle();

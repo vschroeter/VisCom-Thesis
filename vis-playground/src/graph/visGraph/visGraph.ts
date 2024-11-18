@@ -128,7 +128,6 @@ export class VisGraph {
     }
 
     get allLayoutNodes(): LayoutNode[] {
-        // return Array.from(this.mapIdToLayoutNode.values());
         return Array.from(this.getLayeredLayoutNodes(false).flat());
     }
 
@@ -241,9 +240,12 @@ export class VisGraph {
         })
     }
 
-    setConnector(connector: BaseConnector | ((node: LayoutNode) => BaseConnector)) {
-        this.allLayoutNodes.forEach(node => {
-            node.connector = connector;
+    setConnector(connector: BaseConnector | ((connection: LayoutConnection) => BaseConnector)) {
+        // this.allLayoutNodes.forEach(node => {
+        //     node.connector = connector;
+        // })
+        this.allLayoutConnections.forEach(connection => {
+            connection.connector = connector;
         })
     }
 
@@ -268,7 +270,16 @@ export class VisGraph {
 
 
         const botUpLayers = this.getLayeredLayoutNodes(true);
-        const topDownLayers = this.getLayeredLayoutNodes(false);
+        const topDownLayers = Array.from(botUpLayers).reverse();
+
+        const layerCount = botUpLayers.length;
+        
+        // Set the layers of the nodes
+        topDownLayers.forEach((layer, i) => {
+            layer.forEach(node => {
+                node.setLayer(i, layerCount);
+            });
+        })
 
         // Position the nodes and calculate the size
         botUpLayers.forEach(layer => {
@@ -283,12 +294,17 @@ export class VisGraph {
             });
         });
 
-        // Propagate the positions of the parent nodes
+        // console.log("Nodes pos before", this.allLayoutNodes.map(node => [new Point(node.center), node.id]));
+
+        // Propagate the sizes and positions of the parent nodes
         topDownLayers.forEach(layer => {
             layer.forEach(node => {
+                node.propagateSizeToChildNodes();
                 node.propagatePositionToChildNodes();
             });
         });
+
+        // console.log("Nodes pos after", this.allLayoutNodes.map(node => [new Point(node.center), node.id]));
         
         // Connect the nodes
         botUpLayers.forEach(layer => {
@@ -298,6 +314,10 @@ export class VisGraph {
                 }
             });
         });
+
+        // topDownLayers.flat().forEach(node => {
+        //     console.log(node.id, node.sizeFactor);
+        // })
 
         // Ensure, that all graphical elements are created
         this.createGraphicalElements();
@@ -352,13 +372,15 @@ export class VisGraph {
         this.allGraphicalNodes.forEach(node => {
             // node.updateStyleFill((n) => this.commonSettings.nodeColor.getValue(n), this.nodeScoring.extent);
 
-            if (!validScores) {
-                const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
-                node.updateStyleFill(v);
-                return;
-            }
-            const v = scoring.getColor(node.score);
-            node.updateStyleFill(v);
+            // if (!validScores) {
+            //     const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
+            //     node.updateStyleFill(v);
+            //     return;
+            // }
+            // const v = scoring.getColor(node.score);
+            // node.updateStyleFill(v);
+            const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
+            node.updateStyleFill(node.layoutNode.color ?? v);
         })
 
         // Update the node stroke based on the communities
@@ -416,7 +438,12 @@ export class VisGraph {
         this.allGraphicalConnections.forEach(link => {
             const weight = link.weight;
             let opacity = Math.min(Math.max(0.01, weight), 1) * alpha;
-            const width = Math.min(maxW, Math.max(minW, weight * wMultiplier));
+            
+            const startNode = link.source;
+            const endNode = link.target;
+            const sizeMultiplier = Math.max(startNode.parent?.sizeFactor ?? 1, endNode.parent?.sizeFactor ?? 1);
+            const width = Math.min(maxW, Math.max(minW, weight * wMultiplier )) * sizeMultiplier;
+
 
             if (userInteractions && userInteractions.somethingIsSelectedOrFocusedOrHovered) {
                 const startNode = link.source;
@@ -459,14 +486,31 @@ export class VisGraph {
         const hyperNode = new LayoutNode(this, this.getNewHyperNodeId());
         this.addNode(hyperNode, parentNode);
         this.moveNodesToParent(nodes, hyperNode);
+        return hyperNode;
     }
 
     // The given communities are combined into hypernodes
     combineCommunities(communityNodeIds: (LayoutNode | string)[][], parentNode: LayoutNode = this.rootNode) {
         const communities = communityNodeIds.map(community => community.map(node => this.getNode(node)));
         
-        communities.forEach(nodes => {
-            this.combineNodesIntoHyperNode(nodes, parentNode);
+        const colorScheme = d3.interpolateRainbow;
+
+        communities.forEach((nodes, i, arr) => {
+            const hypernode = this.combineNodesIntoHyperNode(nodes, parentNode);
+            
+            
+            // Set style of the hypernode
+            const startPositionInScheme = i / arr.length;
+            const interval = 1 / arr.length;
+            const start = startPositionInScheme
+            const end = startPositionInScheme + interval;
+            // const color = colorScheme(i / arr.length);
+
+            // hypernode.childrenColorScheme = colorScheme;
+            // hypernode.childrenColorSchemeRange = [start, end];
+            hypernode.applyChildrenColorScheme(colorScheme, [start, end]);
+            hypernode.filled = false;
+            hypernode.showLabel = false;
         });
     }
 

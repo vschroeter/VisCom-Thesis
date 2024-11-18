@@ -71,7 +71,7 @@ export interface ViscomHyperLinkData extends Connection2dData {
 
 
 export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
-// export class ViscomLayouter extends RadialLayouter<ViscomLayouterSettings> {
+    // export class ViscomLayouter extends RadialLayouter<ViscomLayouterSettings> {
 
 
     hyperNodes: ViscomHyperNode[] = [];
@@ -82,13 +82,17 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
     //     return this.hyperRadius;
     // }
 
+    override initVisGraph() {
+        // Transform visgraph to hypergraph
+    
+        this.visGraph.combineCommunities(this.commGraph.communities.getAsIdLists());
+        console.log("Combined communities", this.visGraph, this.commGraph.communities.getAsIdLists());
+
+    }
+
     override layout(isUpdate = false) {
 
 
-        // Transform visgraph to hypergraph
-        
-        this.visGraph.combineCommunities(this.commGraph.communities.getAsIdLists());
-        console.log("Combined communities", this.visGraph, this.commGraph.communities.getAsIdLists());
 
         this.visGraph.setPrecalculator(new BasicPrecalculator({ sizeMultiplier: 10 }));
 
@@ -104,22 +108,39 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             // Get the max radius of the child nodes
             const maxChildRadius = Math.max(...node.children.map(n => n.radius));
             const radiusFactor = 2;
+            const marginFactor = 1.1;
 
             const circumference = countChildren * (maxChildRadius * 2) * radiusFactor;
             const radius = circumference / (2 * Math.PI);
+            const outerRadius = (radius + maxChildRadius) * marginFactor;
 
-            return new RadialPositioner(radius);
+            return new RadialPositioner({ radius, outerRadius });
         })
 
         const forwardBackwardThreshold = this.settings.edges.forwardBackwardThreshold.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 270;
         const straightForwardLineAtDegreeDelta = this.settings.edges.straightForwardLineAtDegreeDelta.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 135;
         const backwardLineCurvature = this.settings.edges.backwardLineCurvature.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 120;
 
-        this.visGraph.setConnector(new RadialCurvedConnector({
-            forwardBackwardThreshold,
-            straightForwardLineAtDegreeDelta,
-            backwardLineCurvature
-        }));
+        this.visGraph.setConnector((connection) => {
+            
+            const startNode = connection.source;
+            const endNode = connection.target;
+
+            // If the nodes have the same parent, use the radial connector
+            if (startNode.parent === endNode.parent) {
+                return new RadialCurvedConnector({
+                    forwardBackwardThreshold,
+                    straightForwardLineAtDegreeDelta,
+                    backwardLineCurvature
+                })
+            }
+
+            // return new RadialCurvedConnector({
+            //     forwardBackwardThreshold,
+            //     straightForwardLineAtDegreeDelta,
+            //     backwardLineCurvature
+            // })
+        });
 
 
         this.visGraph.layout();

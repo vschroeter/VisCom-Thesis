@@ -7,6 +7,10 @@ import { CommonSettings } from "../layouter/settings/commonSettings";
 import * as d3 from "d3";
 import { LayoutNode } from "./layoutNode";
 import { Anchor, Connection2d, EllipticArc } from "../graphical";
+import { BaseConnector } from "./layouterComponents/connector";
+
+export type InstanceOrGetter<T> = T | ((node: LayoutConnection) => T);
+
 
 export class VisLink {
 
@@ -74,8 +78,12 @@ export class LayoutConnection {
     /** The style of the curve */
     curveStyle: CurveStyle = "linear"
 
+    connector?: InstanceOrGetter<BaseConnector>;
+
     /** The graphical representation of the connection */
     connection2d?: Connection2d;
+
+
 
     ////////////////////////////////////////////////////////////////////////////
     // Creation methods
@@ -168,6 +176,21 @@ export class LayoutConnection {
     ////////////////////////////////////////////////////////////////////////////
     // Graphical methods
     ////////////////////////////////////////////////////////////////////////////
+
+    protected getInstance<T>(instanceOrGetter: InstanceOrGetter<T>): T {
+        if (instanceOrGetter instanceof Function) {
+            return instanceOrGetter(this);
+        }
+        return instanceOrGetter;
+    }
+
+    connect(connector?: BaseConnector) {
+        const _connector = this.getInstance(connector ?? this.connector);
+        if (!_connector) {
+            return;
+        }
+        _connector.layoutConnection(this);
+    }
 
     createGraphicalElements() {
         this.connection2d = new Connection2d(this);

@@ -21,6 +21,15 @@ export class LayoutNode {
     // The id of the node
     id: string;
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Constructor
+    ////////////////////////////////////////////////////////////////////////////
+
+    constructor(graph: VisGraph, id: string) {
+        this.visGraph = graph;
+        this.id = id;
+    }
+
     // The related communication node. Hypernodes with child nodes do not have a single related communication node.
     commNode?: CommunicationNode;
 
@@ -44,21 +53,15 @@ export class LayoutNode {
         this._index = index;
     }
 
-    // Type of VisNode (TODO: Maybe we dont need this or make it more flexible)
-    nodeType: "normal" | "community" | "stronglyCoupled" | "broadcasting" | "similarConnections" = "normal";
+    // // Type of VisNode (TODO: Maybe we don't need this or make it more flexible)
+    // nodeType: "normal" | "community" | "stronglyCoupled" | "broadcasting" | "similarConnections" = "normal";
 
-    // successorNodes: VisNode[] = [];
-    // predecessorNodes: VisNode[] = [];
+    // // TODO: Associated nodes (somehow, we have to store e.g. duplicated nodes, that are related to this node)
+    // associatedNodes: LayoutNode[] = [];
 
-    // TODO: Associated nodes (somehow, we have to store e.g. duplicated nodes, that are related to this node)
-    associatedNodes: LayoutNode[] = [];
-
-
-    // If the node is finished with the layouting process
-    layouted: boolean = false;
-
-    // If the node's size has already been calculated
-    // sizeCalculated: boolean = false;
+    ////////////////////////////////////////////////////////////////////////////
+    // Layout Parts
+    ////////////////////////////////////////////////////////////////////////////
 
     // The precalculator for the node (e.g. for calculating the size of the node)
     precalculator?: InstanceOrGetter<BasicPrecalculator> = new BasicPrecalculator();
@@ -70,7 +73,7 @@ export class LayoutNode {
     sorter?: InstanceOrGetter<Sorter>;
 
     // The connector for the node
-    connector?: InstanceOrGetter<BaseConnector>;
+    // connector?: InstanceOrGetter<BaseConnector>;
 
     // // List of connections, that are waiting for this node to be layouted
     // connectionsWaitingForLayout: VisConnection[] = [];
@@ -81,15 +84,22 @@ export class LayoutNode {
     inConnections: LayoutConnection[] = [];
 
     // The layer of the node (for layered layouting). Leaf nodes have layer 0.
-    // layer: number = 0;
-
-    hasGraphicalRepresentation: boolean = true;
-
-
-    constructor(graph: VisGraph, id: string) {
-        this.visGraph = graph;
-        this.id = id;
+    protected _layer: number = 0;
+    protected _layerCount: number = 0;
+    get layerFromTop(): number {
+        return this._layer;
     }
+    get layerFromBot(): number {
+        return this._layerCount - this._layer - 1;
+    }
+
+    setLayer(layerFromTop: number, layerCount: number) {
+        this._layer = layerFromTop;
+        this._layerCount = layerCount;
+    }
+
+    // If the node has a graphical representation at all for rendering
+    hasGraphicalRepresentation: boolean = true;
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -128,9 +138,18 @@ export class LayoutNode {
      * The radius should be calculated by the precalculator or the layouter during the layouting process, based on the score and children of the node.
      */
     radius: number = 0;
+    _innerRadius?: number;
+    get innerRadius(): number {
+        return this._innerRadius ?? this.radius;
+    }
+    set innerRadius(value: number) {
+        this._innerRadius = value;
+    }
 
+    sizeFactor: number = 1;
 
     center: Point = new Point(0, 0);
+
     get x(): number { return this.center.x; }
     get y(): number { return this.center.y; }
     set x(x: number) { this.center.x = x; }
@@ -139,6 +158,70 @@ export class LayoutNode {
     // The circle object representing the node
     get circle() {
         return new Circle(this.center, this.radius);
+    }
+
+    get innerCircle() {
+        return new Circle(this.center, this.innerRadius);
+    }
+
+    get translationRelativeToParent(): Vector {
+        return new Vector(this.center.x - (this.parent?.center.x ?? 0), this.center.y - (this.parent?.center.y ?? 0));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Style of the node
+    ////////////////////////////////////////////////////////////////////////////
+
+    // The color of the node. If not set, the color is determined by default values, scoring and user interaction.
+    color?: string;
+
+    childrenColorScheme?: (t: number) => string;
+    childrenColorSchemeRange: [number, number] = [0, 1];
+
+    // The stroke color of the node. If not set, the color is determined by default values, scoring and user interaction.
+    stroke?: string;
+
+    // The stroke width of the node
+    strokeWidth?: number;
+
+    // // The fill color of the node
+    // fill?: string;
+
+    filled: boolean = true;
+
+    strokeColor?: string;
+
+    label?: string;
+    showLabel: boolean = true;
+
+    applyChildrenColorScheme(scheme: (t: number) => string, range: [number, number]) {
+        this.childrenColorScheme = scheme;
+        this.childrenColorSchemeRange = range;
+
+        const min = range[0];
+        const max = range[1];
+        let mid = 0;
+        if (min < max) {
+            mid = (min + max) / 2;
+        } else {
+            // Becausem it's cyclic
+            mid = (min + max + 1) / 2;
+            if (mid > 1) {
+                mid -= 1;
+            }
+        }
+
+        this.color = scheme(mid);
+
+        const rangeDiff = range[1] - range[0];
+
+        this.children.forEach((child, i, arr) => {
+            const t = i / (arr.length);
+            const t1 = (i + 1) / (arr.length);
+            const start = range[0] + rangeDiff * t;
+            const end = range[0] + rangeDiff * t1;
+            child.applyChildrenColorScheme(scheme, [start, end]);
+        });
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -250,6 +333,26 @@ export class LayoutNode {
         });
     }
 
+    propagateSizeToChildNodes() {
+        this.children.forEach(child => {
+
+            const nodeSize = this.radius;
+            const childSize = child.radius;
+            // const parentSize = this.parent?.radius ?? this.radius;
+
+            const nodeSizeFactor = this.sizeFactor;
+            const childSizeFactor = nodeSizeFactor * (childSize / nodeSize);
+
+            child.sizeFactor = childSizeFactor;
+            // const parentSizeFactor = this.sizeFactor;
+            // const parentSize = this.radius;
+            // const childSize = child.radius;
+            // const childSizeFactor = childSize / parentSize;
+            // const combinedSizeFactor = parentSizeFactor * childSizeFactor;
+            // child.sizeFactor = combinedSizeFactor;
+        });
+    }
+
     positionChildren(positioner?: BasePositioner) {
         if (this.children.length == 0) return;
 
@@ -258,13 +361,14 @@ export class LayoutNode {
     }
 
     connect(connector?: BaseConnector) {
-        const _connector = this.getInstance(connector ?? this.connector);
-        if (!_connector) {
-            return;
-        }
+        // const _connector = this.getInstance(connector ?? this.connector);
+        // if (!_connector) {
+        //     return;
+        // }
 
         this.outConnections.forEach(connection => {
-            _connector.layoutConnection(connection);
+            connection.connect()
+            // _connector.layoutConnection(connection);
         });
     }
 

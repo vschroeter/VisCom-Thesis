@@ -100,6 +100,10 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         this.nodes = layouterArgs.nodes;
 
         this.visGraph = VisGraph.fromCommGraph(this.commGraph, layouterArgs.commonSettings, this.userInteractions);
+        this.initVisGraph();
+    }
+
+    protected initVisGraph() {
 
     }
 
@@ -196,94 +200,6 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     updateStyle() {
         this.visGraph.updateGraphicalStyle();
         return;
-        // Get the node score extent
-        const scoring = this.renderArgs.nodeScoring;
-        scoring.extent = d3.extent(this.nodes2d, d => d.score) as [number, number];
-        const validScores = scoring.isExtentValid();
-
-        // Set the score colors of the nodes
-        this.nodes2d.forEach(node => {
-            // node.updateStyleFill((n) => this.commonSettings.nodeColor.getValue(n), this.nodeScoring.extent);
-
-            if (!validScores) {
-                const v = this.commonSettings.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
-                node.updateStyleFill(v);
-                return;
-            }
-
-            node.updateStyleFill(scoring.getColor(node.score));
-        })
-
-        // Update the node stroke based on the communities
-        this.nodes2d.forEach(node => {
-            if (!node.communities) {
-                return;
-            }
-
-            const communities = node.communities.getCommunitiesOfNode(node.id);
-
-            if (communities.length === 0) {
-                return;
-            }
-
-            const totalCommunityCount = node.communities.countOfCommunities;
-            if (totalCommunityCount === 0) {
-                return;
-            }
-
-            const colors = communities.map(community => {
-                const positionOfNodeCommunity = community / totalCommunityCount;
-                return d3.hsl(d3.interpolateSinebow(positionOfNodeCommunity));
-            });
-
-            // Get the average color of all communities
-            const averageColor = d3.hsl(d3.mean(colors, c => c.h)!, d3.mean(colors, c => c.s)!, d3.mean(colors, c => c.l)!);
-            node.updateStyleStroke(averageColor.formatRgb());
-        })
-
-        // Update the opacities based on the user interactions
-        const userInteractions = this.userInteractions;
-        this.nodes2d.forEach(node => {
-            let opacity = 1;
-            if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
-                if (userInteractions.isHovered(node)) {
-                    opacity = 1;
-                } else {
-                    opacity = 0.2;
-                }
-            }
-            node.updateStyleOpacity(opacity);
-        })
-
-        // Update the links opacity based on the user interactions and
-        // the width based on the weight
-
-        const minW = 0.1;
-        const maxW = 5;
-        const wMultiplier = 2;
-
-        const stroke = this.commonSettings.linkColor.getValue()?.toString() ?? "black";
-        const strokeWithoutAlpha = d3.color(stroke)?.copy({ opacity: 1 })?.toString() ?? "black";
-        const alpha = d3.color(stroke)?.opacity ?? 1;
-
-        this.connections2d.forEach(link => {
-            const weight = link.weight;
-            let opacity = Math.min(Math.max(0.01, weight), 1) * alpha;
-            const width = Math.min(maxW, Math.max(minW, weight * wMultiplier));
-
-            if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
-                const startNode = link.source;
-                const endNode = link.target;
-
-                if (userInteractions.isHovered(startNode) || userInteractions.isHovered(endNode)) {
-                    opacity = alpha;
-                } else {
-                    opacity *= 0.2;
-                }
-            }
-            link.updateStyleOpacity(opacity);
-            link.updateStyleStroke(strokeWithoutAlpha, width);
-        })
     }
 
 
@@ -299,8 +215,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
         const parent = this.gParent;
 
-        this.renderLinks(this.selectGroup('links'), events?.linksEvents);
         this.renderNodes(this.selectGroup('nodes'), events?.nodesEvents);
+        this.renderLinks(this.selectGroup('links'), events?.linksEvents);
         this.renderLabels(this.selectGroup('labels'), events?.labelsEvents);
         this.renderDebuggingShapes(parent);
     }
@@ -362,11 +278,29 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     renderLabels(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
         selection.selectChildren('text')
-            .data(this.visGraph.allGraphicalNodes)
+            .data(this.visGraph.allGraphicalNodes.filter(n => n.layoutNode.showLabel))
             .join('text')
-            .attr('x', (d: Node2d) => d.x + 10)
+            .attr('x', (d: Node2d) => {
+                
+                const translationRelativeToParent = d.layoutNode.translationRelativeToParent;
+                if (translationRelativeToParent.x > 0) {
+                    return d.x + d.radius * 1.1;
+                }
+                return d.x - d.radius * 1.1;                
+            })
             .attr('y', (d: Node2d) => d.y)
+            .attr('text-anchor', (d: Node2d) => {
+                const translationRelativeToParent = d.layoutNode.translationRelativeToParent;
+                if (translationRelativeToParent.x > 0) {
+                    return "start";
+                }
+                return "end";
+            })
             .text((d: Node2d) => d.id ?? "")
+            .attr('opacity', (d: Node2d) => d.layoutNode.showLabel ? 1 : 0)
+            .attr("font-size", (d: Node2d) => `${d.layoutNode.sizeFactor * 15}rem`)
+            // .attr("font-size", (d: Node2d) => `${(d.layoutNode.parent?.sizeFactor ?? 1)}rem`)
+        
     }
 
     renderDebuggingShapes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
