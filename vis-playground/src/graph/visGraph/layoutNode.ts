@@ -101,6 +101,60 @@ export class LayoutNode {
     // If the node has a graphical representation at all for rendering
     hasGraphicalRepresentation: boolean = true;
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Ancestor and descendant methods
+    ////////////////////////////////////////////////////////////////////////////
+
+    static firstCommonParent(node1: LayoutNode, node2: LayoutNode): LayoutNode | undefined {
+        let parent: LayoutNode | undefined = node1;
+        while (parent) {
+            if (node2.isDescendantOf(parent)) {
+                return parent;
+            }
+            parent = parent.parent;
+        }
+        return undefined;
+    }
+
+    getParent(condition?: (parent: LayoutNode) => boolean ): LayoutNode | undefined {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        let parent: LayoutNode | undefined = this;
+        if (!condition) {
+            return parent.parent;
+        }
+        while (parent) {
+            if (condition(parent)) {
+                return parent;
+            }
+            parent = parent.parent;
+        }
+        return undefined;
+    }
+
+    isDescendantOf(node: LayoutNode): boolean {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        let parent: LayoutNode | undefined = this;
+        
+        while (parent) {
+            if (parent == node) {
+                return true;
+            }
+            parent = parent.parent;
+        }
+        return false;
+    }
+
+    isAncestorOf(node: LayoutNode): boolean {
+        return node.isDescendantOf(this);
+    }
+
+    isChildOf(node: LayoutNode): boolean {
+        return this.parent == node;
+    }
+
+    isParentOf(node: LayoutNode): boolean {
+        return node.isChildOf(this);
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // Information about the node
@@ -138,12 +192,24 @@ export class LayoutNode {
      * The radius should be calculated by the precalculator or the layouter during the layouting process, based on the score and children of the node.
      */
     radius: number = 0;
+
+    // For child node placements inside this node
     _innerRadius?: number;
+
+    // For connections to this node
+    _outerRadius?: number;
     get innerRadius(): number {
         return this._innerRadius ?? this.radius;
     }
     set innerRadius(value: number) {
         this._innerRadius = value;
+    }
+
+    get outerRadius(): number {
+        return this._outerRadius ?? this.radius;
+    }
+    set outerRadius(value: number) {
+        this._outerRadius = value;
     }
 
     sizeFactor: number = 1;
@@ -162,6 +228,10 @@ export class LayoutNode {
 
     get innerCircle() {
         return new Circle(this.center, this.innerRadius);
+    }
+
+    get outerCircle() {
+        return new Circle(this.center, this.outerRadius);
     }
 
     get translationRelativeToParent(): Vector {

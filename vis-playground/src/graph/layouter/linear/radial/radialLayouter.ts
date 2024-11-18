@@ -247,7 +247,6 @@ export class RadialCurvedConnector {
 
         const radius = parent.innerRadius;
         const center = parent.center;
-        // const radialLayoutCircle = parent.circle;
         const radialLayoutCircle = parent.innerCircle;
         const startPoint = startNode.center;
         const endPoint = endNode.center;
@@ -260,8 +259,8 @@ export class RadialCurvedConnector {
         // If we have a direct link, we instead draw a circular arc with the same radius as the radial layout circle
         if (isDirectLink) {
 
-            const intersectionsStart = radialLayoutCircle.intersect(startNode.circle);
-            const intersectionsEnd = radialLayoutCircle.intersect(endNode.circle);
+            const intersectionsStart = radialLayoutCircle.intersect(startNode.outerCircle);
+            const intersectionsEnd = radialLayoutCircle.intersect(endNode.outerCircle);
 
             // Get the intersections, that are closer to the mid point between the two nodes
             const sDist0 = intersectionsStart[0].distanceTo(radialMidPoint)[0];
@@ -337,8 +336,8 @@ export class RadialCurvedConnector {
 
         // Calculate the arc points
         const arcCircle = new Circle(arcCenter, arcRadius);
-        const intersectionsStart = arcCircle.intersect(startNode.circle);
-        const intersectionsEnd = arcCircle.intersect(endNode.circle);
+        const intersectionsStart = arcCircle.intersect(startNode.outerCircle);
+        const intersectionsEnd = arcCircle.intersect(endNode.outerCircle);
 
         // Get the intersections, that are closer to the mid point between the two nodes
         // const sDist0 = intersectionsStart[0].distanceTo(midPoint)[0];
@@ -440,7 +439,6 @@ export class RadialCurvedConnector {
         // const radius = parent.radius;
         const radius = parent.innerRadius;
         const center = parent.center;
-        const radialLayoutCircle = parent.circle;
         const startPoint = startNode.center;
         const endPoint = endNode.center;
         const midPoint = new Segment(startPoint, endPoint).middle();
@@ -552,8 +550,8 @@ export class RadialCurvedConnector {
         //     this.debugShapes.push(targetBackReferenceSegment);
         // }
 
-        const intersectionsStart = arcCircle.intersect(startNode.circle);
-        const intersectionsEnd = arcCircle.intersect(endNode.circle);
+        const intersectionsStart = arcCircle.intersect(startNode.outerCircle);
+        const intersectionsEnd = arcCircle.intersect(endNode.outerCircle);
 
         console.log({
             startNode,

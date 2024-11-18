@@ -9,7 +9,7 @@ import { LayoutNode } from "./layoutNode";
 import { Anchor, Connection2d, EllipticArc } from "../graphical";
 import { BaseConnector } from "./layouterComponents/connector";
 
-export type InstanceOrGetter<T> = T | ((node: LayoutConnection) => T);
+export type InstanceOrGetter<T> = T | ((node: LayoutConnection) => T | undefined);
 
 
 export class VisLink {
@@ -58,6 +58,22 @@ export class LayoutConnection {
      * One single connection can have multiple links, which are the actual communication links between the nodes.
      */
     private links: VisLink[] = [];
+
+    /**
+     * If the connection is a hyperconnection, it can have children connections between the actual nodes.
+     */
+    private children: LayoutConnection[] = [];
+
+    // If the connection is a child of a hyperconnection, this is the parent hyperconnection.
+    parent?: LayoutConnection;
+
+    get isHyperConnection(): boolean {
+        return this.children.length > 0;
+    }
+
+    get isSubConnection(): boolean {
+        return !!this.parent;
+    }
 
     /**
      * After combining links, the opposite links are stored here.
@@ -146,6 +162,21 @@ export class LayoutConnection {
     }
 
     /**
+     * Adds child connections to the connection.
+     */
+    addChildren(connections: LayoutConnection | LayoutConnection[]) {
+        const children = Array.isArray(connections) ? connections : [connections];
+        children.forEach(connection => {
+            this.children.push(connection);
+            if (connection.parent) {
+                console.error("Connection already has a parent. This should not happen.");
+            }
+            connection.parent = this;
+            this._weight += connection.weight;
+        });
+    }
+
+    /**
      * Adds links as opposite links. TODO: At the moment, this is only used by the `combineConnections` method.
      * @param link The link to add as opposite link.
      */
@@ -177,7 +208,7 @@ export class LayoutConnection {
     // Graphical methods
     ////////////////////////////////////////////////////////////////////////////
 
-    protected getInstance<T>(instanceOrGetter: InstanceOrGetter<T>): T {
+    protected getInstance<T>(instanceOrGetter: InstanceOrGetter<T>): T | undefined {
         if (instanceOrGetter instanceof Function) {
             return instanceOrGetter(this);
         }

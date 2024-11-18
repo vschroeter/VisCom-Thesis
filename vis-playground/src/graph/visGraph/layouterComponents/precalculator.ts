@@ -8,9 +8,20 @@ export class BasicPrecalculator {
     size: number;
     minSize: number;
 
-    constructor({ sizeMultiplier = 10, minSize = 5 }: { sizeMultiplier?: number; minSize?: number; } = {}) {
+    marginFactor = 1.1;
+
+    constructor({
+        sizeMultiplier = 10,
+        minSize = 5,
+        marginFactor = 1.1
+    }: {
+            sizeMultiplier?: number;
+            minSize?: number;
+            marginFactor?: number;
+        } = {}) {
         this.size = sizeMultiplier;
         this.minSize = minSize;
+        this.marginFactor = marginFactor;
     }
 
     precalculate(node: LayoutNode, visGraph: VisGraph) {
@@ -34,7 +45,7 @@ export class BasicPrecalculator {
         }
 
         node.radius = Math.max(node.radius, this.minSize);
-
+        node.outerRadius = node.radius * this.marginFactor;
         // node.sizeCalculated = true;
     }
 }

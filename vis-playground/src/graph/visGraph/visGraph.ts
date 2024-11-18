@@ -134,7 +134,7 @@ export class VisGraph {
     addNode(node: LayoutNode, parentNode?: LayoutNode) {
         const _parentNode = parentNode ?? this.rootNode;
         if (_parentNode !== node) {
-            _parentNode.children.push(node);           
+            _parentNode.children.push(node);
             node.parent = _parentNode;
         }
         this.mapIdToLayoutNode.set(node.id, node);
@@ -194,8 +194,38 @@ export class VisGraph {
         const connection = this.mapSourceNodeIdToTargetNodeIdToConnection.get(sId)!.get(tId)!;
         // connection.links.push(link);
         connection.addLinks(link);
+    }
 
+    addHyperConnection(source: LayoutNode, target: LayoutNode, connection: LayoutConnection) {
+        const sNode = this.getNode(source)
+        const tNode = this.getNode(target);
+        const sId = sNode.id;
+        const tId = tNode.id;
 
+        if (!this.mapSourceNodeIdToTargetNodeIdToConnection.has(sId)) {
+            this.mapSourceNodeIdToTargetNodeIdToConnection.set(sId, new Map());
+        }
+
+        if (!this.mapSourceNodeIdToTargetNodeIdToConnection.get(sId)!.has(tId)) {
+            const newHyperConnection = new LayoutConnection(sNode, tNode);
+            this.mapSourceNodeIdToTargetNodeIdToConnection.get(sId)!.set(tId, newHyperConnection);
+
+            // Check if there is a connection from target to source to store the opposite connection
+            const oppositeConnection = this.mapSourceNodeIdToTargetNodeIdToConnection.get(tId)?.get(sId);
+            if (oppositeConnection) {
+                newHyperConnection.opposite = oppositeConnection;
+                oppositeConnection.opposite = newHyperConnection;
+            }
+
+            // Add the connection to the nodes
+            sNode.outConnections.push(newHyperConnection);
+            tNode.inConnections.push(newHyperConnection);
+        }
+
+        // Add the link
+        const hyperConnection = this.mapSourceNodeIdToTargetNodeIdToConnection.get(sId)!.get(tId)!;
+        // connection.links.push(link);
+        hyperConnection.addChildren(connection);
     }
 
     getOutgoingConnections(node: LayoutNodeOrId, channels?: CommunicationChannel[]): LayoutConnection[] {
@@ -240,7 +270,7 @@ export class VisGraph {
         })
     }
 
-    setConnector(connector: BaseConnector | ((connection: LayoutConnection) => BaseConnector)) {
+    setConnector(connector: BaseConnector | ((connection: LayoutConnection) => BaseConnector | undefined)) {
         // this.allLayoutNodes.forEach(node => {
         //     node.connector = connector;
         // })
@@ -261,7 +291,7 @@ export class VisGraph {
         // 1. Calculate the size of the nodes, using the specified precalculators
         // 2. Sort the child nodes, using the specified sorter
         // 3. Position the child nodes, using the specified positioner
-        
+
         // Before we start connecting the nodes, we need to propagate the position of parent nodes,
         // as each positioner positions the child nodes relative to (0,0). 
         // If a parent is placed at a specific position, this position is applied to each child node.
@@ -273,7 +303,7 @@ export class VisGraph {
         const topDownLayers = Array.from(botUpLayers).reverse();
 
         const layerCount = botUpLayers.length;
-        
+
         // Set the layers of the nodes
         topDownLayers.forEach((layer, i) => {
             layer.forEach(node => {
@@ -305,7 +335,11 @@ export class VisGraph {
         });
 
         // console.log("Nodes pos after", this.allLayoutNodes.map(node => [new Point(node.center), node.id]));
-        
+
+        // console.log({
+        //     topDownLayers
+        // })
+
         // Connect the nodes
         botUpLayers.forEach(layer => {
             layer.forEach(node => {
@@ -377,14 +411,20 @@ export class VisGraph {
             //     node.updateStyleFill(v);
             //     return;
             // }
-            // const v = scoring.getColor(node.score);
+            const v = scoring.getColor(node.score);
             // node.updateStyleFill(v);
-            const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
+            // const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
             node.updateStyleFill(node.layoutNode.color ?? v);
         })
 
         // Update the node stroke based on the communities
         this.allGraphicalNodes.forEach(node => {
+
+            if (node.layoutNode.stroke) {
+                node.updateStyleStroke(node.layoutNode.stroke);
+                return;
+            }
+
             if (!node.communities) {
                 return;
             }
@@ -438,11 +478,11 @@ export class VisGraph {
         this.allGraphicalConnections.forEach(link => {
             const weight = link.weight;
             let opacity = Math.min(Math.max(0.01, weight), 1) * alpha;
-            
+
             const startNode = link.source;
             const endNode = link.target;
             const sizeMultiplier = Math.max(startNode.parent?.sizeFactor ?? 1, endNode.parent?.sizeFactor ?? 1);
-            const width = Math.min(maxW, Math.max(minW, weight * wMultiplier )) * sizeMultiplier;
+            const width = Math.min(maxW, Math.max(minW, weight * wMultiplier)) * sizeMultiplier;
 
 
             if (userInteractions && userInteractions.somethingIsSelectedOrFocusedOrHovered) {
@@ -479,7 +519,7 @@ export class VisGraph {
             }
             node.parent = parentNode;
             parentNode.children.push(node);
-        });        
+        });
     }
 
     combineNodesIntoHyperNode(nodes: LayoutNode[], parentNode: LayoutNode = this.rootNode) {
@@ -492,26 +532,53 @@ export class VisGraph {
     // The given communities are combined into hypernodes
     combineCommunities(communityNodeIds: (LayoutNode | string)[][], parentNode: LayoutNode = this.rootNode) {
         const communities = communityNodeIds.map(community => community.map(node => this.getNode(node)));
-        
+
         const colorScheme = d3.interpolateRainbow;
 
+        // Combine the nodes into hypernodes
         communities.forEach((nodes, i, arr) => {
             const hypernode = this.combineNodesIntoHyperNode(nodes, parentNode);
-            
-            
+
+
             // Set style of the hypernode
             const startPositionInScheme = i / arr.length;
             const interval = 1 / arr.length;
-            const start = startPositionInScheme
-            const end = startPositionInScheme + interval;
+            const intervalPadding = 0.2;
+            const start = startPositionInScheme + intervalPadding / 2;
+            const end = startPositionInScheme + interval - intervalPadding / 2;
             // const color = colorScheme(i / arr.length);
 
             // hypernode.childrenColorScheme = colorScheme;
             // hypernode.childrenColorSchemeRange = [start, end];
             hypernode.applyChildrenColorScheme(colorScheme, [start, end]);
             hypernode.filled = false;
+            hypernode.stroke = colorScheme(startPositionInScheme + interval / 2);
             hypernode.showLabel = false;
         });
+
+        // Create new connections between the hypernodes.
+        // For this, each connection between nodes that have different parents is replaced by a connection between hypernodes with the same parent.
+
+        this.allLayoutConnections.forEach(connection => {
+            const source = connection.source;
+            const target = connection.target;
+            if (!source.parent || !target.parent) return;
+
+            const firstCommonParent = LayoutNode.firstCommonParent(source, target);
+
+            if (source.parent !== target.parent) {
+                const sourceParent = source.parent;
+                const targetParent = target.parent;
+
+                const sourceHypernode = source.getParent((p) => p.parent == firstCommonParent) ?? source
+                const targetHypernode = target.getParent((p) => p.parent == firstCommonParent) ?? target
+
+                this.addHyperConnection(sourceHypernode, targetHypernode, connection);
+
+                // connection.visible = false;
+            }
+        });
+
     }
 
     // If a node only has connections to a single other node in this layer, we can add it as subnode
