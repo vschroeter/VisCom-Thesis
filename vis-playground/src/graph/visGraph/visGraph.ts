@@ -458,8 +458,11 @@ export class VisGraph {
             if (userInteractions && userInteractions.somethingIsSelectedOrFocusedOrHovered) {
                 if (userInteractions.isHovered(node)) {
                     opacity = 1;
-                } else {
-                    opacity = 0.2;
+                } else if (userInteractions.isAdjacentToHovered(node.id, this)) {
+                    opacity = 0.8;
+                }
+                else {
+                    opacity = 0.1;
                 }
             }
             node.updateStyleOpacity(opacity);
@@ -493,7 +496,7 @@ export class VisGraph {
                 if (userInteractions.isHovered(startNode) || userInteractions.isHovered(endNode)) {
                     opacity = alpha;
                 } else {
-                    opacity *= 0.2;
+                    opacity *= 0.05;
                 }
             }
             link.updateStyleOpacity(opacity);

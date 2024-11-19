@@ -156,6 +156,25 @@ export class LayoutNode {
         return node.isChildOf(this);
     }
 
+    get descendants(): LayoutNode[] {
+        const descendants: LayoutNode[] = [];
+        this.children.forEach(child => {
+            descendants.push(child);
+            descendants.push(...child.descendants);
+        });
+        return descendants;
+    }
+
+    get ancestors(): LayoutNode[] {
+        const ancestors: LayoutNode[] = [];
+        let parent = this.parent;
+        while (parent) {
+            ancestors.push(parent);
+            parent = parent.parent;
+        }
+        return ancestors;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Information about the node
     ////////////////////////////////////////////////////////////////////////////

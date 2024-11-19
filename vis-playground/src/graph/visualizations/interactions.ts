@@ -1,5 +1,6 @@
 import mitt from "mitt"
 import { Node2d } from "../graphical"
+import { VisGraph } from "../visGraph/visGraph"
 
 
 interface NodeWithId {
@@ -69,6 +70,28 @@ export class UserInteractions {
     isHovered(nodeId: string | NodeWithId): boolean {
         const _nodeId = (nodeId as NodeWithId).id ?? nodeId
         return this.hoveredNodeIds.has(_nodeId)
+    }
+
+    isAdjacentToHovered(nodeId: string | NodeWithId, visGraph: VisGraph): boolean {
+        const _nodeId = (nodeId as NodeWithId).id ?? nodeId
+
+        for (const hoveredNodeId of this.hoveredNodeIds) {
+            const node = visGraph.getNode(hoveredNodeId);
+
+            for (const successor of node.getSuccessors()) {
+                if (successor.id === _nodeId) {
+                    return true
+                }
+            }
+
+            for (const predecessor of node.getPredecessors()) {
+                if (predecessor.id === _nodeId) {
+                    return true
+                }
+            }
+        }
+
+        return false
     }
 
     isSelected(nodeId: string | NodeWithId): boolean {

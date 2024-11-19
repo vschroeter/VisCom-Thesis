@@ -191,7 +191,14 @@ function layoutUpdated() {
                 if (!isSelected.value) return;
                 const id = d?.id;
                 if (id) {
-                    userInteractions.addHoveredNode(id)
+                    // userInteractions.addHoveredNode(id)
+                    const layoutNode = layouter?.visGraph.getNode(id);
+                    if (layoutNode) {
+                        userInteractions.addHoveredNode(layoutNode.id)
+                        layoutNode.descendants.forEach((desc) => {
+                            userInteractions.addHoveredNode(desc.id)
+                        })
+                    }
                     // throttledUpdateUserInteractions()
                 }
             },
@@ -201,7 +208,14 @@ function layoutUpdated() {
 
                 const id = d?.id;
                 if (id) {
-                    userInteractions.removeHoveredNode(id)
+                    const layoutNode = layouter?.visGraph.getNode(id);
+                    if (layoutNode) {
+                        userInteractions.removeHoveredNode(layoutNode.id)
+                        layoutNode.descendants.forEach((desc) => {
+                            userInteractions.removeHoveredNode(desc.id)
+                        })
+                    }
+                    // userInteractions.removeHoveredNode(id)
                     // throttledUpdateUserInteractions()
                 }
             },

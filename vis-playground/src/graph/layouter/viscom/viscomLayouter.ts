@@ -75,7 +75,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             // return new RadialPositioner({ radius, outerRadius });
             return new RadialPositionerDynamicDistribution({
                 nodeMarginFactor: 1.1,
-                outerMarginFactor: 1.3,
+                outerMarginFactor: 1.1,
             });
         })
 

@@ -80,7 +80,9 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             // console.log("Set node position", node.id, pos, node.circle);
         });
 
-        parentNode.radius = this.radius * this.outerMarginFactor;
+
+        const maxNodeRadius = Math.max(...nodes.map(n => n.radius));
+        parentNode.radius = (this.radius + maxNodeRadius) * this.outerMarginFactor;
         parentNode.innerRadius = this.radius;
     }
 
@@ -374,6 +376,9 @@ export class RadialCurvedConnector {
         if (Math.abs(angleDiffForwardDeg - this.straightForwardLineAtDegreeDelta) < 1) {
             const startAnchor = startNode.getAnchor(endNode.center);
             const endAnchor = endNode.getAnchor(startNode.center);
+
+            startAnchor.anchorPoint = startAnchor.getPointInDirection((startNode.outerRadius - startNode.radius));
+            endAnchor.anchorPoint = endAnchor.getPointInDirection((endNode.outerRadius - endNode.radius));
 
             return [
                 startAnchor,
