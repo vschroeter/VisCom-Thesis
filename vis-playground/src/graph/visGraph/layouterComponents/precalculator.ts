@@ -3,30 +3,49 @@ import { VisGraph } from "../visGraph";
 
 import * as d3 from "d3";
 
-export class BasicPrecalculator {
+/**
+ * A basic size calculator that calculates the size of a node based on the score of the node.
+ */
+export class BasicSizeCalculator {
 
-    size: number;
-    minSize: number;
+    // Size multiplier
+    sizeMultiplier: number;
+
+    minSizeFraction: number = 0.2;
+
+    // At this score the node will have the minimal size
+    minSizeScore: number = 0.1;
+
+    // At this score the node will have the maximal size
+    maxSizeScore: number = 1; 
 
     marginFactor = 1.1;
 
+    scaleScoreToSizeFraction: d3.ScaleContinuousNumeric<number, number>;
+
     constructor({
         sizeMultiplier = 10,
-        minSize = 5,
+        minSizeScore = 0.1,
         marginFactor = 1.1
     }: {
             sizeMultiplier?: number;
-            minSize?: number;
+            minSizeScore?: number;
             marginFactor?: number;
         } = {}) {
-        this.size = sizeMultiplier;
-        this.minSize = minSize;
+        this.sizeMultiplier = sizeMultiplier;
+        this.minSizeScore = minSizeScore;
         this.marginFactor = marginFactor;
+
+        this.scaleScoreToSizeFraction = d3.scaleLog()
+        // this.scaleScoreToSizeFraction = d3.scaleLinear()
+        .domain([this.minSizeScore, this.maxSizeScore])
+            .range([this.minSizeFraction, 1]);
     }
 
     precalculate(node: LayoutNode, visGraph: VisGraph) {
         if (node.children.length == 0) {
-            node.radius = node.score * this.size;
+            node.radius = this.scaleScoreToSizeFraction(Math.max(node.score, this.minSizeScore)) * this.sizeMultiplier;
+            // node.radius = node.score * this.sizeMultiplier;
         } else {
             // If the node size has not been calculated by the layouter, we have to calculate it here
             // For that we just take the max size and the node position extent of the children
@@ -44,7 +63,7 @@ export class BasicPrecalculator {
             }
         }
 
-        node.radius = Math.max(node.radius, this.minSize);
+        node.radius = Math.max(node.radius, this.minSizeScore);
         node.outerRadius = node.radius * this.marginFactor;
         // node.sizeCalculated = true;
     }

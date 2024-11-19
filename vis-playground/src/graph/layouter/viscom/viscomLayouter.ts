@@ -4,11 +4,11 @@ import * as d3 from "d3";
 import { Connection2d, Node2d } from "src/graph/graphical";
 import { ViscomLayouterSettings } from "./viscomSettings";
 import { GraphLayouter } from "../layouter";
-import { RadialCurvedConnector, RadialLayouter, RadialPositioner } from "../linear/radial/radialLayouter";
+import { RadialCurvedConnector, RadialLayouter, RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
 import { RadialLayouterSettings } from "../linear/radial/radialSettings";
 import { MouseEvents } from "src/graph/visualizations/interactions";
 import { Connection2dData } from "src/graph/graphical/Connection2d";
-import { BasicPrecalculator } from "src/graph/visGraph/layouterComponents/precalculator";
+import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/precalculator";
 import { LinearPositioner } from "../linear/arc/arcLayouter";
 
 
@@ -45,8 +45,8 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
 
 
 
-        this.visGraph.setPrecalculator(new BasicPrecalculator({
-            sizeMultiplier: 10,
+        this.visGraph.setPrecalculator(new BasicSizeCalculator({
+            sizeMultiplier: 50,
             marginFactor: 1.1
         }));
 
@@ -72,7 +72,11 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             const radius = circumference / (2 * Math.PI);
             const outerRadius = (radius + maxChildRadius) * marginFactor;
 
-            return new RadialPositioner({ radius, outerRadius });
+            // return new RadialPositioner({ radius, outerRadius });
+            return new RadialPositionerDynamicDistribution({
+                nodeMarginFactor: 1.1,
+                outerMarginFactor: 1.3,
+            });
         })
 
         const forwardBackwardThreshold = this.settings.edges.forwardBackwardThreshold.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 270;

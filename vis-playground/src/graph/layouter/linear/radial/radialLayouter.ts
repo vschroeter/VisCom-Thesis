@@ -6,7 +6,7 @@ import { Circle, Line, Point, PointLike, Segment, Vector } from "2d-geometry";
 import { Anchor } from "src/graph/graphical/primitives/Anchor";
 import { BasePositioner } from "src/graph/visGraph/layouterComponents/positioner";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { BasicPrecalculator } from "src/graph/visGraph/layouterComponents/precalculator";
+import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/precalculator";
 import { LayoutConnection, LayoutConnectionPoint } from "src/graph/visGraph/layoutConnection";
 
 export function radToDeg(rad: number) {
@@ -15,6 +15,75 @@ export function radToDeg(rad: number) {
 
 export function degToRad(deg: number) {
     return deg * Math.PI / 180;
+}
+
+export class RadialPositionerDynamicDistribution extends BasePositioner {
+
+    nodeMarginFactor = 1
+    outerMarginFactor = 1.1
+    center = new Point(0, 0);
+    private radius: number = 0;
+
+    constructor({
+        nodeMarginFactor = 1, outerMarginFactor = 1.1
+    }: {
+        nodeMarginFactor?: number; outerMarginFactor?: number;
+    } = {}) {
+        super();
+        this.nodeMarginFactor = nodeMarginFactor;
+        this.outerMarginFactor = outerMarginFactor;
+    }
+
+
+    static getPositionForRad(rad: number, radius: number, centerTranslation: PointLike): Point {
+        const x = centerTranslation.x + radius * Math.cos(rad);
+        const y = centerTranslation.y + radius * Math.sin(rad);
+
+        return new Point(x, y);
+    }
+
+    getPositionForRad(rad: number, radius?: number, centerTranslation?: PointLike): Point {
+        return RadialPositionerDynamicDistribution.getPositionForRad(rad, radius ?? this.radius, centerTranslation ?? this.center);
+    }
+
+    override positionChildren(parentNode: LayoutNode): void {
+        const nodes = parentNode.children;
+        const continuumMap = new Map<LayoutNode, number>();
+
+        let currentPosition = 0;
+        nodes.forEach((node, i) => {
+            currentPosition += node.radius * this.nodeMarginFactor;
+            currentPosition += node.radius;
+            continuumMap.set(node, currentPosition);
+            currentPosition += node.radius;
+            currentPosition += node.radius * this.nodeMarginFactor;
+        });
+
+        this.radius = currentPosition / (2 * Math.PI);
+
+        // Normalize continuum to [0, 1]
+        const max = currentPosition;
+        continuumMap.forEach((node, key) => {
+            continuumMap.set(key, continuumMap.get(key)! / max);
+        })
+
+        // Place nodes on a circle with radius
+        const angleRadMap = new Map<LayoutNode, number>();
+        // const angleRadStep = 2 * Math.PI / nodes.length;
+        nodes.forEach((node, i) => {
+            const placement = continuumMap.get(node)!;
+            const angle = placement * 2 * Math.PI;
+            angleRadMap.set(node, angle);
+            const pos = this.getPositionForRad(angle);
+            node.x = pos.x;
+            node.y = pos.y;
+            // console.log("Set node position", node.id, pos, node.circle);
+        });
+
+        parentNode.radius = this.radius * this.outerMarginFactor;
+        parentNode.innerRadius = this.radius;
+    }
+
 }
 
 export class RadialPositioner extends BasePositioner {
@@ -628,8 +697,9 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
     }
 
     override layout(isUpdate = false) {
-        this.visGraph.setPrecalculator(new BasicPrecalculator({ sizeMultiplier: 10 }));
-        this.visGraph.setPositioner(new RadialPositioner({ radius: this.getRadius() }));
+        this.visGraph.setPrecalculator(new BasicSizeCalculator({ sizeMultiplier: 50 }));
+        // this.visGraph.setPositioner(new RadialPositioner({ radius: this.getRadius() }));
+        this.visGraph.setPositioner(new RadialPositionerDynamicDistribution());
 
         const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
         this.visGraph.setSorter(sorter);

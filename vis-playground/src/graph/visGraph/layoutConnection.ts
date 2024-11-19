@@ -215,8 +215,10 @@ export class LayoutConnection {
         return instanceOrGetter;
     }
 
-    connect(connector?: BaseConnector) {
-        const _connector = this.getInstance(connector ?? this.connector);
+    // TODO: Name Müll
+    // TODO: Edges benötigen ggf. Infos vom Layouting anderer Kanten
+    connect(connectorOverride?: BaseConnector) {
+        const _connector = this.getInstance(connectorOverride ?? this.connector);
         if (!_connector) {
             return;
         }

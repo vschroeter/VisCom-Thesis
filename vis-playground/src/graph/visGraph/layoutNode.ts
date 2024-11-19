@@ -6,7 +6,7 @@ import * as d3 from "d3";
 import { VisGraph } from "./visGraph";
 import { LayoutConnection } from "./layoutConnection";
 import { Sorter } from "../algorithms/sortings/sorting";
-import { BasicPrecalculator } from "./layouterComponents/precalculator";
+import { BasicSizeCalculator } from "./layouterComponents/precalculator";
 import { BasePositioner } from "./layouterComponents/positioner";
 import { BaseConnector } from "./layouterComponents/connector";
 import { Anchor, Node2d } from "../graphical";
@@ -64,7 +64,7 @@ export class LayoutNode {
     ////////////////////////////////////////////////////////////////////////////
 
     // The precalculator for the node (e.g. for calculating the size of the node)
-    precalculator?: InstanceOrGetter<BasicPrecalculator> = new BasicPrecalculator();
+    precalculator?: InstanceOrGetter<BasicSizeCalculator> = new BasicSizeCalculator();
 
     // The positioner for the node (for positioning the children of the node during the layouting process)
     positioner?: InstanceOrGetter<BasePositioner>;
@@ -381,15 +381,15 @@ export class LayoutNode {
         return instanceOrGetter;
     }
 
-    precalculate(precalculator?: BasicPrecalculator) {
-        const _precalculator = this.getInstance(precalculator ?? this.precalculator);
+    calculateNodeSize(precalculatorOverride?: BasicSizeCalculator) {
+        const _precalculator = this.getInstance(precalculatorOverride ?? this.precalculator);
         _precalculator?.precalculate(this, this.visGraph);
     }
 
-    sortChildren(sorter?: Sorter) {
+    sortChildren(sorterOverride?: Sorter) {
         if (this.children.length == 0) return;
 
-        const _sorter = this.getInstance(sorter ?? this.sorter);
+        const _sorter = this.getInstance(sorterOverride ?? this.sorter);
         if (!_sorter) {
             return;
         }
@@ -423,22 +423,17 @@ export class LayoutNode {
         });
     }
 
-    positionChildren(positioner?: BasePositioner) {
+    calculatePositionOfChildren(positionerOverride?: BasePositioner) {
         if (this.children.length == 0) return;
 
-        const _positioner = this.getInstance(positioner ?? this.positioner);
+        const _positioner = this.getInstance(positionerOverride ?? this.positioner);
         _positioner?.positionChildren(this);
     }
 
-    connect(connector?: BaseConnector) {
-        // const _connector = this.getInstance(connector ?? this.connector);
-        // if (!_connector) {
-        //     return;
-        // }
-
+    // TODO: Name Müll
+    calculateConnectionPoints(connectorOverride?: BaseConnector) {
         this.outConnections.forEach(connection => {
-            connection.connect()
-            // _connector.layoutConnection(connection);
+            connection.connect(connectorOverride)
         });
     }
 

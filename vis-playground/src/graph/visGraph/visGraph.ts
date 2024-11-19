@@ -7,7 +7,7 @@ import { LayoutConnection, VisLink } from "./layoutConnection";
 import { LayoutNode } from "./layoutNode";
 import { Sorter } from "../algorithms/sortings/sorting";
 import { Connection2d, Node2d } from "../graphical";
-import { BasicPrecalculator } from "./layouterComponents/precalculator";
+import { BasicSizeCalculator } from "./layouterComponents/precalculator";
 import { BasePositioner } from "./layouterComponents/positioner";
 import { UserInteractions } from "../visualizations/interactions";
 import { BaseConnector } from "./layouterComponents/connector";
@@ -258,7 +258,7 @@ export class VisGraph {
     ////////////////////////////////////////////////////////////////////////////
 
 
-    setPrecalculator(precalculator: BasicPrecalculator | ((node: LayoutNode) => BasicPrecalculator)) {
+    setPrecalculator(precalculator: BasicSizeCalculator | ((node: LayoutNode) => BasicSizeCalculator)) {
         this.allLayoutNodes.forEach(node => {
             node.precalculator = precalculator;
         })
@@ -317,10 +317,10 @@ export class VisGraph {
 
                 if (node.children.length > 0) {
                     node.sortChildren();
-                    node.positionChildren();
+                    node.calculatePositionOfChildren();
                 }
 
-                node.precalculate();
+                node.calculateNodeSize();
             });
         });
 
@@ -344,7 +344,8 @@ export class VisGraph {
         botUpLayers.forEach(layer => {
             layer.forEach(node => {
                 if (node.parent) {
-                    node.connect();
+                    // TODO: wird edge-group zentriertes Verfahren
+                    node.calculateConnectionPoints();
                 }
             });
         });

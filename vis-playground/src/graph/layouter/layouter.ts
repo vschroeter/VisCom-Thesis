@@ -280,6 +280,18 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         selection.selectChildren('text')
             .data(this.visGraph.allGraphicalNodes.filter(n => n.layoutNode.showLabel))
             .join('text')
+            // .attr('x', (d: Node2d) => {
+            //     return d.x;            
+            // })
+            // .attr('y', (d: Node2d) => d.y + d.radius * 0.1)
+            // .attr('text-anchor', (d: Node2d) => {
+            //     return "middle";
+            // })
+            .attr('dominant-baseline', (d: Node2d) => {
+                return "middle";
+            })
+            .attr("stroke", "white")
+            .attr("stroke-width", (d: Node2d) =>  d.radius * 0.01)
             .attr('x', (d: Node2d) => {
                 
                 const translationRelativeToParent = d.layoutNode.translationRelativeToParent;
@@ -298,7 +310,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             })
             .text((d: Node2d) => d.id ?? "")
             .attr('opacity', (d: Node2d) => d.layoutNode.showLabel ? 1 : 0)
-            .attr("font-size", (d: Node2d) => `${d.layoutNode.sizeFactor * 15}rem`)
+            .attr("font-size", (d: Node2d) => `${d.layoutNode.radius * 2 * 0.8}px`)
             // .attr("font-size", (d: Node2d) => `${(d.layoutNode.parent?.sizeFactor ?? 1)}rem`)
         
     }
