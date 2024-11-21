@@ -185,19 +185,25 @@ export class RadialUtils extends ShapeUtil {
         // The tangent from a point to a circle is perpendicular to the radius at the point of tangency
         // Thus, there are two possible tangents from a point to a circle
 
-        const connectionLine = new Segment(point, circle.center);
-        const perpendicular = new Line(circle.center, connectionLine.vector);
+        try {
 
-        const intersectionPoints = connectionLine.intersect(perpendicular);
+            const connectionLine = new Segment(point, circle.center);
+            const perpendicular = new Line(circle.center, connectionLine.vector);
 
-        if (intersectionPoints.length < 2) {
-            throw new Error("No intersection points found.");
+            const intersectionPoints = circle.intersect(perpendicular);
+
+            if (intersectionPoints.length < 2) {
+                throw new Error("No intersection points found.");
+            }
+
+            return [
+                new Segment(point, intersectionPoints[0]),
+                new Segment(point, intersectionPoints[1])
+            ];
+        } catch (error) {
+            // console.error(error);
+            return [];
         }
-
-        return [
-            new Segment(point, intersectionPoints[0]),
-            new Segment(point, intersectionPoints[1])
-        ];
     }
 
 }

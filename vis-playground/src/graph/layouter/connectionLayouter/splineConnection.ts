@@ -74,12 +74,19 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
 
         const connectionsWithDifferentParents: LayoutConnection[] = [];
 
+        const selfConnections: LayoutConnection[] = [];
+
         allConnections.forEach((connection) => {
             if (connection.finishedLayouting) return;
 
             const start = connection.source;
             const end = connection.target;
             const isOutgoing = start == node;
+
+            if (start == end) {
+                selfConnections.push(connection);
+                return;
+            }
 
             // Out the connections into the different categories
             if (end.isDirectSuccessorInSortingTo(start)) {
@@ -184,8 +191,63 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
             const nextTangents = RadialUtils.getTangentsToCircle(node.center, nextNode.outerCircle);
             const prevTangents = RadialUtils.getTangentsToCircle(node.center, prevNode.outerCircle);
 
-            const nextTangent = RadialUtils.getClosestShapeToPoint(nextTangents, node.center);
+            const nextTangent = RadialUtils.getClosestShapeToPoint(
+                nextTangents, node.center,
+                (tangent) => tangent.end.x,
+                (tangent) => tangent.end.y
+            );
 
+            const prevTangent = RadialUtils.getClosestShapeToPoint(
+                prevTangents, node.center,
+                (tangent) => tangent.end.x,
+                (tangent) => tangent.end.y
+            );
+
+            if (!nextTangent || !prevTangent) {
+                throw new Error("No tangents found.");
+            }
+
+            // Now with the tangents, we can define the angular range for the connections inside the parent circle
+
+            const startSlope = nextTangent.slope;
+            const endSlope = prevTangent.slope;
+            const slopeDiff = (endSlope - startSlope + 2 * Math.PI) % (2 * Math.PI);
+            const midSlope = (startSlope + slopeDiff / 2) % (2 * Math.PI);
+
+            // Sort the inside connections:
+            // - A) first the outgoing connections, then the incoming connections
+            // - B) sort the connections by the index of the target node in the sorting
+            const insideConnections = [...outgoingConnectionsInside, ...incomingConnectionsInside];
+
+            insideConnections.sort((a, b) => {
+                const isOutgoingA = a.source == node;
+                const isOutgoingB = b.source == node;
+
+                if (isOutgoingA && !isOutgoingB) {
+                    return -1;
+                } else if (!isOutgoingA && isOutgoingB) {
+                    return 1;
+                } else {
+                    const areOutgoing = isOutgoingA && isOutgoingB;
+                    const nodeA = areOutgoing ? a.target : a.source;
+                    const nodeB = areOutgoing ? b.target : b.source;
+                    
+                    const nodeIndex = node.index;
+                    const indexA = (nodeA.index + nodeIndex) % node.parent!.children.length;
+                    const indexB = (nodeB.index + nodeIndex) % node.parent!.children.length;
+
+                    return indexA - indexB;
+                }
+            })
+
+            // Now we distribute the connections inside the parent circle
+            insideConnections.forEach((connection, index) => {
+
+                const slope = startSlope + (index + 1) * slopeDiff / (insideConnections.length + 1);
+                
+
+
+            })
 
         }
 

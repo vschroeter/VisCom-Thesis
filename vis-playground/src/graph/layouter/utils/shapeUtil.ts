@@ -5,9 +5,12 @@ export class ShapeUtil {
     static getClosestShapeToPoint<T>(
         shapes: T[],
         point: Point,
-        xGetter: (shape: T) => number = (shape: T) => (shape as any).x,
-        yGetter: (shape: T) => number = (shape: T) => (shape as any).y
-    ): T {
+        xGetter: (shape: T) => number,
+        yGetter: (shape: T) => number
+    ): T | undefined {
+        if (shapes.length === 0) {
+            return undefined;
+        }
         let closestShape = shapes[0];
         let closestDistance = Math.sqrt((xGetter(shapes[0]) - point.x) ** 2 + (yGetter(shapes[0]) - point.y) ** 2);
 
