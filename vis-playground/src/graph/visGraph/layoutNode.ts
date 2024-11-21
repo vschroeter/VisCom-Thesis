@@ -8,7 +8,7 @@ import { LayoutConnection } from "./layoutConnection";
 import { Sorter } from "../algorithms/sortings/sorting";
 import { BasicSizeCalculator } from "./layouterComponents/precalculator";
 import { BasePositioner } from "./layouterComponents/positioner";
-import { BaseConnector } from "./layouterComponents/connector";
+import { BaseConnectionLayouter, BaseNodeConnectionLayouter } from "./layouterComponents/connectionLayouter";
 import { Anchor, Node2d } from "../graphical";
 
 export type InstanceOrGetter<T> = T | ((node: LayoutNode) => T);
@@ -73,7 +73,7 @@ export class LayoutNode {
     sorter?: InstanceOrGetter<Sorter>;
 
     // The connector for the node
-    // connector?: InstanceOrGetter<BaseConnector>;
+    connectionLayouter?: InstanceOrGetter<BaseNodeConnectionLayouter>;
 
     // // List of connections, that are waiting for this node to be layouted
     // connectionsWaitingForLayout: VisConnection[] = [];
@@ -116,7 +116,7 @@ export class LayoutNode {
         return undefined;
     }
 
-    getParent(condition?: (parent: LayoutNode) => boolean ): LayoutNode | undefined {
+    getParent(condition?: (parent: LayoutNode) => boolean): LayoutNode | undefined {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         let parent: LayoutNode | undefined = this;
         if (!condition) {
@@ -134,7 +134,7 @@ export class LayoutNode {
     isDescendantOf(node: LayoutNode): boolean {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         let parent: LayoutNode | undefined = this;
-        
+
         while (parent) {
             if (parent == node) {
                 return true;
@@ -203,6 +203,46 @@ export class LayoutNode {
         // return this.predecessorNodes.length;
         return this.getPredecessors().length;
     }
+
+    isDirectSuccessorInSortingTo(node: LayoutNode): boolean {
+        const parent = this.parent;
+        const otherParent = node.parent;
+
+        if (!parent || !otherParent) {
+            return false;
+        }
+
+        if (parent != otherParent) {
+            return false;
+        }
+
+        const startIndex = node.index;
+        const endIndex = this.index;
+        const isDirectLink = (endIndex - startIndex) == 1 || (startIndex - endIndex) == ((parent?.children.length ?? 0) - 1);
+        return isDirectLink;
+    }
+
+    isDirectPredecessorInSortingTo(node: LayoutNode): boolean {
+        return node.isDirectSuccessorInSortingTo(this);
+    }
+
+    getNextNodeInSorting(): LayoutNode | undefined {
+        if (!this.parent) {
+            return undefined;
+        }
+        const nextIndex = (this.index + 1) % this.parent.children.length;
+        return this.parent.children[nextIndex];
+    }
+
+    getPreviousNodeInSorting(): LayoutNode | undefined {
+        if (!this.parent) {
+            return undefined;
+        }
+        const previousIndex = (this.index - 1 + this.parent.children.length) % this.parent.children.length;
+        return this.parent.children[previousIndex];
+    }
+
+
 
     ////////////////////////////////////////////////////////////////////////////
     // Position and size of the node
@@ -449,10 +489,20 @@ export class LayoutNode {
         _positioner?.positionChildren(this);
     }
 
-    // TODO: Name Müll
-    calculateConnectionPoints(connectorOverride?: BaseConnector) {
+    // calculateConnectionPoints(connectorOverride?: BaseConnectionLayouter) {
+    //     this.outConnections.forEach(connection => {
+    //         connection.calculateLayoutPoints(connectorOverride)
+    //     });
+    // }
+
+    calculateConnections(connectionLayouterOverride?: BaseNodeConnectionLayouter) {
+        const _connectionLayouter = this.getInstance(connectionLayouterOverride ?? this.connectionLayouter);
+        _connectionLayouter?.layoutConnectionsOfNode(this);
+    }
+
+    resetConnectionPoints() {
         this.outConnections.forEach(connection => {
-            connection.connect(connectorOverride)
+            connection.resetPoints();
         });
     }
 

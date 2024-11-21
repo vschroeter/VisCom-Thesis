@@ -4,12 +4,13 @@ import * as d3 from "d3";
 import { Connection2d, Node2d } from "src/graph/graphical";
 import { ViscomLayouterSettings } from "./viscomSettings";
 import { GraphLayouter } from "../layouter";
-import { RadialCurvedConnector, RadialLayouter, RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
+import { RadialCircularArcConnectionLayouter, RadialLayouter, RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
 import { RadialLayouterSettings } from "../linear/radial/radialSettings";
 import { MouseEvents } from "src/graph/visualizations/interactions";
 import { Connection2dData } from "src/graph/graphical/Connection2d";
 import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/precalculator";
 import { LinearPositioner } from "../linear/arc/arcLayouter";
+import { RadialSplineConnectionLayouter } from "../connectionLayouter/splineConnection";
 
 
 export interface ViscomHyperLinkData extends Connection2dData {
@@ -83,34 +84,36 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         const straightForwardLineAtDegreeDelta = this.settings.edges.straightForwardLineAtDegreeDelta.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 135;
         const backwardLineCurvature = this.settings.edges.backwardLineCurvature.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 120;
 
-        this.visGraph.setConnector((connection) => {
+        this.visGraph.setNodeConnectionLayouter(new RadialSplineConnectionLayouter())
 
-            const startNode = connection.source;
-            const endNode = connection.target;
+        // this.visGraph.setConnector((connection) => {
 
-            if (connection.isSubConnection) {
+        //     const startNode = connection.source;
+        //     const endNode = connection.target;
 
-            }
+        //     if (connection.isSubConnection) {
 
-            const startLayer = startNode.layerFromBot;
-            const endLayer = endNode.layerFromBot;
+        //     }
 
-            // If the nodes have the same parent, use the radial connector
-            if (startNode.parent === endNode.parent) {
-                return new RadialCurvedConnector({
-                    forwardBackwardThreshold,
-                    straightForwardLineAtDegreeDelta,
-                    backwardLineCurvature
-                })
-            }
+        //     const startLayer = startNode.layerFromBot;
+        //     const endLayer = endNode.layerFromBot;
 
-            return undefined;
-            // return new RadialCurvedConnector({
-            //     forwardBackwardThreshold,
-            //     straightForwardLineAtDegreeDelta,
-            //     backwardLineCurvature
-            // })
-        });
+        //     // If the nodes have the same parent, use the radial connector
+        //     if (startNode.parent === endNode.parent) {
+        //         return new RadialCurvedConnector({
+        //             forwardBackwardThreshold,
+        //             straightForwardLineAtDegreeDelta,
+        //             backwardLineCurvature
+        //         })
+        //     }
+
+        //     return undefined;
+        //     // return new RadialCurvedConnector({
+        //     //     forwardBackwardThreshold,
+        //     //     straightForwardLineAtDegreeDelta,
+        //     //     backwardLineCurvature
+        //     // })
+        // });
 
 
         this.visGraph.layout();

@@ -7,7 +7,7 @@ import { CommonSettings } from "../layouter/settings/commonSettings";
 import * as d3 from "d3";
 import { LayoutNode } from "./layoutNode";
 import { Anchor, Connection2d, EllipticArc } from "../graphical";
-import { BaseConnector } from "./layouterComponents/connector";
+import { BaseConnectionLayouter } from "./layouterComponents/connectionLayouter";
 
 export type InstanceOrGetter<T> = T | ((node: LayoutConnection) => T | undefined);
 
@@ -89,12 +89,20 @@ export class LayoutConnection {
     }
 
     /** The points that define the connection layout */
-    points: (Point | EllipticArc | Anchor)[] = []
+    points: LayoutConnectionPoint[] = []
+
+    /** Additional points at the start of the connection used for the actual layout points */
+    startPoints: LayoutConnectionPoint[] = []
+
+    /** Additional points at the end of the connection used for the actual layout points */
+    endPoints: LayoutConnectionPoint[] = []
+
+    finishedLayouting: boolean = false;
 
     /** The style of the curve */
     curveStyle: CurveStyle = "linear"
 
-    connector?: InstanceOrGetter<BaseConnector>;
+    connector?: InstanceOrGetter<BaseConnectionLayouter>;
 
     /** The graphical representation of the connection */
     connection2d?: Connection2d;
@@ -215,10 +223,8 @@ export class LayoutConnection {
         return instanceOrGetter;
     }
 
-    // TODO: Name Müll
-    // TODO: Edges benötigen ggf. Infos vom Layouting anderer Kanten
-    connect(connectorOverride?: BaseConnector) {
-        const _connector = this.getInstance(connectorOverride ?? this.connector);
+    calculateLayoutPoints(layouterOverride?: BaseConnectionLayouter) {
+        const _connector = this.getInstance(layouterOverride ?? this.connector);
         if (!_connector) {
             return;
         }
@@ -231,6 +237,13 @@ export class LayoutConnection {
 
     updatePoints() {
         this.connection2d?.updatePath();
+    }
+
+    resetPoints() {
+        this.startPoints = [];
+        this.endPoints = [];
+        this.points = [];
+        this.finishedLayouting = false;
     }
 
 

@@ -8,6 +8,7 @@ import { BasePositioner } from "src/graph/visGraph/layouterComponents/positioner
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/precalculator";
 import { LayoutConnection, LayoutConnectionPoint } from "src/graph/visGraph/layoutConnection";
+import { RadialUtils } from "../../utils/radialUtils";
 
 export function radToDeg(rad: number) {
     return rad * 180 / Math.PI;
@@ -35,15 +36,8 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
     }
 
 
-    static getPositionForRad(rad: number, radius: number, centerTranslation: PointLike): Point {
-        const x = centerTranslation.x + radius * Math.cos(rad);
-        const y = centerTranslation.y + radius * Math.sin(rad);
-
-        return new Point(x, y);
-    }
-
-    getPositionForRad(rad: number, radius?: number, centerTranslation?: PointLike): Point {
-        return RadialPositionerDynamicDistribution.getPositionForRad(rad, radius ?? this.radius, centerTranslation ?? this.center);
+    getPositionOnCircleAtAngleRad(rad: number, radius?: number, centerTranslation?: PointLike): Point {
+        return RadialUtils.positionOnCircleAtRad(rad, radius ?? this.radius, centerTranslation ?? this.center);
     }
 
     override positionChildren(parentNode: LayoutNode): void {
@@ -74,7 +68,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             const placement = continuumMap.get(node)!;
             const angle = placement * 2 * Math.PI;
             angleRadMap.set(node, angle);
-            const pos = this.getPositionForRad(angle);
+            const pos = this.getPositionOnCircleAtAngleRad(angle);
             node.x = pos.x;
             node.y = pos.y;
             // console.log("Set node position", node.id, pos, node.circle);
@@ -112,15 +106,8 @@ export class RadialPositioner extends BasePositioner {
         this.center = new Point(0, 0);
     }
 
-    static getPositionForRad(rad: number, radius: number, centerTranslation: PointLike): Point {
-        const x = centerTranslation.x + radius * Math.cos(rad);
-        const y = centerTranslation.y + radius * Math.sin(rad);
-
-        return new Point(x, y);
-    }
-
-    getPositionForRad(rad: number, radius?: number, centerTranslation?: PointLike): Point {
-        return RadialPositioner.getPositionForRad(rad, radius ?? this.radius, centerTranslation ?? this.center);
+    getPositionOnCircleAtAngleRad(rad: number, radius?: number, centerTranslation?: PointLike): Point {
+        return RadialUtils.positionOnCircleAtRad(rad, radius ?? this.radius, centerTranslation ?? this.center);
     }
 
     override positionChildren(parentNode: LayoutNode): void {
@@ -138,7 +125,7 @@ export class RadialPositioner extends BasePositioner {
             const placement = continuumMap.get(node)!;
             const angle = placement * 2 * Math.PI;
             angleRadMap.set(node, angle);
-            const pos = this.getPositionForRad(angle);
+            const pos = this.getPositionOnCircleAtAngleRad(angle);
             node.x = pos.x;
             node.y = pos.y;
             // console.log("Set node position", node.id, pos, node.circle);
@@ -150,7 +137,7 @@ export class RadialPositioner extends BasePositioner {
 }
 
 
-export class RadialCurvedConnector {
+export class RadialCircularArcConnectionLayouter {
 
     // TODO
     layoutSelfLinks: boolean = false;
@@ -176,15 +163,6 @@ export class RadialCurvedConnector {
         this.backwardLineCurvature = backwardLineCurvature;
     }
 
-    /**
-     * Get the radial angle of a node relative a center 
-     */
-    static radOfNode(node: LayoutNode | Point, center?: LayoutNode | Point): number {
-        const centerPoint = center === undefined ? new Point() : (center instanceof LayoutNode ? center.center : center);
-        const nodePoint = node instanceof LayoutNode ? node.center : node;
-        return Math.atan2(nodePoint.y - centerPoint.y, nodePoint.x - centerPoint.x);
-    }
-
     layoutConnection(connection: LayoutConnection) {
 
         const startNode = connection.source;
@@ -200,8 +178,8 @@ export class RadialCurvedConnector {
             return;
         }
 
-        const startAngleRad = RadialCurvedConnector.radOfNode(startNode, parent);
-        const endAngleRad = RadialCurvedConnector.radOfNode(endNode, parent);
+        const startAngleRad = RadialUtils.radOfPoint(startNode, parent);
+        const endAngleRad = RadialUtils.radOfPoint(endNode, parent);
         const startAngleDeg = radToDeg(startAngleRad);
         const endAngleDeg = radToDeg(endAngleRad);
 
@@ -239,6 +217,92 @@ export class RadialCurvedConnector {
         } catch (e) {
             console.error("Error in layouting connection", e);
         }
+    }
+
+    static getCircularArcBetweenCircles(
+        startCircle: Circle,
+        endCircle: Circle,
+        parentCircle: Circle,
+        direction: "clockwise" | "counter-clockwise" = "clockwise"
+    ): LayoutConnectionPoint[] {
+
+        // Given Constants
+        const startAngleRad = RadialUtils.radOfPoint(startCircle.center, parentCircle.center);
+        const endAngleRad = RadialUtils.radOfPoint(endCircle.center, parentCircle.center);
+        const startAngleDeg = radToDeg(startAngleRad);
+        const endAngleDeg = radToDeg(endAngleRad);
+
+        const angleDiffDeg = endAngleDeg - startAngleDeg;
+
+        // Forward diff = if b < a, then diff is angleDiff + 360 (since we cross the circle's 0° point)
+        const angleDiffForwardDeg = angleDiffDeg < 0 ? angleDiffDeg + 360 : angleDiffDeg;
+        const angleDiffForwardRad = degToRad(angleDiffForwardDeg);
+
+        const angleDiffBackwardDeg = 360 - angleDiffForwardDeg;
+        const angleDiffBackwardRad = degToRad(angleDiffBackwardDeg);
+
+        const radialLayoutCircle = parentCircle;
+        const radius = parentCircle.r;
+        const center = parentCircle.center;
+        const radialMidPoint = direction == "clockwise" ?
+            RadialUtils.positionOnCircleAtRad(startAngleRad + angleDiffForwardRad / 2, radius, center) :
+            RadialUtils.positionOnCircleAtRad(startAngleRad - angleDiffBackwardRad / 2, radius, center);
+
+        const intersectionsStart = radialLayoutCircle.intersect(startCircle);
+        const intersectionsEnd = radialLayoutCircle.intersect(endCircle);
+
+        if (intersectionsStart.length == 0 || intersectionsEnd.length == 0) {
+            console.error("No intersections found between circles", startCircle, endCircle, parentCircle);
+            return [];
+        }
+
+        // Get the intersections, that are closer to the mid point between the two nodes
+        const sDist0 = intersectionsStart[0].distanceTo(radialMidPoint)[0];
+        const sDist1 = intersectionsStart[1].distanceTo(radialMidPoint)[0];
+        const eDist0 = intersectionsEnd[0].distanceTo(radialMidPoint)[0];
+        const eDist1 = intersectionsEnd[1].distanceTo(radialMidPoint)[0];
+
+        const intersectionStart = sDist0 < sDist1 ? intersectionsStart[0] : intersectionsStart[1];
+        const intersectionEnd = eDist0 < eDist1 ? intersectionsEnd[0] : intersectionsEnd[1];
+
+        // Get the anchors
+        const tangentInStartIntersection = new Vector(center, intersectionStart).normalize().rotate90CW();
+        const tangentInEndIntersection = direction == "clockwise" ?
+            new Vector(center, intersectionEnd).normalize().rotate90CCW() :
+            new Vector(center, intersectionEnd).normalize().rotate90CW();
+
+        const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection)
+        const endAnchor = new Anchor(intersectionEnd, tangentInEndIntersection);
+
+        // const straightEndPartForArrow = endAnchor.getPointInDirection(link.maxWidth);
+
+        const arc = new EllipticArc()
+            .radius(radius)
+            .startPoint(startAnchor.anchorPoint)
+            .endPoint(endAnchor.anchorPoint)
+            // .endPoint(straightEndPartForArrow)
+            .largeArc(0)
+            .direction(direction);
+
+        return [
+            startAnchor,
+            arc,
+            // straightEndPartForArrow,
+            endAnchor
+        ];
+
+    }
+
+    protected getDirectCircularLink(
+        startNode: LayoutNode,
+        endNode: LayoutNode,
+        parent: LayoutNode,
+    ): LayoutConnectionPoint[] {
+        return RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+            startNode.outerCircle,
+            endNode.outerCircle,
+            parent.innerCircle
+        );
     }
 
     protected getForwardLink(
@@ -303,8 +367,8 @@ export class RadialCurvedConnector {
         const startIndex = startNode.index;
         const endIndex = endNode.index;
 
-        const startAngleRad = RadialCurvedConnector.radOfNode(startNode, parent);
-        const endAngleRad = RadialCurvedConnector.radOfNode(endNode, parent);
+        const startAngleRad = RadialUtils.radOfPoint(startNode, parent);
+        const endAngleRad = RadialUtils.radOfPoint(endNode, parent);
         const startAngleDeg = radToDeg(startAngleRad);
         const endAngleDeg = radToDeg(endAngleRad);
 
@@ -322,49 +386,14 @@ export class RadialCurvedConnector {
         const startPoint = startNode.center;
         const endPoint = endNode.center;
         const midPoint = new Segment(startPoint, endPoint).middle();
-        const radialMidPoint = RadialPositioner.getPositionForRad(startAngleRad + angleDiffForwardRad / 2, radius, center);
+        const radialMidPoint = RadialUtils.positionOnCircleAtRad(startAngleRad + angleDiffForwardRad / 2, radius, center);
 
         // If the end node is directly after or before the start node, we can draw a more direct link
         const isDirectLink = (endIndex - startIndex) == 1 || (startIndex - endIndex) == ((parent?.children.length ?? 0) - 1);
 
         // If we have a direct link, we instead draw a circular arc with the same radius as the radial layout circle
         if (isDirectLink) {
-
-            const intersectionsStart = radialLayoutCircle.intersect(startNode.outerCircle);
-            const intersectionsEnd = radialLayoutCircle.intersect(endNode.outerCircle);
-
-            // Get the intersections, that are closer to the mid point between the two nodes
-            const sDist0 = intersectionsStart[0].distanceTo(radialMidPoint)[0];
-            const sDist1 = intersectionsStart[1].distanceTo(radialMidPoint)[0];
-            const eDist0 = intersectionsEnd[0].distanceTo(radialMidPoint)[0];
-            const eDist1 = intersectionsEnd[1].distanceTo(radialMidPoint)[0];
-
-            const intersectionStart = sDist0 < sDist1 ? intersectionsStart[0] : intersectionsStart[1];
-            const intersectionEnd = eDist0 < eDist1 ? intersectionsEnd[0] : intersectionsEnd[1];
-
-            // Get the anchors
-            const tangentInStartIntersection = new Vector(center, intersectionStart).normalize().rotate90CW();
-            const tangentInEndIntersection = new Vector(center, intersectionEnd).normalize().rotate90CCW();
-
-            const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection)
-            const endAnchor = new Anchor(intersectionEnd, tangentInEndIntersection);
-
-            // const straightEndPartForArrow = endAnchor.getPointInDirection(link.maxWidth);
-
-            const arc = new EllipticArc()
-                .radius(radius)
-                .startPoint(startAnchor.anchorPoint)
-                .endPoint(endAnchor.anchorPoint)
-                // .endPoint(straightEndPartForArrow)
-                .largeArc(0)
-                .direction("clockwise");
-
-            return [
-                startAnchor,
-                arc,
-                // straightEndPartForArrow,
-                endAnchor
-            ];
+            return this.getDirectCircularLink(startNode, endNode, parent);
         }
 
 
@@ -387,7 +416,7 @@ export class RadialCurvedConnector {
         }
 
 
-        const straightLinePoint = RadialPositioner.getPositionForRad(startAngleRad + straightLineAtRadDelta, radius, center);
+        const straightLinePoint = RadialUtils.positionOnCircleAtRad(startAngleRad + straightLineAtRadDelta, radius, center);
 
         const vectorToStraightLinePoint = new Vector(startPoint, straightLinePoint);
         const orthogonalVector = vectorToStraightLinePoint.rotate90CW();
@@ -497,8 +526,8 @@ export class RadialCurvedConnector {
     ): LayoutConnectionPoint[] {
 
         // Given Constants
-        const startAngleRad = RadialCurvedConnector.radOfNode(startNode, parent);
-        const endAngleRad = RadialCurvedConnector.radOfNode(endNode, parent);
+        const startAngleRad = RadialUtils.radOfPoint(startNode, parent);
+        const endAngleRad = RadialUtils.radOfPoint(endNode, parent);
         const startAngleDeg = radToDeg(startAngleRad);
         const endAngleDeg = radToDeg(endAngleRad);
 
@@ -516,7 +545,7 @@ export class RadialCurvedConnector {
         const startPoint = startNode.center;
         const endPoint = endNode.center;
         const midPoint = new Segment(startPoint, endPoint).middle();
-        const radialMidPoint = RadialPositioner.getPositionForRad(startAngleRad - angleDiffBackwardRad / 2, radius, center);
+        const radialMidPoint = RadialUtils.positionOnCircleAtRad(startAngleRad - angleDiffBackwardRad / 2, radius, center);
 
         /** 
         For a backward link, we want a circular arc that is outside the circle.
@@ -583,7 +612,7 @@ export class RadialCurvedConnector {
          * All center points of the circular arcs to this target node will be on this line.
          */
         const backwardLineAtRadDelta = degToRad(this.backwardLineCurvature);
-        const referenceLinePoint = RadialPositioner.getPositionForRad(endAngleRad + backwardLineAtRadDelta, radius, center);
+        const referenceLinePoint = RadialUtils.positionOnCircleAtRad(endAngleRad + backwardLineAtRadDelta, radius, center);
 
         // If backwardLineAtRadDelta == 0  we have to get the tangent to the circle at the end point
         const referenceLine = backwardLineAtRadDelta == 0 ?
@@ -595,7 +624,7 @@ export class RadialCurvedConnector {
         * They are the intersection of the reference line with the line from the radialMidPoint to the center of the radial layout circle.
         * The same intersection point is created, if we intersect the reference line with the targetBackReferenceLine.
         */
-        const targetBackReferenceLinePoint = RadialPositioner.getPositionForRad(startAngleRad - backwardLineAtRadDelta, radius, center);
+        const targetBackReferenceLinePoint = RadialUtils.positionOnCircleAtRad(startAngleRad - backwardLineAtRadDelta, radius, center);
         const targetBackReferenceLine = backwardLineAtRadDelta == 0 ?
             new Line(startPoint, new Vector(startPoint, center).rotate90CCW()) :
             new Line(startPoint, targetBackReferenceLinePoint);
@@ -713,7 +742,7 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
         const straightForwardLineAtDegreeDelta = this.settings.edges.straightForwardLineAtDegreeDelta.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 135;
         const backwardLineCurvature = this.settings.edges.backwardLineCurvature.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 120;
 
-        this.visGraph.setConnector(new RadialCurvedConnector({
+        this.visGraph.setConnector(new RadialCircularArcConnectionLayouter({
             forwardBackwardThreshold,
             straightForwardLineAtDegreeDelta,
             backwardLineCurvature

@@ -6,7 +6,7 @@ import { Vector } from "2d-geometry";
 import { BasePositioner } from "src/graph/visGraph/layouterComponents/positioner";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { VisGraph } from "src/graph/visGraph/visGraph";
-import { BaseConnector } from "src/graph/visGraph/layouterComponents/connector";
+import { BaseConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
 
@@ -48,7 +48,7 @@ export class LinearPositioner extends BasePositioner {
     }
 }
 
-export class ArcConnector extends BaseConnector {
+export class ArcConnector extends BaseConnectionLayouter {
 
     isVertical = true;
     get isHorizontal() { return !this.isVertical; }

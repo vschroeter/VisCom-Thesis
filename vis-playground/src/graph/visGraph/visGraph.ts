@@ -10,7 +10,7 @@ import { Connection2d, Node2d } from "../graphical";
 import { BasicSizeCalculator } from "./layouterComponents/precalculator";
 import { BasePositioner } from "./layouterComponents/positioner";
 import { UserInteractions } from "../visualizations/interactions";
-import { BaseConnector } from "./layouterComponents/connector";
+import { BaseConnectionLayouter, BaseNodeConnectionLayouter } from "./layouterComponents/connectionLayouter";
 
 export type LayoutNodeOrId = LayoutNode | string;
 
@@ -270,12 +270,18 @@ export class VisGraph {
         })
     }
 
-    setConnector(connector: BaseConnector | ((connection: LayoutConnection) => BaseConnector | undefined)) {
+    setConnector(connector: BaseConnectionLayouter | ((connection: LayoutConnection) => BaseConnectionLayouter | undefined)) {
         // this.allLayoutNodes.forEach(node => {
         //     node.connector = connector;
         // })
         this.allLayoutConnections.forEach(connection => {
             connection.connector = connector;
+        })
+    }
+
+    setNodeConnectionLayouter(layouter: BaseNodeConnectionLayouter | ((node: LayoutNode) => BaseNodeConnectionLayouter)) {
+        this.allLayoutNodes.forEach(node => {
+            node.connectionLayouter = layouter;
         })
     }
 
@@ -324,8 +330,6 @@ export class VisGraph {
             });
         });
 
-        // console.log("Nodes pos before", this.allLayoutNodes.map(node => [new Point(node.center), node.id]));
-
         // Propagate the sizes and positions of the parent nodes
         topDownLayers.forEach(layer => {
             layer.forEach(node => {
@@ -334,25 +338,29 @@ export class VisGraph {
             });
         });
 
-        // console.log("Nodes pos after", this.allLayoutNodes.map(node => [new Point(node.center), node.id]));
-
-        // console.log({
-        //     topDownLayers
-        // })
-
-        // Connect the nodes
+        // Reset the connection layouts 
         botUpLayers.forEach(layer => {
             layer.forEach(node => {
-                if (node.parent) {
-                    // TODO: wird edge-group zentriertes Verfahren
-                    node.calculateConnectionPoints();
-                }
+                node.resetConnectionPoints();
             });
         });
 
-        // topDownLayers.flat().forEach(node => {
-        //     console.log(node.id, node.sizeFactor);
-        // })
+
+        // Calculate the connection layouts based on a node's edge groups (node focused)  
+        botUpLayers.forEach(layer => {
+            layer.forEach(node => {
+                node.calculateConnections();
+            });
+        });
+
+        // Calculate the layout of the connections (connection focused)
+        botUpLayers.forEach(layer => {
+            layer.forEach(node => {
+                node.outConnections.forEach(connection => {
+                    connection.calculateLayoutPoints();
+                });
+            });
+        });
 
         // Ensure, that all graphical elements are created
         this.createGraphicalElements();

@@ -1,6 +1,7 @@
 import { LayoutConnection } from "../layoutConnection";
+import { LayoutNode } from "../layoutNode";
 
-export class BaseConnector {
+export class BaseConnectionLayouter {
     
     /**
      * Calculate the layout of a connection.
@@ -8,6 +9,13 @@ export class BaseConnector {
      */
     layoutConnection(connection: LayoutConnection): void {
         // connection.points = [];
+    }
+}
+
+export class BaseNodeConnectionLayouter {
+
+    layoutConnectionsOfNode(node: LayoutNode): void {
+
     }
 
 }
