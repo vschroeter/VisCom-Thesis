@@ -25,4 +25,27 @@ export class ShapeUtil {
         return closestShape;
     }
 
+    static getFurthestShapeToPoint<T>(
+        shapes: T[],
+        point: Point,
+        xGetter: (shape: T) => number,
+        yGetter: (shape: T) => number
+    ): T | undefined {
+        if (shapes.length === 0) {
+            return undefined;
+        }
+        let furthestShape = shapes[0];
+        let furthestDistance = Math.sqrt((xGetter(shapes[0]) - point.x) ** 2 + (yGetter(shapes[0]) - point.y) ** 2);
+
+        for (let i = 1; i < shapes.length; i++) {
+            const distance = Math.sqrt((xGetter(shapes[i]) - point.x) ** 2 + (yGetter(shapes[i]) - point.y) ** 2);
+            if (distance > furthestDistance) {
+                furthestShape = shapes[i];
+                furthestDistance = distance;
+            }
+        }
+
+        return furthestShape;
+    }
+
 }
