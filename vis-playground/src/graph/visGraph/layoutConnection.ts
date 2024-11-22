@@ -1,6 +1,6 @@
 
 
-import { Point } from "2d-geometry";
+import { Point, Shape } from "2d-geometry";
 import { CommunicationChannel, CommunicationGraph, CommunicationLink, CommunicationNode, CommunicationTopic } from "../commGraph";
 import { CommonSettings } from "../layouter/settings/commonSettings";
 
@@ -8,6 +8,7 @@ import * as d3 from "d3";
 import { LayoutNode } from "./layoutNode";
 import { Anchor, Connection2d, EllipticArc } from "../graphical";
 import { BaseConnectionLayouter } from "./layouterComponents/connectionLayouter";
+import { SvgPathSegment } from "../graphical/primitives/pathSegments/PathSegment";
 
 export type InstanceOrGetter<T> = T | ((node: LayoutConnection) => T | undefined);
 
@@ -28,7 +29,7 @@ export class VisLink {
     }
 }
 
-export type LayoutConnectionPoint = Point | EllipticArc | Anchor;
+export type LayoutConnectionPoint = Point | Anchor | SvgPathSegment;
 
 export type CurveStyle = "linear" | "basis" | "natural" | d3.CurveFactory
 
@@ -39,6 +40,8 @@ export class LayoutConnection {
     source: LayoutNode;
     /** The target node of the connection */
     target: LayoutNode;
+
+    debugShapes: Shape[] = [];
 
     /** ID of the source node */
     get fromId(): string {

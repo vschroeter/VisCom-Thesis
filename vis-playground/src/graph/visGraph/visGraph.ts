@@ -270,16 +270,17 @@ export class VisGraph {
         })
     }
 
-    setConnector(connector: BaseConnectionLayouter | ((connection: LayoutConnection) => BaseConnectionLayouter | undefined)) {
-        // this.allLayoutNodes.forEach(node => {
-        //     node.connector = connector;
-        // })
-        this.allLayoutConnections.forEach(connection => {
-            connection.connector = connector;
-        })
-    }
+    // setConnectionLayouter(connector: BaseConnectionLayouter | ((connection: LayoutConnection) => BaseConnectionLayouter | undefined)) {
+    //     // this.allLayoutNodes.forEach(node => {
+    //     //     node.connector = connector;
+    //     // })
+    //     this.allLayoutConnections.forEach(connection => {
+    //         connection.connector = connector;
+    //     })
+    // }
 
-    setNodeConnectionLayouter(layouter: BaseNodeConnectionLayouter | ((node: LayoutNode) => BaseNodeConnectionLayouter)) {
+    // setNodeConnectionLayouter(layouter: BaseNodeConnectionLayouter | ((node: LayoutNode) => BaseNodeConnectionLayouter)) {
+    setConnectionLayouter(layouter: BaseNodeConnectionLayouter | BaseNodeConnectionLayouter[]) {
         this.allLayoutNodes.forEach(node => {
             node.connectionLayouter = layouter;
         })
@@ -338,29 +339,25 @@ export class VisGraph {
             });
         });
 
-        // Reset the connection layouts 
-        botUpLayers.forEach(layer => {
-            layer.forEach(node => {
-                node.resetConnectionPoints();
-            });
-        });
 
 
-        // Calculate the connection layouts based on a node's edge groups (node focused)  
-        botUpLayers.forEach(layer => {
-            layer.forEach(node => {
-                node.calculateConnections();
-            });
-        });
+        // Reset and init the connection layouts 
+        botUpLayers.flat().forEach(node => {
+            node.initConnectionLayouter();
+        })
 
-        // Calculate the layout of the connections (connection focused)
-        botUpLayers.forEach(layer => {
-            layer.forEach(node => {
-                node.outConnections.forEach(connection => {
-                    connection.calculateLayoutPoints();
+        // Calculate the connection layouts based on a node's edge groups (node focused) 
+        let connectionChanged = true;
+        while (connectionChanged) {
+            connectionChanged = false;
+            botUpLayers.forEach(layer => {
+                layer.forEach(node => {
+                    // node.calculateConnections();
+                    const changed = node.iterateConnectionLayouter();
+                    connectionChanged = connectionChanged || changed;
                 });
             });
-        });
+        }
 
         // Ensure, that all graphical elements are created
         this.createGraphicalElements();

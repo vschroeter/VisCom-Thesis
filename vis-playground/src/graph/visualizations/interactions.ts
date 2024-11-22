@@ -30,9 +30,10 @@ export class UserInteractions {
         this.emitter.emit("update")
     }
 
-    addHoveredNode(nodeId: string) {
-        this.hoveredNodeIds.add(nodeId)
-        console.log("Hovered nodes", this.hoveredNodeIds)
+    addHoveredNode(nodeId: string | string[]) {
+        const nodeIds = Array.isArray(nodeId) ? nodeId : [nodeId]
+        nodeIds.forEach(id => this.hoveredNodeIds.add(id))
+        // console.log("Hovered nodes", this.hoveredNodeIds)
         this.emitter.emit("update")
     }
 
@@ -61,8 +62,9 @@ export class UserInteractions {
         this.emitter.emit("update")
     }
 
-    removeHoveredNode(nodeId: string) {
-        this.hoveredNodeIds.delete(nodeId)
+    removeHoveredNode(nodeId: string | string[]) {
+        const nodeIds = Array.isArray(nodeId) ? nodeId : [nodeId]
+        nodeIds.forEach(id => this.hoveredNodeIds.delete(id))
         this.emitter.emit("update")
     }
 

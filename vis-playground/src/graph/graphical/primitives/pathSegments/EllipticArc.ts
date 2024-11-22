@@ -1,4 +1,5 @@
 import { Point } from "2d-geometry";
+import { SvgPathSegment } from "./PathSegment";
 
 
 
@@ -32,7 +33,7 @@ function vectorAngle(ux: number, uy: number, vx: number, vy: number): number {
     return sign * angle;
 }
 
-export class EllipticArc {
+export class EllipticArc implements SvgPathSegment {
 
     // Radius of the ellipse in the x direction
     _rx: number = 0;
@@ -55,6 +56,14 @@ export class EllipticArc {
 
     // The end point of the arc
     _end?: Point;
+
+    get start() {
+        return this._start ?? new Point(0, 0);
+    }
+    get end() {
+        return this._end ?? new Point(0, 0);
+    }
+
 
     /**
      * Creates an instance of EllipticArc.

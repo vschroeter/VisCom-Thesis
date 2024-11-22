@@ -6,9 +6,10 @@ import { EllipticArc } from "./";
 
 import * as d3 from "d3"
 import { SvgRenderable } from "./Renderable";
-import { Point } from "2d-geometry";
+import { Point, ShapeTag } from "2d-geometry";
 import { CurveStyle, LayoutConnection, LayoutConnectionPoint } from "../visGraph/layoutConnection";
 import { LayoutNode } from "../visGraph/layoutNode";
+import { SvgPathSegment } from "./primitives/pathSegments/PathSegment";
 
 export class Arrow2D {
 
@@ -73,10 +74,10 @@ export interface Connection2dData {
 // export class Connection2d<T extends Connection2dData = Connection2dData> extends SvgRenderable {
 export class Connection2d extends SvgRenderable {
 
-    
+
     /** The defining layout connection */
     layoutConnection: LayoutConnection;
-    
+
     // /** The points defining the connection */
     get points(): LayoutConnectionPoint[] {
         return this.layoutConnection.points
@@ -124,7 +125,7 @@ export class Connection2d extends SvgRenderable {
         path?: boolean,
         stroke?: boolean,
         opacity?: boolean,
-    } = {path: true, stroke: true, opacity: true}) {
+    } = { path: true, stroke: true, opacity: true }) {
         if (path) {
             this.addUpdateCallback(this.renderPath)
         }
@@ -150,15 +151,24 @@ export class Connection2d extends SvgRenderable {
             return this.source.getAnchor(this.target.center).anchorPoint;
         }
 
-        if (this.points[0] instanceof EllipticArc) {
-            return (this.points[0] as EllipticArc)._start ?? this.source.center
+        if ((this.points[0] as Point).tag == ShapeTag.Point) {
+            return this.points[0] as Point
         }
+
+        // if (this.points[0] instanceof EllipticArc) {
+        //     return (this.points[0] as EllipticArc)._start ?? this.source.center
+        // }
 
         if (this.points[0] instanceof Anchor) {
             return (this.points[0] as Anchor).anchorPoint
         }
 
-        return this.points[0]
+        // Otherwise, it will be a PathSegment
+        if ((this.points[0] as SvgPathSegment).start) {
+            return (this.points[0] as SvgPathSegment).start
+        }
+
+        return this.source.center
     }
 
     /** The end point of the connection (either the last defined point or the target node) */
@@ -172,15 +182,21 @@ export class Connection2d extends SvgRenderable {
 
         const lastPoint = this.points[this.points.length - 1]
 
-        if (lastPoint instanceof EllipticArc) {
-            return lastPoint._end ?? this.target.center
+
+        if ((lastPoint as Point).tag == ShapeTag.Point) {
+            return lastPoint as Point
         }
 
         if (lastPoint instanceof Anchor) {
             return lastPoint.anchorPoint
         }
 
-        return lastPoint
+        // Otherwise, it will be a PathSegment
+        if ((lastPoint as SvgPathSegment).end) {
+            return (lastPoint as SvgPathSegment).end
+        }
+
+        return this.target.center
     }
 
     /** The curve factory to use for the line */
@@ -204,20 +220,23 @@ export class Connection2d extends SvgRenderable {
             .y(d => d.y)
             .curve(this.curveFactory)
 
-        return (points: (Point | EllipticArc | Anchor)[]) => {
+        return (points: LayoutConnectionPoint[]) => {
             let path = ""
             let currentPoints: Point[] = []
             points.forEach((point, i) => {
-                if (point instanceof EllipticArc) {
+
+                if ((point as Point).tag == ShapeTag.Point) {
+                    currentPoints.push(point as Point)
+                } else if (point instanceof Anchor) {
+                    currentPoints.push(point.anchorPoint)
+                }
+                // Otherwise, it will be a PathSegment
+                else {
                     if (currentPoints.length > 0) {
                         path += pointLine(currentPoints) + " "
                         currentPoints = []
                     }
-                    path += point.getSvgPath() + " "
-                } else if (point instanceof Point) {
-                    currentPoints.push(point)
-                } else if (point instanceof Anchor) {
-                    currentPoints.push(point.anchorPoint)
+                    path += (point as SvgPathSegment).getSvgPath() + " "
                 }
             });
 

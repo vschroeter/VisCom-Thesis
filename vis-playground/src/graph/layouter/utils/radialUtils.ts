@@ -1,4 +1,4 @@
-import { Circle, Line, Point, PointLike, Segment } from "2d-geometry";
+import { Circle, Line, Point, PointLike, Segment, Vector } from "2d-geometry";
 import { ShapeUtil } from "./shapeUtil";
 
 /**
@@ -39,6 +39,13 @@ export class RadialUtils extends ShapeUtil {
         return deg * Math.PI / 180;
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Vectors
+    ////////////////////////////////////////////////////////////////////////////
+
+    static radToVector(rad: number): Vector {
+        return new Vector(Math.cos(rad), Math.sin(rad));
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // Angles in a circle

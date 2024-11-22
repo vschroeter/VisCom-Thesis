@@ -1,4 +1,4 @@
-import { Circle, Point, Vector } from "2d-geometry";
+import { Circle, Point, Shape, Vector } from "2d-geometry";
 import { CommunicationChannel, CommunicationGraph, CommunicationLink, CommunicationNode, CommunicationTopic } from "../commGraph";
 import { CommonSettings } from "../layouter/settings/commonSettings";
 
@@ -20,6 +20,8 @@ export class LayoutNode {
 
     // The id of the node
     id: string;
+
+    debugShapes: Shape[] = [];
 
     ////////////////////////////////////////////////////////////////////////////
     // Constructor
@@ -72,8 +74,10 @@ export class LayoutNode {
     // The sorter for the node (for sorting the children of the node before layouting)
     sorter?: InstanceOrGetter<Sorter>;
 
-    // The connector for the node
-    connectionLayouter?: InstanceOrGetter<BaseNodeConnectionLayouter>;
+    // The layouter (or list of layouters) to calculate the connections of the node
+    connectionLayouter: BaseNodeConnectionLayouter | BaseNodeConnectionLayouter[] = new BaseNodeConnectionLayouter();
+    protected _currentConnectionLayouterIndex = 0;
+    // connectionLayouter?: InstanceOrGetter<BaseNodeConnectionLayouter | BaseNodeConnectionLayouter[]>;
 
     // // List of connections, that are waiting for this node to be layouted
     // connectionsWaitingForLayout: VisConnection[] = [];
@@ -495,16 +499,46 @@ export class LayoutNode {
     //     });
     // }
 
-    calculateConnections(connectionLayouterOverride?: BaseNodeConnectionLayouter) {
-        const _connectionLayouter = this.getInstance(connectionLayouterOverride ?? this.connectionLayouter);
-        _connectionLayouter?.layoutConnectionsOfNode(this);
-    }
+    ////////////////////////////////////////////////////////////////////////////
+    // Connection layouting methods
+    ////////////////////////////////////////////////////////////////////////////
 
-    resetConnectionPoints() {
+    initConnectionLayouter() {
         this.outConnections.forEach(connection => {
             connection.resetPoints();
         });
+        this._currentConnectionLayouterIndex = 0;
+        // this.connectionLayouter = this.getInstance(this.connectionLayouter);
     }
+
+    protected getConnectionLayouter(): BaseNodeConnectionLayouter[] {
+        return (Array.isArray(this.connectionLayouter) ? this.connectionLayouter : [this.connectionLayouter]);
+    } 
+
+    iterateConnectionLayouter(): boolean {
+        const layouters = (Array.isArray(this.connectionLayouter) ? this.connectionLayouter : [this.connectionLayouter]);
+        if (layouters.length == 0) {
+            return false;
+        }
+
+        if (this._currentConnectionLayouterIndex >= layouters.length) {
+            return false;
+        }
+
+        const layouter = layouters[this._currentConnectionLayouterIndex];
+        layouter.layoutConnectionsOfNode(this);
+        this._currentConnectionLayouterIndex++;
+        return true;
+    }
+
+
+    // calculateConnections(connectionLayouterOverride?: BaseNodeConnectionLayouter) {
+    //     const _connectionLayouter = this.getInstance(connectionLayouterOverride ?? this.connectionLayouter);
+    //     _connectionLayouter?.layoutConnectionsOfNode(this);
+    // }
+
+
+
 
     ////////////////////////////////////////////////////////////////////////////
     // Rendering methods

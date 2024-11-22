@@ -9,6 +9,7 @@ import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/precalculator";
 import { LayoutConnection, LayoutConnectionPoint } from "src/graph/visGraph/layoutConnection";
 import { RadialUtils } from "../../utils/radialUtils";
+import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 
 export function radToDeg(rad: number) {
     return rad * 180 / Math.PI;
@@ -137,7 +138,7 @@ export class RadialPositioner extends BasePositioner {
 }
 
 
-export class RadialCircularArcConnectionLayouter {
+export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayouter {
 
     // TODO
     layoutSelfLinks: boolean = false;
@@ -158,65 +159,68 @@ export class RadialCircularArcConnectionLayouter {
             straightForwardLineAtDegreeDelta?: number;
             backwardLineCurvature?: number;
         } = {}) {
+        super();
         this.forwardBackwardThreshold = forwardBackwardThreshold;
         this.straightForwardLineAtDegreeDelta = straightForwardLineAtDegreeDelta;
         this.backwardLineCurvature = backwardLineCurvature;
     }
 
-    layoutConnection(connection: LayoutConnection) {
+    override layoutConnectionsOfNode(node: LayoutNode): void {
 
-        const startNode = connection.source;
-        const endNode = connection.target;
-        const parent = startNode.parent ?? endNode.parent;
+        node.outConnections.forEach((connection) => {
+            const startNode = connection.source;
+            const endNode = connection.target;
+            const parent = startNode.parent ?? endNode.parent;
 
-        if (!parent) {
-            throw new Error("Parent node of connection is not set");
-        }
-
-        if (startNode == endNode) {
-            // TODO: Implement self links
-            return;
-        }
-
-        const startAngleRad = RadialUtils.radOfPoint(startNode, parent);
-        const endAngleRad = RadialUtils.radOfPoint(endNode, parent);
-        const startAngleDeg = radToDeg(startAngleRad);
-        const endAngleDeg = radToDeg(endAngleRad);
-
-        const angleDiffDeg = endAngleDeg - startAngleDeg;
-
-        // Forward diff = if b < a, then diff is angleDiff + 360 (since we cross the circle's 0° point)
-        const angleDiffForwardDeg = angleDiffDeg < 0 ? angleDiffDeg + 360 : angleDiffDeg;
-
-        // Forward links should be inside the circle
-        // Backward links should be outside the circle
-
-        // We have to make a decision on how we treat forward and backward links:
-        // We can either:
-        // 1.) Distinguish them clearly by the sorting result. This way, backward links based on the sorting are always outside the circle
-        //     This could however lead to the case, that a link between nodes that are close on the circle is drawn a much longer way outside the circle
-        // 2.) Distinguish them by the angle difference. This way, links are drawn in a way that makes the most sense based on the circular layout
-        // Cases for angle a and b:
-        // - a < b:
-        //     - 1.) Either always a forward link
-        //     - 2.) Or a forward link if the angle difference is less than 180 (or another threshold) degrees
-        // - a > b:
-        //     - 1.) Either we have a backward link
-        //     - 2.) Or a link between nodes via the 0 degree point (e.g. from 270° to 0° --> Diff is -270°, but actually it is a 90° forward link)
-        //    --> again, we could use a threshold to decide if we treat it as a forward or backward link
-
-        // Links below the threshold are forward links
-        const isForwardLink = angleDiffForwardDeg <= this.forwardBackwardThreshold;
-
-        try {
-            if (isForwardLink) {
-                connection.points = this.getForwardLink(startNode, endNode, parent);
-            } else {
-                connection.points = this.getBackwardLink(startNode, endNode, parent);
+            if (!parent) {
+                throw new Error("Parent node of connection is not set");
             }
-        } catch (e) {
-            console.error("Error in layouting connection", e);
-        }
+
+            if (startNode == endNode) {
+                // TODO: Implement self links
+                return;
+            }
+
+            const startAngleRad = RadialUtils.radOfPoint(startNode, parent);
+            const endAngleRad = RadialUtils.radOfPoint(endNode, parent);
+            const startAngleDeg = radToDeg(startAngleRad);
+            const endAngleDeg = radToDeg(endAngleRad);
+
+            const angleDiffDeg = endAngleDeg - startAngleDeg;
+
+            // Forward diff = if b < a, then diff is angleDiff + 360 (since we cross the circle's 0° point)
+            const angleDiffForwardDeg = angleDiffDeg < 0 ? angleDiffDeg + 360 : angleDiffDeg;
+
+            // Forward links should be inside the circle
+            // Backward links should be outside the circle
+
+            // We have to make a decision on how we treat forward and backward links:
+            // We can either:
+            // 1.) Distinguish them clearly by the sorting result. This way, backward links based on the sorting are always outside the circle
+            //     This could however lead to the case, that a link between nodes that are close on the circle is drawn a much longer way outside the circle
+            // 2.) Distinguish them by the angle difference. This way, links are drawn in a way that makes the most sense based on the circular layout
+            // Cases for angle a and b:
+            // - a < b:
+            //     - 1.) Either always a forward link
+            //     - 2.) Or a forward link if the angle difference is less than 180 (or another threshold) degrees
+            // - a > b:
+            //     - 1.) Either we have a backward link
+            //     - 2.) Or a link between nodes via the 0 degree point (e.g. from 270° to 0° --> Diff is -270°, but actually it is a 90° forward link)
+            //    --> again, we could use a threshold to decide if we treat it as a forward or backward link
+
+            // Links below the threshold are forward links
+            const isForwardLink = angleDiffForwardDeg <= this.forwardBackwardThreshold;
+
+            try {
+                if (isForwardLink) {
+                    connection.points = this.getForwardLink(startNode, endNode, parent);
+                } else {
+                    connection.points = this.getBackwardLink(startNode, endNode, parent);
+                }
+            } catch (e) {
+                console.error("Error in layouting connection", e);
+            }
+        });
     }
 
     static getCircularArcBetweenCircles(
@@ -742,7 +746,7 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
         const straightForwardLineAtDegreeDelta = this.settings.edges.straightForwardLineAtDegreeDelta.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 135;
         const backwardLineCurvature = this.settings.edges.backwardLineCurvature.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 120;
 
-        this.visGraph.setConnector(new RadialCircularArcConnectionLayouter({
+        this.visGraph.setConnectionLayouter(new RadialCircularArcConnectionLayouter({
             forwardBackwardThreshold,
             straightForwardLineAtDegreeDelta,
             backwardLineCurvature

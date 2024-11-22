@@ -60,7 +60,23 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     settings: T;
     visGraph: VisGraph;
 
-    debugShapes: Shape[] = [];
+    // debugShapes: Shape[] = [];
+
+    get debugShapes(): Shape[] {
+        const shapes: Shape[] = [];
+        this.visGraph.allGraphicalNodes.forEach(n => {
+            if (n.layoutNode.debugShapes.length > 0) {
+                shapes.push(...n.layoutNode.debugShapes);
+            }
+        });
+
+        this.visGraph.allGraphicalConnections.forEach(l => {
+            if (l.layoutConnection.debugShapes.length > 0) {
+                shapes.push(...l.layoutConnection.debugShapes);
+            }
+        });
+        return shapes;
+    }
 
     gParent: d3.Selection<SVGGElement | null, unknown, null, undefined> | null = null;
 
@@ -293,12 +309,12 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             // .attr("stroke", "white")
             // .attr("stroke-width", (d: Node2d) => Math.min(0.5, d.radius * 0.01))
             .attr('x', (d: Node2d) => {
-                
+
                 const translationRelativeToParent = d.layoutNode.translationRelativeToParent;
                 if (translationRelativeToParent.x > 0) {
                     return d.x + d.radius * 1.1;
                 }
-                return d.x - d.radius * 1.1;                
+                return d.x - d.radius * 1.1;
             })
             .attr('y', (d: Node2d) => d.y)
             .attr('text-anchor', (d: Node2d) => {
@@ -311,8 +327,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             .text((d: Node2d) => d.id ?? "")
             .attr('opacity', (d: Node2d) => d.layoutNode.showLabel ? 1 : 0)
             .attr("font-size", (d: Node2d) => `${Math.min(20, d.layoutNode.radius * 2 * 0.6)}px`)
-            // .attr("font-size", (d: Node2d) => `${(d.layoutNode.parent?.sizeFactor ?? 1)}rem`)
-        
+        // .attr("font-size", (d: Node2d) => `${(d.layoutNode.parent?.sizeFactor ?? 1)}rem`)
+
     }
 
     renderDebuggingShapes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
