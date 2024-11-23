@@ -41,6 +41,12 @@ export class LayoutNode {
     // Child nodes, if any
     children: LayoutNode[] = [];
 
+    // If there are children, the anchor node is the defining node for position and alignment
+    anchorNode?: LayoutNode;
+
+    get isAnchor(): boolean {
+        return this.parent?.anchorNode == this;
+    }
 
     _index = -1;
     // The index of the node in the parent's children list or the manually set index
@@ -246,6 +252,23 @@ export class LayoutNode {
         return this.parent.children[previousIndex];
     }
 
+    getIndexOfNodeContainingDescendant(descendant: LayoutNode): number {
+        let node: LayoutNode | undefined = descendant;
+        while (node?.parent != this) {
+            if (!node) {
+                return -1;
+            }
+            node = node.parent;
+        }
+
+        return node.index;
+    }
+
+    getNodeAtIndex(index: number): LayoutNode {
+        index = (index + this.children.length) % this.children.length;
+        return this.children[index];
+    }
+
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -299,6 +322,18 @@ export class LayoutNode {
 
     get translationRelativeToParent(): Vector {
         return new Vector(this.center.x - (this.parent?.center.x ?? 0), this.center.y - (this.parent?.center.y ?? 0));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Transformation methods for the node
+    ////////////////////////////////////////////////////////////////////////////
+
+    rotateChildrenLocally(rad: number) {
+        const center = new Point(0, 0);
+        // this.center = this.center.rotate(rad, center);
+        this.children.forEach(child => {
+            child.center = child.center.rotate(rad, center);
+        });
     }
 
     ////////////////////////////////////////////////////////////////////////////

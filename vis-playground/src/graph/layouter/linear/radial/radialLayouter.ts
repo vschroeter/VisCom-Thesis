@@ -43,6 +43,9 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
 
     override positionChildren(parentNode: LayoutNode): void {
         const nodes = parentNode.children;
+        if (nodes.length == 0) {
+            return;
+        }
         const continuumMap = new Map<LayoutNode, number>();
 
         let currentPosition = 0;
@@ -62,23 +65,43 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             continuumMap.set(key, continuumMap.get(key)! / max);
         })
 
-        // Place nodes on a circle with radius
-        const angleRadMap = new Map<LayoutNode, number>();
-        // const angleRadStep = 2 * Math.PI / nodes.length;
-        nodes.forEach((node, i) => {
-            const placement = continuumMap.get(node)!;
-            const angle = placement * 2 * Math.PI;
-            angleRadMap.set(node, angle);
-            const pos = this.getPositionOnCircleAtAngleRad(angle);
-            node.x = pos.x;
-            node.y = pos.y;
-            // console.log("Set node position", node.id, pos, node.circle);
-        });
+        const startAngleDeg = -90;
+        const startAngleRad = degToRad(startAngleDeg);
 
+        if (nodes.length == 1) {
+            // If there is only one node, place it at the center and set the radius to the node's radius
+            const maxRadius = nodes[0].radius;0
+            nodes[0].x = this.center.x;
+            nodes[0].y = this.center.y;
+            this.radius = maxRadius;
+            parentNode.radius = (this.radius + maxRadius);
+            parentNode.innerRadius = this.radius;
+        } else {
+            // Place nodes on a circle with radius
+            const angleRadMap = new Map<LayoutNode, number>();
+            // const angleRadStep = 2 * Math.PI / nodes.length;
+            nodes.forEach((node, i) => {
+                const placement = continuumMap.get(node)!;
+                const angle = startAngleRad + placement * 2 * Math.PI;
+                angleRadMap.set(node, angle);
+                const pos = this.getPositionOnCircleAtAngleRad(angle);
+                node.x = pos.x;
+                node.y = pos.y;
 
-        const maxNodeRadius = Math.max(...nodes.map(n => n.radius));
-        parentNode.radius = (this.radius + maxNodeRadius) * this.outerMarginFactor;
-        parentNode.innerRadius = this.radius;
+                // If the node has a anchor child node, we want to rotate the node so that the anchor node is directed to the center
+                const anchorNode = node.anchorNode;
+                if (anchorNode) {
+                    const nodeCenter = new Point(0, 0); // Because the node is positioned with the parent assumed at (0, 0)
+                    const currentSlope = new Vector(anchorNode.center, nodeCenter).slope;
+                    node.rotateChildrenLocally(angle - currentSlope);
+                }
+
+            });
+    
+            const maxNodeRadius = Math.max(...nodes.map(n => n.radius));
+            parentNode.radius = (this.radius + maxNodeRadius) * this.outerMarginFactor;
+            parentNode.innerRadius = this.radius;
+        }
     }
 
 }

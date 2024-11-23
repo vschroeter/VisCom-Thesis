@@ -491,7 +491,7 @@ export class VisGraph {
             const startNode = link.source;
             const endNode = link.target;
             const sizeMultiplier = Math.max(startNode.parent?.sizeFactor ?? 1, endNode.parent?.sizeFactor ?? 1);
-            const width = Math.min(maxW, Math.max(minW, weight * wMultiplier)) * sizeMultiplier;
+            const width = Math.min(maxW, Math.max(minW, weight * wMultiplier * sizeMultiplier));
 
 
             if (userInteractions && userInteractions.somethingIsSelectedOrFocusedOrHovered) {
@@ -528,6 +528,14 @@ export class VisGraph {
             }
             node.parent = parentNode;
             parentNode.children.push(node);
+
+            // We can check here, if the old parent now only contains the new parent as single child
+            // If so, we can move the children of the new parent to the old parent and remove the new parent
+            if (oldParent && oldParent.children.length === 1 && oldParent.children[0] === parentNode) {;
+                
+                this.moveNodesToParent(Array.from(parentNode.children), oldParent);
+                this.removeNode(parentNode);          
+            }
         });
     }
 
@@ -592,6 +600,53 @@ export class VisGraph {
 
     // If a node only has connections to a single other node in this layer, we can add it as subnode
     combineStronglyCoupledNodes() {
+
+        // const mapNodeToParent = new Map<LayoutNode, LayoutNode>();
+        const mapParentToNodes = new Map<LayoutNode, LayoutNode[]>();
+
+        // Check for each node, if all outgoing and incoming connections are to/from the same node
+        this.allLayoutNodes.forEach(node => {
+            const outConnections = node.outConnections;
+            const inConnections = node.inConnections;
+
+            // Check the outgoing connections
+            const hasOutgoingConnections = outConnections.length > 0;
+            const hasIncomingConnections = inConnections.length > 0;
+            const outNode = outConnections.length === 1 ? outConnections[0].target : undefined;
+            const inNode = inConnections.length === 1 ? inConnections[0].source : undefined;
+
+            //TODO: Check self-loops
+
+            if (hasOutgoingConnections && hasIncomingConnections && outNode && inNode && outNode === inNode) {
+                if (!mapParentToNodes.has(outNode)) {
+                    mapParentToNodes.set(outNode, []);
+                }
+                mapParentToNodes.get(outNode)!.push(node);
+
+            } else if (hasOutgoingConnections && !hasIncomingConnections && outNode) {
+                if (!mapParentToNodes.has(outNode)) {
+                    mapParentToNodes.set(outNode, []);
+                }
+                mapParentToNodes.get(outNode)!.push(node);
+            } else if (!hasOutgoingConnections && hasIncomingConnections && inNode) {
+                if (!mapParentToNodes.has(inNode)) {
+                    mapParentToNodes.set(inNode, []);
+                }
+                mapParentToNodes.get(inNode)!.push(node);
+            }
+        });
+
+        this.allLayoutNodes.forEach(node => {
+
+            if (mapParentToNodes.has(node)) {
+                const nodes = mapParentToNodes.get(node)!;
+                nodes.push(node);
+                const hypernode = this.combineNodesIntoHyperNode(nodes, node.parent);
+                hypernode.anchorNode = node;
+                hypernode.filled = false;
+                hypernode.showLabel = false;
+            }
+        });
 
     }
 

@@ -80,9 +80,10 @@ export class RadialConnectionsHelper {
                 }
             }
             else {
-                if ((start.parent && end.parent) && start.parent == end.parent) {
+                const commonParent = LayoutNode.firstCommonParent(start, end);
 
-                    const forwardRadBetweenPoints = RadialUtils.forwardRadBetweenPoints(start.center, end.center, start.parent.center);
+                if (commonParent) {
+                    const forwardRadBetweenPoints = RadialUtils.forwardRadBetweenPoints(start.center, end.center, commonParent.center);
                     const isAboveThreshold = forwardRadBetweenPoints > this.forwardBackwardThresholdRad;
 
                     if (isAboveThreshold && isOutgoing) {
@@ -94,7 +95,8 @@ export class RadialConnectionsHelper {
                     } else if (!isAboveThreshold && !isOutgoing) {
                         incomingConnectionsInside.push(connection);
                     }
-                } else {
+                }
+                else {
                     connectionsWithDifferentParents.push(connection);
                 }
             }

@@ -39,7 +39,11 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
     override initVisGraph() {
         // Transform visgraph to hypergraph
 
+
+
         this.visGraph.combineCommunities(this.commGraph.communities.getAsIdLists());
+        this.visGraph.combineStronglyCoupledNodes();
+
         console.log("Combined communities", this.visGraph, this.commGraph.communities.getAsIdLists());
 
     }
