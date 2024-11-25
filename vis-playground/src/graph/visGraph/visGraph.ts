@@ -324,7 +324,6 @@ export class VisGraph {
 
                 if (node.children.length > 0) {
                     node.sortChildren();
-                    console.log("Sorted " + node.id, node.children.map(n => n.id));
                     node.calculatePositionOfChildren();
                 }
 
@@ -640,6 +639,7 @@ export class VisGraph {
             const inNode = inConnections.length === 1 ? inConnections[0].source : undefined;
 
             //TODO: Check self-loops
+            //TODO: Ignore duplicate connections when having hyper connections
 
             if (hasOutgoingConnections && hasIncomingConnections && outNode && inNode && outNode === inNode) {
                 if (!mapParentToNodes.has(outNode)) {
