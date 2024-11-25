@@ -9,6 +9,36 @@ import { RadialConnectionsHelper } from "./radialConnections";
 import { CubicBezierCurve } from "src/graph/graphical/primitives/pathSegments/CubicBezierCurve";
 
 
+class Continuum {
+
+    parent: LayoutNode;
+    connectionContinuum: Map<LayoutConnection, number> = new Map();
+    currentContinuumPos: number = 0;
+    continuumSize: number = 0;
+
+    constructor(parent: LayoutNode, startContinuumPos: number = 0) {
+        this.parent = parent;
+        this.currentContinuumPos = startContinuumPos;
+    }
+
+    addConnection(connection: LayoutConnection, distance: number = 1) {
+        this.connectionContinuum.set(connection, this.currentContinuumPos);
+        this.currentContinuumPos += distance;
+        this.continuumSize = this.currentContinuumPos;
+    }
+
+    increaseContinuum(size: number) {
+        this.currentContinuumPos += size;
+    }
+
+    getContinuumPos(connection: LayoutConnection, normalized = true) {
+        if (normalized) {
+            return this.connectionContinuum.get(connection)! / this.continuumSize
+        }
+        return this.connectionContinuum.get(connection)!;
+    }
+}
+
 export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnectionLayouter {
 
     radialConnectionsHelper: RadialConnectionsHelper;
@@ -21,6 +51,40 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
         });
     }
 
+    static sortConnectionsByIndexInPlace<T>(connections: T[], node: LayoutNode, reverse = false, getConnection: (c: T) => LayoutConnection = (c: T) => c as LayoutConnection): T[] {
+        connections.sort((_a, _b) => {
+            const a = getConnection(_a);
+            const b = getConnection(_b);
+            const isOutgoingA = a.source == node;
+            const isOutgoingB = b.source == node;
+
+            if (isOutgoingA && !isOutgoingB) {
+                return -1;
+            } else if (!isOutgoingA && isOutgoingB) {
+                return 1;
+            } else {
+                const areOutgoing = isOutgoingA && isOutgoingB;
+                const nodeA = areOutgoing ? a.target : a.source;
+                const nodeB = areOutgoing ? b.target : b.source;
+
+                const commonParent = LayoutNode.firstCommonParent(nodeA, nodeB)!;
+
+                const nodeIndex = commonParent.getIndexOfNodeContainingDescendant(node);
+                let indexA = commonParent.getIndexOfNodeContainingDescendant(nodeA);
+                let indexB = commonParent.getIndexOfNodeContainingDescendant(nodeB);
+
+                indexA = (indexA - nodeIndex + commonParent.children.length) % commonParent.children.length;
+                indexB = (indexB - nodeIndex + commonParent.children.length) % commonParent.children.length;
+
+                return indexA - indexB;
+            }
+        })
+        if (reverse) {
+            connections.reverse();
+        }
+        return connections;
+    }
+
     override layoutConnectionsOfNode(node: LayoutNode): void {
         const connections = this.radialConnectionsHelper.getConnectionTypesFromNode(node);
         // console.log(node.id, connections);
@@ -31,6 +95,9 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
         const outgoingConnectionsOutside: LayoutConnection[] = connections.outgoingConnectionsOutside;
         const incomingConnectionsOutside: LayoutConnection[] = connections.incomingConnectionsOutside;
 
+        let filteredIncomingOutsideConnections: LayoutConnection[] = incomingConnectionsOutside;
+        let filteredOutgoingOutsideConnections: LayoutConnection[] = outgoingConnectionsOutside;
+
         const connectionsWithDifferentParents: LayoutConnection[] = connections.connectionsWithDifferentParents;
 
         const selfConnections: LayoutConnection[] = connections.selfConnections;
@@ -39,49 +106,137 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
         // In the next step, additional control points will be added by other layouters
 
         if (outgoingConnectionsInside.length > 0 || incomingConnectionsInside.length > 0) {
+            // Besides the inside connections, we also consider the incoming outside connections, in case that we can combine them with an inside connection
+            const connectionsForCombining = [...outgoingConnectionsInside, ...incomingConnectionsInside, ...incomingConnectionsOutside, ...outgoingConnectionsOutside];
 
-
-
-            // console.log({
-            //     id: node.id,
-            //     startSlope: RadialUtils.radToDeg(startSlope),
-            //     endSlope: RadialUtils.radToDeg(endSlope),
-            //     slopeDiff: RadialUtils.radToDeg(slopeDiff),
-            //     midSlope: RadialUtils.radToDeg(midSlope)
-            // });
-            // Sort the inside connections:
-            // - A) first the outgoing connections, then the incoming connections
-            // - B) sort the connections by the index of the target node in the sorting
-            const insideConnections = [...outgoingConnectionsInside, ...incomingConnectionsInside];
-
-            insideConnections.sort((a, b) => {
-                const isOutgoingA = a.source == node;
-                const isOutgoingB = b.source == node;
-
-                if (isOutgoingA && !isOutgoingB) {
-                    return -1;
-                } else if (!isOutgoingA && isOutgoingB) {
-                    return 1;
-                } else {
-                    const areOutgoing = isOutgoingA && isOutgoingB;
-                    const nodeA = areOutgoing ? a.target : a.source;
-                    const nodeB = areOutgoing ? b.target : b.source;
-
-                    const commonParent = LayoutNode.firstCommonParent(nodeA, nodeB)!;
-
-                    const nodeIndex = commonParent.getIndexOfNodeContainingDescendant(node);
-                    let indexA = commonParent.getIndexOfNodeContainingDescendant(nodeA);
-                    let indexB = commonParent.getIndexOfNodeContainingDescendant(nodeB);
-
-                    indexA = (indexA - nodeIndex + commonParent.children.length) % commonParent.children.length;
-                    indexB = (indexB - nodeIndex + commonParent.children.length) % commonParent.children.length;
-
-                    return indexA - indexB;
+            const mapIdsToConnection = new Map<string, Map<string, LayoutConnection>>();
+            connectionsForCombining.forEach((connection) => {
+                mapIdsToConnection.set(connection.source.id, new Map());
+                mapIdsToConnection.get(connection.source.id)!.set(connection.target.id, connection);
+            });
+            // A list of connections, that have an opposite connection as well
+            const mapCombinedConnections = new Map<string, Map<string, [LayoutConnection, LayoutConnection]>>();
+            [...outgoingConnectionsInside, ...outgoingConnectionsOutside].forEach((outgoingConnection) => {
+                const incomingConnection = mapIdsToConnection.get(outgoingConnection.target.id)?.get(outgoingConnection.source.id);
+                if (incomingConnection) {
+                    if (!mapCombinedConnections.has(outgoingConnection.source.id)) {
+                        mapCombinedConnections.set(outgoingConnection.source.id, new Map());
+                    }
+                    mapCombinedConnections.get(outgoingConnection.source.id)!.set(outgoingConnection.target.id, [outgoingConnection, incomingConnection]);
                 }
             })
 
+            // Remove the combined connections from the inside connections
+            const onlyOutgoingConnections = outgoingConnectionsInside.filter((outgoingConnection) => {
+                return !mapCombinedConnections.get(outgoingConnection.source.id)?.get(outgoingConnection.target.id) &&
+                    !mapCombinedConnections.get(outgoingConnection.target.id)?.get(outgoingConnection.source.id)
+            });
+            const onlyIncomingConnections = incomingConnectionsInside.filter((incomingConnection) => {
+                return !mapCombinedConnections.get(incomingConnection.source.id)?.get(incomingConnection.target.id) &&
+                    !mapCombinedConnections.get(incomingConnection.target.id)?.get(incomingConnection.source.id)
+            });
+            filteredIncomingOutsideConnections = incomingConnectionsOutside.filter((incomingConnection) => {
+                return !mapCombinedConnections.get(incomingConnection.source.id)?.get(incomingConnection.target.id) &&
+                    !mapCombinedConnections.get(incomingConnection.target.id)?.get(incomingConnection.source.id)
+            });
+            filteredOutgoingOutsideConnections = outgoingConnectionsOutside.filter((outgoingConnection) => {
+                return !mapCombinedConnections.get(outgoingConnection.source.id)?.get(outgoingConnection.target.id) &&
+                    !mapCombinedConnections.get(outgoingConnection.target.id)?.get(outgoingConnection.source.id)
+            });
+
+            const combinedConnections: [LayoutConnection, LayoutConnection][] = [];
+            mapCombinedConnections.forEach((map) => {
+                map.forEach((connectionPair) => {
+                    combinedConnections.push(connectionPair);
+                })
+            })
+
+            console.log(node.id,
+                {
+                    onlyOutgoingConnections,
+                    onlyIncomingConnections,
+                    filteredIncomingOutsideConnections,
+                    filteredOutgoingOutsideConnections,
+                    combinedConnections
+                }
+            );
+
+            // Sort the three groups of inside connections:
+            // - first the outgoing connections, then the combined connections and then the incoming connections
+            // - Inside the groups: sort the connections by the index of the target node in the sorting
+            // RadialSplineConnectionAnchorPointCalculator.sortConnectionsByIndexInPlace(onlyOutgoingConnections, node);
+            // RadialSplineConnectionAnchorPointCalculator.sortConnectionsByIndexInPlace(combinedConnections, node, false, (pair) => pair[0]);
+
+            // We combine the outgoing connections and the combined connections, so we need to sort them together
+            const outgoingConnectionsCombined = [...onlyOutgoingConnections, ...combinedConnections];
+            const connectionGetter = (pair: [LayoutConnection, LayoutConnection] | LayoutConnection) => {
+                if (Array.isArray(pair)) {
+                    return pair[0];
+                } else {
+                    return pair;
+                }
+            }
+            RadialSplineConnectionAnchorPointCalculator.sortConnectionsByIndexInPlace(outgoingConnectionsCombined, node, false, connectionGetter);
+
+            RadialSplineConnectionAnchorPointCalculator.sortConnectionsByIndexInPlace(onlyIncomingConnections, node);
+
+            const mapParentNodeIdToContinuum = new Map<string, Continuum>();
+
+            const addConnectionToContinuum = (connections: [LayoutConnection, LayoutConnection] | LayoutConnection) => {
+                const connection = connectionGetter(connections);
+                const startNode = connection.source;
+                const targetNode = connection.target;
+                const commonParent = LayoutNode.firstCommonParent(startNode, targetNode)!;
+                if (!mapParentNodeIdToContinuum.has(commonParent.id)) {
+                    mapParentNodeIdToContinuum.set(commonParent.id, new Continuum(commonParent, 1));
+                }
+
+                const continuum = mapParentNodeIdToContinuum.get(commonParent.id)!;
+                continuum.addConnection(connection);
+            };
+
+            outgoingConnectionsCombined.forEach(connections => {
+                addConnectionToContinuum(connections);
+            })
+
+            mapParentNodeIdToContinuum.forEach(continuum => continuum.increaseContinuum(1));
+
+            onlyIncomingConnections.forEach(connection => {
+                addConnectionToContinuum(connection);
+            })
+
+            // const continuumMap = new Map<number, number>();
+            // let currentPos = 1;
+            // let currentIndex = 0;
+            // outgoingConnectionsCombined.forEach(connection => {
+            //     continuumMap.set(currentIndex, currentPos);
+            //     currentPos += 1;
+            //     currentIndex += 1;
+            // });
+            // // currentPos += (onlyOutgoingConnections.length > 0 && combinedConnections.length) ? 1 : 0;
+            // // combinedConnections.forEach(connection => {
+            // //     continuumMap.set(currentIndex, currentPos);
+            // //     currentPos += 1;
+            // //     currentIndex += 1;
+            // // });
+            // // currentPos += (combinedConnections.length > 0 && onlyIncomingConnections.length) ? 1 : 0;
+            // currentPos += (outgoingConnectionsCombined.length > 0 && onlyIncomingConnections.length) ? 1 : 0;
+            // onlyIncomingConnections.forEach(connection => {
+            //     continuumMap.set(currentIndex, currentPos);
+            //     currentPos += 1;
+            //     currentIndex += 1;
+            // });
+
+            // const continuumSize = currentPos;
+            // const sortedConnections = [...onlyOutgoingConnections, ...combinedConnections, ...onlyIncomingConnections];
+            const sortedConnections = [...outgoingConnectionsCombined, ...onlyIncomingConnections];
+
             // Now we distribute the connections inside the parent circle
-            insideConnections.forEach((connection, index) => {
+            sortedConnections.forEach((connections, index) => {
+                const isArray = Array.isArray(connections);
+                const connection = isArray ? connections[0] : connections;
+
+
 
                 // For the inside connections, we first determine the available range to positions connections 
                 // without overlapping with the adjacent nodes
@@ -103,6 +258,7 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
                     throw new Error("No tangents found.");
                 }
 
+
                 // Now with the tangents, we can define the angular range for the connections inside the parent circle
 
                 const startSlope = nextTangent.slope;
@@ -112,7 +268,13 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
 
                 const isOutgoing = connection.source == node;
 
-                const slopeRad = startSlope + (index + 1) * slopeDiff / (insideConnections.length + 1);
+                // const continuumPosNormed = continuumMap.get(index)! / continuumSize;
+                const continuum = mapParentNodeIdToContinuum.get(commonParent.id)!;
+                const continuumPosNormed = continuum.getContinuumPos(connection, true);
+                const continuumSize = continuum.continuumSize;
+
+                // const slopeRad = startSlope + (index + 1) * slopeDiff / (insideConnections.length + 1);
+                const slopeRad = startSlope + slopeDiff * continuumPosNormed;
                 const slopeVector = RadialUtils.radToVector(slopeRad);
                 const slopeSegmentForIntersection = new Segment(node.center, node.center.translate(slopeVector.multiply(2 * node.outerCircle.r)));
 
@@ -122,12 +284,42 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
                     throw new Error("No intersection point found.");
                 }
 
+                if (node.id == "facialexpressionmanager_node") {
+                    console.log({
+                        id: node.id,
+                        commonParent: commonParent.id,
+                        nextNode: nextNode.id,
+                        prevNode: prevNode.id,
+                        index,
+                        continuumPosNormed,
+                        slopeRad,
+                        slopeVector,
+                        intersectionPoints
+                    })
+                }
+
                 const anchor = new Anchor(intersectionPoints[0], slopeVector);
 
-                if (isOutgoing) {
-                    connection.startPoints = [anchor];
+                if (!isArray) {
+                    if (isOutgoing) {
+                        connection.startPoints = [anchor];
+                    } else {
+                        connection.endPoints = [anchor];
+                    }
                 } else {
-                    connection.endPoints = [anchor];
+                    connections.forEach(connection => {
+                        const isOutgoing = connection.source == node;
+                        const translationDistance = (1 / continuumSize) * node.outerCircle.r * slopeDiff / (Math.PI * 2);
+                        if (isOutgoing) {
+                            // The outgoing anchor should be translated a little bit to the left (so the vector rotated by 90 degrees CCW)
+                            const anchor = new Anchor(intersectionPoints[0].translate(slopeVector.rotate90CCW().multiply(translationDistance)), slopeVector);
+                            connection.startPoints = [anchor];
+                        } else {
+                            // The incoming anchor should be translated a little bit to the right (so the vector rotated by 90 degrees CW)
+                            const anchor = new Anchor(intersectionPoints[0].translate(slopeVector.rotate90CW().multiply(translationDistance)), slopeVector);
+                            connection.endPoints = [anchor];
+                        }
+                    })
                 }
             })
         }
@@ -137,32 +329,11 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
             // Sort the outside connections:
             // - A) first the outgoing connections, then the incoming connections
             // - B) sort the connections by the index of the target node in the sorting
-            const outsideConnections = [...outgoingConnectionsOutside, ...incomingConnectionsOutside];
 
-            outsideConnections.sort((a, b) => {
-                const isOutgoingA = a.source == node;
-                const isOutgoingB = b.source == node;
+            RadialSplineConnectionAnchorPointCalculator.sortConnectionsByIndexInPlace(filteredOutgoingOutsideConnections, node, true);
+            RadialSplineConnectionAnchorPointCalculator.sortConnectionsByIndexInPlace(filteredIncomingOutsideConnections, node, true);
 
-                if (isOutgoingA && !isOutgoingB) {
-                    return -1;
-                } else if (!isOutgoingA && isOutgoingB) {
-                    return 1;
-                } else {
-                    const areOutgoing = isOutgoingA && isOutgoingB;
-                    const nodeA = areOutgoing ? a.target : a.source;
-                    const nodeB = areOutgoing ? b.target : b.source;
-                    const commonParent = LayoutNode.firstCommonParent(nodeA, nodeB)!;
-
-                    const nodeIndex = commonParent.getIndexOfNodeContainingDescendant(node);
-                    let indexA = commonParent.getIndexOfNodeContainingDescendant(nodeA);
-                    let indexB = commonParent.getIndexOfNodeContainingDescendant(nodeB);
-
-                    indexA = (indexA - nodeIndex + commonParent.children.length) % commonParent.children.length;
-                    indexB = (indexB - nodeIndex + commonParent.children.length) % commonParent.children.length;
-
-                    return indexB - indexA;
-                }
-            })
+            const outsideConnections = [...filteredOutgoingOutsideConnections, ...filteredIncomingOutsideConnections];
 
             // Now we distribute the connections inside the parent circle
             outsideConnections.forEach((connection, index) => {

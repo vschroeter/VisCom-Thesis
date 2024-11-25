@@ -50,11 +50,12 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
 
         let currentPosition = 0;
         nodes.forEach((node, i) => {
-            currentPosition += node.radius * this.nodeMarginFactor;
-            currentPosition += node.radius;
+            const r = node.outerRadius;
+            currentPosition += r * this.nodeMarginFactor;
+            currentPosition += r;
             continuumMap.set(node, currentPosition);
-            currentPosition += node.radius;
-            currentPosition += node.radius * this.nodeMarginFactor;
+            currentPosition += r;
+            currentPosition += r * this.nodeMarginFactor;
         });
 
         this.radius = currentPosition / (2 * Math.PI);

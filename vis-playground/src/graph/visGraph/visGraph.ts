@@ -324,6 +324,7 @@ export class VisGraph {
 
                 if (node.children.length > 0) {
                     node.sortChildren();
+                    console.log("Sorted " + node.id, node.children.map(n => n.id));
                     node.calculatePositionOfChildren();
                 }
 
@@ -377,10 +378,14 @@ export class VisGraph {
         return this.allLayoutNodes.map(node => node.node2d).filter(node => node !== undefined) as Node2d[];
     }
 
-    getAllGraphicalConnections(): Connection2d[] {
+    getAllGraphicalConnections(ignoreNonRendered = true): Connection2d[] {
         const connections: Connection2d[] = [];
         this.allLayoutNodes.forEach(node => {
-            connections.push(...node.outConnections.map(connection => connection.connection2d).filter(connection => connection !== undefined) as Connection2d[]);
+            connections.push(...node.outConnections
+                .map(connection => connection.connection2d as Connection2d)
+                .filter(connection => connection !== undefined)
+                .filter(connection => !(ignoreNonRendered && !connection.layoutConnection.isRendered))
+            );
         });
         return connections;
     }
@@ -400,6 +405,10 @@ export class VisGraph {
             node.updateGraphicalLayout();
         });
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Style methods
+    ////////////////////////////////////////////////////////////////////////////
 
     updateGraphicalStyle() {
 
@@ -504,12 +513,22 @@ export class VisGraph {
                     opacity *= 0.05;
                 }
             }
+
             link.updateStyleOpacity(opacity);
             link.updateStyleStroke(strokeWithoutAlpha, width);
         })
 
     }
 
+    setEdgeVisibility({ hyperEdges = true, edgesIncludedInHyperEdges = true }) {
+        this.allLayoutConnections.forEach(connection => {
+            if (connection.isHyperConnection) {
+                connection.isRendered = hyperEdges;
+            } else if (connection.isPrimaryConnection) {
+                connection.isRendered = edgesIncludedInHyperEdges;
+            }
+        });
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // Hierarchy methods
@@ -531,10 +550,11 @@ export class VisGraph {
 
             // We can check here, if the old parent now only contains the new parent as single child
             // If so, we can move the children of the new parent to the old parent and remove the new parent
-            if (oldParent && oldParent.children.length === 1 && oldParent.children[0] === parentNode) {;
-                
+            if (oldParent && oldParent.children.length === 1 && oldParent.children[0] === parentNode) {
+                ;
+
                 this.moveNodesToParent(Array.from(parentNode.children), oldParent);
-                this.removeNode(parentNode);          
+                this.removeNode(parentNode);
             }
         });
     }
@@ -573,6 +593,11 @@ export class VisGraph {
             hypernode.showLabel = false;
         });
 
+        this.updateHyperConnections();
+
+    }
+
+    updateHyperConnections() {
         // Create new connections between the hypernodes.
         // For this, each connection between nodes that have different parents is replaced by a connection between hypernodes with the same parent.
 
@@ -595,7 +620,6 @@ export class VisGraph {
                 // connection.visible = false;
             }
         });
-
     }
 
     // If a node only has connections to a single other node in this layer, we can add it as subnode
@@ -645,8 +669,10 @@ export class VisGraph {
                 hypernode.anchorNode = node;
                 hypernode.filled = false;
                 hypernode.showLabel = false;
+                hypernode.stroke = "gray"
             }
         });
+        this.updateHyperConnections();
 
     }
 

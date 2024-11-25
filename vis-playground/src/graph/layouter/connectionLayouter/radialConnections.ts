@@ -17,7 +17,11 @@ export class RadialConnectionsHelper {
         this.forwardBackwardThresholdRad = degToRad(forwardBackwardThresholdDeg);
     }
 
-    getConnectionTypesFromNode(node: LayoutNode, ignoreFinished = true) {
+    getConnectionTypesFromNode(node: LayoutNode, settings = {
+        // groupConnections: true,
+        ignoreNonRendered: true,
+        ignoreFinished: true
+    }) {
 
         const outgoingConnections = node.outConnections;
         const incomingConnections = node.inConnections;
@@ -54,7 +58,8 @@ export class RadialConnectionsHelper {
         const selfConnections: LayoutConnection[] = [];
 
         allConnections.forEach((connection) => {
-            if (ignoreFinished && connection.finishedLayouting) return;
+            if (settings.ignoreFinished && connection.finishedLayouting) return;
+            if (settings.ignoreNonRendered && !connection.isRendered) return;
 
             const start = connection.source;
             const end = connection.target;

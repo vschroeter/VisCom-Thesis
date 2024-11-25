@@ -58,7 +58,7 @@ export class NodeScoring {
 export class GraphLayouter<T extends GraphLayouterSettings> {
 
     settings: T;
-    visGraph: VisGraph;
+    visGraph!: VisGraph;
 
     // debugShapes: Shape[] = [];
 
@@ -96,8 +96,6 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     center: Point = new Point(0, 0);
 
-    // nodes: Node2d[] = [];
-    // links: Connection2d[] = [];
     calculateMetrics: boolean = true;
 
     protected events: { [key: string]: ((this: GraphLayouter<any>) => void) } = {};
@@ -115,8 +113,12 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         // this.userInteractions = layouterArgs.userInteractions;
         this.nodes = layouterArgs.nodes;
 
-        this.visGraph = VisGraph.fromCommGraph(this.commGraph, layouterArgs.commonSettings, this.userInteractions);
+        this.resetVisGraph();
         this.initVisGraph();
+    }
+
+    resetVisGraph() {
+        this.visGraph = VisGraph.fromCommGraph(this.commGraph, this.commonSettings, this.userInteractions);
     }
 
     protected initVisGraph() {
@@ -325,8 +327,10 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
                 return "end";
             })
             .text((d: Node2d) => d.id ?? "")
-            .attr('opacity', (d: Node2d) => d.layoutNode.showLabel ? 1 : 0)
             .attr("font-size", (d: Node2d) => `${Math.min(20, d.layoutNode.radius * 2 * 0.6)}px`)
+            .attr("opacity", (d: Node2d) => {
+                return d.opacity;
+            })
         // .attr("font-size", (d: Node2d) => `${(d.layoutNode.parent?.sizeFactor ?? 1)}rem`)
 
     }

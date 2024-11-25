@@ -55,7 +55,7 @@ import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
 import MetricOverview from './MetricOverview.vue';
 import { Node2d } from '../graphical';
-import { useThrottleFn, watchDebounced } from '@vueuse/core';
+import { useThrottleFn, watchDebounced, watchThrottled } from '@vueuse/core';
 import { layouterMapping } from '../layouter/settings/settingsCollection';
 import { CommonSettings } from '../layouter/settings/commonSettings';
 import { UserInteractions } from './interactions';
@@ -294,9 +294,13 @@ onMounted(() => {
             nodes: commGraph.value.nodes as CommunicationNode[],
         });
 
-        watchDebounced(settings, (newVal) => {
+        // watchDebounced(settings, (newVal) => {
+        //     layouter?.updateLayout(true);
+        // }, { debounce: 1000, immediate: false, deep: true })
+
+        watchThrottled(settings, (newVal) => {
             layouter?.updateLayout(true);
-        }, { debounce: 1000, immediate: false, deep: true })
+        }, { throttle: 500, immediate: false, deep: true, leading: true, trailing: true })
 
         watch(settingsCollection.commonSettings, (newVal) => {
             layouter?.updateGraphByCommonSettings();

@@ -74,8 +74,12 @@ export class LayoutConnection {
         return this.children.length > 0;
     }
 
-    get isSubConnection(): boolean {
+    get isPrimaryConnection(): boolean {
         return !!this.parent;
+    }
+
+    get hasParentHyperConnection(): boolean {
+        return this.parent !== undefined;
     }
 
     /**
@@ -110,7 +114,7 @@ export class LayoutConnection {
     /** The graphical representation of the connection */
     connection2d?: Connection2d;
 
-
+    isRendered: boolean = true;
 
     ////////////////////////////////////////////////////////////////////////////
     // Creation methods

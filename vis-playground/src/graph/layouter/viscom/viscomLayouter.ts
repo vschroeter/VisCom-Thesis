@@ -39,18 +39,24 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
     override initVisGraph() {
         // Transform visgraph to hypergraph
 
-
+        this.resetVisGraph();
 
         this.visGraph.combineCommunities(this.commGraph.communities.getAsIdLists());
-        this.visGraph.combineStronglyCoupledNodes();
+        for (let i = 0; i < (this.settings.algorithm.combiningSteps.getValue() ?? 0); i++) {
+            this.visGraph.combineStronglyCoupledNodes();
+        }
+
+        this.visGraph.setEdgeVisibility({
+            hyperEdges: this.settings.display.showHyperEdges.getValue() ?? true,
+            edgesIncludedInHyperEdges: this.settings.display.showIncludedInHyperEdges.getValue() ?? true,
+        })
 
         console.log("Combined communities", this.visGraph, this.commGraph.communities.getAsIdLists());
 
     }
 
     override layout(isUpdate = false) {
-
-
+        this.initVisGraph()
 
         this.visGraph.setPrecalculator(new BasicSizeCalculator({
             sizeMultiplier: 50,
@@ -61,28 +67,9 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         this.visGraph.setSorter(sorter);
 
         this.visGraph.setPositioner((node) => {
-            // const radius = this.settings.size.radius.getValue(this.settings.getContext({ nodes: node.children })) ?? 100;
-            // console.log("Radius", node, radius);
-
-            // if (node.layerFromBot == 1) {
-            //     return new LinearPositioner()
-            // }
-
-            const countChildren = node.children.length;
-
-            // Get the max radius of the child nodes
-            const maxChildRadius = Math.max(...node.children.map(n => n.radius));
-            const radiusFactor = 2;
-            const marginFactor = 1.1;
-
-            const circumference = countChildren * (maxChildRadius * 2) * radiusFactor;
-            const radius = circumference / (2 * Math.PI);
-            const outerRadius = (radius + maxChildRadius) * marginFactor;
-
-            // return new RadialPositioner({ radius, outerRadius });
             return new RadialPositionerDynamicDistribution({
-                nodeMarginFactor: 1.1,
-                outerMarginFactor: 1.1,
+                nodeMarginFactor: this.settings.spacing.nodeMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1,
+                outerMarginFactor: this.settings.spacing.outerMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
             });
         })
 
@@ -96,37 +83,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             new RadialSplineConnectionLayouter(),
             new BasicConnectionCombiner()
         ])
-        // this.visGraph.setConnectionLayouter(new BasicConnectionCombiner());
-
-        // this.visGraph.setConnector((connection) => {
-
-        //     const startNode = connection.source;
-        //     const endNode = connection.target;
-
-        //     if (connection.isSubConnection) {
-
-        //     }
-
-        //     const startLayer = startNode.layerFromBot;
-        //     const endLayer = endNode.layerFromBot;
-
-        //     // If the nodes have the same parent, use the radial connector
-        //     if (startNode.parent === endNode.parent) {
-        //         return new RadialCurvedConnector({
-        //             forwardBackwardThreshold,
-        //             straightForwardLineAtDegreeDelta,
-        //             backwardLineCurvature
-        //         })
-        //     }
-
-        //     return undefined;
-        //     // return new RadialCurvedConnector({
-        //     //     forwardBackwardThreshold,
-        //     //     straightForwardLineAtDegreeDelta,
-        //     //     backwardLineCurvature
-        //     // })
-        // });
-
+        
 
         this.visGraph.layout();
         this.emitEvent("end");
