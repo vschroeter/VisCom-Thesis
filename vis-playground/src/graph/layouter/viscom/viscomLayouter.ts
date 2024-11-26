@@ -1,16 +1,10 @@
-import { CommunicationGraph, CommunicationLink, CommunicationNode } from "src/graph/commGraph";
 
-import * as d3 from "d3";
-import { Connection2d, Node2d } from "src/graph/graphical";
 import { ViscomLayouterSettings } from "./viscomSettings";
 import { GraphLayouter } from "../layouter";
-import { RadialCircularArcConnectionLayouter, RadialLayouter, RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
-import { RadialLayouterSettings } from "../linear/radial/radialSettings";
-import { MouseEvents } from "src/graph/visualizations/interactions";
+import { RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
 import { Connection2dData } from "src/graph/graphical/Connection2d";
 import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/precalculator";
-import { LinearPositioner } from "../linear/arc/arcLayouter";
-import { RadialSplineConnectionAnchorPointCalculator, RadialSplineConnectionLayouter } from "../connectionLayouter/splineConnection";
+import { RadialSplineConnectionAnchorPointCalculator, RadialSplineConnectionLayouter, RadialSubConnectionLayouter } from "../connectionLayouter/splineConnection";
 import { BasicConnectionCombiner } from "../connectionLayouter/connectionCombiner";
 import { DirectCircularConnectionLayouter } from "../connectionLayouter/circularArcConnection";
 
@@ -81,6 +75,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             new DirectCircularConnectionLayouter(),
             new RadialSplineConnectionAnchorPointCalculator(),
             new RadialSplineConnectionLayouter(),
+            new RadialSubConnectionLayouter(),
             new BasicConnectionCombiner()
         ])
         

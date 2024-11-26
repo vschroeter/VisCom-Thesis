@@ -1,12 +1,14 @@
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { RadialCircularArcConnectionLayouter, RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
+import {  RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
 import { RadialUtils } from "../utils/radialUtils";
 import { LayoutConnection, LayoutConnectionPoint } from "src/graph/visGraph/layoutConnection";
-import { Circle, Ray, Segment } from "2d-geometry";
+import { Circle, Line, Point, Ray, Segment, Vector } from "2d-geometry";
 import { Anchor } from "src/graph/graphical";
 import { RadialConnectionsHelper } from "./radialConnections";
-import { CubicBezierCurve } from "src/graph/graphical/primitives/pathSegments/CubicBezierCurve";
+import { CubicBezierCurve } from "src/graph/graphical/primitives/pathSegments/BezierCurve";
+import { ShapeUtil } from "../utils/shapeUtil";
+import { CircleSegmentConnection } from "src/graph/graphical/primitives/pathSegments/CircleSegment";
 
 
 class Continuum {
@@ -47,7 +49,7 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
         super();
 
         this.radialConnectionsHelper = new RadialConnectionsHelper({
-            forwardBackwardThresholdDeg: 270
+            forwardBackwardThresholdDeg: 360
         });
     }
 
@@ -399,7 +401,7 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
         super();
 
         this.radialConnectionsHelper = new RadialConnectionsHelper({
-            forwardBackwardThresholdDeg: 270
+            forwardBackwardThresholdDeg: 360
         });
     }
 
@@ -530,5 +532,113 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
 
 
     }
+}
 
+
+export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
+
+
+    radialConnectionsHelper: RadialConnectionsHelper;
+
+    constructor() {
+        super();
+
+        this.radialConnectionsHelper = new RadialConnectionsHelper({
+            forwardBackwardThresholdDeg: 360
+        });
+    }
+
+    override layoutConnectionsOfNode(node: LayoutNode): void {
+        // Different types of rendered connections:
+        // Direct connections:
+        // - Direct forward connections-- > rendered as circular arcs
+        // - Direct backward connections --> rendered as circular arcs, but with a larger radius
+        // Connections inside the circle of the parent node:
+        // - are rendered as splines
+        // - Outgoing connections, if the forward angular difference from node to target is below the threshold
+        // - Incoming connections, if the backward angular difference from start to node is below the threshold
+        // - Bidirectional connections always
+        // Connections outside the circle of the parent node:
+        // - are rendered as splines
+        // - Outgoing connections, if the forward angular difference from node to target is above the threshold
+        // - Incoming connections, if the backward angular difference from start to node is above the threshold
+
+        const connections = this.radialConnectionsHelper.getConnectionTypesFromNode(node);
+
+        const outgoingConnectionsInside: LayoutConnection[] = connections.outgoingConnectionsInside;
+        const incomingConnectionsInside: LayoutConnection[] = connections.incomingConnectionsInside;
+
+        const outgoingConnectionsOutside: LayoutConnection[] = connections.outgoingConnectionsOutside;
+        const incomingConnectionsOutside: LayoutConnection[] = connections.incomingConnectionsOutside;
+
+        const connectionsWithDifferentParents: LayoutConnection[] = connections.connectionsWithDifferentParents;
+
+        const selfConnections: LayoutConnection[] = connections.selfConnections;
+
+        node.outConnections.forEach(connection => {
+            if (connection.hasParentHyperConnection) {
+                const start = connection.source;
+                const end = connection.target;
+
+                let currentStart = start;
+                let currentEnd = end;
+
+                const parentHyperConnection = connection.parent!;
+                const hyperStart = parentHyperConnection.source;
+                const hyperEnd = parentHyperConnection.target;
+
+                const startAnchors: LayoutConnectionPoint[] = [];
+                const endAnchors: LayoutConnectionPoint[] = [];
+
+                const segments: CircleSegmentConnection[] = [];
+
+                // From the start node we build the connection to the start of the hyper connection
+                while (currentStart != hyperStart) {
+                    const node = currentStart;
+                    // The anchor is outgoing from the current node away from the parent's center
+
+                    const parentCenter = node.parent?.center ?? new Point(0, 0);
+                    const nodeCenter = node.center;
+                    const line = new Line(parentCenter, nodeCenter);
+                    const intersections = node.outerCircle.intersect(line);
+                    const intersection = ShapeUtil.getFurthestShapeToPoint(intersections, parentCenter, (intersection) => intersection)!;
+
+                    const anchor = new Anchor(intersection, new Vector(parentCenter, intersection));
+
+                    if (start.id == "4") {
+                        const x = 5;
+                    }
+
+                    startAnchors.push(anchor);
+
+                    // Adapt the last segment
+                    const lastSegment = segments[segments.length - 1];
+                    if (lastSegment) {
+                        lastSegment.setEndAnchor(anchor);
+                    }
+
+                    const arcConnection = new CircleSegmentConnection(anchor, node.parent!.circle)
+                    segments.push(arcConnection);
+
+
+
+                    currentStart = node.parent!;
+                }
+
+                const lastSegment = segments[segments.length - 1];
+                if (lastSegment) {
+                    const anchor = parentHyperConnection.startPoints[0] as Anchor ?? parentHyperConnection.points[0] as Anchor
+                    lastSegment.setEndAnchor(anchor);
+                }
+
+                // connection.startPoints = startAnchors;
+                connection.startPoints = segments;
+                connection.points = parentHyperConnection.points;
+            }
+        })
+
+
+
+
+    }
 }

@@ -1,11 +1,6 @@
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { RadialCircularArcConnectionLayouter, RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
-import { RadialUtils } from "../utils/radialUtils";
-import { LayoutConnection, LayoutConnectionPoint } from "src/graph/visGraph/layoutConnection";
-import { Circle, Ray, Segment } from "2d-geometry";
-import { Anchor } from "src/graph/graphical";
-import { RadialConnectionsHelper } from "./radialConnections";
+import { RadialCircularArcConnectionLayouter, RadialConnectionsHelper } from "./radialConnections";
 
 
 export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter {

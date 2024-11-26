@@ -1,6 +1,26 @@
 import { Point } from "2d-geometry";
 import { SvgPathSegment } from "./PathSegment";
 
+export class QuadraticBezierCurve implements SvgPathSegment {
+
+    // The start point of the curve
+    start: Point;
+    // The end point of the curve
+    end: Point;
+    // The control point of the curve
+    control: Point;
+
+    constructor(start: Point, control: Point, end: Point) {
+        this.start = start;
+        this.control = control;
+        this.end = end;
+    }
+
+    getSvgPath(): string {
+        return `M ${this.start.x} ${this.start.y} Q ${this.control.x} ${this.control.y}, ${this.end.x} ${this.end.y}`;
+    }
+
+}
 
 export class CubicBezierCurve implements SvgPathSegment {
 

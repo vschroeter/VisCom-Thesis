@@ -333,6 +333,7 @@ export class LayoutNode {
         // this.center = this.center.rotate(rad, center);
         this.children.forEach(child => {
             child.center = child.center.rotate(rad, center);
+            child.rotateChildrenLocally(rad);
         });
     }
 
