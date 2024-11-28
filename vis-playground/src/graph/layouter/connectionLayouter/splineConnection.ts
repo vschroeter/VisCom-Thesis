@@ -301,6 +301,8 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
                 }
 
                 const anchor = new Anchor(intersectionPoints[0], slopeVector);
+                // const anchorOutgoing = new Anchor(intersectionPoints[0], slopeVector.rotate90CCW());
+                // const anchorIncoming = new Anchor(intersectionPoints[0], slopeVector.rotate90CW());
 
                 if (!isArray) {
                     if (isOutgoing) {
@@ -379,11 +381,12 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
                     throw new Error("No intersection point found.");
                 }
 
-                const anchor = new Anchor(intersectionPoints[0], slopeVector);
-
+                
                 if (isOutgoing) {
+                    const anchor = new Anchor(intersectionPoints[0], slopeVector);
                     connection.startPoints = [anchor];
                 } else {
+                    const anchor = new Anchor(intersectionPoints[0], slopeVector);
                     connection.endPoints = [anchor];
                 }
             })
@@ -618,6 +621,7 @@ export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
                     }
 
                     const arcConnection = new CircleSegmentConnection(anchor, node.parent!.circle)
+                    arcConnection.node = node;
                     segments.push(arcConnection);
 
 

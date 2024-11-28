@@ -262,12 +262,14 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         const intersectionEnd = eDist0 < eDist1 ? intersectionsEnd[0] : intersectionsEnd[1];
 
         // Get the anchors
-        const tangentInStartIntersection = new Vector(center, intersectionStart).normalize().rotate90CCW();
+        const tangentInStartIntersection = direction == "clockwise" ?
+            new Vector(center, intersectionStart).normalize().rotate90CW() :
+            new Vector(center, intersectionStart).normalize().rotate90CCW();
         const tangentInEndIntersection = direction == "clockwise" ?
             new Vector(center, intersectionEnd).normalize().rotate90CCW() :
             new Vector(center, intersectionEnd).normalize().rotate90CW();
 
-        const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection)
+        const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection);
         const endAnchor = new Anchor(intersectionEnd, tangentInEndIntersection);
 
         // const straightEndPartForArrow = endAnchor.getPointInDirection(link.maxWidth);
