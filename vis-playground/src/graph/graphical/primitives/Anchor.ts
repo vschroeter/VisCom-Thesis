@@ -26,4 +26,31 @@ export class Anchor {
   getPointInDirection(distance: number): Point {
     return this.anchorPoint.translate(this.direction.multiply(distance));
   }
+
+  getPointAwayFromReference(distance: number, referencePoint?: Point) {
+
+    const reference = referencePoint ?? this.anchorPoint;
+
+    const p1 = this.getPointInDirection(distance);
+    const p2 = this.getPointInDirection(-distance);
+
+    if (reference === this.anchorPoint) {
+      return p1;
+    } 
+
+    return p1.distanceTo(reference)[0] > p2.distanceTo(reference)[0] ? p1 : p2;
+  }
+
+  getPointTowardsReference(distance: number, referencePoint?: Point) {
+    const reference = referencePoint ?? this.anchorPoint;
+
+    const p1 = this.getPointInDirection(distance);
+    const p2 = this.getPointInDirection(-distance);
+
+    if (reference === this.anchorPoint) {
+      return p1;
+    } 
+
+    return p1.distanceTo(reference)[0] < p2.distanceTo(reference)[0] ? p1 : p2;
+  }
 }

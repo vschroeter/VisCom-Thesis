@@ -104,6 +104,15 @@ export class LayoutConnection {
     /** Additional points at the end of the connection used for the actual layout points */
     endPoints: LayoutConnectionPoint[] = []
 
+    /** All points combined */
+    get combinedPoints(): LayoutConnectionPoint[] {
+        return [
+            ...this.startPoints,
+            ...this.points,
+            ...this.endPoints
+        ]
+    }
+
     finishedLayouting: boolean = false;
 
     /** The style of the curve */

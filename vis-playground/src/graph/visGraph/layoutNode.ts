@@ -562,6 +562,7 @@ export class LayoutNode {
         }
 
         const layouter = layouters[this._currentConnectionLayouterIndex];
+        // console.log('[NODE] iterateConnectionLayouter', this.id, layouter);
         layouter.layoutConnectionsOfNode(this);
         this._currentConnectionLayouterIndex++;
         return true;

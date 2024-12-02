@@ -351,11 +351,15 @@ export class VisGraph {
         while (connectionChanged) {
             connectionChanged = false;
             botUpLayers.forEach(layer => {
-                layer.forEach(node => {
-                    // node.calculateConnections();
-                    const changed = node.iterateConnectionLayouter();
-                    connectionChanged = connectionChanged || changed;
-                });
+                try {
+                    layer.forEach(node => {
+                        // node.calculateConnections();
+                        const changed = node.iterateConnectionLayouter();
+                        connectionChanged = connectionChanged || changed;
+                    });
+                } catch (e) {
+                    console.error(e);
+                }
             });
         }
 
@@ -599,6 +603,11 @@ export class VisGraph {
     updateHyperConnections() {
         // Create new connections between the hypernodes.
         // For this, each connection between nodes that have different parents is replaced by a connection between hypernodes with the same parent.
+
+        // First reset all parent connections
+        this.allLayoutConnections.forEach(connection => {
+            connection.parent = undefined;
+        });
 
         this.allLayoutConnections.forEach(connection => {
             const source = connection.source;

@@ -1,6 +1,6 @@
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import {  RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
+import { RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
 import { RadialUtils } from "../utils/radialUtils";
 import { LayoutConnection, LayoutConnectionPoint } from "src/graph/visGraph/layoutConnection";
 import { Circle, Line, Point, Ray, Segment, Vector } from "2d-geometry";
@@ -153,15 +153,15 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
                 })
             })
 
-            console.log(node.id,
-                {
-                    onlyOutgoingConnections,
-                    onlyIncomingConnections,
-                    filteredIncomingOutsideConnections,
-                    filteredOutgoingOutsideConnections,
-                    combinedConnections
-                }
-            );
+            // console.log(node.id,
+            //     {
+            //         onlyOutgoingConnections,
+            //         onlyIncomingConnections,
+            //         filteredIncomingOutsideConnections,
+            //         filteredOutgoingOutsideConnections,
+            //         combinedConnections
+            //     }
+            // );
 
             // Sort the three groups of inside connections:
             // - first the outgoing connections, then the combined connections and then the incoming connections
@@ -286,20 +286,6 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
                     throw new Error("No intersection point found.");
                 }
 
-                if (node.id == "facialexpressionmanager_node") {
-                    console.log({
-                        id: node.id,
-                        commonParent: commonParent.id,
-                        nextNode: nextNode.id,
-                        prevNode: prevNode.id,
-                        index,
-                        continuumPosNormed,
-                        slopeRad,
-                        slopeVector,
-                        intersectionPoints
-                    })
-                }
-
                 const anchor = new Anchor(intersectionPoints[0], slopeVector);
                 // const anchorOutgoing = new Anchor(intersectionPoints[0], slopeVector.rotate90CCW());
                 // const anchorIncoming = new Anchor(intersectionPoints[0], slopeVector.rotate90CW());
@@ -381,7 +367,7 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
                     throw new Error("No intersection point found.");
                 }
 
-                
+
                 if (isOutgoing) {
                     const anchor = new Anchor(intersectionPoints[0], slopeVector);
                     connection.startPoints = [anchor];
@@ -593,51 +579,132 @@ export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
                 const startAnchors: LayoutConnectionPoint[] = [];
                 const endAnchors: LayoutConnectionPoint[] = [];
 
-                const segments: CircleSegmentConnection[] = [];
+                const startSegments: CircleSegmentConnection[] = [];
+                const endSegments: CircleSegmentConnection[] = [];
+
+                if (connection.source.id == "1" && connection.target.id == "3") {
+                    const x = 5;
+                }
 
                 // From the start node we build the connection to the start of the hyper connection
                 while (currentStart != hyperStart) {
+                    if (currentStart === undefined) {
+                        console.error("This should not happen");
+                        break;
+                    }
+
                     const node = currentStart;
                     // The anchor is outgoing from the current node away from the parent's center
 
                     const parentCenter = node.parent?.center ?? new Point(0, 0);
                     const nodeCenter = node.center;
+
+                    // console.log({
+                    //     node,
+                    //     start: start.id,
+                    //     end: end.id,
+                    //     connection,
+                    //     parent: node.parent,
+                    //     currentStart,
+                    //     hyperStart,
+                    //     parentCenter,
+                    //     nodeCenter
+                    // })
+
                     const line = new Line(parentCenter, nodeCenter);
                     const intersections = node.outerCircle.intersect(line);
                     const intersection = ShapeUtil.getFurthestShapeToPoint(intersections, parentCenter, (intersection) => intersection)!;
 
                     const anchor = new Anchor(intersection, new Vector(parentCenter, intersection));
-
-                    if (start.id == "4") {
-                        const x = 5;
-                    }
-
                     startAnchors.push(anchor);
 
                     // Adapt the last segment
-                    const lastSegment = segments[segments.length - 1];
+                    const lastSegment = startSegments[startSegments.length - 1];
                     if (lastSegment) {
                         lastSegment.setEndAnchor(anchor);
                     }
 
-                    const arcConnection = new CircleSegmentConnection(anchor, node.parent!.circle)
+                    const arcConnection = new CircleSegmentConnection(node.parent!.circle)
+                    // arcConnection.debug = true;
+                    arcConnection.setStartAnchor(anchor);
                     arcConnection.node = node;
-                    segments.push(arcConnection);
+                    arcConnection.connection = connection;
 
-
+                    startSegments.push(arcConnection);
 
                     currentStart = node.parent!;
                 }
 
-                const lastSegment = segments[segments.length - 1];
+                const lastSegment = startSegments[startSegments.length - 1];
                 if (lastSegment) {
                     const anchor = parentHyperConnection.startPoints[0] as Anchor ?? parentHyperConnection.points[0] as Anchor
                     lastSegment.setEndAnchor(anchor);
                 }
 
+
+
                 // connection.startPoints = startAnchors;
-                connection.startPoints = segments;
-                connection.points = parentHyperConnection.points;
+                if (connection.startPoints.length > 1) {
+                    console.warn("This should not happen");
+                }
+                connection.startPoints = startSegments;
+                connection.points = parentHyperConnection.combinedPoints;
+
+                let lastAnchor: Anchor | undefined = undefined; 
+
+                // From the start node we build the connection to the start of the hyper connection
+                while (currentEnd != hyperEnd) {
+                    if (currentEnd === undefined) {
+                        console.error("This should not happen");
+                        break;
+                    }
+
+                    const node = currentEnd;
+                    // The anchor is outgoing from the current node away from the parent's center
+
+                    const parentCenter = node.parent?.center ?? new Point(0, 0);
+                    const nodeCenter = node.center;
+
+                    const line = new Line(parentCenter, nodeCenter);
+                    const intersections = node.outerCircle.intersect(line);
+                    const intersection = ShapeUtil.getFurthestShapeToPoint(intersections, parentCenter, (intersection) => intersection)!;
+
+                    const anchor = new Anchor(intersection, new Vector(intersection, parentCenter));
+                    // startAnchors.push(anchor);
+
+                    // Adapt the last segment
+                    const lastSegment = endSegments[endSegments.length - 1];
+                    if (lastSegment) {
+                        lastSegment.setStartAnchor(anchor);
+                    }
+
+                    const arcConnection = new CircleSegmentConnection(node.parent!.circle)
+                    // arcConnection.debug = true;
+                    arcConnection.setEndAnchor(anchor);
+                    
+                    lastAnchor = new Anchor(intersection, anchor.direction.rotate(Math.PI));
+
+                    arcConnection.node = node;
+                    arcConnection.connection = connection;
+                    endSegments.push(arcConnection);
+
+                    currentEnd = node.parent!;
+                }
+
+                const lastEndSegment = endSegments[endSegments.length - 1];
+                if (lastEndSegment) {
+                    const points = parentHyperConnection.combinedPoints;
+                    const anchor = points[points.length - 1] as Anchor;
+                    const rotatedAnchor = new Anchor(anchor.anchorPoint, anchor.direction.rotate(Math.PI));
+                    // const anchor = parentHyperConnection.startPoints[0] as Anchor ?? parentHyperConnection.points[0] as Anchor
+                    lastEndSegment.setStartAnchor(rotatedAnchor);
+                    // lastAnchor = anchor;
+                }
+
+                connection.endPoints = [...endSegments];
+                if (lastAnchor) {
+                    connection.endPoints.push(lastAnchor);
+                }
             }
         })
 

@@ -15,6 +15,9 @@ export class BasicConnectionCombiner extends BaseNodeConnectionLayouter {
                 ...connection.endPoints
             ]
 
+            connection.startPoints = [];
+            connection.endPoints = [];
+
             connection.finishedLayouting = true;
         })
     }
