@@ -65,7 +65,7 @@ export class LayoutConnection {
     /**
      * If the connection is a hyperconnection, it can have children connections between the actual nodes.
      */
-    private children: LayoutConnection[] = [];
+    children: LayoutConnection[] = [];
 
     // If the connection is a child of a hyperconnection, this is the parent hyperconnection.
     parent?: LayoutConnection;

@@ -10,13 +10,10 @@ import { VisGraph } from "../visGraph/visGraph";
 import { LayoutNode } from "../visGraph/layoutNode";
 
 export interface GraphLayouterConstructorArgs<T extends GraphLayouterSettings> {
-    // nodes: Node2d[];
     nodes: CommunicationNode[];
-    // links: Connection2d[];
     settings: T;
     commGraph: CommunicationGraph;
     commonSettings: CommonSettings;
-    userInteractions: UserInteractions;
 }
 
 export class RenderArgs {
@@ -80,14 +77,10 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     gParent: d3.Selection<SVGGElement | null, unknown, null, undefined> | null = null;
 
-    renderArgs: RenderArgs;
-    get commonSettings() {
-        return this.renderArgs.commonSettings;
-    }
     get userInteractions() {
-        return this.renderArgs.userInteractions;
+        return this.visGraph.userInteractions;
     }
-    // commonSettings: CommonSettings;
+    commonSettings: CommonSettings;
     // userInteractions: UserInteractions;
     // nodeScoring: NodeScoring = new NodeScoring();
 
@@ -103,14 +96,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     constructor(layouterArgs: GraphLayouterConstructorArgs<T>) {
         this.commGraph = layouterArgs.commGraph;
         this.settings = layouterArgs.settings;
+        this.commonSettings = layouterArgs.commonSettings;
 
-        this.renderArgs = new RenderArgs(
-            layouterArgs.commonSettings,
-            layouterArgs.userInteractions,
-            new NodeScoring(),
-            (n) => layouterArgs.commonSettings.nodeColor.getValue(n)?.toString() ?? "red");
-        // this.commonSettings = layouterArgs.commonSettings;
-        // this.userInteractions = layouterArgs.userInteractions;
         this.nodes = layouterArgs.nodes;
 
         this.resetVisGraph();
@@ -118,7 +105,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     resetVisGraph() {
-        this.visGraph = VisGraph.fromCommGraph(this.commGraph, this.commonSettings, this.userInteractions);
+        this.visGraph = VisGraph.fromCommGraph(this.commGraph, this.commonSettings);
     }
 
     protected initVisGraph() {

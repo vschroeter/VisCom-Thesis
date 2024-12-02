@@ -17,7 +17,6 @@ export const useGraphStore = defineStore('graph', {
         layouterSettingsCollectionJson: useStorage("layouterSettingsCollectionJson", "{}" as string),
         settingsCollection: new SettingsCollection() as SettingsCollection,
         metricsCollection: new MetricsCollection() as MetricsCollection,
-        userInteractions: new UserInteractions() as UserInteractions,
     }),
     getters: {
         // graph: (state) => state.graph,

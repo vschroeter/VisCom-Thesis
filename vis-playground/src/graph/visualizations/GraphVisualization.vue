@@ -54,7 +54,7 @@ import { CommunicationGraph, CommunicationNode } from 'src/graph/commGraph';
 import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
 import MetricOverview from './MetricOverview.vue';
-import { Node2d } from '../graphical';
+import { Connection2d, Node2d } from '../graphical';
 import { useThrottleFn, watchDebounced, watchThrottled } from '@vueuse/core';
 import { layouterMapping } from '../layouter/settings/settingsCollection';
 import { CommonSettings } from '../layouter/settings/commonSettings';
@@ -87,7 +87,7 @@ const props = withDefaults(defineProps<{
 const graphStore = useGraphStore();
 const settingsCollection = graphStore.settingsCollection;
 const metricsCollection = graphStore.metricsCollection;
-const userInteractions = graphStore.userInteractions as UserInteractions;
+// const userInteractions = graphStore.userInteractions as UserInteractions;
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -191,17 +191,13 @@ function layoutUpdated() {
                 if (!isSelected.value) return;
                 const id = d?.id;
                 if (id) {
-                    // userInteractions.addHoveredNode(id)
-                    const layoutNode = layouter?.visGraph.getNode(id);
-                    const nodeIdsToAdd: string[] = [];
-                    if (layoutNode) {
-                        nodeIdsToAdd.push(layoutNode.id)
-                        layoutNode.descendants.forEach((desc) => {
-                            nodeIdsToAdd.push(desc.id)
-                        })
+                    const visGraph = layouter?.visGraph;
+                    const userInteractions = visGraph?.userInteractions;
+                    if (!userInteractions) {
+                        console.error("No user interactions found for ", visGraph);
+                        return
                     }
-                    userInteractions.addHoveredNode(nodeIdsToAdd)
-
+                    userInteractions.addHoveredNode(id, true)
                 }
             },
             mouseleave: (d: Node2d) => {
@@ -210,16 +206,28 @@ function layoutUpdated() {
 
                 const id = d?.id;
                 if (id) {
-                    const layoutNode = layouter?.visGraph.getNode(id);
-                    if (layoutNode) {
-                        const nodesToRemove: string[] = [];
-                        nodesToRemove.push(layoutNode.id)
-                        layoutNode.descendants.forEach((desc) => {
-                            nodesToRemove.push(desc.id)
-                        })
-                        userInteractions.removeHoveredNode(nodesToRemove)
+                    const visGraph = layouter?.visGraph;
+                    const userInteractions = visGraph?.userInteractions;
+                    if (!userInteractions) {
+                        console.error("No user interactions found for ", visGraph);
+                        return
                     }
+                    userInteractions.removeHoveredNode(id, true)
                 }
+            },
+        },
+        linksEvents: {
+            mouseenter: (d: Connection2d) => {
+                if (!isSelected.value) return;
+                const userInteractions = layouter?.visGraph?.userInteractions;
+                userInteractions?.addHoveredConnection(d.layoutConnection)
+                // console.log("Mouse enter", d)
+            },
+            mouseleave: (d: any) => {
+                if (!isSelected.value) return;
+                const userInteractions = layouter?.visGraph?.userInteractions;
+                userInteractions?.removeHoveredConnection(d.layoutConnection)
+                // console.log("Mouse leave", d)
             },
         }
     });
@@ -232,6 +240,10 @@ function layoutUpdated() {
 
 function layoutFinished() {
     layoutUpdated();
+
+    layouter?.visGraph.userInteractions?.emitter.on('update', () => {
+        throttledUpdateUserInteractions()
+    })
 
     if (layouter?.calculateMetrics) {
         setTimeout(async () => {
@@ -263,9 +275,7 @@ onMounted(() => {
 
     console.log("[VIS] Mounted"); //, props.settings);
 
-    userInteractions.emitter.on('update', () => {
-        throttledUpdateUserInteractions()
-    })
+
 
     watch(commGraph, (newVal) => {
         //updateSimulation();
@@ -290,7 +300,6 @@ onMounted(() => {
             commGraph: commGraph.value as CommunicationGraph,
             settings: settings.value,
             commonSettings: settingsCollection.commonSettings as CommonSettings,
-            userInteractions: userInteractions,
             nodes: commGraph.value.nodes as CommunicationNode[],
         });
 
@@ -306,6 +315,7 @@ onMounted(() => {
             layouter?.updateGraphByCommonSettings();
             layoutUpdated()
         }, { immediate: false, deep: true })
+
 
 
 

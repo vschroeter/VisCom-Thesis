@@ -39,23 +39,23 @@ export class NodeScoring {
 export class VisGraph {
 
     commonSettings?: CommonSettings;
-    userInteractions?: UserInteractions;
+    userInteractions: UserInteractions;
 
     ////////////////////////////////////////////////////////////////////////////
     // Creation methods
     ////////////////////////////////////////////////////////////////////////////
 
-    constructor(commonSettings?: CommonSettings, userInteractions?: UserInteractions) {
+    constructor(commonSettings?: CommonSettings) {
         this.commonSettings = commonSettings;
-        this.userInteractions = userInteractions;
+        this.userInteractions = new UserInteractions(this);
 
         this.rootNode.hasGraphicalRepresentation = false;
         this.addNode(this.rootNode);
     }
 
-    static fromCommGraph(commGraph: CommunicationGraph, commonSettings: CommonSettings, userInteractions?: UserInteractions): VisGraph {
+    static fromCommGraph(commGraph: CommunicationGraph, commonSettings: CommonSettings): VisGraph {
 
-        const visGraph = new VisGraph(commonSettings, userInteractions);
+        const visGraph = new VisGraph(commonSettings);
 
         // At first, add the nodes to the graph
         commGraph.nodes.forEach(commNode => {
@@ -472,10 +472,10 @@ export class VisGraph {
         const userInteractions = this.userInteractions;
         this.allGraphicalNodes.forEach(node => {
             let opacity = 1;
-            if (userInteractions && userInteractions.somethingIsSelectedOrFocusedOrHovered) {
+            if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
                 if (userInteractions.isHovered(node)) {
                     opacity = 1;
-                } else if (userInteractions.isAdjacentToHovered(node.id, this)) {
+                } else if (userInteractions.isAdjacentToHovered(node.id)) {
                     opacity = 0.8;
                 }
                 else {
@@ -496,29 +496,31 @@ export class VisGraph {
         const strokeWithoutAlpha = d3.color(stroke)?.copy({ opacity: 1 })?.toString() ?? "black";
         const alpha = d3.color(stroke)?.opacity ?? 1;
 
-        this.allGraphicalConnections.forEach(link => {
-            const weight = link.weight;
+        this.allGraphicalConnections.forEach(connection => {
+            const weight = connection.weight;
             let opacity = Math.min(Math.max(0.01, weight), 1) * alpha;
 
-            const startNode = link.source;
-            const endNode = link.target;
+            const startNode = connection.source;
+            const endNode = connection.target;
             const sizeMultiplier = Math.max(startNode.parent?.sizeFactor ?? 1, endNode.parent?.sizeFactor ?? 1);
             const width = Math.min(maxW, Math.max(minW, weight * wMultiplier * sizeMultiplier));
 
 
-            if (userInteractions && userInteractions.somethingIsSelectedOrFocusedOrHovered) {
-                const startNode = link.source;
-                const endNode = link.target;
+            if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
+                const startNode = connection.source;
+                const endNode = connection.target;
 
-                if (userInteractions.isHovered(startNode) || userInteractions.isHovered(endNode)) {
+                if (userInteractions.isHovered(connection.layoutConnection)) {
+                    opacity = alpha;
+                } else if (userInteractions.isHovered(startNode) || userInteractions.isHovered(endNode)) {
                     opacity = alpha;
                 } else {
                     opacity *= 0.05;
                 }
             }
 
-            link.updateStyleOpacity(opacity);
-            link.updateStyleStroke(strokeWithoutAlpha, width);
+            connection.updateStyleOpacity(opacity);
+            connection.updateStyleStroke(strokeWithoutAlpha, width);
         })
 
     }

@@ -1,6 +1,7 @@
 import mitt from "mitt"
 import { Node2d } from "../graphical"
-import { VisGraph } from "../visGraph/visGraph"
+import { LayoutNodeOrId, VisGraph } from "../visGraph/visGraph"
+import { LayoutConnection } from "../visGraph/layoutConnection"
 
 
 interface NodeWithId {
@@ -15,10 +16,18 @@ export interface MouseEvents<EventData> {
 
 export class UserInteractions {
 
+    visGraph: VisGraph
+
     private focusedNodeId: string | undefined = undefined
 
     private selectedNodeIds: Set<string> = new Set()
     private hoveredNodeIds: Set<string> = new Set()
+
+    private hoveredConnection: Set<LayoutConnection> = new Set()
+
+    constructor(visGraph: VisGraph) {
+        this.visGraph = visGraph
+    }
 
 
     emitter = mitt<{
@@ -30,9 +39,38 @@ export class UserInteractions {
         this.emitter.emit("update")
     }
 
-    addHoveredNode(nodeId: string | string[]) {
+    addHoveredConnection(connection: LayoutConnection, addChildren = true) {
+        this.hoveredConnection.add(connection)
+
+        if (addChildren) {
+            connection.children.forEach(child => this.hoveredConnection.add(child))
+        }
+
+        this.emitter.emit("update")
+    }
+
+    removeHoveredConnection(connection: LayoutConnection, removeChildren = true) {
+        this.hoveredConnection.delete(connection)
+
+        if (removeChildren) {
+            connection.children.forEach(child => this.hoveredConnection.delete(child))
+        }
+        this.emitter.emit("update")
+    }
+
+    addHoveredNode(nodeId: LayoutNodeOrId | LayoutNodeOrId[], addDescendants = true) {
+
         const nodeIds = Array.isArray(nodeId) ? nodeId : [nodeId]
-        nodeIds.forEach(id => this.hoveredNodeIds.add(id))
+        const nodes = nodeIds.map(id => this.visGraph.getNode(id))
+
+        nodes.forEach(node => this.hoveredNodeIds.add(node.id))
+
+        if (addDescendants) {
+            nodes.forEach(node => {
+                node.descendants.forEach(descendant => this.hoveredNodeIds.add(descendant.id))
+            })
+        }
+
         // console.log("Hovered nodes", this.hoveredNodeIds)
         this.emitter.emit("update")
     }
@@ -62,23 +100,43 @@ export class UserInteractions {
         this.emitter.emit("update")
     }
 
-    removeHoveredNode(nodeId: string | string[]) {
+    removeHoveredNode(nodeId: LayoutNodeOrId | LayoutNodeOrId[], removeDescendants = true) {
         const nodeIds = Array.isArray(nodeId) ? nodeId : [nodeId]
-        nodeIds.forEach(id => this.hoveredNodeIds.delete(id))
+        const nodes = nodeIds.map(id => this.visGraph.getNode(id))
+
+        nodes.forEach(node => this.hoveredNodeIds.delete(node.id))
+
+        if (removeDescendants) {
+            nodes.forEach(node => {
+                node.descendants.forEach(descendant => this.hoveredNodeIds.delete(descendant.id))
+            })
+        }
+
         this.emitter.emit("update")
     }
 
+    isHovered(connection: LayoutConnection): boolean;
+    isHovered(nodeId: string | NodeWithId): boolean;
+    isHovered(connectionOrNode: LayoutConnection | string | NodeWithId): boolean {
+        
+        if (connectionOrNode instanceof LayoutConnection) {
+            return this.hoveredConnection.has(connectionOrNode)
+        }
 
-    isHovered(nodeId: string | NodeWithId): boolean {
-        const _nodeId = (nodeId as NodeWithId).id ?? nodeId
-        return this.hoveredNodeIds.has(_nodeId)
+        const _nodeId = (connectionOrNode as NodeWithId).id ?? connectionOrNode
+
+        if (this.hoveredNodeIds.size > 0) {
+            return this.hoveredNodeIds.has(_nodeId)
+        }
+
+        return false
     }
 
-    isAdjacentToHovered(nodeId: string | NodeWithId, visGraph: VisGraph): boolean {
+    isAdjacentToHovered(nodeId: string | NodeWithId): boolean {
         const _nodeId = (nodeId as NodeWithId).id ?? nodeId
 
         for (const hoveredNodeId of this.hoveredNodeIds) {
-            const node = visGraph.getNode(hoveredNodeId);
+            const node = this.visGraph.getNode(hoveredNodeId);
 
             for (const successor of node.getSuccessors()) {
                 if (successor.id === _nodeId) {
@@ -88,6 +146,14 @@ export class UserInteractions {
 
             for (const predecessor of node.getPredecessors()) {
                 if (predecessor.id === _nodeId) {
+                    return true
+                }
+            }
+        }
+
+        if (this.hoveredConnection.size > 0) {
+            for (const connection of this.hoveredConnection) {
+                if (connection.source.id === _nodeId || connection.target.id === _nodeId) {
                     return true
                 }
             }
@@ -120,15 +186,15 @@ export class UserInteractions {
     }
 
     get somethingIsFocused(): boolean {
-        return this.focusedNodeId !== undefined
+        return this.focusedNodeId !== undefined && this.focusedNodeId !== null
     }
 
     get somethingIsHovered(): boolean {
-        return this.hoveredNodeIds.size > 0
+        return this.hoveredNodeIds.size > 0 || this.hoveredConnection.size > 0
     }
 
     get somethingIsSelected(): boolean {
-        return this.selectedNodeIds.size > 0
+        return this.selectedNodeIds.size > 0 || this.hoveredConnection.size > 0
     }
 
 
