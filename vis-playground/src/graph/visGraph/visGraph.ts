@@ -84,7 +84,7 @@ export class VisGraph {
     rootNode: LayoutNode = new LayoutNode(this, "__root__");
 
     ////////////////////////////////////////////////////////////////////////////
-    // Node Management
+    // #region Node Management
     ////////////////////////////////////////////////////////////////////////////
 
     // Id to layout node mapping
@@ -155,7 +155,7 @@ export class VisGraph {
 
 
     ////////////////////////////////////////////////////////////////////////////
-    // Link Methods
+    // #region Link Methods
     ////////////////////////////////////////////////////////////////////////////
     private mapSourceNodeIdToTargetNodeIdToConnection: Map<string, Map<string, LayoutConnection>> = new Map();
 
@@ -254,7 +254,7 @@ export class VisGraph {
 
 
     ////////////////////////////////////////////////////////////////////////////
-    // Layout methods
+    // #region Layout methods
     ////////////////////////////////////////////////////////////////////////////
 
 
@@ -370,7 +370,7 @@ export class VisGraph {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Rendering methods
+    // #region Rendering methods
     ////////////////////////////////////////////////////////////////////////////
 
     getAllGraphicalNodes(): Node2d[] {
@@ -410,7 +410,7 @@ export class VisGraph {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Style methods
+    // #region Style methods
     ////////////////////////////////////////////////////////////////////////////
 
     updateGraphicalStyle() {
@@ -502,7 +502,8 @@ export class VisGraph {
 
             const startNode = connection.source;
             const endNode = connection.target;
-            const sizeMultiplier = Math.max(startNode.parent?.sizeFactor ?? 1, endNode.parent?.sizeFactor ?? 1);
+            // const sizeMultiplier = Math.max(startNode.parent?.sizeFactor ?? 1, endNode.parent?.sizeFactor ?? 1);
+            const sizeMultiplier = 1;
             const width = Math.min(maxW, Math.max(minW, weight * wMultiplier * sizeMultiplier));
 
 
@@ -536,7 +537,7 @@ export class VisGraph {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Hierarchy methods
+    // #region Hierarchy methods
     ////////////////////////////////////////////////////////////////////////////
     private _hyperNodeId = 0;
 

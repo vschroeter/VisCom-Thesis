@@ -623,8 +623,8 @@ export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
                     if (lastSegment) {
                         lastSegment.setEndAnchor(anchor);
                     }
-
-                    const arcConnection = new CircleSegmentConnection(node.parent!.circle)
+                    const circle = new Circle(node.parent!.center, node.parent!.circle.r * 0.95);
+                    const arcConnection = new CircleSegmentConnection(circle)
                     // arcConnection.debug = true;
                     arcConnection.setStartAnchor(anchor);
                     arcConnection.node = node;
@@ -676,9 +676,10 @@ export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
                     const lastSegment = endSegments[endSegments.length - 1];
                     if (lastSegment) {
                         lastSegment.setStartAnchor(anchor);
-                    }
+                    }   
 
-                    const arcConnection = new CircleSegmentConnection(node.parent!.circle)
+                    const circle = new Circle(node.parent!.center, node.parent!.circle.r * 1.05);
+                    const arcConnection = new CircleSegmentConnection(circle)
                     // arcConnection.debug = true;
                     arcConnection.setEndAnchor(anchor);
                     

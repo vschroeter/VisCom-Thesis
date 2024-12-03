@@ -1,4 +1,4 @@
-import { Circle, Point } from "2d-geometry";
+import { Circle, Point, Segment } from "2d-geometry";
 import { Anchor } from "../Anchor";
 import { SvgPathSegment } from "./PathSegment";
 import { EllipticArc } from "./EllipticArc";
@@ -94,17 +94,17 @@ export class CircleSegmentConnection implements SvgPathSegment {
         // const startControlPointDelta = radiusAtStart > radius ? absStartDelta : -absStartDelta;
         // const endControlPointDelta = radiusAtEnd > radius ? absEndDelta : -absEndDelta;
 
-        const startControlPoint =
+        const startCircleCenterPoint =
             radiusAtStart < radius ?
                 startAnchor.getPointAwayFromReference(absStartDelta, center) :
                 startAnchor.getPointTowardsReference(absStartDelta, center);
-        const endControlPoint =
+        const endCircleCenterPoint =
             radiusAtEnd < radius ?
                 endAnchor.getPointAwayFromReference(absEndDelta, center) :
                 endAnchor.getPointTowardsReference(absEndDelta, center);
 
-        const startCircleForIntersection = new Circle(startControlPoint, absStartDelta);
-        const endCircleForIntersection = new Circle(endControlPoint, absEndDelta);
+        const startCircleForIntersection = new Circle(startCircleCenterPoint, absStartDelta);
+        const endCircleForIntersection = new Circle(endCircleCenterPoint, absEndDelta);
 
         // If the the start and end circle are close together and intersect, we just draw a cubic bezier curve
         const intersections = startCircleForIntersection.intersect(endCircleForIntersection);
@@ -133,16 +133,16 @@ export class CircleSegmentConnection implements SvgPathSegment {
         const startIntersections = startCircleForIntersection.intersect(this.circle);
         const endIntersections = endCircleForIntersection.intersect(this.circle);
 
-        const startIntersection = ShapeUtil.getClosestShapeToPoint(startIntersections, endAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
-        const endIntersection = ShapeUtil.getClosestShapeToPoint(endIntersections, startAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
+        const arcStartPoint = ShapeUtil.getClosestShapeToPoint(startIntersections, endAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
+        const arcEndPoint = ShapeUtil.getClosestShapeToPoint(endIntersections, startAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
 
-        const arc = new EllipticArc(startIntersection, endIntersection);
+        const arc = new EllipticArc(arcStartPoint, arcEndPoint);
         arc.radius(radius);
 
-        const startRad = RadialUtils.radOfPoint(startIntersection, this.circle.center);
-        const endRad = RadialUtils.radOfPoint(endIntersection, this.circle.center);
+        const arcStartRad = RadialUtils.radOfPoint(arcStartPoint, this.circle.center);
+        const arcEndRad = RadialUtils.radOfPoint(arcEndPoint, this.circle.center);
 
-        let radDiff = (endRad - startRad);
+        let radDiff = (arcEndRad - arcStartRad);
         if (radDiff < -Math.PI) {
             radDiff += Math.PI * 2;
         }
@@ -150,18 +150,33 @@ export class CircleSegmentConnection implements SvgPathSegment {
         if (radDiff > Math.PI) {
             radDiff -= Math.PI * 2;
         }
-        
+
         const arcDirection = radDiff > 0 ? "clockwise" : "counter-clockwise";
-        // const arcDirection = radDiff > 0 ? "counter-clockwise" : "clockwise";
         arc.direction(arcDirection);
 
-        // console.log({
-        //     id: this.node?.id,
-        //     connection: this.connection
-        // })
+        const arcStartVector = RadialUtils.radToVector(arcStartRad);
+        const arcEndVector = RadialUtils.radToVector(arcEndRad);
 
-        const startCurve = new QuadraticBezierCurve(startPoint, startControlPoint, startIntersection);
-        const endCurve = new QuadraticBezierCurve(endIntersection, endControlPoint, endPoint);
+        const distanceStartToArcStart = startAnchor.anchorPoint.distanceTo(arcStartPoint)[0];
+        const distanceEndToArcEnd = endAnchor.anchorPoint.distanceTo(arcEndPoint)[0];
+        const distanceFactor = 0.5;
+
+        const startControlPoint1 = startPoint.translate(startAnchor.direction.multiply(distanceStartToArcStart * distanceFactor));
+        const startControlPoint2 = arcStartPoint.translate(
+            arcDirection === "clockwise" ?
+                arcStartVector.rotate90CCW().multiply(distanceStartToArcStart * distanceFactor) :
+                arcStartVector.rotate90CW().multiply(distanceStartToArcStart * distanceFactor)
+        );
+
+        const endControlPoint1 = arcEndPoint.translate(
+            arcDirection === "clockwise" ?
+                arcEndVector.rotate90CW().multiply(distanceEndToArcEnd * distanceFactor) :
+                arcEndVector.rotate90CCW().multiply(distanceEndToArcEnd * distanceFactor)
+        );
+        const endControlPoint2 = endPoint.translate(endAnchor.direction.rotate(Math.PI).multiply(distanceEndToArcEnd * distanceFactor));
+
+        const startCurve = new CubicBezierCurve(startPoint, startControlPoint1, startControlPoint2, arcStartPoint);
+        const endCurve = new CubicBezierCurve(arcEndPoint, endControlPoint1, endControlPoint2, endPoint);
 
         return `${startCurve.getSvgPath()} ${arc.getSvgPath()} ${endCurve.getSvgPath()}`;
     }
