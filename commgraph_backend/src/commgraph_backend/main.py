@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
+from commgraph_backend.commgraph.converter import convert_to_weighted_graph
 import networkx as nx
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -11,6 +11,7 @@ from commgraph_backend.communities.community_detection_methods import community_
 from commgraph_backend.data.reader import RosMetaSysGraphGenerator
 from commgraph_backend.generator.generator import CommGraphGenerator
 from commgraph_backend.generator.generator_methods import generator_methods_config
+from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
 from commgraph_backend.noderank.node_rank_methods import node_rank_methods_config
 
 app = Flask(__name__)
@@ -119,9 +120,14 @@ def analyze_communities(method):
         params[param["key"]] = param_value
 
     data = request.get_json()
-    graph = nx.node_link_graph(data)
-    result = community_methods_config[method]["method"](graph, **params)
-    # print(result)
+    graph = nx.node_link_graph(data, edges="links")
+    weighted_graph = convert_to_weighted_graph(graph)
+    # for node in weighted_graph.nodes:
+    #     print(node)
+    #     for edge in weighted_graph.edges(node):
+    #         print("\t", edge, weighted_graph.get_edge_data(*edge)[0]["weight"])
+    result = community_methods_config[method]["method"](weighted_graph, **params)
+    print(result)
 
     # Convert sets in the result to lists
     result = [list(community) for community in result]

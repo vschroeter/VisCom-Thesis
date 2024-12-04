@@ -5,6 +5,9 @@ import networkx as nx
 
 MAX_NODES = 1000
 
+default_params = [
+    {"key": "ignore_threshold", "type": "float", "description": "Threshold for ignoring edges", "range": [0.0, 1.0], "default": 0.125},
+]
 
 community_methods_config = {
     "edge_betweenness_partition": {

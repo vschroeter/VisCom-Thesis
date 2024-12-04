@@ -36,6 +36,10 @@ export class NodeScoring {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////
+// #region VisGraph
+////////////////////////////////////////////////////////////////////////////
+
 export class VisGraph {
 
     commonSettings?: CommonSettings;
@@ -71,6 +75,8 @@ export class VisGraph {
             const visLink = new VisLink(commLink);
             visGraph.addLink(commLink.fromId, commLink.toId, visLink);
         });
+
+        console.log("Created vis graph", visGraph);
 
         return visGraph;
     }
@@ -516,7 +522,8 @@ export class VisGraph {
                 } else if (userInteractions.isHovered(startNode) || userInteractions.isHovered(endNode)) {
                     opacity = alpha;
                 } else {
-                    opacity *= 0.05;
+                    // opacity *= 0.05;
+                    opacity *= 0.0;
                 }
             }
 
