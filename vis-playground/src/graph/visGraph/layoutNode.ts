@@ -21,16 +21,21 @@ export class LayoutNode {
     // The id of the node
     id: string;
 
+    // Rendered shapes for debugging 
     debugShapes: Shape[] = [];
 
     ////////////////////////////////////////////////////////////////////////////
-    // Constructor
+    // #region Constructor
     ////////////////////////////////////////////////////////////////////////////
 
     constructor(graph: VisGraph, id: string) {
         this.visGraph = graph;
         this.id = id;
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // #region Node relations
+    ////////////////////////////////////////////////////////////////////////////
 
     // The related communication node. Hypernodes with child nodes do not have a single related communication node.
     commNode?: CommunicationNode;
@@ -44,11 +49,27 @@ export class LayoutNode {
     // If there are children, the anchor node is the defining node for position and alignment
     anchorNode?: LayoutNode;
 
+    // If this node is the anchor node of its parent
     get isAnchor(): boolean {
         return this.parent?.anchorNode == this;
     }
 
-    _index = -1;
+    // If this node is a split node, this is the parent node
+    splitParent?: LayoutNode;
+
+    // If the node is a splitted node from another actual node
+    get isSplitNode(): boolean {
+        return this.splitParent != undefined;
+    }
+
+    // If this node is a split node, these are the children
+    splitChildren: LayoutNode[] = [];
+
+    ////////////////////////////////////////////////////////////////////////////
+    // #region Layout Parts
+    ////////////////////////////////////////////////////////////////////////////
+
+    private _index = -1;
     // The index of the node in the parent's children list or the manually set index
     get index(): number {
         if (this._index >= 0) {
@@ -60,16 +81,6 @@ export class LayoutNode {
     set index(index: number) {
         this._index = index;
     }
-
-    // // Type of VisNode (TODO: Maybe we don't need this or make it more flexible)
-    // nodeType: "normal" | "community" | "stronglyCoupled" | "broadcasting" | "similarConnections" = "normal";
-
-    // // TODO: Associated nodes (somehow, we have to store e.g. duplicated nodes, that are related to this node)
-    // associatedNodes: LayoutNode[] = [];
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Layout Parts
-    ////////////////////////////////////////////////////////////////////////////
 
     // The precalculator for the node (e.g. for calculating the size of the node)
     precalculator?: InstanceOrGetter<BasicSizeCalculator> = new BasicSizeCalculator();
@@ -83,10 +94,6 @@ export class LayoutNode {
     // The layouter (or list of layouters) to calculate the connections of the node
     connectionLayouter: BaseNodeConnectionLayouter | BaseNodeConnectionLayouter[] = new BaseNodeConnectionLayouter();
     protected _currentConnectionLayouterIndex = 0;
-    // connectionLayouter?: InstanceOrGetter<BaseNodeConnectionLayouter | BaseNodeConnectionLayouter[]>;
-
-    // // List of connections, that are waiting for this node to be layouted
-    // connectionsWaitingForLayout: VisConnection[] = [];
 
     // Outgoing connections to other nodes
     outConnections: LayoutConnection[] = [];
@@ -103,6 +110,7 @@ export class LayoutNode {
         return this._layerCount - this._layer - 1;
     }
 
+    // Set the layer of the node (for layered layouting)
     setLayer(layerFromTop: number, layerCount: number) {
         this._layer = layerFromTop;
         this._layerCount = layerCount;
@@ -112,9 +120,29 @@ export class LayoutNode {
     hasGraphicalRepresentation: boolean = true;
 
     ////////////////////////////////////////////////////////////////////////////
-    // Ancestor and descendant methods
+    // #region Ancestor & Descendant Methods
     ////////////////////////////////////////////////////////////////////////////
 
+    // TODO: Channel einbauen
+    getSuccessors(channels?: CommunicationChannel[]): LayoutNode[] {
+        // if (channels) {
+        //     const channelTypes = channels.map(c => c.type);
+        //     return this.outConnections.filter(c => c.links.some(l => channelTypes.include(l.channel.type))).map(c => c.target);
+        // }
+        return this.outConnections.map(c => c.target);
+    }
+
+    getPredecessors(channels?: CommunicationChannel[]): LayoutNode[] {
+        return this.inConnections.map(c => c.source);
+    }
+
+
+    /**
+     * Get the first common parent of two nodes
+     * @param node1 Node 1
+     * @param node2 Node 2
+     * @returns The first common parent of the two nodes, if any
+     */
     static firstCommonParent(node1: LayoutNode, node2: LayoutNode): LayoutNode | undefined {
         let parent: LayoutNode | undefined = node1;
         while (parent) {
@@ -126,7 +154,12 @@ export class LayoutNode {
         return undefined;
     }
 
-    getParent(condition?: (parent: LayoutNode) => boolean): LayoutNode | undefined {
+    /**
+     * Returns the first parent of the node that satisfies a given condition
+     * @param condition The condition that the parent node should satisfy
+     * @returns The first parent node that satisfies the condition, if any
+     */
+    getFirstParentByCondition(condition?: (parent: LayoutNode) => boolean): LayoutNode | undefined {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         let parent: LayoutNode | undefined = this;
         if (!condition) {
@@ -141,6 +174,10 @@ export class LayoutNode {
         return undefined;
     }
 
+    /**
+     * @param node The other node
+     * @returns True, if the node is a descendant of the other node
+     */
     isDescendantOf(node: LayoutNode): boolean {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         let parent: LayoutNode | undefined = this;
@@ -154,18 +191,33 @@ export class LayoutNode {
         return false;
     }
 
+    /**
+     * @param node The other node
+     * @returns True, if the node is an ancestor of the other node
+     */
     isAncestorOf(node: LayoutNode): boolean {
         return node.isDescendantOf(this);
     }
 
+    /**
+     * @param node The other node
+     * @returns True, if the node is a child of the other node
+     */
     isChildOf(node: LayoutNode): boolean {
         return this.parent == node;
     }
 
+    /**
+     * @param node The other node
+     * @returns True, if the node is a parent of the other node
+     */
     isParentOf(node: LayoutNode): boolean {
         return node.isChildOf(this);
     }
 
+    /**
+     * The descendants of the node
+     */
     get descendants(): LayoutNode[] {
         const descendants: LayoutNode[] = [];
         this.children.forEach(child => {
@@ -175,6 +227,23 @@ export class LayoutNode {
         return descendants;
     }
 
+    /**
+     * The successors of the node
+     */
+    get successors(): LayoutNode[] {
+        return this.getSuccessors();
+    }
+
+    /**
+     * The predecessors of the node
+     */
+    get predecessors(): LayoutNode[] {
+        return this.getPredecessors();
+    }
+
+    /**
+     * The ancestors of the node
+     */
     get ancestors(): LayoutNode[] {
         const ancestors: LayoutNode[] = [];
         let parent = this.parent;
@@ -186,7 +255,23 @@ export class LayoutNode {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Information about the node
+    // #region Connection Methods
+    ////////////////////////////////////////////////////////////////////////////
+
+    getBidirectionalConnections(channels?: CommunicationChannel[]): LayoutConnection[] {
+        return this.outConnections.filter(c => c.opposite !== undefined);
+    }
+
+    getOutgoingConnections(channels?: CommunicationChannel[]): LayoutConnection[] {
+        return this.outConnections;
+    }
+
+    getIncomingConnections(channels?: CommunicationChannel[]): LayoutConnection[] {
+        return this.inConnections;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // #region Node Information
     ////////////////////////////////////////////////////////////////////////////
 
     // The score of the node (e.g. for ranking the significance of nodes)
@@ -272,7 +357,7 @@ export class LayoutNode {
 
 
     ////////////////////////////////////////////////////////////////////////////
-    // Position and size of the node
+    // #region Position & Size of the Node
     ////////////////////////////////////////////////////////////////////////////
     /**
      * The radius should be calculated by the precalculator or the layouter during the layouting process, based on the score and children of the node.
@@ -325,7 +410,7 @@ export class LayoutNode {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Transformation methods for the node
+    // #region Transformation Methods for the Node
     ////////////////////////////////////////////////////////////////////////////
 
     rotateChildrenLocally(rad: number) {
@@ -338,7 +423,7 @@ export class LayoutNode {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Style of the node
+    // #region Style of the node
     ////////////////////////////////////////////////////////////////////////////
 
     // The color of the node. If not set, the color is determined by default values, scoring and user interaction.
@@ -394,39 +479,8 @@ export class LayoutNode {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Connection methods
+    // #region Anchor methods
     ////////////////////////////////////////////////////////////////////////////
-
-    getBidirectionalConnections(channels?: CommunicationChannel[]): LayoutConnection[] {
-        return this.outConnections.filter(c => c.opposite !== undefined);
-    }
-
-    getOutgoingConnections(channels?: CommunicationChannel[]): LayoutConnection[] {
-        return this.outConnections;
-    }
-
-    getIncomingConnections(channels?: CommunicationChannel[]): LayoutConnection[] {
-        return this.inConnections;
-    }
-
-    // TODO: Channel einbauen
-    getSuccessors(channels?: CommunicationChannel[]): LayoutNode[] {
-        // if (channels) {
-        //     const channelTypes = channels.map(c => c.type);
-        //     return this.outConnections.filter(c => c.links.some(l => channelTypes.include(l.channel.type))).map(c => c.target);
-        // }
-        return this.outConnections.map(c => c.target);
-    }
-
-    getPredecessors(channels?: CommunicationChannel[]): LayoutNode[] {
-        return this.inConnections.map(c => c.source);
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Anchor methods
-    ////////////////////////////////////////////////////////////////////////////
-
 
     /**
      * Get the anchor of the node directed towards a given point
@@ -471,7 +525,7 @@ export class LayoutNode {
 
 
     ////////////////////////////////////////////////////////////////////////////
-    // Layouting methods
+    // #region Layouting methods
     ////////////////////////////////////////////////////////////////////////////
     protected getInstance<T>(instanceOrGetter: InstanceOrGetter<T>): T {
         if (instanceOrGetter instanceof Function) {
@@ -536,7 +590,7 @@ export class LayoutNode {
     // }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Connection layouting methods
+    // #region Connection layouting methods
     ////////////////////////////////////////////////////////////////////////////
 
     initConnectionLayouter() {
@@ -549,7 +603,7 @@ export class LayoutNode {
 
     protected getConnectionLayouter(): BaseNodeConnectionLayouter[] {
         return (Array.isArray(this.connectionLayouter) ? this.connectionLayouter : [this.connectionLayouter]);
-    } 
+    }
 
     iterateConnectionLayouter(): boolean {
         const layouters = (Array.isArray(this.connectionLayouter) ? this.connectionLayouter : [this.connectionLayouter]);
@@ -568,17 +622,8 @@ export class LayoutNode {
         return true;
     }
 
-
-    // calculateConnections(connectionLayouterOverride?: BaseNodeConnectionLayouter) {
-    //     const _connectionLayouter = this.getInstance(connectionLayouterOverride ?? this.connectionLayouter);
-    //     _connectionLayouter?.layoutConnectionsOfNode(this);
-    // }
-
-
-
-
     ////////////////////////////////////////////////////////////////////////////
-    // Rendering methods
+    // #region Rendering methods
     ////////////////////////////////////////////////////////////////////////////
 
     node2d: Node2d | undefined;

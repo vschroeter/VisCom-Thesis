@@ -111,6 +111,19 @@ export class VisGraph {
         return id;
     }
 
+    /**
+     * Get the next free id with the given prefix, appending a number to the prefix, e.g., prefix_0, prefix_1, ...
+     * @param prefix The prefix of the id
+     * @returns The next free id with the given prefix
+     */
+    getNextFreeId(prefix: string): string {
+        let i = 0;
+        while (this.mapIdToLayoutNode.has(`${prefix}_${i}`)) {
+            i++;
+        }
+        return `${prefix}_${i}`;
+    }
+
 
     /**
      * Get the nodes of the graph in its hierarchical layers.
@@ -630,8 +643,8 @@ export class VisGraph {
                 const sourceParent = source.parent;
                 const targetParent = target.parent;
 
-                const sourceHypernode = source.getParent((p) => p.parent == firstCommonParent) ?? source
-                const targetHypernode = target.getParent((p) => p.parent == firstCommonParent) ?? target
+                const sourceHypernode = source.getFirstParentByCondition((p) => p.parent == firstCommonParent) ?? source
+                const targetHypernode = target.getFirstParentByCondition((p) => p.parent == firstCommonParent) ?? target
 
                 this.addHyperConnection(sourceHypernode, targetHypernode, connection);
 
