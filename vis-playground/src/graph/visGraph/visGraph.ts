@@ -594,6 +594,14 @@ export class VisGraph {
 
     // The given communities are combined into hypernodes
     combineCommunities(communityNodeIds: (LayoutNode | string)[][], parentNode: LayoutNode = this.rootNode) {
+
+        // Knoten aufsplitten, die zu mehreren Communities gehören
+        // - Die Verbindungen werden kopiert und gefiltert, jeder Teilknoten behält nur folgende Verbindungen:
+        //   - Verbindungen innerhalb des eigenen Hypernodes
+        //   - Verbindungen zu den anderen Teilknoten (werden implizit angezeigt)
+        //   - Verbindungen zu externen Knoten, die nicht innerhalb von anderen Hypernodes liegen, die durch einen anderen Teilknoten abgedeckt werden
+        // Hypernodes bilden
+
         const communities = communityNodeIds.map(community => community.map(node => this.getNode(node)));
 
         const colorScheme = d3.interpolateRainbow;
