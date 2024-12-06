@@ -1,0 +1,273 @@
+{
+    "version": "1.0.0",
+    "name": "0006nodes_2023-09-01_12_00_00_handcraftedBroadcastExample",
+    "description": "6 example nodes used to show the challenges with broadcast nodes and topics.",
+    "created_at": "2023-09-01T12:00:00.000000",
+    "nodeCount": 6,
+    "author": "vschroeter",
+    "cc_by_sa_consent": true,
+    "nodes": [
+        {
+            "name": "a0",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/a0_pub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/a0_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "a1",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/a0_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/a1_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "a2",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/a0_sub",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/a1_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/a2_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "a3",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/a0_sub",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/a1_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/a3_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "b0",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/b4_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/b0_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "b1",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/b0_sub",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/a3_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/b1_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "b2",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/b3_sub",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/b4_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/b2_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "b3",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/b1_sub",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/b0_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/b3_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "b4",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/b1_sub",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/b3_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/b4_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "c0",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/b2_sub",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/c1_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/c0_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "c1",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/a2_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/c1_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "c2",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/c0_sub",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/c1_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/c2_sub",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        }
+        
+
+    ]
+}
