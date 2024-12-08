@@ -228,6 +228,34 @@ export class LayoutConnection {
         return this.oppositeLinks;
     }
 
+    getSubNodePathViaHypernodes(): LayoutNode[] {
+        const parentHyperConnection = this.parent!;
+        const hyperStart = parentHyperConnection.source;
+        const hyperEnd = parentHyperConnection.target;
+
+        const nodes: LayoutNode[] = [];
+
+        let currentNode: LayoutNode | undefined = this.source;
+
+        nodes.push(this.source);
+        while (currentNode?.parent && currentNode != hyperStart) {
+            currentNode = currentNode.parent;
+            nodes.push(currentNode);
+        }
+
+        currentNode = this.target;
+        const endNodes: LayoutNode[] = [];
+        endNodes.push(this.target);
+        while (currentNode?.parent && currentNode != hyperEnd) {
+            currentNode = currentNode.parent;
+            endNodes.push(currentNode);
+        }
+
+        nodes.push(...endNodes.reverse());
+
+        return nodes;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Graphical methods
     ////////////////////////////////////////////////////////////////////////////

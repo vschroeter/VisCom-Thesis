@@ -53,4 +53,12 @@ export class Anchor {
 
     return p1.distanceTo(reference)[0] < p2.distanceTo(reference)[0] ? p1 : p2;
   }
+
+  clone() {
+    return new Anchor(this.anchorPoint.clone(), this.direction.clone());
+  }
+
+  cloneReversed() {
+    return new Anchor(this.anchorPoint.clone(), this.direction.clone().multiply(-1));
+  }
 }

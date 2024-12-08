@@ -604,6 +604,12 @@ export class VisGraph {
 
         const communities = communityNodeIds.map(community => community.map(node => this.getNode(node)));
 
+        const nodesHavingMultipleCommunities = this.allLayoutNodes.filter(node => {
+            return communities.filter(community => community.includes(node)).length > 1;
+        });
+        
+        console.log("Nodes having multiple communities", nodesHavingMultipleCommunities);
+
         const colorScheme = d3.interpolateRainbow;
 
         // Combine the nodes into hypernodes

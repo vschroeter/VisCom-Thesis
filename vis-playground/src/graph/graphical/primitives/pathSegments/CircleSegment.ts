@@ -112,8 +112,14 @@ export class CircleSegmentConnection implements SvgPathSegment {
         const endContainsStart = endCircleForIntersection.contains(startCircleForIntersection);
 
         if (this.debug) {
+            startCircleForIntersection._data = { stroke: "red" };
+            this.node?.debugShapes.push(this.circle);
+            this.node?.debugShapes.push(startPoint);
+            this.node?.debugShapes.push(endPoint);
             this.node?.debugShapes.push(startCircleForIntersection);
             this.node?.debugShapes.push(endCircleForIntersection);
+            this.node?.debugShapes.push(startCircleCenterPoint);
+            this.node?.debugShapes.push(endCircleCenterPoint);
         }
 
         if (intersections.length > 0 || startContainsEnd || endContainsStart) {
@@ -122,8 +128,11 @@ export class CircleSegmentConnection implements SvgPathSegment {
             const anchorDistanceFactor = 0.4
             const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
 
-            const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
-            const endControlPoint = endAnchor.getPointInDirection(-distanceToControlPoint);
+            // const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
+            // const endControlPoint = endAnchor.getPointInDirection(-distanceToControlPoint);
+
+            const startControlPoint = startAnchor.getPointTowardsReference(distanceToControlPoint, endPoint);
+            const endControlPoint = endAnchor.getPointTowardsReference(-distanceToControlPoint, startPoint);
 
             const curve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
             return curve.getSvgPath();

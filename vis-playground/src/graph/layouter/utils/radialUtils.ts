@@ -39,6 +39,40 @@ export class RadialUtils extends ShapeUtil {
         return deg * Math.PI / 180;
     }
 
+    static forwardRadBetweenAngles(startRad: number, endRad: number): number {
+        const rad = endRad - startRad;
+        return rad < 0 ? rad + 2 * Math.PI : rad;
+    }
+
+    /**
+     * Returns the radian value between the given start and end radian values.
+     * If the target radian is not between the start and end radian values, the closest value is returned.
+     * If the target radian is between the start and end radian values, the target radian is returned.
+     * @param startRad The minimum radian value.
+     * @param endRad The maximum radian value.
+     * @param targetRad The target radian value.
+     */
+    static putRadBetween(startRad: number, endRad: number, targetRad: number): number {
+        const forwardRad = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
+
+        const forwardTargetToStart = RadialUtils.forwardRadBetweenAngles(targetRad, startRad);
+        const forwardStartToTarget = RadialUtils.forwardRadBetweenAngles(startRad, targetRad);
+        const forwardTargetToEnd = RadialUtils.forwardRadBetweenAngles(targetRad, endRad);
+
+        
+
+        // If the target rad is outside the range, return the closest value
+        if (forwardTargetToStart < forwardTargetToEnd) {
+            
+            if (forwardTargetToStart < Math.abs(forwardTargetToEnd - 2 * Math.PI)) {
+                return startRad;
+            }
+            return endRad;
+        }
+
+        return targetRad;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Vectors
     ////////////////////////////////////////////////////////////////////////////

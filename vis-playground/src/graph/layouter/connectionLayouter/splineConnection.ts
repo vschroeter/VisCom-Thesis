@@ -10,6 +10,9 @@ import { CubicBezierCurve } from "src/graph/graphical/primitives/pathSegments/Be
 import { ShapeUtil } from "../utils/shapeUtil";
 import { CircleSegmentConnection } from "src/graph/graphical/primitives/pathSegments/CircleSegment";
 
+////////////////////////////////////////////////////////////////////////////
+// #region Continuum
+////////////////////////////////////////////////////////////////////////////
 
 class Continuum {
 
@@ -40,6 +43,10 @@ class Continuum {
         return this.connectionContinuum.get(connection)!;
     }
 }
+
+////////////////////////////////////////////////////////////////////////////
+// #region Anchor Point Calculator
+////////////////////////////////////////////////////////////////////////////
 
 export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnectionLayouter {
 
@@ -381,6 +388,10 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
 
 }
 
+////////////////////////////////////////////////////////////////////////////
+// #region Spline Layouter
+////////////////////////////////////////////////////////////////////////////
+
 export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
 
 
@@ -523,6 +534,185 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////
+// #region Sub Connection Layouter
+///////////////////////////////////////////////////////////////////////////
+
+export class CircleSegmentAnchor {
+    anchor: Anchor;
+    parentNode: LayoutNode;
+
+    constructor(anchor: Anchor, parentNode: LayoutNode) {
+        this.anchor = anchor;
+        this.parentNode = parentNode;
+    }
+}
+
+export class MultiHyperConnection {
+
+    nodePath: LayoutNode[] = [];
+    hyperConnection?: LayoutConnection;
+    connection?: LayoutConnection;
+
+    constructor() {
+
+    }
+
+    calculatePoints(): LayoutConnectionPoint[] {
+        const nodesFromHyperConnectionToStart: LayoutNode[] = [];
+        const nodesFromHyperConnectionToEnd: LayoutNode[] = [];
+
+        if (this.hyperConnection === undefined) {
+            return [];
+        }
+
+        let isStart = true;
+        this.nodePath.forEach((node, index) => {
+            if (isStart) {
+                nodesFromHyperConnectionToStart.push(node);
+            } else {
+                nodesFromHyperConnectionToEnd.push(node);
+            }
+            if (node == this.hyperConnection!.source) {
+                isStart = false;
+            }
+        })
+        nodesFromHyperConnectionToStart.reverse();
+
+        console.log({
+            path: this.nodePath,
+            connection: this.connection,
+            hyperConnection: this.hyperConnection,
+            nodesFromHyperConnectionToStart,
+            nodesFromHyperConnectionToEnd
+        })
+
+
+        // From hyper start to path start calculate the anchor points:
+        // Each node has based on its parent circle a outer range of valid anchor points
+
+        const anchorsFromHyperStartToStart: CircleSegmentAnchor[] = [];
+        const anchorsFromHyperEndToEnd: CircleSegmentAnchor[] = [];
+
+        anchorsFromHyperStartToStart.push(
+            new CircleSegmentAnchor((this.hyperConnection.combinedPoints[0] as Anchor).clone(), this.hyperConnection.source.parent!)
+        );
+        anchorsFromHyperEndToEnd.push(
+            new CircleSegmentAnchor((this.hyperConnection.combinedPoints[this.hyperConnection.combinedPoints.length - 1] as Anchor).cloneReversed(), this.hyperConnection.target.parent!)
+        );
+
+        const calculateAnchors = (
+            anchorList: CircleSegmentAnchor[],
+            path: LayoutNode[],
+            isBeforeHyperConnection: boolean
+        ) => {
+            path.forEach((node, index) => {
+                if (node == this.hyperConnection!.source || node == this.hyperConnection!.target) {
+                    return;
+                }
+
+                const parentCenter = node.parent?.center ?? new Point(0, 0);
+                const nodeCenter = node.center;
+                
+                // Valid outer angles
+                const intersections = node.outerCircle.intersect(node.parent?.innerCircle ?? new Circle(new Point(0, 0), 0));
+                const radNodeCenter = RadialUtils.radOfPoint(nodeCenter, parentCenter);
+                let rad0 = RadialUtils.radOfPoint(intersections[0], nodeCenter);
+                let rad1 = RadialUtils.radOfPoint(intersections[1], nodeCenter);
+    
+                if (RadialUtils.forwardRadBetweenAngles(radNodeCenter, rad0) < RadialUtils.forwardRadBetweenAngles(radNodeCenter, rad1)) {
+                    [rad0, rad1] = [rad1, rad0];
+                }
+
+                const radRange = RadialUtils.forwardRadBetweenAngles(rad0, rad1);
+                const radMid = rad0 + radRange / 2;
+                const radFactor = 0.8;
+                rad0 = radMid - radRange * radFactor / 2;
+                rad1 = radMid + radRange * radFactor / 2;
+
+
+                const lastAnchor = anchorList[anchorList.length - 1];
+                const anchorRad = RadialUtils.radOfPoint(lastAnchor.anchor.anchorPoint, nodeCenter);
+
+                // this.connection?.source.debugShapes.push(new Circle(intersections[0], 2));
+                // this.connection?.source.debugShapes.push(new Circle(intersections[1], 2));
+                // this.connection?.source.debugShapes.push(new Circle(lastAnchor.anchor.anchorPoint, 2));
+    
+                const chosenRad = RadialUtils.putRadBetween(rad0, rad1, anchorRad);
+                const chosenVector = RadialUtils.radToVector(chosenRad).multiply(node.outerCircle.r);
+                const reverseVector = chosenVector.rotate(Math.PI);
+                const chosenPoint = nodeCenter.translate(chosenVector);
+    
+                // this.connection?.source.debugShapes.push(new Circle(chosenPoint, 2));
+
+                const anchor = new Anchor(chosenPoint, isBeforeHyperConnection ? chosenVector : reverseVector);
+                const circleSegmentAnchor = new CircleSegmentAnchor(anchor, node.parent!);
+                anchorList.push(circleSegmentAnchor);
+            })
+        }
+
+        calculateAnchors(anchorsFromHyperStartToStart, nodesFromHyperConnectionToStart, true);
+        calculateAnchors(anchorsFromHyperEndToEnd, nodesFromHyperConnectionToEnd, false);
+
+        const anchorsFromStartToHyperStart = Array.from(anchorsFromHyperStartToStart).reverse();
+
+        // console.log({
+        //     anchorsFromHyperStartToStart,
+        //     anchorsFromStartToHyperStart,
+        //     anchorsFromHyperEndToEnd
+        // })
+
+        const getCircleSegmentConnections = (
+            circleSegmentAnchors: CircleSegmentAnchor[],
+            isForward: boolean
+        ) => {
+            const circleSegmentConnections: LayoutConnectionPoint[] = [];
+            for (let i = 1; i < circleSegmentAnchors.length; i++) {
+                
+                const startAnchor = circleSegmentAnchors[i - 1];
+                const endAnchor = circleSegmentAnchors[i];
+                
+                const circleSegment = new CircleSegmentConnection(
+                    isForward ? startAnchor.parentNode.circle :
+                    endAnchor.parentNode.circle
+                );
+    
+                circleSegment.setStartAnchor(startAnchor.anchor);
+                circleSegment.setEndAnchor(endAnchor.anchor);
+                circleSegment.node = startAnchor.parentNode;
+                circleSegment.connection = this.connection;
+                // circleSegment.debug = true;
+
+                circleSegmentConnections.push(circleSegment);
+            }
+
+            // At the end we add the last anchor point
+            const lastAnchor = circleSegmentAnchors[circleSegmentAnchors.length - 1];
+
+            return [...circleSegmentConnections, lastAnchor.anchor.cloneReversed()];
+        };
+
+        const startCircleSegmentConnections = getCircleSegmentConnections(anchorsFromStartToHyperStart, true);
+        const endCircleSegmentConnections = getCircleSegmentConnections(anchorsFromHyperEndToEnd, false);
+
+        const combinedPoints: LayoutConnectionPoint[] = [
+            ...startCircleSegmentConnections,
+            ...this.hyperConnection.points,
+            ...endCircleSegmentConnections
+        ];
+
+        console.log({
+            conn: this.connection,
+            anchorsFromHyperEndToEnd,
+            anchorsFromHyperStartToStart,
+            startCircleSegmentConnections,
+            endCircleSegmentConnections,
+            combinedPoints
+        })
+
+        return combinedPoints
+    }
+}
 
 export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
 
@@ -564,150 +754,170 @@ export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
 
         const selfConnections: LayoutConnection[] = connections.selfConnections;
 
+        const hyperConnections: MultiHyperConnection[] = [];
+
         node.outConnections.forEach(connection => {
             if (connection.hasParentHyperConnection) {
-                const start = connection.source;
-                const end = connection.target;
-
-                let currentStart = start;
-                let currentEnd = end;
+                // if (!(connection.source.id == "1" && connection.target.id == "3")) return;
 
                 const parentHyperConnection = connection.parent!;
-                const hyperStart = parentHyperConnection.source;
-                const hyperEnd = parentHyperConnection.target;
+                const hyperConnection = new MultiHyperConnection();
 
-                const startAnchors: LayoutConnectionPoint[] = [];
-                const endAnchors: LayoutConnectionPoint[] = [];
-
-                const startSegments: CircleSegmentConnection[] = [];
-                const endSegments: CircleSegmentConnection[] = [];
-
-                if (connection.source.id == "1" && connection.target.id == "3") {
-                    const x = 5;
-                }
-
-                // From the start node we build the connection to the start of the hyper connection
-                while (currentStart != hyperStart) {
-                    if (currentStart === undefined) {
-                        console.error("This should not happen");
-                        break;
-                    }
-
-                    const node = currentStart;
-                    // The anchor is outgoing from the current node away from the parent's center
-
-                    const parentCenter = node.parent?.center ?? new Point(0, 0);
-                    const nodeCenter = node.center;
-
-                    // console.log({
-                    //     node,
-                    //     start: start.id,
-                    //     end: end.id,
-                    //     connection,
-                    //     parent: node.parent,
-                    //     currentStart,
-                    //     hyperStart,
-                    //     parentCenter,
-                    //     nodeCenter
-                    // })
-
-                    const line = new Line(parentCenter, nodeCenter);
-                    const intersections = node.outerCircle.intersect(line);
-                    const intersection = ShapeUtil.getFurthestShapeToPoint(intersections, parentCenter, (intersection) => intersection)!;
-
-                    const anchor = new Anchor(intersection, new Vector(parentCenter, intersection));
-                    startAnchors.push(anchor);
-
-                    // Adapt the last segment
-                    const lastSegment = startSegments[startSegments.length - 1];
-                    if (lastSegment) {
-                        lastSegment.setEndAnchor(anchor);
-                    }
-                    const circle = new Circle(node.parent!.center, node.parent!.circle.r * 0.95);
-                    const arcConnection = new CircleSegmentConnection(circle)
-                    // arcConnection.debug = true;
-                    arcConnection.setStartAnchor(anchor);
-                    arcConnection.node = node;
-                    arcConnection.connection = connection;
-
-                    startSegments.push(arcConnection);
-
-                    currentStart = node.parent!;
-                }
-
-                const lastSegment = startSegments[startSegments.length - 1];
-                if (lastSegment) {
-                    const anchor = parentHyperConnection.startPoints[0] as Anchor ?? parentHyperConnection.points[0] as Anchor
-                    lastSegment.setEndAnchor(anchor);
-                }
-
-
-
-                // connection.startPoints = startAnchors;
-                if (connection.startPoints.length > 1) {
-                    console.warn("This should not happen");
-                }
-                connection.startPoints = startSegments;
-                connection.points = parentHyperConnection.combinedPoints;
-
-                let lastAnchor: Anchor | undefined = undefined; 
-
-                // From the start node we build the connection to the start of the hyper connection
-                while (currentEnd != hyperEnd) {
-                    if (currentEnd === undefined) {
-                        console.error("This should not happen");
-                        break;
-                    }
-
-                    const node = currentEnd;
-                    // The anchor is outgoing from the current node away from the parent's center
-
-                    const parentCenter = node.parent?.center ?? new Point(0, 0);
-                    const nodeCenter = node.center;
-
-                    const line = new Line(parentCenter, nodeCenter);
-                    const intersections = node.outerCircle.intersect(line);
-                    const intersection = ShapeUtil.getFurthestShapeToPoint(intersections, parentCenter, (intersection) => intersection)!;
-
-                    const anchor = new Anchor(intersection, new Vector(intersection, parentCenter));
-                    // startAnchors.push(anchor);
-
-                    // Adapt the last segment
-                    const lastSegment = endSegments[endSegments.length - 1];
-                    if (lastSegment) {
-                        lastSegment.setStartAnchor(anchor);
-                    }   
-
-                    const circle = new Circle(node.parent!.center, node.parent!.circle.r * 1.05);
-                    const arcConnection = new CircleSegmentConnection(circle)
-                    // arcConnection.debug = true;
-                    arcConnection.setEndAnchor(anchor);
-                    
-                    lastAnchor = new Anchor(intersection, anchor.direction.rotate(Math.PI));
-
-                    arcConnection.node = node;
-                    arcConnection.connection = connection;
-                    endSegments.push(arcConnection);
-
-                    currentEnd = node.parent!;
-                }
-
-                const lastEndSegment = endSegments[endSegments.length - 1];
-                if (lastEndSegment) {
-                    const points = parentHyperConnection.combinedPoints;
-                    const anchor = points[points.length - 1] as Anchor;
-                    const rotatedAnchor = new Anchor(anchor.anchorPoint, anchor.direction.rotate(Math.PI));
-                    // const anchor = parentHyperConnection.startPoints[0] as Anchor ?? parentHyperConnection.points[0] as Anchor
-                    lastEndSegment.setStartAnchor(rotatedAnchor);
-                    // lastAnchor = anchor;
-                }
-
-                connection.endPoints = [...endSegments];
-                if (lastAnchor) {
-                    connection.endPoints.push(lastAnchor);
-                }
+                hyperConnection.nodePath = connection.getSubNodePathViaHypernodes();
+                hyperConnection.hyperConnection = parentHyperConnection;
+                hyperConnection.connection = connection;
+                hyperConnections.push(hyperConnection);
             }
         })
+
+        hyperConnections.forEach(hyperConnection => {
+            hyperConnection.connection!.points = hyperConnection.calculatePoints();
+        })
+
+        // node.outConnections.forEach(connection => {
+        //     if (connection.hasParentHyperConnection) {
+        //         const start = connection.source;
+        //         const end = connection.target;
+
+        //         let currentStart = start;
+        //         let currentEnd = end;
+
+        //         const parentHyperConnection = connection.parent!;
+        //         const hyperStart = parentHyperConnection.source;
+        //         const hyperEnd = parentHyperConnection.target;
+
+        //         const startAnchors: LayoutConnectionPoint[] = [];
+        //         const endAnchors: LayoutConnectionPoint[] = [];
+
+        //         const startSegments: CircleSegmentConnection[] = [];
+        //         const endSegments: CircleSegmentConnection[] = [];
+
+        //         if (connection.source.id == "1" && connection.target.id == "3") {
+        //             const x = 5;
+        //         }
+
+        //         // From the start node we build the connection to the start of the hyper connection
+        //         while (currentStart != hyperStart) {
+        //             if (currentStart === undefined) {
+        //                 console.error("This should not happen");
+        //                 break;
+        //             }
+
+        //             const node = currentStart;
+        //             // The anchor is outgoing from the current node away from the parent's center
+
+        //             const parentCenter = node.parent?.center ?? new Point(0, 0);
+        //             const nodeCenter = node.center;
+
+        //             // console.log({
+        //             //     node,
+        //             //     start: start.id,
+        //             //     end: end.id,
+        //             //     connection,
+        //             //     parent: node.parent,
+        //             //     currentStart,
+        //             //     hyperStart,
+        //             //     parentCenter,
+        //             //     nodeCenter
+        //             // })
+
+        //             const line = new Line(parentCenter, nodeCenter);
+        //             const intersections = node.outerCircle.intersect(line);
+        //             const intersection = ShapeUtil.getFurthestShapeToPoint(intersections, parentCenter, (intersection) => intersection)!;
+
+        //             const anchor = new Anchor(intersection, new Vector(parentCenter, intersection));
+        //             startAnchors.push(anchor);
+
+        //             // Adapt the last segment
+        //             const lastSegment = startSegments[startSegments.length - 1];
+        //             if (lastSegment) {
+        //                 lastSegment.setEndAnchor(anchor);
+        //             }
+        //             const circle = new Circle(node.parent!.center, node.parent!.circle.r * 0.95);
+        //             const arcConnection = new CircleSegmentConnection(circle)
+        //             // arcConnection.debug = true;
+        //             arcConnection.setStartAnchor(anchor);
+        //             arcConnection.node = node;
+        //             arcConnection.connection = connection;
+
+        //             startSegments.push(arcConnection);
+
+        //             currentStart = node.parent!;
+        //         }
+
+        //         const lastSegment = startSegments[startSegments.length - 1];
+        //         if (lastSegment) {
+        //             const anchor = parentHyperConnection.startPoints[0] as Anchor ?? parentHyperConnection.points[0] as Anchor
+        //             lastSegment.setEndAnchor(anchor);
+        //         }
+
+
+
+        //         // connection.startPoints = startAnchors;
+        //         if (connection.startPoints.length > 1) {
+        //             console.warn("This should not happen");
+        //         }
+        //         connection.startPoints = startSegments;
+        //         connection.points = parentHyperConnection.combinedPoints;
+
+        //         let lastAnchor: Anchor | undefined = undefined;
+
+        //         // From the start node we build the connection to the start of the hyper connection
+        //         while (currentEnd != hyperEnd) {
+        //             if (currentEnd === undefined) {
+        //                 console.error("This should not happen");
+        //                 break;
+        //             }
+
+        //             const node = currentEnd;
+        //             // The anchor is outgoing from the current node away from the parent's center
+
+        //             const parentCenter = node.parent?.center ?? new Point(0, 0);
+        //             const nodeCenter = node.center;
+
+        //             const line = new Line(parentCenter, nodeCenter);
+        //             const intersections = node.outerCircle.intersect(line);
+        //             const intersection = ShapeUtil.getFurthestShapeToPoint(intersections, parentCenter, (intersection) => intersection)!;
+
+        //             const anchor = new Anchor(intersection, new Vector(intersection, parentCenter));
+        //             // startAnchors.push(anchor);
+
+        //             // Adapt the last segment
+        //             const lastSegment = endSegments[endSegments.length - 1];
+        //             if (lastSegment) {
+        //                 lastSegment.setStartAnchor(anchor);
+        //             }
+
+        //             const circle = new Circle(node.parent!.center, node.parent!.circle.r * 1.05);
+        //             const arcConnection = new CircleSegmentConnection(circle)
+        //             // arcConnection.debug = true;
+        //             arcConnection.setEndAnchor(anchor);
+
+        //             lastAnchor = new Anchor(intersection, anchor.direction.rotate(Math.PI));
+
+        //             arcConnection.node = node;
+        //             arcConnection.connection = connection;
+        //             endSegments.push(arcConnection);
+
+        //             currentEnd = node.parent!;
+        //         }
+
+        //         const lastEndSegment = endSegments[endSegments.length - 1];
+        //         if (lastEndSegment) {
+        //             const points = parentHyperConnection.combinedPoints;
+        //             const anchor = points[points.length - 1] as Anchor;
+        //             const rotatedAnchor = new Anchor(anchor.anchorPoint, anchor.direction.rotate(Math.PI));
+        //             // const anchor = parentHyperConnection.startPoints[0] as Anchor ?? parentHyperConnection.points[0] as Anchor
+        //             lastEndSegment.setStartAnchor(rotatedAnchor);
+        //             // lastAnchor = anchor;
+        //         }
+
+        //         connection.endPoints = [...endSegments];
+        //         if (lastAnchor) {
+        //             connection.endPoints.push(lastAnchor);
+        //         }
+        //     }
+        // })
 
 
 
