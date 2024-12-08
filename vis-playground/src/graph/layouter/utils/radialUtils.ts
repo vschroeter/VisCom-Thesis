@@ -39,6 +39,19 @@ export class RadialUtils extends ShapeUtil {
         return deg * Math.PI / 180;
     }
 
+    static normalizeRad(rad: number, positive: boolean = false): number {
+        if (rad < 0) {
+            rad += Math.floor(-rad / (2 * Math.PI) + 1) * 2 * Math.PI;
+        }
+
+        rad = rad % (2 * Math.PI);
+
+        if (!positive && rad > Math.PI) {
+            return rad - 2 * Math.PI;
+        }
+        return rad;
+    }
+
     static forwardRadBetweenAngles(startRad: number, endRad: number): number {
         const rad = endRad - startRad;
         return rad < 0 ? rad + 2 * Math.PI : rad;
@@ -53,13 +66,25 @@ export class RadialUtils extends ShapeUtil {
      * @param targetRad The target radian value.
      */
     static putRadBetween(startRad: number, endRad: number, targetRad: number): number {
+
+        startRad = RadialUtils.normalizeRad(startRad);
+        endRad = RadialUtils.normalizeRad(endRad);
+        targetRad = RadialUtils.normalizeRad(targetRad);
+
         const forwardRad = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
 
         const forwardTargetToStart = RadialUtils.forwardRadBetweenAngles(targetRad, startRad);
         const forwardStartToTarget = RadialUtils.forwardRadBetweenAngles(startRad, targetRad);
         const forwardTargetToEnd = RadialUtils.forwardRadBetweenAngles(targetRad, endRad);
 
-        
+        // console.log({
+        //     startRad: radToDeg(startRad),
+        //     endRad: radToDeg(endRad),
+        //     targetRad: radToDeg(targetRad),
+        //     forwardTargetToStart: radToDeg(forwardTargetToStart),
+        //     forwardStartToTarget: radToDeg(forwardStartToTarget),
+        //     forwardTargetToEnd: radToDeg(forwardTargetToEnd),
+        // })
 
         // If the target rad is outside the range, return the closest value
         if (forwardTargetToStart < forwardTargetToEnd) {

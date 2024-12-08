@@ -1,7 +1,7 @@
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
-import { RadialUtils } from "../utils/radialUtils";
+import { RadialUtils, radToDeg } from "../utils/radialUtils";
 import { LayoutConnection, LayoutConnectionPoint } from "src/graph/visGraph/layoutConnection";
 import { Circle, Line, Point, Ray, Segment, Vector } from "2d-geometry";
 import { Anchor } from "src/graph/graphical";
@@ -579,13 +579,13 @@ export class MultiHyperConnection {
         })
         nodesFromHyperConnectionToStart.reverse();
 
-        console.log({
-            path: this.nodePath,
-            connection: this.connection,
-            hyperConnection: this.hyperConnection,
-            nodesFromHyperConnectionToStart,
-            nodesFromHyperConnectionToEnd
-        })
+        // console.log({
+        //     path: this.nodePath,
+        //     connection: this.connection,
+        //     hyperConnection: this.hyperConnection,
+        //     nodesFromHyperConnectionToStart,
+        //     nodesFromHyperConnectionToEnd
+        // })
 
 
         // From hyper start to path start calculate the anchor points:
@@ -624,12 +624,19 @@ export class MultiHyperConnection {
                     [rad0, rad1] = [rad1, rad0];
                 }
 
+                // console.log({
+                //     node: node.id,
+                //     rad0: radToDeg(rad0),
+                //     rad1: radToDeg(rad1),
+                // })
+
                 const radRange = RadialUtils.forwardRadBetweenAngles(rad0, rad1);
                 const radMid = rad0 + radRange / 2;
                 const radFactor = 0.8;
                 rad0 = radMid - radRange * radFactor / 2;
                 rad1 = radMid + radRange * radFactor / 2;
-
+                rad0 %= 2 * Math.PI;
+                rad1 %= 2 * Math.PI;
 
                 const lastAnchor = anchorList[anchorList.length - 1];
                 const anchorRad = RadialUtils.radOfPoint(lastAnchor.anchor.anchorPoint, nodeCenter);
@@ -643,6 +650,15 @@ export class MultiHyperConnection {
                 const reverseVector = chosenVector.rotate(Math.PI);
                 const chosenPoint = nodeCenter.translate(chosenVector);
     
+                // console.log({
+                //     node: node.id,
+                //     rad0: radToDeg(rad0),
+                //     rad1: radToDeg(rad1),
+                //     radRange: radToDeg(radRange),
+                //     anchorRad: radToDeg(anchorRad),
+                //     chosenRad: radToDeg(chosenRad),
+                // })
+
                 // this.connection?.source.debugShapes.push(new Circle(chosenPoint, 2));
 
                 const anchor = new Anchor(chosenPoint, isBeforeHyperConnection ? chosenVector : reverseVector);
@@ -701,14 +717,14 @@ export class MultiHyperConnection {
             ...endCircleSegmentConnections
         ];
 
-        console.log({
-            conn: this.connection,
-            anchorsFromHyperEndToEnd,
-            anchorsFromHyperStartToStart,
-            startCircleSegmentConnections,
-            endCircleSegmentConnections,
-            combinedPoints
-        })
+        // console.log({
+        //     conn: this.connection,
+        //     anchorsFromHyperEndToEnd,
+        //     anchorsFromHyperStartToStart,
+        //     startCircleSegmentConnections,
+        //     endCircleSegmentConnections,
+        //     combinedPoints
+        // })
 
         return combinedPoints
     }
@@ -758,7 +774,7 @@ export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
 
         node.outConnections.forEach(connection => {
             if (connection.hasParentHyperConnection) {
-                // if (!(connection.source.id == "1" && connection.target.id == "3")) return;
+                // if (!(connection.source.id == "flint_node" && connection.target.id == "system_information")) return;
 
                 const parentHyperConnection = connection.parent!;
                 const hyperConnection = new MultiHyperConnection();
@@ -767,6 +783,8 @@ export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
                 hyperConnection.hyperConnection = parentHyperConnection;
                 hyperConnection.connection = connection;
                 hyperConnections.push(hyperConnection);
+            } else {
+                // console.log(connection.weight);
             }
         })
 

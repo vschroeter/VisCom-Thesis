@@ -508,8 +508,8 @@ export class VisGraph {
         // the width based on the weight
 
         const minW = 0.1;
-        const maxW = 5;
-        const wMultiplier = 2;
+        const maxW = 8;
+        const wMultiplier = 1;
 
         const stroke = this.commonSettings?.linkColor.getValue()?.toString() ?? "black";
         const strokeWithoutAlpha = d3.color(stroke)?.copy({ opacity: 1 })?.toString() ?? "black";
