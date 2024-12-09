@@ -1,9 +1,9 @@
 import networkx as nx
 
-from commgraph_backend.commgraph.converter import convert_normal_graph_to_commgraph, convert_to_weighted_graph
-from commgraph_backend.communities.community_detection import CommGraphCommunityDetector
-from commgraph_backend.data.reader import RosMetaSysGraphGenerator
-from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality, get_commgraph_node_clusters
+from viscom_backend.commgraph.converter import convert_normal_graph_to_commgraph, convert_to_weighted_graph
+from viscom_backend.communities.community_detection import CommGraphCommunityDetector
+from viscom_backend.data.reader import RosMetaSysGraphGenerator
+from viscom_backend.noderank.commgraph_centrality import calculate_commgraph_centrality, get_commgraph_node_clusters
 
 ds = RosMetaSysGraphGenerator.get_available_datasets(True)
 

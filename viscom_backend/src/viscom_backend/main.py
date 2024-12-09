@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-import random
 
-from commgraph_backend.commgraph.converter import convert_to_weighted_graph
 import networkx as nx
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from commgraph_backend.communities.community_detection_methods import community_methods_config
-from commgraph_backend.data.reader import RosMetaSysGraphGenerator
-from commgraph_backend.generator.generator import CommGraphGenerator
-from commgraph_backend.generator.generator_methods import generator_methods_config
-from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
-from commgraph_backend.noderank.node_rank_methods import node_rank_methods_config
+from viscom_backend.commgraph.converter import convert_to_weighted_graph
+from viscom_backend.communities.community_detection_methods import community_methods_config
+from viscom_backend.data.reader import RosMetaSysGraphGenerator
+from viscom_backend.generator.generator_methods import generator_methods_config
+from viscom_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
+from viscom_backend.noderank.node_rank_methods import node_rank_methods_config
 
 app = Flask(__name__)
 CORS(app)
@@ -121,6 +119,7 @@ def analyze_communities(method):
 
     data = request.get_json()
     graph = nx.node_link_graph(data, edges="links")
+    # graph = nx.node_link_graph(data)
     weighted_graph = convert_to_weighted_graph(graph)
     # for node in weighted_graph.nodes:
     #     print(node)

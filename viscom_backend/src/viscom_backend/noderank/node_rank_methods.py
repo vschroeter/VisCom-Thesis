@@ -1,4 +1,4 @@
-from commgraph_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
+from viscom_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
 import networkx as nx
 
 node_rank_methods_config = {

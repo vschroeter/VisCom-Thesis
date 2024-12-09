@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import Any, List, Dict, Set, TypeVar
 
-from commgraph_backend.commgraph.channel import CommunicationChannel, CommunicationDirection
-from commgraph_backend.commgraph.node import CommunicationNode
+from viscom_backend.commgraph.channel import CommunicationChannel, CommunicationDirection
+from viscom_backend.commgraph.node import CommunicationNode
 from ngraph.graph import createGraph, Graph
 
 NodeData = TypeVar("NodeData")

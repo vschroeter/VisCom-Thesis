@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import networkx as nx
 
-from commgraph_backend.commgraph.converter import convert_normal_graph_to_commgraph, convert_to_weighted_graph
-from commgraph_backend.data.reader import RosMetaSysGraphGenerator
-from commgraph_backend.generator.generator import CommGraphGenerator
+from viscom_backend.commgraph.converter import convert_normal_graph_to_commgraph, convert_to_weighted_graph
+from viscom_backend.data.reader import RosMetaSysGraphGenerator
+from viscom_backend.generator.generator import CommGraphGenerator
 
 MAX_NODES = 1000
 

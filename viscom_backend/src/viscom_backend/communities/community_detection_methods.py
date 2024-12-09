@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from commgraph_backend.communities.community_detection import CommGraphCommunityDetector
+from viscom_backend.communities.community_detection import CommGraphCommunityDetector
 import networkx as nx
 
 MAX_NODES = 1000

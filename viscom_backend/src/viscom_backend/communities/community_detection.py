@@ -8,7 +8,7 @@ from functools import lru_cache
 import networkx as nx
 from networkx.algorithms.community import modularity
 
-from commgraph_backend.commgraph.converter import convert_node_connections_graph_to_topic_graph, convert_to_weighted_graph
+from viscom_backend.commgraph.converter import convert_node_connections_graph_to_topic_graph, convert_to_weighted_graph
 
 
 class Community:
