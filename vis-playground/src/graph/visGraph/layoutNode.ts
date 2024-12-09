@@ -605,6 +605,10 @@ export class LayoutNode {
         return (Array.isArray(this.connectionLayouter) ? this.connectionLayouter : [this.connectionLayouter]);
     }
 
+    getConnectionLayouterByTag(tag: string): BaseNodeConnectionLayouter | undefined {
+        return this.getConnectionLayouter().find(layouter => layouter.TAG == tag);
+    }
+
     iterateConnectionLayouter(): boolean {
         const layouters = (Array.isArray(this.connectionLayouter) ? this.connectionLayouter : [this.connectionLayouter]);
         if (layouters.length == 0) {
@@ -617,7 +621,7 @@ export class LayoutNode {
 
         const layouter = layouters[this._currentConnectionLayouterIndex];
         // console.log('[NODE] iterateConnectionLayouter', this.id, layouter);
-        layouter.layoutConnectionsOfNode(this);
+        layouter.layoutConnections(this);
         this._currentConnectionLayouterIndex++;
         return true;
     }

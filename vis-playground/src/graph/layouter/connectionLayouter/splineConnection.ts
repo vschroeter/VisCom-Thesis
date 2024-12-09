@@ -57,8 +57,6 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
         this.radialConnectionsHelper = new RadialConnectionsHelper({
             forwardBackwardThresholdDeg: 360
         });
-
-        this.addPreHook(this.prepareAnchorPoints.bind(this));
     }
 
 
@@ -97,7 +95,7 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
     }
 
 
-    prepareAnchorPoints(node: LayoutNode): void {
+    override layoutConnectionsOfNode(node: LayoutNode): void {
         const connections = this.radialConnectionsHelper.getConnectionTypesFromNode(node);
         // console.log(node.id, connections);
 
@@ -389,116 +387,120 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
         }
     }
 
-    override layoutConnectionsOfNode(node: LayoutNode): void {
-        // Different types of rendered connections:
-        // Direct connections:
-        // - Direct forward connections-- > rendered as circular arcs
-        // - Direct backward connections --> rendered as circular arcs, but with a larger radius
-        // Connections inside the circle of the parent node:
-        // - are rendered as splines
-        // - Outgoing connections, if the forward angular difference from node to target is below the threshold
-        // - Incoming connections, if the backward angular difference from start to node is below the threshold
-        // - Bidirectional connections always
-        // Connections outside the circle of the parent node:
-        // - are rendered as splines
-        // - Outgoing connections, if the forward angular difference from node to target is above the threshold
-        // - Incoming connections, if the backward angular difference from start to node is above the threshold
+    override layoutConnectionsOfChildren(parent: LayoutNode): void {
+        parent.children.forEach(node => {
+            // Different types of rendered connections:
+            // Direct connections:
+            // - Direct forward connections-- > rendered as circular arcs
+            // - Direct backward connections --> rendered as circular arcs, but with a larger radius
+            // Connections inside the circle of the parent node:
+            // - are rendered as splines
+            // - Outgoing connections, if the forward angular difference from node to target is below the threshold
+            // - Incoming connections, if the backward angular difference from start to node is below the threshold
+            // - Bidirectional connections always
+            // Connections outside the circle of the parent node:
+            // - are rendered as splines
+            // - Outgoing connections, if the forward angular difference from node to target is above the threshold
+            // - Incoming connections, if the backward angular difference from start to node is above the threshold
 
-        const connections = this.radialConnectionsHelper.getConnectionTypesFromNode(node);
+            const connections = this.radialConnectionsHelper.getConnectionTypesFromNode(node);
 
-        const outgoingConnectionsInside: LayoutConnection[] = connections.outgoingConnectionsInside;
-        const incomingConnectionsInside: LayoutConnection[] = connections.incomingConnectionsInside;
+            const outgoingConnectionsInside: LayoutConnection[] = connections.outgoingConnectionsInside;
+            const incomingConnectionsInside: LayoutConnection[] = connections.incomingConnectionsInside;
 
-        const outgoingConnectionsOutside: LayoutConnection[] = connections.outgoingConnectionsOutside;
-        const incomingConnectionsOutside: LayoutConnection[] = connections.incomingConnectionsOutside;
+            const outgoingConnectionsOutside: LayoutConnection[] = connections.outgoingConnectionsOutside;
+            const incomingConnectionsOutside: LayoutConnection[] = connections.incomingConnectionsOutside;
 
-        const connectionsWithDifferentParents: LayoutConnection[] = connections.connectionsWithDifferentParents;
+            const connectionsWithDifferentParents: LayoutConnection[] = connections.connectionsWithDifferentParents;
 
-        const selfConnections: LayoutConnection[] = connections.selfConnections;
+            const selfConnections: LayoutConnection[] = connections.selfConnections;
 
-        // Render connections inside the parent circle
+            // Render connections inside the parent circle
 
-        // TODO: Add arrow control points
-        if (outgoingConnectionsInside.length > 0) {
+            // TODO: Add arrow control points
+            if (outgoingConnectionsInside.length > 0) {
 
-            const insideConnections = [...outgoingConnectionsInside];
+                const insideConnections = [...outgoingConnectionsInside];
 
-            // Now we distribute the connections inside the parent circle
-            insideConnections.forEach((connection, index) => {
-                const sizeArrow = 10;
+                // Now we distribute the connections inside the parent circle
+                insideConnections.forEach((connection, index) => {
+                    const sizeArrow = 10;
 
-                const startAnchor = connection.startPoints[0] as Anchor;
-                const endAnchor = connection.endPoints[0] as Anchor;
+                    const startAnchor = connection.startPoints[0] as Anchor;
+                    const endAnchor = connection.endPoints[0] as Anchor;
 
-                if (startAnchor && endAnchor) {
+                    if (startAnchor && endAnchor) {
 
-                    // When having the anchors, we want to add two further control points for the spline
-                    // These control points depend on the distance between the anchor points
-                    const distanceBetweenAnchors = startAnchor.anchorPoint.distanceTo(endAnchor.anchorPoint)[0];
-                    const anchorDistanceFactor = 0.4
-                    const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
+                        // When having the anchors, we want to add two further control points for the spline
+                        // These control points depend on the distance between the anchor points
+                        const distanceBetweenAnchors = startAnchor.anchorPoint.distanceTo(endAnchor.anchorPoint)[0];
+                        const anchorDistanceFactor = 0.4
+                        const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
 
-                    const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
-                    const endControlPoint = endAnchor.getPointInDirection(distanceToControlPoint);
-
-
-                    // connection.startPoints = [startAnchor, startControlPoint];
-                    // connection.endPoints = [endControlPoint, endAnchor];
-
-                    const bezierCurve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
-                    connection.points = [bezierCurve];
-
-                    // node.debugShapes.push(new Circle(startControlPoint, 2));
-                    // node.debugShapes.push(new Circle(endControlPoint, 3));
-                }
+                        const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
+                        const endControlPoint = endAnchor.getPointInDirection(distanceToControlPoint);
 
 
-                connection.curveStyle = "basis";
+                        // connection.startPoints = [startAnchor, startControlPoint];
+                        // connection.endPoints = [endControlPoint, endAnchor];
+
+                        const bezierCurve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
+                        connection.points = [bezierCurve];
+
+                        // node.debugShapes.push(new Circle(startControlPoint, 2));
+                        // node.debugShapes.push(new Circle(endControlPoint, 3));
+                    } else {
+                        console.warn("No anchor points found for connection", connection);
+                    }
 
 
-            })
-
-        }
-
-        if (outgoingConnectionsOutside.length > 0) {
-
-            const outsideConnections = [...outgoingConnectionsOutside];
-
-            // Now we distribute the connections inside the parent circle
-            outsideConnections.forEach((connection, index) => {
-                const sizeArrow = 10;
-
-                const startAnchor = connection.startPoints[0] as Anchor;
-                const endAnchor = connection.endPoints[0] as Anchor;
-
-                if (startAnchor && endAnchor) {
-
-                    // When having the anchors, we want to add two further control points for the spline
-                    // These control points depend on the distance between the anchor points
-                    const distanceBetweenAnchors = startAnchor.anchorPoint.distanceTo(endAnchor.anchorPoint)[0];
-                    const anchorDistanceFactor = 0.4
-                    const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
-
-                    const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
-                    const endControlPoint = endAnchor.getPointInDirection(distanceToControlPoint);
+                    connection.curveStyle = "basis";
 
 
-                    // connection.startPoints = [startAnchor, startControlPoint];
-                    // connection.endPoints = [endControlPoint, endAnchor];
+                })
 
-                    const bezierCurve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
-                    connection.points = [bezierCurve];
+            }
 
-                    // node.debugShapes.push(new Circle(startControlPoint, 2));
-                    // node.debugShapes.push(new Circle(endControlPoint, 3));
-                }
+            if (outgoingConnectionsOutside.length > 0) {
+
+                const outsideConnections = [...outgoingConnectionsOutside];
+
+                // Now we distribute the connections inside the parent circle
+                outsideConnections.forEach((connection, index) => {
+                    const sizeArrow = 10;
+
+                    const startAnchor = connection.startPoints[0] as Anchor;
+                    const endAnchor = connection.endPoints[0] as Anchor;
+
+                    if (startAnchor && endAnchor) {
+
+                        // When having the anchors, we want to add two further control points for the spline
+                        // These control points depend on the distance between the anchor points
+                        const distanceBetweenAnchors = startAnchor.anchorPoint.distanceTo(endAnchor.anchorPoint)[0];
+                        const anchorDistanceFactor = 0.4
+                        const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
+
+                        const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
+                        const endControlPoint = endAnchor.getPointInDirection(distanceToControlPoint);
 
 
-                connection.curveStyle = "basis";
+                        // connection.startPoints = [startAnchor, startControlPoint];
+                        // connection.endPoints = [endControlPoint, endAnchor];
+
+                        const bezierCurve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
+                        connection.points = [bezierCurve];
+
+                        // node.debugShapes.push(new Circle(startControlPoint, 2));
+                        // node.debugShapes.push(new Circle(endControlPoint, 3));
+                    }
 
 
-            })
-        }
+                    connection.curveStyle = "basis";
+
+
+                })
+            }
+        })
     }
 }
 
@@ -526,12 +528,15 @@ export class MultiHyperConnection {
 
     }
 
-    calculatePoints(): LayoutConnectionPoint[] {
+    calculatePoints(): {
+        circleSegments: CircleSegmentConnection[],
+        points: LayoutConnectionPoint[]
+    } {
         const nodesFromHyperConnectionToStart: LayoutNode[] = [];
         const nodesFromHyperConnectionToEnd: LayoutNode[] = [];
 
         if (this.hyperConnection === undefined) {
-            return [];
+            return {circleSegments: [], points: []};
         }
 
         let isStart = true;
@@ -646,34 +651,35 @@ export class MultiHyperConnection {
         //     anchorsFromHyperEndToEnd
         // })
 
+        const circleSegmentConnections: CircleSegmentConnection[] = [];
+
         const getCircleSegmentConnections = (
             circleSegmentAnchors: CircleSegmentAnchor[],
             isForward: boolean
         ) => {
-            const circleSegmentConnections: LayoutConnectionPoint[] = [];
+            const _circleSegmentConnections: CircleSegmentConnection[] = [];
             for (let i = 1; i < circleSegmentAnchors.length; i++) {
 
                 const startAnchor = circleSegmentAnchors[i - 1];
                 const endAnchor = circleSegmentAnchors[i];
 
-                const circleSegment = new CircleSegmentConnection(
-                    isForward ? startAnchor.parentNode.circle :
-                        endAnchor.parentNode.circle
-                );
+                const parentNode = isForward ? startAnchor.parentNode : endAnchor.parentNode;
+                const circleSegment = new CircleSegmentConnection(parentNode.circle);
 
                 circleSegment.setStartAnchor(startAnchor.anchor);
                 circleSegment.setEndAnchor(endAnchor.anchor);
-                circleSegment.node = startAnchor.parentNode;
+                circleSegment.parentNode = parentNode;
                 circleSegment.connection = this.connection;
                 // circleSegment.debug = true;
 
-                circleSegmentConnections.push(circleSegment);
+                _circleSegmentConnections.push(circleSegment);
             }
 
             // At the end we add the last anchor point
             const lastAnchor = circleSegmentAnchors[circleSegmentAnchors.length - 1];
+            circleSegmentConnections.push(..._circleSegmentConnections);
 
-            return [...circleSegmentConnections, lastAnchor.anchor.cloneReversed()];
+            return [..._circleSegmentConnections, lastAnchor.anchor.cloneReversed()];
         };
 
         const startCircleSegmentConnections = getCircleSegmentConnections(anchorsFromStartToHyperStart, true);
@@ -694,14 +700,19 @@ export class MultiHyperConnection {
         //     combinedPoints
         // })
 
-        return combinedPoints
+        return {
+            points: combinedPoints,
+            circleSegments: circleSegmentConnections
+        }
     }
 }
 
 export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
-
+    override TAG = "RadialSubConnectionLayouter";
 
     radialConnectionsHelper: RadialConnectionsHelper;
+
+    hyperConnections: MultiHyperConnection[] = [];
 
     constructor() {
         super();
@@ -751,162 +762,72 @@ export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
                 hyperConnection.hyperConnection = parentHyperConnection;
                 hyperConnection.connection = connection;
                 hyperConnections.push(hyperConnection);
+                // hyperConnections.forEach(hyperConnection => {
+                //     connection.points = hyperConnection.calculatePoints();
+                // })
             } else {
                 // console.log(connection.weight);
             }
         })
 
-        hyperConnections.forEach(hyperConnection => {
-            hyperConnection.connection!.points = hyperConnection.calculatePoints();
-        })
 
-        // node.outConnections.forEach(connection => {
-        //     if (connection.hasParentHyperConnection) {
-        //         const start = connection.source;
-        //         const end = connection.target;
+        this.hyperConnections.push(...hyperConnections);
+    }
+    override layoutConnectionsOfChildren(node: LayoutNode): void {
+        if (node != node.visGraph.rootNode) {
+            return;
+        }
+        // return;
+        // Get all hyper connections of child nodes
+        const hyperConnections: MultiHyperConnection[] = [];
+        node.children.forEach(child => {
+            const layouter = child.getConnectionLayouterByTag(this.TAG) as RadialSubConnectionLayouter;
 
-        //         let currentStart = start;
-        //         let currentEnd = end;
+            if (layouter !== undefined) {
+                hyperConnections.push(...layouter.hyperConnections);
+            }
+        });
 
-        //         const parentHyperConnection = connection.parent!;
-        //         const hyperStart = parentHyperConnection.source;
-        //         const hyperEnd = parentHyperConnection.target;
+        if (this.hyperConnections.length == 0) {
+            return;
+        }
 
-        //         const startAnchors: LayoutConnectionPoint[] = [];
-        //         const endAnchors: LayoutConnectionPoint[] = [];
+        console.log(node.id, hyperConnections);
 
-        //         const startSegments: CircleSegmentConnection[] = [];
-        //         const endSegments: CircleSegmentConnection[] = [];
-
-        //         if (connection.source.id == "1" && connection.target.id == "3") {
-        //             const x = 5;
-        //         }
-
-        //         // From the start node we build the connection to the start of the hyper connection
-        //         while (currentStart != hyperStart) {
-        //             if (currentStart === undefined) {
-        //                 console.error("This should not happen");
-        //                 break;
-        //             }
-
-        //             const node = currentStart;
-        //             // The anchor is outgoing from the current node away from the parent's center
-
-        //             const parentCenter = node.parent?.center ?? new Point(0, 0);
-        //             const nodeCenter = node.center;
-
-        //             // console.log({
-        //             //     node,
-        //             //     start: start.id,
-        //             //     end: end.id,
-        //             //     connection,
-        //             //     parent: node.parent,
-        //             //     currentStart,
-        //             //     hyperStart,
-        //             //     parentCenter,
-        //             //     nodeCenter
-        //             // })
-
-        //             const line = new Line(parentCenter, nodeCenter);
-        //             const intersections = node.outerCircle.intersect(line);
-        //             const intersection = ShapeUtil.getFurthestShapeToPoint(intersections, parentCenter, (intersection) => intersection)!;
-
-        //             const anchor = new Anchor(intersection, new Vector(parentCenter, intersection));
-        //             startAnchors.push(anchor);
-
-        //             // Adapt the last segment
-        //             const lastSegment = startSegments[startSegments.length - 1];
-        //             if (lastSegment) {
-        //                 lastSegment.setEndAnchor(anchor);
-        //             }
-        //             const circle = new Circle(node.parent!.center, node.parent!.circle.r * 0.95);
-        //             const arcConnection = new CircleSegmentConnection(circle)
-        //             // arcConnection.debug = true;
-        //             arcConnection.setStartAnchor(anchor);
-        //             arcConnection.node = node;
-        //             arcConnection.connection = connection;
-
-        //             startSegments.push(arcConnection);
-
-        //             currentStart = node.parent!;
-        //         }
-
-        //         const lastSegment = startSegments[startSegments.length - 1];
-        //         if (lastSegment) {
-        //             const anchor = parentHyperConnection.startPoints[0] as Anchor ?? parentHyperConnection.points[0] as Anchor
-        //             lastSegment.setEndAnchor(anchor);
-        //         }
-
-
-
-        //         // connection.startPoints = startAnchors;
-        //         if (connection.startPoints.length > 1) {
-        //             console.warn("This should not happen");
-        //         }
-        //         connection.startPoints = startSegments;
-        //         connection.points = parentHyperConnection.combinedPoints;
-
-        //         let lastAnchor: Anchor | undefined = undefined;
-
-        //         // From the start node we build the connection to the start of the hyper connection
-        //         while (currentEnd != hyperEnd) {
-        //             if (currentEnd === undefined) {
-        //                 console.error("This should not happen");
-        //                 break;
-        //             }
-
-        //             const node = currentEnd;
-        //             // The anchor is outgoing from the current node away from the parent's center
-
-        //             const parentCenter = node.parent?.center ?? new Point(0, 0);
-        //             const nodeCenter = node.center;
-
-        //             const line = new Line(parentCenter, nodeCenter);
-        //             const intersections = node.outerCircle.intersect(line);
-        //             const intersection = ShapeUtil.getFurthestShapeToPoint(intersections, parentCenter, (intersection) => intersection)!;
-
-        //             const anchor = new Anchor(intersection, new Vector(intersection, parentCenter));
-        //             // startAnchors.push(anchor);
-
-        //             // Adapt the last segment
-        //             const lastSegment = endSegments[endSegments.length - 1];
-        //             if (lastSegment) {
-        //                 lastSegment.setStartAnchor(anchor);
-        //             }
-
-        //             const circle = new Circle(node.parent!.center, node.parent!.circle.r * 1.05);
-        //             const arcConnection = new CircleSegmentConnection(circle)
-        //             // arcConnection.debug = true;
-        //             arcConnection.setEndAnchor(anchor);
-
-        //             lastAnchor = new Anchor(intersection, anchor.direction.rotate(Math.PI));
-
-        //             arcConnection.node = node;
-        //             arcConnection.connection = connection;
-        //             endSegments.push(arcConnection);
-
-        //             currentEnd = node.parent!;
-        //         }
-
-        //         const lastEndSegment = endSegments[endSegments.length - 1];
-        //         if (lastEndSegment) {
-        //             const points = parentHyperConnection.combinedPoints;
-        //             const anchor = points[points.length - 1] as Anchor;
-        //             const rotatedAnchor = new Anchor(anchor.anchorPoint, anchor.direction.rotate(Math.PI));
-        //             // const anchor = parentHyperConnection.startPoints[0] as Anchor ?? parentHyperConnection.points[0] as Anchor
-        //             lastEndSegment.setStartAnchor(rotatedAnchor);
-        //             // lastAnchor = anchor;
-        //         }
-
-        //         connection.endPoints = [...endSegments];
-        //         if (lastAnchor) {
-        //             connection.endPoints.push(lastAnchor);
-        //         }
-        //     }
+        // hyperConnections.forEach(hyperConnection => {
+        //     // hyperConnection.
+        //     hyperConnection.connection!.points = hyperConnection.calculatePoints();
         // })
 
+        const nodeToCircleSegmentsMap = new Map<LayoutNode, CircleSegmentConnection[]>();
 
+        this.hyperConnections.forEach(hyperConnection => {
+            const res = hyperConnection.calculatePoints();
 
+            res.circleSegments.forEach(circleSegment => {
+                if (!circleSegment.parentNode) return;
+
+                if (!nodeToCircleSegmentsMap.has(circleSegment.parentNode)) {
+                    nodeToCircleSegmentsMap.set(circleSegment.parentNode, []);
+                }
+                nodeToCircleSegmentsMap.get(circleSegment.parentNode)!.push(circleSegment);
+            })
+
+            hyperConnection.connection!.points = res.points;
+        })
+
+        console.log(nodeToCircleSegmentsMap);
+
+        nodeToCircleSegmentsMap.forEach((circleSegments, parentNode) => {
+            const segmentsOnCircle = circleSegments.filter(circleSegment => circleSegment.isOnCircle);
+            const min = 0.9
+            const max = 1.1
+
+            segmentsOnCircle.forEach((circleSegment, index) => {
+                circleSegment.circle.r *= min + (max - min) * ((index + 1) / (segmentsOnCircle.length + 1));
+                circleSegment.calculate(true)
+            });
+        })
 
     }
 }

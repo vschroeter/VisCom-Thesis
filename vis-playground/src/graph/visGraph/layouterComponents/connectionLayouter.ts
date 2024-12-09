@@ -27,6 +27,7 @@ export type NodeConnectionLayouterHook = (node: LayoutNode) => void;
  * 4. Post hooks for the node
  */
 export class BaseNodeConnectionLayouter {
+    TAG = "BaseNodeConnectionLayouter";
 
     protected preHooks: NodeConnectionLayouterHook[] = [];
     protected postHooks: NodeConnectionLayouterHook[] = [];

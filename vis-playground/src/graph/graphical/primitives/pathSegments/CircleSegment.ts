@@ -12,7 +12,19 @@ export class CircleSegmentConnection implements SvgPathSegment {
 
     debug: boolean = false;
 
-    node?: LayoutNode;
+    protected _calculated: boolean = false;
+    get calculated(): boolean {
+        return this._calculated;
+    }
+    set calculated(value: boolean) {
+        this._calculated = value;
+        this.startCurve = undefined;
+        this.endCurve = undefined;
+        this.circleArc = undefined;
+        this.directConnectionCurve = undefined;
+    }
+
+    parentNode?: LayoutNode;
     connection?: LayoutConnection;
 
     get start(): Point {
@@ -25,6 +37,11 @@ export class CircleSegmentConnection implements SvgPathSegment {
     circle: Circle;
     startAnchor?: Anchor;
     endAnchor?: Anchor;
+
+    startCurve?: CubicBezierCurve;
+    endCurve?: CubicBezierCurve;
+    circleArc?: EllipticArc;
+    directConnectionCurve?: CubicBezierCurve;
 
     constructor(
         circle: Circle,
@@ -56,8 +73,29 @@ export class CircleSegmentConnection implements SvgPathSegment {
         this.endAnchor = endAnchor;
     }
 
-    getSvgPath(): string {
+    get isOnCircle() {
+        if (!this._calculated) {
+            this.calculate();
+        }
 
+        return this.directConnectionCurve === undefined;
+    }
+
+    getSvgPath(): string {
+        if (!this._calculated) {
+            this.calculate();
+        }
+
+        if (this.directConnectionCurve) {
+            return this.directConnectionCurve.getSvgPath();
+        }
+
+        return `${this.startCurve?.getSvgPath()} ${this.circleArc?.getSvgPath()} ${this.endCurve?.getSvgPath()}`;
+    }
+    calculate(force = false): string {
+        if (this._calculated && !force) {
+            return this.getSvgPath();
+        }
         // Contains 3 forms:
         // - a start connection quadratic bezier curve from the start anchor to the circle
         // - a circle arc
@@ -113,16 +151,17 @@ export class CircleSegmentConnection implements SvgPathSegment {
 
         if (this.debug) {
             startCircleForIntersection._data = { stroke: "red" };
-            this.node?.debugShapes.push(this.circle);
-            this.node?.debugShapes.push(startPoint);
-            this.node?.debugShapes.push(endPoint);
-            this.node?.debugShapes.push(startCircleForIntersection);
-            this.node?.debugShapes.push(endCircleForIntersection);
-            this.node?.debugShapes.push(startCircleCenterPoint);
-            this.node?.debugShapes.push(endCircleCenterPoint);
+            this.parentNode?.debugShapes.push(this.circle);
+            this.parentNode?.debugShapes.push(startPoint);
+            this.parentNode?.debugShapes.push(endPoint);
+            this.parentNode?.debugShapes.push(startCircleForIntersection);
+            this.parentNode?.debugShapes.push(endCircleForIntersection);
+            this.parentNode?.debugShapes.push(startCircleCenterPoint);
+            this.parentNode?.debugShapes.push(endCircleCenterPoint);
         }
 
         if (intersections.length > 0 || startContainsEnd || endContainsStart) {
+
             // The control points are the same like in the normal spline connection
             const distanceBetweenAnchors = startAnchor.anchorPoint.distanceTo(endAnchor.anchorPoint)[0];
             const anchorDistanceFactor = 0.4
@@ -135,6 +174,7 @@ export class CircleSegmentConnection implements SvgPathSegment {
             const endControlPoint = endAnchor.getPointTowardsReference(-distanceToControlPoint, startPoint);
 
             const curve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
+            this.directConnectionCurve = curve;
             return curve.getSvgPath();
         }
 
@@ -187,6 +227,9 @@ export class CircleSegmentConnection implements SvgPathSegment {
         const startCurve = new CubicBezierCurve(startPoint, startControlPoint1, startControlPoint2, arcStartPoint);
         const endCurve = new CubicBezierCurve(arcEndPoint, endControlPoint1, endControlPoint2, endPoint);
 
+        this.startCurve = startCurve;
+        this.endCurve = endCurve;
+        this.circleArc = arc;
         return `${startCurve.getSvgPath()} ${arc.getSvgPath()} ${endCurve.getSvgPath()}`;
     }
 
