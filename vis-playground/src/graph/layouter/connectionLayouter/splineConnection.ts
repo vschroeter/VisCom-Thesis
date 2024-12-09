@@ -45,11 +45,10 @@ class Continuum {
 }
 
 ////////////////////////////////////////////////////////////////////////////
-// #region Anchor Point Calculator
+// #region Spline Layouter
 ////////////////////////////////////////////////////////////////////////////
 
-export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnectionLayouter {
-
+export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
     radialConnectionsHelper: RadialConnectionsHelper;
 
     constructor() {
@@ -58,7 +57,10 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
         this.radialConnectionsHelper = new RadialConnectionsHelper({
             forwardBackwardThresholdDeg: 360
         });
+
+        this.addPreHook(this.prepareAnchorPoints.bind(this));
     }
+
 
     static sortConnectionsByIndexInPlace<T>(connections: T[], node: LayoutNode, reverse = false, getConnection: (c: T) => LayoutConnection = (c: T) => c as LayoutConnection): T[] {
         connections.sort((_a, _b) => {
@@ -94,7 +96,8 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
         return connections;
     }
 
-    override layoutConnectionsOfNode(node: LayoutNode): void {
+
+    prepareAnchorPoints(node: LayoutNode): void {
         const connections = this.radialConnectionsHelper.getConnectionTypesFromNode(node);
         // console.log(node.id, connections);
 
@@ -185,9 +188,9 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
                     return pair;
                 }
             }
-            RadialSplineConnectionAnchorPointCalculator.sortConnectionsByIndexInPlace(outgoingConnectionsCombined, node, false, connectionGetter);
+            RadialSplineConnectionLayouter.sortConnectionsByIndexInPlace(outgoingConnectionsCombined, node, false, connectionGetter);
 
-            RadialSplineConnectionAnchorPointCalculator.sortConnectionsByIndexInPlace(onlyIncomingConnections, node);
+            RadialSplineConnectionLayouter.sortConnectionsByIndexInPlace(onlyIncomingConnections, node);
 
             const mapParentNodeIdToContinuum = new Map<string, Continuum>();
 
@@ -327,8 +330,8 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
             // - A) first the outgoing connections, then the incoming connections
             // - B) sort the connections by the index of the target node in the sorting
 
-            RadialSplineConnectionAnchorPointCalculator.sortConnectionsByIndexInPlace(filteredOutgoingOutsideConnections, node, true);
-            RadialSplineConnectionAnchorPointCalculator.sortConnectionsByIndexInPlace(filteredIncomingOutsideConnections, node, true);
+            RadialSplineConnectionLayouter.sortConnectionsByIndexInPlace(filteredOutgoingOutsideConnections, node, true);
+            RadialSplineConnectionLayouter.sortConnectionsByIndexInPlace(filteredIncomingOutsideConnections, node, true);
 
             const outsideConnections = [...filteredOutgoingOutsideConnections, ...filteredIncomingOutsideConnections];
 
@@ -386,25 +389,6 @@ export class RadialSplineConnectionAnchorPointCalculator extends BaseNodeConnect
         }
     }
 
-}
-
-////////////////////////////////////////////////////////////////////////////
-// #region Spline Layouter
-////////////////////////////////////////////////////////////////////////////
-
-export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
-
-
-    radialConnectionsHelper: RadialConnectionsHelper;
-
-    constructor() {
-        super();
-
-        this.radialConnectionsHelper = new RadialConnectionsHelper({
-            forwardBackwardThresholdDeg: 360
-        });
-    }
-
     override layoutConnectionsOfNode(node: LayoutNode): void {
         // Different types of rendered connections:
         // Direct connections:
@@ -431,19 +415,6 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
         const connectionsWithDifferentParents: LayoutConnection[] = connections.connectionsWithDifferentParents;
 
         const selfConnections: LayoutConnection[] = connections.selfConnections;
-
-
-        // console.log({
-        //     id: node.id,
-        //     directOutForwardConnections,
-        //     directOutBackwardConnections,
-        //     directInForwardConnections,
-        //     directInBackwardConnections,
-        //     outgoingConnectionsInside,
-        //     incomingConnectionsInside,
-        //     outgoingConnectionsOutside,
-        //     incomingConnectionsOutside
-        // });
 
         // Render connections inside the parent circle
 
@@ -528,9 +499,6 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
 
             })
         }
-
-
-
     }
 }
 
@@ -613,13 +581,13 @@ export class MultiHyperConnection {
 
                 const parentCenter = node.parent?.center ?? new Point(0, 0);
                 const nodeCenter = node.center;
-                
+
                 // Valid outer angles
                 const intersections = node.outerCircle.intersect(node.parent?.innerCircle ?? new Circle(new Point(0, 0), 0));
                 const radNodeCenter = RadialUtils.radOfPoint(nodeCenter, parentCenter);
                 let rad0 = RadialUtils.radOfPoint(intersections[0], nodeCenter);
                 let rad1 = RadialUtils.radOfPoint(intersections[1], nodeCenter);
-    
+
                 if (RadialUtils.forwardRadBetweenAngles(radNodeCenter, rad0) < RadialUtils.forwardRadBetweenAngles(radNodeCenter, rad1)) {
                     [rad0, rad1] = [rad1, rad0];
                 }
@@ -644,12 +612,12 @@ export class MultiHyperConnection {
                 // this.connection?.source.debugShapes.push(new Circle(intersections[0], 2));
                 // this.connection?.source.debugShapes.push(new Circle(intersections[1], 2));
                 // this.connection?.source.debugShapes.push(new Circle(lastAnchor.anchor.anchorPoint, 2));
-    
+
                 const chosenRad = RadialUtils.putRadBetween(rad0, rad1, anchorRad);
                 const chosenVector = RadialUtils.radToVector(chosenRad).multiply(node.outerCircle.r);
                 const reverseVector = chosenVector.rotate(Math.PI);
                 const chosenPoint = nodeCenter.translate(chosenVector);
-    
+
                 // console.log({
                 //     node: node.id,
                 //     rad0: radToDeg(rad0),
@@ -684,15 +652,15 @@ export class MultiHyperConnection {
         ) => {
             const circleSegmentConnections: LayoutConnectionPoint[] = [];
             for (let i = 1; i < circleSegmentAnchors.length; i++) {
-                
+
                 const startAnchor = circleSegmentAnchors[i - 1];
                 const endAnchor = circleSegmentAnchors[i];
-                
+
                 const circleSegment = new CircleSegmentConnection(
                     isForward ? startAnchor.parentNode.circle :
-                    endAnchor.parentNode.circle
+                        endAnchor.parentNode.circle
                 );
-    
+
                 circleSegment.setStartAnchor(startAnchor.anchor);
                 circleSegment.setEndAnchor(endAnchor.anchor);
                 circleSegment.node = startAnchor.parentNode;
