@@ -404,7 +404,8 @@ class GenDiamond(GenBase):
 
                 # Remove direct connections between diamond nodes
                 for i in range(1, len(diamond_nodes)):
-                    graph.remove_edge(diamond_nodes[i - 1], diamond_nodes[i])
+                    if graph.has_edge(diamond_nodes[i - 1], diamond_nodes[i]):
+                        graph.remove_edge(diamond_nodes[i - 1], diamond_nodes[i])
 
         return graph
 

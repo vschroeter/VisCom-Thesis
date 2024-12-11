@@ -610,6 +610,24 @@ export class VisGraph {
         
         console.log("Nodes having multiple communities", nodesHavingMultipleCommunities);
 
+        nodesHavingMultipleCommunities.forEach(node => {
+            if (node.children.length > 0) {
+                console.error("Node having multiple communities has children, this should not happen");
+            }
+            let i = 0;
+            communities.forEach(community => {
+                if (!community.includes(node)) {
+                    return;
+                }
+                const splitNode = node.clone(node.id + `_${i++}`);
+
+                // Filter connections
+                
+            })
+
+        });
+
+
         const colorScheme = d3.interpolateRainbow;
 
         // Combine the nodes into hypernodes
