@@ -7,6 +7,7 @@ import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/preca
 import { RadialSplineConnectionLayouter, RadialSubConnectionLayouter } from "../connectionLayouter/splineConnection";
 import { BasicConnectionCombiner } from "../connectionLayouter/connectionCombiner";
 import { DirectCircularConnectionLayouter } from "../connectionLayouter/circularArcConnection";
+import { IdSorter } from "src/graph/algorithms/sortings/simple";
 
 
 export interface ViscomHyperLinkData extends Connection2dData {
@@ -50,6 +51,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
     }
 
     override layout(isUpdate = false) {
+        console.log("Layouting", this.visGraph, this.commGraph.communities.getAsIdLists());
         this.initVisGraph()
 
         this.visGraph.setPrecalculator(new BasicSizeCalculator({
@@ -58,6 +60,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         }));
 
         const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
+        // const sorter = new IdSorter(this.visGraph, this.commonSettings);
         this.visGraph.setSorter(sorter);
 
         this.visGraph.setPositioner((node) => {
@@ -78,8 +81,9 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             new BasicConnectionCombiner()
         ])
         
-
+        console.log("Before layout", this.visGraph);
         this.visGraph.layout();
+        console.log("After layout", this.visGraph);
         this.emitEvent("end");
 
     }

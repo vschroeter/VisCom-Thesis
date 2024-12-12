@@ -71,6 +71,12 @@ export class UserInteractions {
             })
         }
 
+        nodes.forEach(node => {
+            if (node.splitParent) {
+                node.splitParent.splitChildren.map(child => child.id).forEach(id => this.hoveredNodeIds.add(id))
+            }
+        });
+
         // console.log("Hovered nodes", this.hoveredNodeIds)
         this.emitter.emit("update")
     }
@@ -112,13 +118,19 @@ export class UserInteractions {
             })
         }
 
+        nodes.forEach(node => {
+            if (node.splitParent) {
+                node.splitParent.splitChildren.map(child => child.id).forEach(id => this.hoveredNodeIds.delete(id))
+            }
+        });
+
         this.emitter.emit("update")
     }
 
     isHovered(connection: LayoutConnection): boolean;
     isHovered(nodeId: string | NodeWithId): boolean;
     isHovered(connectionOrNode: LayoutConnection | string | NodeWithId): boolean {
-        
+
         if (connectionOrNode instanceof LayoutConnection) {
             return this.hoveredConnection.has(connectionOrNode)
         }

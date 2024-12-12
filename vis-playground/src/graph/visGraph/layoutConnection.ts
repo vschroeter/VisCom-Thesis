@@ -126,7 +126,7 @@ export class LayoutConnection {
     isRendered: boolean = true;
 
     ////////////////////////////////////////////////////////////////////////////
-    // Creation methods
+    // #region Constructor
     ////////////////////////////////////////////////////////////////////////////
 
     constructor(source: LayoutNode, target: LayoutNode) {
@@ -145,7 +145,16 @@ export class LayoutConnection {
         newConnection._weight = connection._weight;
         newConnection.links = Array.from(connection.links);
         newConnection.oppositeLinks = Array.from(connection.oppositeLinks);
+        newConnection.children = Array.from(connection.children.map(child => child.clone()));
         return newConnection;
+    }
+
+    /**
+     * Creates a new connection from a communication link.
+     * @returns The cloned connection.
+     */
+    clone(): LayoutConnection {
+        return LayoutConnection.copyFromConnection(this);
     }
 
     /**
@@ -169,8 +178,13 @@ export class LayoutConnection {
         return combinedConnections.filter(connection => connection._weight > 0.001);
     }
 
+    remove() {
+        this.source.outConnections = this.source.outConnections.filter(connection => connection != this);
+        this.target.inConnections = this.target.inConnections.filter(connection => connection != this);
+    }
+
     ////////////////////////////////////////////////////////////////////////////
-    // Link methods
+    // #region Link methods
     ////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -257,7 +271,7 @@ export class LayoutConnection {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Graphical methods
+    // #region Graphical methods
     ////////////////////////////////////////////////////////////////////////////
 
     protected getInstance<T>(instanceOrGetter: InstanceOrGetter<T>): T | undefined {

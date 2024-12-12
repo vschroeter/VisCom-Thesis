@@ -33,6 +33,20 @@ export class LayoutNode {
         this.id = id;
     }
 
+    clone(id: string): LayoutNode {
+        const clone = new LayoutNode(this.visGraph, id);
+        clone.label = this.label;
+        clone.score = this.score;
+        this.visGraph.addNode(clone, this.parent);
+        this.outConnections.forEach(connection => {
+            this.visGraph.addLink(clone, connection.target, connection.getLinks());
+        });
+        this.inConnections.forEach(connection => {
+            this.visGraph.addLink(connection.source, clone, connection.getLinks());
+        });
+        return clone;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // #region Node relations
     ////////////////////////////////////////////////////////////////////////////
@@ -64,6 +78,11 @@ export class LayoutNode {
 
     // If this node is a split node, these are the children
     splitChildren: LayoutNode[] = [];
+
+    addSplitChild(child: LayoutNode) {
+        this.splitChildren.push(child);
+        child.splitParent = this;
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // #region Layout Parts
@@ -269,6 +288,21 @@ export class LayoutNode {
     getIncomingConnections(channels?: CommunicationChannel[]): LayoutConnection[] {
         return this.inConnections;
     }
+
+    removeConnections(predicate: (connection: LayoutConnection) => boolean) {
+
+        const connectionsToRemove = [
+            ...this.inConnections.filter(predicate),
+            ...this.outConnections.filter(predicate)
+        ]
+
+        // Remove the connections at this and the other nodes
+        connectionsToRemove.forEach(connection => {
+            connection.remove();
+        });
+    }
+
+
 
     ////////////////////////////////////////////////////////////////////////////
     // #region Node Information

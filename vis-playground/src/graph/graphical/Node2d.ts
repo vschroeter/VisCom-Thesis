@@ -212,7 +212,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
       { currentValuePath: 'strokeStyle.stroke', newValue: stroke },
       { currentValuePath: 'strokeStyle.strokeWidth', newValue: strokeWidth },
       { currentValuePath: 'strokeStyle.strokeOpacity', newValue: strokeOpacity }
-    ], this.renderStyleFill);
+    ], this.renderStyleStroke);
   }
 
   //++++ Opacity ++++//

@@ -159,7 +159,7 @@ export class VisGraph {
         this.mapIdToLayoutNode.set(node.id, node);
     }
 
-    removeNode(node: LayoutNode, removeChildren = false) {
+    removeNode(node: LayoutNode, removeChildren = false, keepInMap = false) {
         if (node.children.length > 0) {
             if (!removeChildren) {
                 throw new Error("Cannot remove node with children");
@@ -167,7 +167,19 @@ export class VisGraph {
             node.children.forEach(child => this.removeNode(child, true));
         }
 
-        this.mapIdToLayoutNode.delete(node.id);
+        node.outConnections.forEach(connection => {
+            const target = connection.target;
+            target.inConnections.splice(target.inConnections.indexOf(connection), 1);
+        })
+
+        node.inConnections.forEach(connection => {
+            const source = connection.source;
+            source.outConnections.splice(source.outConnections.indexOf(connection), 1);
+        })
+
+        if (!keepInMap) {
+            this.mapIdToLayoutNode.delete(node.id);
+        }
         node.parent?.children.splice(node.parent.children.indexOf(node), 1);
     }
 
@@ -182,7 +194,7 @@ export class VisGraph {
         return this.getAllConnections();
     }
 
-    addLink(source: LayoutNodeOrId, target: LayoutNodeOrId, link: VisLink) {
+    addLink(source: LayoutNodeOrId, target: LayoutNodeOrId, links: VisLink | VisLink[]) {
 
         const sNode = this.getNode(source)
         const tNode = this.getNode(target);
@@ -212,7 +224,7 @@ export class VisGraph {
         // Add the link
         const connection = this.mapSourceNodeIdToTargetNodeIdToConnection.get(sId)!.get(tId)!;
         // connection.links.push(link);
-        connection.addLinks(link);
+        connection.addLinks(links);
     }
 
     addHyperConnection(source: LayoutNode, target: LayoutNode, connection: LayoutConnection) {
@@ -359,7 +371,6 @@ export class VisGraph {
         });
 
 
-
         // Reset and init the connection layouts 
         botUpLayers.flat().forEach(node => {
             node.initConnectionLayouter();
@@ -453,16 +464,25 @@ export class VisGraph {
             // const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
             node.updateStyleFill(node.layoutNode.color ?? v);
         })
+        const userInteractions = this.userInteractions;
 
         // Update the node stroke based on the communities
         this.allGraphicalNodes.forEach(node => {
+
+            if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
+                if (userInteractions.isHovered(node)) {
+                    node.updateStyleStroke("black");
+                    return;
+                }
+            }
 
             if (node.layoutNode.stroke) {
                 node.updateStyleStroke(node.layoutNode.stroke);
                 return;
             }
-
+            
             if (!node.communities) {
+                node.updateStyleStroke("white");
                 return;
             }
 
@@ -488,7 +508,6 @@ export class VisGraph {
         })
 
         // Update the opacities based on the user interactions
-        const userInteractions = this.userInteractions;
         this.allGraphicalNodes.forEach(node => {
             let opacity = 1;
             if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
@@ -600,7 +619,6 @@ export class VisGraph {
         //   - Verbindungen innerhalb des eigenen Hypernodes
         //   - Verbindungen zu den anderen Teilknoten (werden implizit angezeigt)
         //   - Verbindungen zu externen Knoten, die nicht innerhalb von anderen Hypernodes liegen, die durch einen anderen Teilknoten abgedeckt werden
-        // Hypernodes bilden
 
         const communities = communityNodeIds.map(community => community.map(node => this.getNode(node)));
 
@@ -615,20 +633,75 @@ export class VisGraph {
                 console.error("Node having multiple communities has children, this should not happen");
             }
             let i = 0;
-            communities.forEach(community => {
-                if (!community.includes(node)) {
-                    return;
-                }
+
+            const communitiesWithNode = communities.filter(community => community.includes(node));
+            
+            communitiesWithNode.forEach(community => {
+                const allNodeIdsInCommunitiesWithNode = new Set(communitiesWithNode.flat().map(node => node.id));
+                
                 const splitNode = node.clone(node.id + `_${i++}`);
+                node.addSplitChild(splitNode);
+
+                // Remove the old node from this community and add the split node
+                community.splice(community.indexOf(node), 1, splitNode);
+
+                const nodeIdsInThisCommunity = community.map(node => node.id);
+                // In this community, there are also implicitly all nodes of other communities having this split (child-)node in it
+                const nodeIdsInOtherCommunitiesConnectedWithSplitNode = communitiesWithNode.filter(c => c !== community).flat().map(node => node.id);
+                const setNodeIdsInOtherCommunitiesConnectedWithSplitNode = new Set(nodeIdsInOtherCommunitiesConnectedWithSplitNode);
+                
+                const setNodeIdsInThisCommunity = new Set(nodeIdsInThisCommunity);
+                const nodesNotInThisCommunity = Array.from(allNodeIdsInCommunitiesWithNode).filter(id => !setNodeIdsInThisCommunity.has(id));
+                const setNodesNotInThisCommunity = new Set(nodesNotInThisCommunity);
+                
+                // console.log({
+                //     id: splitNode.id,
+                //     splitNode,
+                //     nodeIdsInThisCommunity,
+                //     nodesNotInThisCommunity,
+                //     nodeIdsInOtherCommunitiesConnectedWithSplitNode
+                // })
 
                 // Filter connections
-                
+                splitNode.removeConnections(connection => {
+                    // return false;
+                    const sourceId = connection.source.id;
+                    const targetId = connection.target.id;
+                    // const otherNode = sourceId === node.id ? connection.target : connection.source;
+
+                    if (setNodeIdsInThisCommunity.has(sourceId) && setNodeIdsInThisCommunity.has(targetId)) {
+                        return false;
+                    }
+
+                    if (setNodesNotInThisCommunity.has(sourceId) || setNodesNotInThisCommunity.has(targetId)) {
+                        return true;
+                    }
+
+                    if (setNodeIdsInOtherCommunitiesConnectedWithSplitNode.has(sourceId) || setNodeIdsInOtherCommunitiesConnectedWithSplitNode.has(targetId)) {
+                        return true;
+                    }
+
+                    return false;
+                })
+
+
             })
 
+            this.removeNode(node);
         });
 
+        // console.log("Communities after splitting", communities);
 
         const colorScheme = d3.interpolateRainbow;
+        const normalRange = [0, 1];
+        const splitRange = [0, 1]
+        if (nodesHavingMultipleCommunities.length > 0) {
+            normalRange[1] = 0.6;
+            splitRange[0] = 0.6;
+        }
+
+        const normalRangeDiff = normalRange[1] - normalRange[0];
+        const splitRangeDiff = splitRange[1] - splitRange[0];
 
         // Combine the nodes into hypernodes
         communities.forEach((nodes, i, arr) => {
@@ -639,8 +712,8 @@ export class VisGraph {
             const startPositionInScheme = i / arr.length;
             const interval = 1 / arr.length;
             const intervalPadding = 0.2;
-            const start = startPositionInScheme + intervalPadding / 2;
-            const end = startPositionInScheme + interval - intervalPadding / 2;
+            const start = normalRange[0] + normalRangeDiff * (startPositionInScheme + intervalPadding / 2);
+            const end = normalRange[0] + normalRangeDiff * (startPositionInScheme + interval - intervalPadding / 2);
             // const color = colorScheme(i / arr.length);
 
             // hypernode.childrenColorScheme = colorScheme;
@@ -650,6 +723,23 @@ export class VisGraph {
             hypernode.stroke = colorScheme(startPositionInScheme + interval / 2);
             hypernode.showLabel = false;
         });
+
+        // Adapt the colors of split children, so that they have a common color
+        nodesHavingMultipleCommunities.forEach((node, i) => {
+            const splitChildren = node.splitChildren;
+
+            const startPositionInScheme = i / nodesHavingMultipleCommunities.length;
+            const interval = 1 / nodesHavingMultipleCommunities.length;
+            const intervalPadding = 0.2;
+            const start = splitRange[0] + splitRangeDiff * (startPositionInScheme + intervalPadding / 2);
+            const end = splitRange[0] + splitRangeDiff * (startPositionInScheme + interval - intervalPadding / 2);
+
+            splitChildren.forEach((child, j) => {
+                const color = colorScheme(start + (end - start) * (j / splitChildren.length));
+                child.color = color;
+                child.stroke = color;
+            });
+        })
 
         this.updateHyperConnections();
 
