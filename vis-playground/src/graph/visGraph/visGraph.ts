@@ -480,7 +480,7 @@ export class VisGraph {
                 node.updateStyleStroke(node.layoutNode.stroke);
                 return;
             }
-            
+
             if (!node.communities) {
                 node.updateStyleStroke("white");
                 return;
@@ -625,7 +625,7 @@ export class VisGraph {
         const nodesHavingMultipleCommunities = this.allLayoutNodes.filter(node => {
             return communities.filter(community => community.includes(node)).length > 1;
         });
-        
+
         console.log("Nodes having multiple communities", nodesHavingMultipleCommunities);
 
         nodesHavingMultipleCommunities.forEach(node => {
@@ -635,10 +635,10 @@ export class VisGraph {
             let i = 0;
 
             const communitiesWithNode = communities.filter(community => community.includes(node));
-            
+
             communitiesWithNode.forEach(community => {
                 const allNodeIdsInCommunitiesWithNode = new Set(communitiesWithNode.flat().map(node => node.id));
-                
+
                 const splitNode = node.clone(node.id + `_${i++}`);
                 node.addSplitChild(splitNode);
 
@@ -649,11 +649,11 @@ export class VisGraph {
                 // In this community, there are also implicitly all nodes of other communities having this split (child-)node in it
                 const nodeIdsInOtherCommunitiesConnectedWithSplitNode = communitiesWithNode.filter(c => c !== community).flat().map(node => node.id);
                 const setNodeIdsInOtherCommunitiesConnectedWithSplitNode = new Set(nodeIdsInOtherCommunitiesConnectedWithSplitNode);
-                
+
                 const setNodeIdsInThisCommunity = new Set(nodeIdsInThisCommunity);
                 const nodesNotInThisCommunity = Array.from(allNodeIdsInCommunitiesWithNode).filter(id => !setNodeIdsInThisCommunity.has(id));
                 const setNodesNotInThisCommunity = new Set(nodesNotInThisCommunity);
-                
+
                 // console.log({
                 //     id: splitNode.id,
                 //     splitNode,
@@ -778,56 +778,122 @@ export class VisGraph {
     // If a node only has connections to a single other node in this layer, we can add it as subnode
     combineStronglyCoupledNodes() {
 
-        // const mapNodeToParent = new Map<LayoutNode, LayoutNode>();
-        const mapParentToNodes = new Map<LayoutNode, LayoutNode[]>();
+        const nodeToSingleParent = new Map<LayoutNode, LayoutNode>();
 
-        // Check for each node, if all outgoing and incoming connections are to/from the same node
-        this.allLayoutNodes.forEach(node => {
+        // 1. Phase: Strongly coupling
+        // - Every node with exactly one connected node is assigned to this node
+        // - The nodes from Phase 1 are grouped together
+
+        /**
+         * Returns a single connected node, if the node has exactly one parent or child node.
+         * @param node The node to check
+         * @param filterOutNodes These nodes are not considered as connected nodes
+         * @returns The single connected node, if it exists, undefined otherwise
+         */
+        const getSingleConnectedNode = (node: LayoutNode, filterOutNodes: LayoutNode[] = []) => {
             const outConnections = node.outConnections;
             const inConnections = node.inConnections;
 
-            // Check the outgoing connections
-            const hasOutgoingConnections = outConnections.length > 0;
-            const hasIncomingConnections = inConnections.length > 0;
-            const outNode = outConnections.length === 1 ? outConnections[0].target : undefined;
-            const inNode = inConnections.length === 1 ? inConnections[0].source : undefined;
+            // Set of parent nodes to the node
+            const sourceNodes = new Set([...inConnections.map(c => c.source)]);
+            // Set of child nodes to the node
+            const targetNodes = new Set([...outConnections.map(c => c.target)]);
 
-            //TODO: Check self-loops
-            //TODO: Ignore duplicate connections when having hyper connections
+            // Remove nodes that should be filtered out
+            filterOutNodes.forEach(node => sourceNodes.delete(node));
+            filterOutNodes.forEach(node => targetNodes.delete(node));
 
-            if (hasOutgoingConnections && hasIncomingConnections && outNode && inNode && outNode === inNode) {
-                if (!mapParentToNodes.has(outNode)) {
-                    mapParentToNodes.set(outNode, []);
-                }
-                mapParentToNodes.get(outNode)!.push(node);
+            // Nodes that are children of the node, but not parents
+            const onlyTargetNodes = new Set([...targetNodes].filter(node => !sourceNodes.has(node)));
+            // Nodes that are parents of the node, but not children
+            const onlySourceNodes = new Set([...sourceNodes].filter(node => !targetNodes.has(node)));
 
-            } else if (hasOutgoingConnections && !hasIncomingConnections && outNode) {
-                if (!mapParentToNodes.has(outNode)) {
-                    mapParentToNodes.set(outNode, []);
-                }
-                mapParentToNodes.get(outNode)!.push(node);
-            } else if (!hasOutgoingConnections && hasIncomingConnections && inNode) {
-                if (!mapParentToNodes.has(inNode)) {
-                    mapParentToNodes.set(inNode, []);
-                }
-                mapParentToNodes.get(inNode)!.push(node);
+            // If there is a single source node and no other target nodes (that are not also the source node)
+            if (sourceNodes.size === 1 && onlyTargetNodes.size === 0) {
+                const source = sourceNodes.values().next().value!;
+                return source;
+
             }
-        });
+            // If there is a single target node and no other source nodes (that are not also the target node)
+            else if (targetNodes.size === 1 && onlySourceNodes.size === 0) {
+                const target = targetNodes.values().next().value!;
+                return target;
+            }
+            return undefined;
+        }
 
         this.allLayoutNodes.forEach(node => {
-
-            if (mapParentToNodes.has(node)) {
-                const nodes = mapParentToNodes.get(node)!;
-                nodes.push(node);
-                const hypernode = this.combineNodesIntoHyperNode(nodes, node.parent);
-                hypernode.anchorNode = node;
-                hypernode.filled = false;
-                hypernode.showLabel = false;
-                hypernode.stroke = "gray"
+            const singleParent = getSingleConnectedNode(node);
+            if (singleParent) {
+                nodeToSingleParent.set(node, singleParent);
             }
         });
-        this.updateHyperConnections();
 
+        type Group = { anchor: LayoutNode, nodes: LayoutNode[] };
+        const groups: Group[] = [];
+        const nodeToGroup = new Map<LayoutNode, Group>();
+
+        // Create the groups as result from phase 1
+        nodeToSingleParent.forEach((parent, node) => {
+            const group = nodeToGroup.get(parent) ?? { anchor: parent, nodes: [parent] };
+            if (!nodeToGroup.has(parent)) {
+                groups.push(group);
+            }
+            group.nodes.push(node);
+            nodeToGroup.set(parent, group);
+            nodeToGroup.set(node, group);
+        })
+
+        // 2. Phase: Pipelining
+        // Every of these parent nodes is processed in a queue:
+        // - If the parent node has exactly one parent, it is assigned to this parent
+        //   --> this parent is added to the process queue
+        // - If the parent node has multiple parents, it is not further processed
+        // - If a node is parent of multiple nodes, it is not further processed
+        // The existing groups are extended by parents from Phase 2, if these parents have only 1 child
+
+        let changedGroups = Array.from(groups);
+        while (changedGroups.length > 0) {
+            changedGroups = [];
+            const nodeToChildren = new Map<LayoutNode, LayoutNode[]>();
+
+            // Get the parents of each anchor node
+            groups.forEach(group => {
+                const anchor = group.anchor;
+                // Ignore the nodes of the group for the single connected node check
+                const parentOfAnchor = getSingleConnectedNode(anchor, group.nodes);
+                if (parentOfAnchor) {
+                    nodeToChildren.set(parentOfAnchor, [...(nodeToChildren.get(parentOfAnchor) ?? []), anchor]);
+                }
+            })
+
+            // For each group, in which the anchor has only one parent, assign the anchor to the parent
+            nodeToChildren.forEach((children, parent) => {
+                if (children.length === 1) {
+                    const child = children[0];
+                    const group = nodeToGroup.get(child)!;
+
+                    group.anchor = parent;
+                    group.nodes.push(parent);
+                    changedGroups.push(group);
+                }
+            })
+        }
+
+        // Combine the nodes into hypernodes
+        groups.forEach(group => {
+            const nodes = Array.from(group.nodes);
+            const anchorNode = group.anchor;
+
+            const hypernode = this.combineNodesIntoHyperNode(nodes, anchorNode?.parent);
+            hypernode.anchorNode = anchorNode;
+            hypernode.filled = false;
+            hypernode.showLabel = false;
+            hypernode.stroke = "gray"
+        });
+
+        // Update the hyper connections
+        this.updateHyperConnections();
     }
 
     // If a node is broadcasting to every other node in this layer, we can add it to each node as subnode
