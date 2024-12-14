@@ -302,6 +302,9 @@ export class LayoutNode {
         });
     }
 
+    removeHyperConnections(predicate: (connection: LayoutConnection) => boolean = () => true) {
+        this.removeConnections(c => c.isHyperConnection  && predicate(c));
+    }
 
 
     ////////////////////////////////////////////////////////////////////////////

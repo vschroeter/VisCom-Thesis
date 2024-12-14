@@ -179,8 +179,7 @@ export class LayoutConnection {
     }
 
     remove() {
-        this.source.outConnections = this.source.outConnections.filter(connection => connection != this);
-        this.target.inConnections = this.target.inConnections.filter(connection => connection != this);
+        this.source.visGraph.removeConnection(this);
     }
 
     ////////////////////////////////////////////////////////////////////////////

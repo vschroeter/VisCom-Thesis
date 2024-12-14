@@ -233,7 +233,7 @@ export class TopologicalSorter extends Sorter {
 
 
         const adaptedGenerationList = Array.from(adaptedGenerations.values()).sort((a, b) => a.generation - b.generation)
-        console.log("Generations", adaptedGenerationList)
+        // console.log("Generations", adaptedGenerationList)
         return adaptedGenerationList
     }
 

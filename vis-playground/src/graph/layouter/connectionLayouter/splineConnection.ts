@@ -215,32 +215,8 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                 addConnectionToContinuum(connection);
             })
 
-            // const continuumMap = new Map<number, number>();
-            // let currentPos = 1;
-            // let currentIndex = 0;
-            // outgoingConnectionsCombined.forEach(connection => {
-            //     continuumMap.set(currentIndex, currentPos);
-            //     currentPos += 1;
-            //     currentIndex += 1;
-            // });
-            // // currentPos += (onlyOutgoingConnections.length > 0 && combinedConnections.length) ? 1 : 0;
-            // // combinedConnections.forEach(connection => {
-            // //     continuumMap.set(currentIndex, currentPos);
-            // //     currentPos += 1;
-            // //     currentIndex += 1;
-            // // });
-            // // currentPos += (combinedConnections.length > 0 && onlyIncomingConnections.length) ? 1 : 0;
-            // currentPos += (outgoingConnectionsCombined.length > 0 && onlyIncomingConnections.length) ? 1 : 0;
-            // onlyIncomingConnections.forEach(connection => {
-            //     continuumMap.set(currentIndex, currentPos);
-            //     currentPos += 1;
-            //     currentIndex += 1;
-            // });
-
-            // const continuumSize = currentPos;
-            // const sortedConnections = [...onlyOutgoingConnections, ...combinedConnections, ...onlyIncomingConnections];
             const sortedConnections = [...outgoingConnectionsCombined, ...onlyIncomingConnections];
-
+            
             // Now we distribute the connections inside the parent circle
             sortedConnections.forEach((connections, index) => {
                 const isArray = Array.isArray(connections);
@@ -297,6 +273,7 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                 const anchor = new Anchor(intersectionPoints[0], slopeVector);
                 // const anchorOutgoing = new Anchor(intersectionPoints[0], slopeVector.rotate90CCW());
                 // const anchorIncoming = new Anchor(intersectionPoints[0], slopeVector.rotate90CW());
+
 
                 if (!isArray) {
                     if (isOutgoing) {
@@ -792,12 +769,7 @@ export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
             return;
         }
 
-        console.log(node.id, hyperConnections);
-
-        // hyperConnections.forEach(hyperConnection => {
-        //     // hyperConnection.
-        //     hyperConnection.connection!.points = hyperConnection.calculatePoints();
-        // })
+        // console.log(node.id, hyperConnections);
 
         const nodeToCircleSegmentsMap = new Map<LayoutNode, CircleSegmentConnection[]>();
 
