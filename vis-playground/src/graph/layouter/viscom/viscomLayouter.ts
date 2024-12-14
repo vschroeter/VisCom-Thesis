@@ -69,11 +69,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
                 outerMarginFactor: this.settings.spacing.outerMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
             });
         })
-
-        const forwardBackwardThreshold = this.settings.edges.forwardBackwardThreshold.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 270;
-        const straightForwardLineAtDegreeDelta = this.settings.edges.straightForwardLineAtDegreeDelta.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 135;
-        const backwardLineCurvature = this.settings.edges.backwardLineCurvature.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 120;
-
+        
         this.visGraph.setConnectionLayouter([
             new DirectCircularConnectionLayouter(),
             new RadialSplineConnectionLayouter(),

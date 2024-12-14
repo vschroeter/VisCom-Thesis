@@ -41,6 +41,10 @@ export class LayoutConnection {
     /** The target node of the connection */
     target: LayoutNode;
 
+    get id(): string {
+        return `${this.fromId}->${this.toId}`;
+    }
+
     debugShapes: Shape[] = [];
 
     /** ID of the source node */

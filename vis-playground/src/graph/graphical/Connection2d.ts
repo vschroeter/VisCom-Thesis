@@ -78,6 +78,10 @@ export class Connection2d extends SvgRenderable {
     /** The defining layout connection */
     layoutConnection: LayoutConnection;
 
+    get id(): string {
+        return this.layoutConnection.id
+    }
+
     // /** The points defining the connection */
     get points(): LayoutConnectionPoint[] {
         return this.layoutConnection.points

@@ -30,7 +30,7 @@ export class RadialSpacingSettings extends Setting {
 
     outerMarginFactor = new Param<number>({
         key: "outerRadiusMarginFactor",
-        label: "Margin factor for the outer radius of a hypernode.",
+        label: "Margin fac. for outer R of hypernodes",
         optional: false,
         defaultValue: 1.1,
         type: "number",

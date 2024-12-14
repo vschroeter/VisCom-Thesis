@@ -61,7 +61,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             continuumMap.set(key, continuumMap.get(key)! / max);
         })
 
-        const startAngleDeg = -90;
+        const startAngleDeg = 180;
         const startAngleRad = degToRad(startAngleDeg);
 
         if (nodes.length == 1) {

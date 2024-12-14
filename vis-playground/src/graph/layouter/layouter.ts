@@ -231,7 +231,9 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         const className = this.constructor.name.toLowerCase();
 
         const nodes = selection.selectChildren('g.node')
-            .data(this.visGraph.allGraphicalNodes)
+            .data<Node2d>(this.visGraph.allGraphicalNodes, (d, i, g) => {
+                return (d as Node2d).id;
+            })
             .join(
                 // enter => enter.append('g').classed('node', true).call(d => d.datum().enter(d)),
                 enter => enter.append('g').classed('node', true).each((d, i, g) => {
@@ -258,7 +260,9 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     renderLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Connection2d>) {
 
         const links = selection.selectChildren('g.link')
-            .data(this.visGraph.allGraphicalConnections)
+            .data<Connection2d>(this.visGraph.allGraphicalConnections, (d, i, g) => {
+                return (d as Connection2d).id;
+            })
             .join(
                 // enter => enter.append('g').classed('node', true).call(d => d.datum().enter(d)),
                 enter => enter.append('g').classed('link', true).each((d, i, g) => {
@@ -283,7 +287,9 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     renderLabels(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
         selection.selectChildren('text')
-            .data(this.visGraph.allGraphicalNodes.filter(n => n.layoutNode.showLabel))
+            .data<Node2d>(this.visGraph.allGraphicalNodes.filter(n => n.layoutNode.showLabel), (d, i, g) => {
+                return (d as Node2d).id;
+            })
             .join('text')
             // .attr('x', (d: Node2d) => {
             //     return d.x;            
