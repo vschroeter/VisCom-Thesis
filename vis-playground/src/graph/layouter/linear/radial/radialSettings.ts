@@ -1,26 +1,47 @@
 import { LinearSortingSettings } from "../../settings/linearSettings";
 import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../../settings/settings";
 
-export class SizeSettings extends Setting {
-    radius = new Param({
-        key: "radius",
+// export class SizeSettings extends Setting {
+//     radius = new Param({
+//         key: "radius",
+//         optional: false,
+//         defaultValue: "10 * n",
+//     });
+
+//     constructor() {
+//         super({
+//             key: "size",
+//             label: "Size",
+//             description: "Size settings for the radial layout.",
+//             optional: false,
+//         });
+//     }
+// }
+
+export class RadialSpacingSettings extends Setting {
+    nodeMarginFactor = new Param<number>({
+        key: "nodeMarginFactor",
+        label: "Margin factor between nodes",
+        description: "The factor to multiply the node radius with to get the margin between the nodes inside a circle.",
         optional: false,
-        defaultValue: "10 * n",
+        defaultValue: 1,
+        type: "number",
     });
 
-    constructor() {
-        super({
-            key: "size",
-            label: "Size",
-            description: "Size settings for the radial layout.",
-            optional: false,
-        });
-    }
+    outerMarginFactor = new Param<number>({
+        key: "outerRadiusMarginFactor",
+        label: "Margin factor for the outer radius of a hypernode.",
+        optional: false,
+        defaultValue: 1.1,
+        type: "number",
+    });
 }
+
 
 export class EdgeSettings extends Setting {
     forwardBackwardThreshold = new Param({
         key: "forwardBackwardThreshold",
+        label: "Forw.-Back. Edge ° Thresh.",
         description: "The threshold angle in the radial layout for edges to be handled as backward edges (in degree).",
         optional: false,
         defaultValue: 270,
@@ -28,6 +49,7 @@ export class EdgeSettings extends Setting {
 
     straightForwardLineAtDegreeDelta = new Param({
         key: "straightForwardLineAtDegreeDelta",
+        label: "Straight Line @ Delta°",
         description: "The threshold angle in the radial layout for forward edges to be drawn as straight lines (in degree). Lines above this threshold will be drawn as concave curves, lines below this threshold will be drawn as convex curves.",
         optional: false,
         defaultValue: 135,
@@ -35,34 +57,38 @@ export class EdgeSettings extends Setting {
 
     backwardLineCurvature = new Param({
         key: "backwardLineCurvature",
+        label: "Backward Line Curvature°",
         description: "The curvature of the backward edges (between 0° and 180°).",
         optional: false,
         defaultValue: 120,
     });
     
-    combineEdges = new Param<boolean>({
-        key: "combineEdges",
-        optional: false,
-        defaultValue: false,
-        type: "boolean",
-    })
-
-    constructor() {
-        super({
-            key: "edges",
-            label: "Edges",
-            description: "Settings for the edges.",
-            optional: false,
-        });
-    }
+    // combineEdges = new Param<boolean>({
+    //     key: "combineEdges",
+    //     optional: false,
+    //     defaultValue: false,
+    //     type: "boolean",
+    // })
 }
 
 
 export class RadialLayouterSettings extends GraphLayouterSettings {
-    size = new SizeSettings();
+    spacing = new RadialSpacingSettings({
+        key: "spacing",
+        label: "Spacing",
+        description: "Spacing settings for the radial layout.",
+        optional: false,
+    });
+    
     sorting = new LinearSortingSettings();
 
-    edges = new EdgeSettings();    
+
+    edges = new EdgeSettings({
+        key: "edges",
+        label: "Edges",
+        description: "Settings for the edges.",
+        optional: false,
+    });    
 
     constructor(type: string, name?: string) {
         super(type, name);

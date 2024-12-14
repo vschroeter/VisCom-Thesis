@@ -8,7 +8,7 @@
                 <div v-for="param in commonSettings.parameters" :key="param.key" class="q-mb-md">
                     <!-- :rules="['anyColor']" -->
 
-                    <ParamInput v-model="commonSettings.parameterMap[param.key]" outlined/>
+                    <ParamInput v-model="commonSettings.parameterMap[param.key]" outlined />
 
 
                 </div>
@@ -22,7 +22,7 @@
                         </q-popup-proxy>
                     </q-icon>
                 </template>
-            </q-input> -->
+</q-input> -->
         </div>
 
 
@@ -55,13 +55,13 @@
                             <div class="col">
                                 <q-table dense hide-pagination :pagination="{ rowsPerPage: 0 }"
                                     :title="setting.label || setting.key" :row-key="row => row.key" :key="updated"
-                                    :rows="setting.enabledParameters" :columns="settingTableColumns">
+                                    :rows="setting.enabledParameters" :columns="getSettingTableColumns(setting)">
 
                                     <!-- If the setting is optional, add a toggle at the top altering the setting.active flag -->
                                     <template v-slot:top="props">
                                         <div class="text-h6">{{ setting.label ?? setting.key }}</div>
                                         <q-space />
-                                        <q-toggle v-model="setting.active" dense size="sm" />
+                                        <q-toggle v-if="setting.optional" v-model="setting.active" dense size="sm" />
 
                                         <q-tooltip :delay="1000" v-if="true || (setting.description?.length ?? 0) > 0">
                                             {{ setting.description }}
@@ -154,7 +154,7 @@
 <script setup lang="ts">
 
 import { QTableColumn } from 'quasar';
-import { GraphLayouterSettings, Param } from 'src/graph/layouter/settings/settings';
+import { GraphLayouterSettings, Param, Setting } from 'src/graph/layouter/settings/settings';
 import { useGraphStore } from 'src/stores/graph-store';
 import { computed, onMounted, onUpdated, ref, watch, type Ref } from 'vue'
 
@@ -223,6 +223,17 @@ const settingTableColumns: QTableColumn<Param>[] = [
         sortable: false
     },
 ];
+
+// All but the first column
+const settingTableColumnsWithoutActivation: QTableColumn<Param>[] = settingTableColumns.slice(1)
+
+function getSettingTableColumns(setting: Setting): QTableColumn<Param>[] {
+    // If no param in the setting is optional, return the columns without the activation column
+    if (setting.enabledParameters.filter(p => p.optional).length == 0) {
+        return settingTableColumnsWithoutActivation
+    }
+    return settingTableColumns
+}
 
 ////////////////////////////////////////////////////////////////////////////
 // Helper functions

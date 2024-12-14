@@ -1,4 +1,4 @@
-import { RadialLayouterSettings } from "../linear/radial/radialSettings";
+import { EdgeSettings, RadialLayouterSettings, RadialSpacingSettings } from "../linear/radial/radialSettings";
 import { LinearSortingSettings } from "../settings/linearSettings";
 import { GraphLayouterSettings, Param, Setting } from "../settings/settings";
 
@@ -46,25 +46,15 @@ export class DisplaySettings extends Setting {
     });
 }
 
-export class SpacingSettings extends Setting {
-    nodeMarginFactor = new Param<number>({
-        key: "nodeMarginFactor",
-        description: "The factor to multiply the node radius with to get the margin between the nodes inside a circle.",
+export class ViscomLayouterSettings extends GraphLayouterSettings {
+    spacing = new RadialSpacingSettings({
+        key: "spacing",
+        label: "Spacing",
+        description: "Spacing settings for the radial layout.",
         optional: false,
-        defaultValue: 1,
-        type: "number",
     });
 
-    outerMarginFactor = new Param<number>({
-        key: "outerRadiusMarginFactor",
-        description: "The factor for the outer radius of a hypernode.",
-        optional: false,
-        defaultValue: 1.1,
-        type: "number",
-    });
-}
-
-export class ViscomLayouterSettings extends RadialLayouterSettings {
+    sorting = new LinearSortingSettings();
 
     display = new DisplaySettings({
         key: "display",
@@ -79,20 +69,5 @@ export class ViscomLayouterSettings extends RadialLayouterSettings {
         description: "Algorithm settings for the viscom layout.",
         optional: false,
     });
-
-    spacing = new SpacingSettings({
-        key: "spacing",
-        label: "Spacing",
-        description: "Spacing settings for the viscom layout.",
-        optional: false,
-    });
-
-    // size = new SizeSettings();
-    // sorting = new LinearSortingSettings
-    //     ();
-
-    // constructor(type: string, name?: string) {
-    //     super(type, name);
-    // }
 }
 
