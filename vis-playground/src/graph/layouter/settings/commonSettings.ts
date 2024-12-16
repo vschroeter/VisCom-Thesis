@@ -39,11 +39,11 @@ export class CommonSettings extends Setting {
         defaultValue: "#000000AA",
     })
 
-    showCommunities = new Param({
+    showLinkScore = new Param({
         type: "boolean",
-        key: "showCommunities",
-        label: "Show Communities",
-        description: "Show communities",
+        key: "showLinkScore",
+        label: "Show Link Score",
+        description: "Display link score as link width",
         optional: false,
         defaultValue: true,
     })

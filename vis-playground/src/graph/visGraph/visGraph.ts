@@ -542,7 +542,14 @@ export class VisGraph {
         const strokeWithoutAlpha = d3.color(stroke)?.copy({ opacity: 1 })?.toString() ?? "black";
         const alpha = d3.color(stroke)?.opacity ?? 1;
 
+        const showLinkScore = this.commonSettings?.showLinkScore.getValue() ?? true;
+
         this.allGraphicalConnections.forEach(connection => {
+            if (!showLinkScore) {
+                connection.updateStyleOpacity(alpha);
+                connection.updateStyleStroke(strokeWithoutAlpha, 1);
+                return;
+            }
             const weight = connection.weight;
             let opacity = Math.min(Math.max(0.01, weight), 1) * alpha;
 

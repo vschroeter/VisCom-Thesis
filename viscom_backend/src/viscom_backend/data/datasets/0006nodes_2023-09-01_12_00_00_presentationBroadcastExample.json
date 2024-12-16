@@ -58,6 +58,10 @@
                 }
             ],
             "subscribers": [
+                {
+                    "name": "/parameter_events",
+                    "type": "rcl_interfaces/msg/ParameterEvent"
+                }
             ],
             "services": [
                 {
@@ -121,6 +125,10 @@
                 {
                     "name": "/system/i2c/writeArray",
                     "type": "hardware_interfaces_msgs/msg/I2CwriteArray"
+                },
+                {
+                    "name": "/parameter_events",
+                    "type": "rcl_interfaces/msg/ParameterEvent"
                 }
             ],
             "services": [
@@ -233,6 +241,10 @@
                 {
                     "name": "/resources/new_resources_available",
                     "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/parameter_events",
+                    "type": "rcl_interfaces/msg/ParameterEvent"
                 }
             ],
             "services": [
@@ -354,6 +366,10 @@
                 {
                     "name": "/resources/new_resources_available",
                     "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/parameter_events",
+                    "type": "rcl_interfaces/msg/ParameterEvent"
                 }
             ],
             "services": [
@@ -475,6 +491,10 @@
                 {
                     "name": "/resources/new_resources_available",
                     "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/parameter_events",
+                    "type": "rcl_interfaces/msg/ParameterEvent"
                 }
             ],
             "services": [
@@ -692,6 +712,10 @@
                 {
                     "name": "/voice_equalized",
                     "type": "rosass_msgs/msg/AudioBuffer"
+                },
+                {
+                    "name": "/parameter_events",
+                    "type": "rcl_interfaces/msg/ParameterEvent"
                 }
             ],
             "services": [

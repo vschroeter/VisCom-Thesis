@@ -323,6 +323,8 @@ export class Connection2d extends SvgRenderable {
     renderStyleStroke(selection: d3.Selection<any, any, any, any>) {
         this.applyStrokeAttributs(this.selectSubElement('path.link'));
         this.applyStrokeAttributs(this.selectSubElement('path.arrow')).attr('fill', this.stroke ?? "none");
+
+        this.renderPath(selection)
     }
 
     updateStyleStroke(stroke?: string, strokeWidth?: number) {

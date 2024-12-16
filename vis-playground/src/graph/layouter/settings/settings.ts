@@ -457,6 +457,7 @@ export class ParamWithLinkContext extends Param {
         "- ct: Number of connections on the target node",
         "- cs: Number of connections on the source node",
         "- cd: Number of connections on both nodes (sum of degrees)",
+        "- w: Weight of the link",
     ]
 
     override tooltip: string[] = ParamWithLinkContext.tooltip;
@@ -465,7 +466,8 @@ export class ParamWithLinkContext extends Param {
         let ctx: Record<string, any> = {
             ct: 1,
             cs: 1,
-            cd: 1
+            cd: 1,
+            w: 1,
         };
 
         ctx = { ...ctx, ...context };
@@ -476,6 +478,7 @@ export class ParamWithLinkContext extends Param {
             ctx.ct = countTargetConnections;
             ctx.cs = countSourceConnections;
             ctx.cd = countSourceConnections + countTargetConnections;
+            ctx.w = link.weight ?? 1;
         }
         return super.getValue(ctx);
     }
