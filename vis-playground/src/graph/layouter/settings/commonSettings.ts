@@ -39,11 +39,29 @@ export class CommonSettings extends Setting {
         defaultValue: "#000000AA",
     })
 
-    showLinkScore = new Param({
+    showLinkScore = new Param<boolean>({
         type: "boolean",
         key: "showLinkScore",
         label: "Show Link Score",
         description: "Display link score as link width",
+        optional: false,
+        defaultValue: true,
+    })
+
+    showNodeScore = new Param<boolean>({
+        type: "boolean",
+        key: "showNodeScore",
+        label: "Show Node Score",
+        description: "Display node score as node radius",
+        optional: false,
+        defaultValue: true,
+    })
+
+    showCommunityColors = new Param<boolean>({
+        type: "boolean",
+        key: "showCommunityColors",
+        label: "Show Community Colors",
+        description: "Display community colors",
         optional: false,
         defaultValue: true,
     })

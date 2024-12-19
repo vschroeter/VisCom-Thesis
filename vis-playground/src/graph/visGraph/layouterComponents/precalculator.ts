@@ -23,18 +23,23 @@ export class BasicSizeCalculator {
 
     scaleScoreToSizeFraction: d3.ScaleContinuousNumeric<number, number>;
 
+    adaptRadiusBasedOnScore: boolean;
+
     constructor({
         sizeMultiplier = 10,
         minSizeScore = 0.1,
-        marginFactor = 1.1
+        marginFactor = 1.1,
+        adaptRadiusBasedOnScore = true
     }: {
             sizeMultiplier?: number;
             minSizeScore?: number;
             marginFactor?: number;
+            adaptRadiusBasedOnScore?: boolean;
         } = {}) {
         this.sizeMultiplier = sizeMultiplier;
         this.minSizeScore = minSizeScore;
         this.marginFactor = marginFactor;
+        this.adaptRadiusBasedOnScore = adaptRadiusBasedOnScore;
 
         this.scaleScoreToSizeFraction = d3.scaleLog()
         // this.scaleScoreToSizeFraction = d3.scaleLinear()
@@ -44,7 +49,11 @@ export class BasicSizeCalculator {
 
     precalculate(node: LayoutNode, visGraph: VisGraph) {
         if (node.children.length == 0) {
-            node.radius = this.scaleScoreToSizeFraction(Math.max(node.score, this.minSizeScore)) * this.sizeMultiplier;
+            if (!this.adaptRadiusBasedOnScore) {
+                node.radius = this.sizeMultiplier;
+            } else {
+                node.radius = this.scaleScoreToSizeFraction(Math.max(node.score, this.minSizeScore)) * this.sizeMultiplier;
+            }
             // node.radius = node.score * this.sizeMultiplier;
         } else {
             // If the node size has not been calculated by the layouter, we have to calculate it here

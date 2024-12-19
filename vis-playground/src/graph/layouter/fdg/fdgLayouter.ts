@@ -4,6 +4,7 @@ import { FdgLayouterSettings } from "./fdgSettings";
 import * as d3 from "d3";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
+import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/precalculator";
 
 export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
@@ -11,6 +12,12 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
     override layout(isUpdate = false) {
         const ctx = this.settings.getContext({ visGraph: this.visGraph });
+
+        this.visGraph.setPrecalculator(new BasicSizeCalculator({
+            sizeMultiplier: 10,
+            marginFactor: 1.1,
+            adaptRadiusBasedOnScore: this.commonSettings.showNodeScore.getValue() ?? true,
+        }));
 
         if (this.simulation) {
             // console.log("Stopping simulation");

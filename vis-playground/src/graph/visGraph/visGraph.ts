@@ -470,7 +470,9 @@ export class VisGraph {
             const v = scoring.getColor(node.score);
             // node.updateStyleFill(v);
             // const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
-            node.updateStyleFill(node.layoutNode.color ?? v);
+
+            const color = (this.commonSettings?.showCommunityColors.getValue() ? node.layoutNode.color : v) ?? v;
+            node.updateStyleFill(color);
         })
         const userInteractions = this.userInteractions;
 
