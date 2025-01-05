@@ -1,6 +1,7 @@
 import { EdgeSettings, RadialLayouterSettings, RadialSpacingSettings } from "../linear/radial/radialSettings";
 import { LinearSortingSettings } from "../settings/linearSettings";
 import { GraphLayouterSettings, Param, Setting } from "../settings/settings";
+import { CommunitySettings } from "./communitySettings";
 
 export class SizeSettings extends Setting {
     radius = new Param({
@@ -46,6 +47,8 @@ export class DisplaySettings extends Setting {
     });
 }
 
+
+
 export class ViscomLayouterSettings extends GraphLayouterSettings {
     spacing = new RadialSpacingSettings({
         key: "spacing",
@@ -67,6 +70,13 @@ export class ViscomLayouterSettings extends GraphLayouterSettings {
         key: "algorithm",
         label: "Algorithm",
         description: "Algorithm settings for the viscom layout.",
+        optional: false,
+    });
+
+    community = new CommunitySettings({
+        key: "community",
+        label: "Community",
+        description: "Community settings for the viscom layout.",
         optional: false,
     });
 }

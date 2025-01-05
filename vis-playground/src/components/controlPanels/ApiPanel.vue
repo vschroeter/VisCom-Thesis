@@ -136,6 +136,7 @@ import { convertGraphToCommGraph } from 'src/graph/converter';
 import { useGraphStore } from 'src/stores/graph-store';
 import { computed, onMounted, onUpdated, reactive, ref, watch, type Ref } from 'vue'
 import ParamInput from '../elements/ParamInput.vue';
+import { useApiStore } from 'src/stores/api-store';
 
 ////////////////////////////////////////////////////////////////////////////
 // Props
@@ -148,6 +149,7 @@ import ParamInput from '../elements/ParamInput.vue';
 ////////////////////////////////////////////////////////////////////////////
 
 const graphStore = useGraphStore()
+const apiStore = useApiStore()
 const currentGraph: Ref<CommunicationGraph> = computed(() => graphStore.graph as CommunicationGraph)
 
 ////////////////////////////////////////////////////////////////////////////
@@ -160,7 +162,15 @@ const currentGraph: Ref<CommunicationGraph> = computed(() => graphStore.graph as
 ////////////////////////////////////////////////////////////////////////////
 
 const showConnectionSettings = ref(false)
-const generatorApiUrl = ref('http://127.0.0.1:5000')
+// const generatorApiUrl = ref('http://127.0.0.1:5000')
+// const { generatorApiUrl } = storeToRefs(apiStore)
+const generatorApiUrl = computed({
+    get: () => apiStore.generatorApiUrl,
+    set: (value) => {
+        console.log("Setting generatorApiUrl to", value)
+        apiStore.generatorApiUrl = value
+    }
+})
 
 ////////////////////////////////////////////////////////////////////////////
 // Graph Generator
@@ -184,9 +194,9 @@ const generators = computed(() => {
 })
 
 
-watch(selectedGenerator, (newVal) => {
-    console.log(newVal)
-})
+// watch(selectedGenerator, (newVal) => {
+//     console.log(newVal)
+// })
 
 
 function fetchGenerateMethods() {
@@ -195,7 +205,7 @@ function fetchGenerateMethods() {
         .then((data: ApiGeneratorMethods) => {
             const methods = reactive(new GeneratorMethods(data)) as GeneratorMethods
             generateMethods.value = methods
-            console.log(generateMethods)
+            // console.log(generateMethods)
         })
 }
 

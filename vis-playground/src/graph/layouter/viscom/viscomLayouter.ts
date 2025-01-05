@@ -31,7 +31,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
     //     return this.hyperRadius;
     // }
 
-    override initVisGraph() {
+    override initVisGraph(): Promise<void> {
         // Transform visgraph to hypergraph
 
         this.resetVisGraph();
@@ -42,23 +42,29 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             l: this.visGraph.allLayoutConnections.flatMap(c => c.getLinks()).length
         })
 
-        this.visGraph.combineCommunities(this.commGraph.communities.getAsIdLists());
-        for (let i = 0; i < (this.settings.algorithm.combiningSteps.getValue() ?? 0); i++) {
-            this.visGraph.combineStronglyCoupledNodes();
-        }
+        return this.settings.community.fetchCommunities(this.visGraph).then(communities => {
+            console.log("Fetched communities", communities);
+            this.visGraph.combineCommunities(communities);
+        }).then(() => {
+            // this.visGraph.combineCommunities(this.commGraph.communities.getAsIdLists());
 
-        this.visGraph.setEdgeVisibility({
-            hyperEdges: this.settings.display.showHyperEdges.getValue() ?? true,
-            edgesIncludedInHyperEdges: this.settings.display.showIncludedInHyperEdges.getValue() ?? true,
+
+            for (let i = 0; i < (this.settings.algorithm.combiningSteps.getValue() ?? 0); i++) {
+                this.visGraph.combineStronglyCoupledNodes();
+            }
+
+            this.visGraph.setEdgeVisibility({
+                hyperEdges: this.settings.display.showHyperEdges.getValue() ?? true,
+                edgesIncludedInHyperEdges: this.settings.display.showIncludedInHyperEdges.getValue() ?? true,
+            })
+
+            console.log("Combined communities", this.visGraph, this.commGraph.communities.getAsIdLists());
         })
-
-        console.log("Combined communities", this.visGraph, this.commGraph.communities.getAsIdLists());
-
     }
 
     override layout(isUpdate = false) {
         console.log("Layouting", this.visGraph, this.commGraph.communities.getAsIdLists());
-        this.initVisGraph()
+        // this.initVisGraph().then(() => {
 
         this.visGraph.setPrecalculator(new BasicSizeCalculator({
             sizeMultiplier: 50,
@@ -76,19 +82,19 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
                 outerMarginFactor: this.settings.spacing.outerMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
             });
         })
-        
+
         this.visGraph.setConnectionLayouter([
             new DirectCircularConnectionLayouter(),
             new RadialSplineConnectionLayouter(),
             new RadialSubConnectionLayouter(),
             new BasicConnectionCombiner()
         ])
-        
-        console.log("Before layout", this.visGraph);
+
+        // console.log("Before layout", this.visGraph);
         this.visGraph.layout();
         console.log("After layout", this.visGraph);
         this.emitEvent("end");
-
+        // })
     }
 
 

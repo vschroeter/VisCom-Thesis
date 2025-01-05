@@ -36,7 +36,7 @@
 <script setup lang="ts">
 
 import { Param } from 'src/graph/layouter/settings/settings';
-import { computed, onMounted, onUpdated, ref, type Ref } from 'vue'
+import { computed, onMounted, onUpdated, ref, toValue, type Ref } from 'vue'
 import * as d3 from 'd3';
 
 ////////////////////////////////////////////////////////////////////////////

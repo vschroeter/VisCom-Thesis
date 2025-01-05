@@ -14,6 +14,7 @@ export interface GraphLayouterConstructorArgs<T extends GraphLayouterSettings> {
     settings: T;
     commGraph: CommunicationGraph;
     commonSettings: CommonSettings;
+    initOnConstruction?: boolean;
 }
 
 export class RenderArgs {
@@ -94,22 +95,27 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     protected events: { [key: string]: ((this: GraphLayouter<any>) => void) } = {};
 
     constructor(layouterArgs: GraphLayouterConstructorArgs<T>) {
+        console.log("Creating layouter", layouterArgs);
         this.commGraph = layouterArgs.commGraph;
         this.settings = layouterArgs.settings;
         this.commonSettings = layouterArgs.commonSettings;
 
         this.nodes = layouterArgs.nodes;
 
-        this.resetVisGraph();
-        this.initVisGraph();
+        if (layouterArgs.initOnConstruction) {
+            this.resetVisGraph();
+            this.initVisGraph();
+        }
     }
 
     resetVisGraph() {
         this.visGraph = VisGraph.fromCommGraph(this.commGraph, this.commonSettings);
     }
 
-    protected initVisGraph() {
-
+    protected initVisGraph(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            resolve();
+        });
     }
 
     get nodes2d(): Node2d[] {
@@ -132,8 +138,12 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     updateLayout(isUpdate: boolean = false): void {
-        this.updateGraphByCommonSettings();
-        this.layout(isUpdate);
+        this.initVisGraph().then(() => {
+            this.updateGraphByCommonSettings();
+            this.layout(isUpdate);
+            // this.emitEvent("update");
+        });
+        // this.layout(isUpdate);
     }
 
     protected markConnectionsAsUpdateRequired() {

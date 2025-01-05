@@ -301,6 +301,7 @@ onMounted(() => {
             settings: settings.value,
             commonSettings: settingsCollection.commonSettings as CommonSettings,
             nodes: commGraph.value.nodes as CommunicationNode[],
+            initOnConstruction: false,
         });
 
         // watchDebounced(settings, (newVal) => {

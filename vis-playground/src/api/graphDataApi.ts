@@ -1,12 +1,13 @@
 
 import createGraph, { Graph } from 'ngraph.graph';
 import { CommunicationGraph } from 'src/graph/commGraph';
+import { VisGraph } from 'src/graph/visGraph/visGraph';
 
 
 export interface ApiLink {
     source: string;
     target: string;
-    
+
     pub_topic?: string;
     service_name?: string;
 }
@@ -86,4 +87,27 @@ export function commGraphToNodeLinkData(commGraph: CommunicationGraph) {
         }
     });
     return { nodes, links };
+}
+
+export function visGraphToNodeLinkData(visGraph: VisGraph) {
+
+    const nodes: ApiNode[] = [];
+    const links: ApiLink[] = [];
+    visGraph.allLayoutNodes.forEach((node) => {
+        nodes.push({ id: node.id });
+    });
+    visGraph.allLayoutConnections.forEach((conn) => {
+
+        conn.getLinks().forEach((link) => {
+            // console.log('link', link);
+            if (link.channel.type == "PubSub") {
+                links.push({ source: conn.fromId, target: conn.toId, pub_topic: link.topic.id });
+            } else {
+                links.push({ source: conn.fromId, target: conn.toId, service_name: link.topic.id });
+            }
+        })
+
+    });
+    return { nodes, links };
+
 }
