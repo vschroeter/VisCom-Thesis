@@ -1,5 +1,5 @@
 import { useApiStore } from "src/stores/api-store";
-import { ParamChoice, Setting } from "../settings/settings";
+import { Param, ParamChoice, Setting } from "../settings/settings";
 import { ApiGeneratorMethods, GeneratorMethods } from "src/api/generatorApi";
 import { computed, ComputedRef, Ref, ref } from "vue";
 import { VisGraph } from "src/graph/visGraph/visGraph";
@@ -31,6 +31,15 @@ export class CommunitySettings extends ApiSetting {
         optional: false,
         defaultValue: "None",
         choices: ["None", "louvain"],
+    })
+
+    addVirtualNodes = new Param<boolean>({
+        key: "addVirtualNodes",
+        label: "Add Virtual Nodes",
+        description: "Add virtual nodes to other communities.",
+        optional: false,
+        defaultValue: false,
+        type: "boolean",
     })
 
 

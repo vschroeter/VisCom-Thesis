@@ -74,6 +74,8 @@ export class LayoutConnection {
     // If the connection is a child of a hyperconnection, this is the parent hyperconnection.
     parent?: LayoutConnection;
 
+    isCalculated: boolean = false;
+
     get isHyperConnection(): boolean {
         return this.children.length > 0;
     }

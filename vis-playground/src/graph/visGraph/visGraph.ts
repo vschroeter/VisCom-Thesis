@@ -150,6 +150,11 @@ export class VisGraph {
         return Array.from(this.getLayeredLayoutNodes(false).flat());
     }
 
+    get allLeafLayoutNodes(): LayoutNode[] {
+        const layers = this.getLayeredLayoutNodes(true);
+        return layers[0];
+    }
+
     addNode(node: LayoutNode, parentNode?: LayoutNode) {
         const _parentNode = parentNode ?? this.rootNode;
         if (_parentNode !== node) {
@@ -183,6 +188,19 @@ export class VisGraph {
         node.parent?.children.splice(node.parent.children.indexOf(node), 1);
     }
 
+    getCommunitiesOfConnectionsOfNode(node: LayoutNode): LayoutNode[] {
+        const communities = new Set<LayoutNode>();
+
+        node.outConnections.forEach(connection => {
+            const target = connection.target;
+            if (!target.parent) return;
+
+            if (target.parent !== node.parent) {
+                communities.add(target.parent);
+            }
+        });
+        return Array.from(communities);
+    }
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -225,9 +243,11 @@ export class VisGraph {
         const connection = this.mapSourceNodeIdToTargetNodeIdToConnection.get(sId)!.get(tId)!;
         // connection.links.push(link);
         connection.addLinks(links);
+
+        return connection;
     }
 
-    addHyperConnection(source: LayoutNode, target: LayoutNode, connection: LayoutConnection) {
+    addHyperConnection(source: LayoutNode, target: LayoutNode, connection: LayoutConnection | LayoutConnection[], isExplicit = false) {
         const sNode = this.getNode(source)
         const tNode = this.getNode(target);
         const sId = sNode.id;
@@ -255,6 +275,7 @@ export class VisGraph {
 
         // Add the link
         const hyperConnection = this.mapSourceNodeIdToTargetNodeIdToConnection.get(sId)!.get(tId)!;
+        hyperConnection.isCalculated = !isExplicit;
         // connection.links.push(link);
         hyperConnection.addChildren(connection);
     }
@@ -265,6 +286,28 @@ export class VisGraph {
         source.outConnections = source.outConnections.filter(c => c !== connection);
         target.inConnections = target.inConnections.filter(c => c !== connection);
         this.mapSourceNodeIdToTargetNodeIdToConnection.get(source.id)!.delete(target.id);
+    }
+
+    moveConnectionsBetweenNodes(oldSource: LayoutNode, oldTarget: LayoutNode, newSource: LayoutNode, newTarget: LayoutNode, deleteInstantly = true): { newConnections: LayoutConnection[], connectionsToDelete: LayoutConnection[] } {
+        const connections = this.getConnectionsBetweenNodes(oldSource, oldTarget);
+        const newConnections: LayoutConnection[] = [];
+        const connectionsToDelete: LayoutConnection[] = [];
+        connections.forEach(connection => {
+            console.log("Move connection", `${oldSource.id} -> ${oldTarget.id}`, "to", `${newSource.id} -> ${newTarget.id}`);
+            if (deleteInstantly) {
+                this.removeConnection(connection);
+            } else {
+                connectionsToDelete.push(connection);
+            }
+            // this.removeConnection(connection);
+            const nc = this.addLink(newSource, newTarget, connection.getLinks());
+            newConnections.push(nc);
+        });
+
+        return {
+            newConnections,
+            connectionsToDelete
+        }
     }
 
     getOutgoingConnections(node: LayoutNodeOrId, channels?: CommunicationChannel[]): LayoutConnection[] {
@@ -762,8 +805,67 @@ export class VisGraph {
         })
 
         this.updateHyperConnections();
+    }
+
+    addVirtualCommunityNodes() {
+
+        // Detect nodes, that have connections to other communities
+        // We assume, that in this stage communities are represented by first layer hypernodes 
+
+        const connectionsToDelete: LayoutConnection[] = [];
+
+        this.allLeafLayoutNodes.forEach(node => {
+            const connectedComms = this.getCommunitiesOfConnectionsOfNode(node);
+            if (connectedComms.length > 0) {
+                // nodesWithOtherCommunityConnections.set(node, connectedComms);
+                console.log("Node", node.id, "is connected to communities", connectedComms.map(c => c.id));
+
+                // For each node n, with n being in community c_n:
+                // For each other community c_i n has connections to, create a virtual node n_i in c_i
+                // Connect all nodes in c_i that have connections to n with n_i
+                // Connect n with n_i
+
+                connectedComms.forEach(comm => {
+
+                    // Create a virtual node in the other community
+                    const virtualNode = new LayoutNode(this, `${node.id}_in_${comm.id}`);
+                    this.addNode(virtualNode, comm);
+
+                    // Connect all nodes in the other community that are connected to the node with the virtual node
+                    comm.children.forEach(node_in_comm => {
+                        if (node_in_comm === node) return;
+                        // console.log("Move connection of node", node_in_comm.id, "from", node.id, "to", virtualNode.id);
+                        const toDelete1 = this.moveConnectionsBetweenNodes(node_in_comm, node, node_in_comm, virtualNode, false);
+                        const toDelete2 = this.moveConnectionsBetweenNodes(node, node_in_comm, virtualNode, node_in_comm, false);
+
+                        connectionsToDelete.push(...toDelete1.connectionsToDelete);
+                        connectionsToDelete.push(...toDelete2.connectionsToDelete);
+                    });
+
+                    const lOut = virtualNode.outConnections.length;
+                    const lIn = virtualNode.inConnections.length;
+
+                    // Connect the node with the virtual node
+                    if (lOut > 0) {
+                        this.addHyperConnection(node, virtualNode, virtualNode.outConnections, true);
+                    }
+                    if (lIn > 0) {
+                        this.addHyperConnection(virtualNode, node, virtualNode.inConnections, true);
+                    }
+
+                })
+            }
+        })
+
+        connectionsToDelete.forEach(connection => {
+            console.log("Remove connection", `${connection.source.id} -> ${connection.target.id}`);
+            this.removeConnection(connection);
+        });
+
+
 
     }
+
 
     updateHyperConnections() {
 
@@ -771,10 +873,10 @@ export class VisGraph {
         // For this, each connection between nodes that have different parents is replaced by a connection between hypernodes with the same parent.
 
         // // First reset all parent connections
-        
+
         // First reset all hyper connections
         this.allLayoutNodes.forEach(node => {
-            node.removeHyperConnections();
+            node.removeCalculatedHyperConnections();
         });
         this.allLayoutConnections.forEach(connection => {
             connection.parent = undefined;
@@ -796,7 +898,7 @@ export class VisGraph {
                         const sourceHypernode = source.getFirstParentByCondition((p) => p.parent == firstCommonParent) ?? source
                         const targetHypernode = target.getFirstParentByCondition((p) => p.parent == firstCommonParent) ?? target
 
-                        this.addHyperConnection(sourceHypernode, targetHypernode, connection);
+                        this.addHyperConnection(sourceHypernode, targetHypernode, connection, false);
 
                         // connection.visible = false;
                     }

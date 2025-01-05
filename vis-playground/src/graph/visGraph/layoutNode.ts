@@ -306,6 +306,10 @@ export class LayoutNode {
         this.removeConnections(c => c.isHyperConnection  && predicate(c));
     }
 
+    removeCalculatedHyperConnections() {
+        this.removeHyperConnections(c => c.isCalculated);
+    }
+
 
     ////////////////////////////////////////////////////////////////////////////
     // #region Node Information

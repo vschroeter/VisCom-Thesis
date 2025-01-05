@@ -45,6 +45,12 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         return this.settings.community.fetchCommunities(this.visGraph).then(communities => {
             console.log("Fetched communities", communities);
             this.visGraph.combineCommunities(communities);
+
+            if (this.settings.community.addVirtualNodes.getValue() ?? false) {
+                this.visGraph.addVirtualCommunityNodes();
+            }
+
+
         }).then(() => {
             // this.visGraph.combineCommunities(this.commGraph.communities.getAsIdLists());
 
