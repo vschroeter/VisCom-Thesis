@@ -62,13 +62,13 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     get debugShapes(): Shape[] {
         const shapes: Shape[] = [];
-        this.visGraph.allGraphicalNodes.forEach(n => {
+        this.visGraph?.allGraphicalNodes.forEach(n => {
             if (n.layoutNode.debugShapes.length > 0) {
                 shapes.push(...n.layoutNode.debugShapes);
             }
         });
 
-        this.visGraph.allGraphicalConnections.forEach(l => {
+        this.visGraph?.allGraphicalConnections.forEach(l => {
             if (l.layoutConnection.debugShapes.length > 0) {
                 shapes.push(...l.layoutConnection.debugShapes);
             }
@@ -79,7 +79,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     gParent: d3.Selection<SVGGElement | null, unknown, null, undefined> | null = null;
 
     get userInteractions() {
-        return this.visGraph.userInteractions;
+        return this.visGraph?.userInteractions;
     }
     commonSettings: CommonSettings;
     // userInteractions: UserInteractions;
@@ -102,8 +102,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
         this.nodes = layouterArgs.nodes;
 
+        this.resetVisGraph();
         if (layouterArgs.initOnConstruction) {
-            this.resetVisGraph();
             this.initVisGraph();
         }
     }
@@ -119,11 +119,11 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     get nodes2d(): Node2d[] {
-        return this.visGraph.allGraphicalNodes;
+        return this.visGraph?.allGraphicalNodes;
     }
 
     get connections2d(): Connection2d[] {
-        return this.visGraph.allGraphicalConnections;
+        return this.visGraph?.allGraphicalConnections;
     }
 
     adaptNodesByCenterTranslation() {
@@ -213,7 +213,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
 
     updateStyle() {
-        this.visGraph.updateGraphicalStyle();
+        this.visGraph?.updateGraphicalStyle();
         return;
     }
 
@@ -239,7 +239,9 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     renderNodes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
         // Get the current classname of this object
         const className = this.constructor.name.toLowerCase();
-
+        if (!this.visGraph) {
+            return;
+        }
         const nodes = selection.selectChildren('g.node')
             .data<Node2d>(this.visGraph.allGraphicalNodes, (d, i, g) => {
                 return (d as Node2d).id;
@@ -268,7 +270,9 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     renderLinks(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Connection2d>) {
-
+        if (!this.visGraph) {
+            return;
+        }
         const links = selection.selectChildren('g.link')
             .data<Connection2d>(this.visGraph.allGraphicalConnections, (d, i, g) => {
                 return (d as Connection2d).id;
@@ -296,6 +300,9 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     }
 
     renderLabels(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>, events?: MouseEvents<Node2d>) {
+        if (!this.visGraph) {
+            return;
+        }
         selection.selectChildren('text')
             .data<Node2d>(this.visGraph.allGraphicalNodes.filter(n => n.layoutNode.showLabel), (d, i, g) => {
                 return (d as Node2d).id;

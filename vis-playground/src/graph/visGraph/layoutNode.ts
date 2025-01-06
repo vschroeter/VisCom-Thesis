@@ -33,17 +33,19 @@ export class LayoutNode {
         this.id = id;
     }
 
-    clone(id: string): LayoutNode {
+    clone(id: string, cloneConnections: boolean = true): LayoutNode {
         const clone = new LayoutNode(this.visGraph, id);
         clone.label = this.label;
         clone.score = this.score;
         this.visGraph.addNode(clone, this.parent);
-        this.outConnections.forEach(connection => {
-            this.visGraph.addLink(clone, connection.target, connection.getLinks());
-        });
-        this.inConnections.forEach(connection => {
-            this.visGraph.addLink(connection.source, clone, connection.getLinks());
-        });
+        if (cloneConnections) {
+            this.outConnections.forEach(connection => {
+                this.visGraph.addLink(clone, connection.target, connection.getLinks());
+            });
+            this.inConnections.forEach(connection => {
+                this.visGraph.addLink(connection.source, clone, connection.getLinks());
+            });
+        }
         return clone;
     }
 
@@ -303,7 +305,7 @@ export class LayoutNode {
     }
 
     removeHyperConnections(predicate: (connection: LayoutConnection) => boolean = () => true) {
-        this.removeConnections(c => c.isHyperConnection  && predicate(c));
+        this.removeConnections(c => c.isHyperConnection && predicate(c));
     }
 
     removeCalculatedHyperConnections() {

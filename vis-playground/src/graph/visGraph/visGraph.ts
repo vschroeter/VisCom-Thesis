@@ -829,7 +829,9 @@ export class VisGraph {
 
                     // Create a virtual node in the other community
                     const virtualNode = new LayoutNode(this, `${node.id}_in_${comm.id}`);
+                    virtualNode.score = node.score;
                     this.addNode(virtualNode, comm);
+                    // const virtualNode = node.clone(`${node.id}_in_${comm.id}`, false);
 
                     // Connect all nodes in the other community that are connected to the node with the virtual node
                     comm.children.forEach(node_in_comm => {
