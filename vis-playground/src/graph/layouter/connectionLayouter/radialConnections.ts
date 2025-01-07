@@ -1,4 +1,4 @@
-import { LayoutConnection, LayoutConnectionPoint } from "src/graph/visGraph/layoutConnection";
+import { LayoutConnection, LayoutConnectionPoint, LayoutConnectionPoints } from "src/graph/visGraph/layoutConnection";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { degToRad, RadialUtils, radToDeg } from "../utils/radialUtils";
 import { Circle, Line, Point, Segment, Vector } from "2d-geometry";
@@ -205,9 +205,9 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
 
             try {
                 if (isForwardLink) {
-                    connection.points = this.getForwardLink(startNode, endNode, parent);
+                    connection.setPoints(this.getForwardLink(startNode, endNode, parent));
                 } else {
-                    connection.points = this.getBackwardLink(startNode, endNode, parent);
+                    connection.setPoints(this.getBackwardLink(startNode, endNode, parent));
                 }
             } catch (e) {
                 console.error("Error in layouting connection", e);
@@ -220,7 +220,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         endCircle: Circle,
         parentCircle: Circle,
         direction: "clockwise" | "counter-clockwise" = "clockwise"
-    ): LayoutConnectionPoint[] {
+    ): LayoutConnectionPoints {
 
         // Given Constants
         const startAngleRad = RadialUtils.radOfPoint(startCircle.center, parentCircle.center);
@@ -266,8 +266,8 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
             new Vector(center, intersectionStart).normalize().rotate90CW() :
             new Vector(center, intersectionStart).normalize().rotate90CCW();
         const tangentInEndIntersection = direction == "clockwise" ?
-            new Vector(center, intersectionEnd).normalize().rotate90CCW() :
-            new Vector(center, intersectionEnd).normalize().rotate90CW();
+            new Vector(center, intersectionEnd).normalize().rotate90CW() :
+            new Vector(center, intersectionEnd).normalize().rotate90CCW();
 
         const startAnchor = new Anchor(intersectionStart, tangentInStartIntersection);
         const endAnchor = new Anchor(intersectionEnd, tangentInEndIntersection);
@@ -282,12 +282,12 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
             .largeArc(0)
             .direction(direction);
 
-        return [
-            startAnchor,
-            arc,
-            // straightEndPartForArrow,
-            endAnchor
-        ];
+        return {
+            startAnchor: startAnchor,
+            points: [arc],
+            endAnchor: endAnchor
+        }
+
 
     }
 
@@ -295,7 +295,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         startNode: LayoutNode,
         endNode: LayoutNode,
         parent: LayoutNode,
-    ): LayoutConnectionPoint[] {
+    ): LayoutConnectionPoints {
         return RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
             startNode.outerCircle,
             endNode.outerCircle,
@@ -307,7 +307,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         startNode: LayoutNode,
         endNode: LayoutNode,
         parent: LayoutNode,
-    ): LayoutConnectionPoint[] {
+    ): LayoutConnectionPoints {
         /** 
         For a forward link, we want a circular arc that is inside the circle.
         This circle arc is defined by the following:
@@ -407,10 +407,10 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
             startAnchor.anchorPoint = startAnchor.getPointInDirection((startNode.outerRadius - startNode.radius));
             endAnchor.anchorPoint = endAnchor.getPointInDirection((endNode.outerRadius - endNode.radius));
 
-            return [
+            return {
                 startAnchor,
                 endAnchor
-            ];
+            };
         }
 
 
@@ -508,12 +508,13 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
             .largeArc(0)
             .direction(direction);
 
-        return [
+        return {
             startAnchor,
-            arc,
+            points: [arc],
             // straightEndPartForArrow,
             endAnchor
-        ];
+
+        }
 
     }
 
@@ -521,7 +522,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         startNode: LayoutNode,
         endNode: LayoutNode,
         parent: LayoutNode,
-    ): LayoutConnectionPoint[] {
+    ): LayoutConnectionPoints {
 
         // Given Constants
         const startAngleRad = RadialUtils.radOfPoint(startNode, parent);
@@ -654,14 +655,14 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         const intersectionsStart = arcCircle.intersect(startNode.outerCircle);
         const intersectionsEnd = arcCircle.intersect(endNode.outerCircle);
 
-        console.log({
-            startNode,
-            endNode,
-            parent,
-            arcCircle,
-            intersectionsStart,
-            intersectionsEnd
-        });
+        // console.log({
+        //     startNode,
+        //     endNode,
+        //     parent,
+        //     arcCircle,
+        //     intersectionsStart,
+        //     intersectionsEnd
+        // });
 
         // Get the intersections, that are closer to the mid point between the two nodes
         const sDist0 = intersectionsStart[0].distanceTo(radialMidPoint)[0];
@@ -699,12 +700,13 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
             .largeArc(largeArc)
             .direction(direction);
 
-        return [
+        return {
             startAnchor,
-            arc,
+            points: [arc],
             // straightEndPartForArrow,
             endAnchor
-        ];
+
+        }
 
     }
 

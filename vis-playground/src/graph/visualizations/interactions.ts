@@ -75,8 +75,14 @@ export class UserInteractions {
 
         nodes.forEach(node => {
             if (node.splitParent) {
+                this.hoveredNodeIds.add(node.splitParent.id)
                 node.splitParent.splitChildren.map(child => child.id).forEach(id => this.hoveredNodeIds.add(id))
             }
+
+            if (node.splitChildren.length > 0) {
+                node.splitChildren.map(child => child.id).forEach(id => this.hoveredNodeIds.add(id))
+            }
+
         });
 
         // console.log("Hovered nodes", this.hoveredNodeIds)
@@ -122,7 +128,12 @@ export class UserInteractions {
 
         nodes.forEach(node => {
             if (node.splitParent) {
+                this.hoveredNodeIds.delete(node.splitParent.id)
                 node.splitParent.splitChildren.map(child => child.id).forEach(id => this.hoveredNodeIds.delete(id))
+            }
+
+            if (node.splitChildren.length > 0) {
+                node.splitChildren.map(child => child.id).forEach(id => this.hoveredNodeIds.delete(id))
             }
         });
 

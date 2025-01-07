@@ -2,7 +2,7 @@ import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponent
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
 import { RadialUtils, radToDeg } from "../utils/radialUtils";
-import { LayoutConnection, LayoutConnectionPoint } from "src/graph/visGraph/layoutConnection";
+import { LayoutConnection, LayoutConnectionPoint, LayoutConnectionPoints } from "src/graph/visGraph/layoutConnection";
 import { Circle, Line, Point, Ray, Segment, Vector } from "2d-geometry";
 import { Anchor } from "src/graph/graphical";
 import { RadialConnectionsHelper } from "./radialConnections";
@@ -216,7 +216,7 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
             })
 
             const sortedConnections = [...outgoingConnectionsCombined, ...onlyIncomingConnections];
-            
+
             // Now we distribute the connections inside the parent circle
             sortedConnections.forEach((connections, index) => {
                 const isArray = Array.isArray(connections);
@@ -271,15 +271,17 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                 }
 
                 const anchor = new Anchor(intersectionPoints[0], slopeVector);
+                const anchorReversed = anchor.cloneReversed();
                 // const anchorOutgoing = new Anchor(intersectionPoints[0], slopeVector.rotate90CCW());
                 // const anchorIncoming = new Anchor(intersectionPoints[0], slopeVector.rotate90CW());
 
 
                 if (!isArray) {
                     if (isOutgoing) {
-                        connection.startPoints = [anchor];
+                        // connection.startPoints = [anchor];
+                        connection.startAnchor = anchor;
                     } else {
-                        connection.endPoints = [anchor];
+                        connection.endAnchor = anchorReversed;
                     }
                 } else {
                     connections.forEach(connection => {
@@ -288,11 +290,11 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                         if (isOutgoing) {
                             // The outgoing anchor should be translated a little bit to the left (so the vector rotated by 90 degrees CCW)
                             const anchor = new Anchor(intersectionPoints[0].translate(slopeVector.rotate90CCW().multiply(translationDistance)), slopeVector);
-                            connection.startPoints = [anchor];
+                            connection.startAnchor = anchor;
                         } else {
                             // The incoming anchor should be translated a little bit to the right (so the vector rotated by 90 degrees CW)
-                            const anchor = new Anchor(intersectionPoints[0].translate(slopeVector.rotate90CW().multiply(translationDistance)), slopeVector);
-                            connection.endPoints = [anchor];
+                            const anchor = new Anchor(intersectionPoints[0].translate(slopeVector.rotate90CW().multiply(translationDistance)), slopeVector.rotate(Math.PI));
+                            connection.endAnchor = anchor;
                         }
                     })
                 }
@@ -355,10 +357,10 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
 
                 if (isOutgoing) {
                     const anchor = new Anchor(intersectionPoints[0], slopeVector);
-                    connection.startPoints = [anchor];
+                    connection.startAnchor = anchor;
                 } else {
-                    const anchor = new Anchor(intersectionPoints[0], slopeVector);
-                    connection.endPoints = [anchor];
+                    const anchor = new Anchor(intersectionPoints[0], slopeVector.rotate90CW());
+                    connection.endAnchor = anchor;
                 }
             })
         }
@@ -403,8 +405,8 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                 insideConnections.forEach((connection, index) => {
                     const sizeArrow = 10;
 
-                    const startAnchor = connection.startPoints[0] as Anchor;
-                    const endAnchor = connection.endPoints[0] as Anchor;
+                    const startAnchor = connection.startAnchor;
+                    const endAnchor = connection.endAnchor;
 
                     if (startAnchor && endAnchor) {
 
@@ -415,7 +417,7 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                         const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
 
                         const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
-                        const endControlPoint = endAnchor.getPointInDirection(distanceToControlPoint);
+                        const endControlPoint = endAnchor.getPointInDirection(-distanceToControlPoint);
 
 
                         // connection.startPoints = [startAnchor, startControlPoint];
@@ -445,9 +447,9 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                 // Now we distribute the connections inside the parent circle
                 outsideConnections.forEach((connection, index) => {
                     const sizeArrow = 10;
-
-                    const startAnchor = connection.startPoints[0] as Anchor;
-                    const endAnchor = connection.endPoints[0] as Anchor;
+                    
+                    const startAnchor = connection.startAnchor;
+                    const endAnchor = connection.endAnchor;
 
                     if (startAnchor && endAnchor) {
 
@@ -458,7 +460,7 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                         const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
 
                         const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
-                        const endControlPoint = endAnchor.getPointInDirection(distanceToControlPoint);
+                        const endControlPoint = endAnchor.getPointInDirection(-distanceToControlPoint);
 
 
                         // connection.startPoints = [startAnchor, startControlPoint];
@@ -507,13 +509,13 @@ export class MultiHyperConnection {
 
     calculatePoints(): {
         circleSegments: CircleSegmentConnection[],
-        points: LayoutConnectionPoint[]
-    } {
+        points: LayoutConnectionPoints
+    }  {
         const nodesFromHyperConnectionToStart: LayoutNode[] = [];
         const nodesFromHyperConnectionToEnd: LayoutNode[] = [];
 
         if (this.hyperConnection === undefined) {
-            return {circleSegments: [], points: []};
+            return { circleSegments: [], points: [] };
         }
 
         let isStart = true;
@@ -548,7 +550,8 @@ export class MultiHyperConnection {
             new CircleSegmentAnchor((this.hyperConnection.combinedPoints[0] as Anchor).clone(), this.hyperConnection.source.parent!)
         );
         anchorsFromHyperEndToEnd.push(
-            new CircleSegmentAnchor((this.hyperConnection.combinedPoints[this.hyperConnection.combinedPoints.length - 1] as Anchor).cloneReversed(), this.hyperConnection.target.parent!)
+            // new CircleSegmentAnchor((this.hyperConnection.combinedPoints[this.hyperConnection.combinedPoints.length - 1] as Anchor).cloneReversed(), this.hyperConnection.target.parent!)
+            new CircleSegmentAnchor((this.hyperConnection.combinedPoints[this.hyperConnection.combinedPoints.length - 1] as Anchor).clone(), this.hyperConnection.target.parent!)
         );
 
         const calculateAnchors = (
@@ -656,17 +659,34 @@ export class MultiHyperConnection {
             const lastAnchor = circleSegmentAnchors[circleSegmentAnchors.length - 1];
             circleSegmentConnections.push(..._circleSegmentConnections);
 
-            return [..._circleSegmentConnections, lastAnchor.anchor.cloneReversed()];
+            return [..._circleSegmentConnections];
         };
 
         const startCircleSegmentConnections = getCircleSegmentConnections(anchorsFromStartToHyperStart, true);
         const endCircleSegmentConnections = getCircleSegmentConnections(anchorsFromHyperEndToEnd, false);
+
+        // console.log({
+        //     startCircleSegmentConnections,
+        //     points: this.hyperConnection.combinedPoints,
+        //     endCircleSegmentConnections
+        // })
 
         const combinedPoints: LayoutConnectionPoint[] = [
             ...startCircleSegmentConnections,
             ...this.hyperConnection.points,
             ...endCircleSegmentConnections
         ];
+
+        const startAnchor = startCircleSegmentConnections[0]?.startAnchor?.clone() ?? this.hyperConnection.startAnchor?.clone();
+        const endAnchor = endCircleSegmentConnections[endCircleSegmentConnections.length - 1]?.endAnchor?.clone() ?? this.hyperConnection.endAnchor?.clone();
+        if (!startAnchor) console.warn("No start anchor found", this.connection);
+        if (!endAnchor) console.warn("No end anchor found", this.connection);
+
+        const points: LayoutConnectionPoints = {
+            startAnchor: startAnchor,
+            endAnchor: endAnchor,
+            points: combinedPoints
+        }
 
         // console.log({
         //     conn: this.connection,
@@ -678,7 +698,7 @@ export class MultiHyperConnection {
         // })
 
         return {
-            points: combinedPoints,
+            points: points,
             circleSegments: circleSegmentConnections
         }
     }
@@ -785,7 +805,7 @@ export class RadialSubConnectionLayouter extends BaseNodeConnectionLayouter {
                 nodeToCircleSegmentsMap.get(circleSegment.parentNode)!.push(circleSegment);
             })
 
-            hyperConnection.connection!.points = res.points;
+            hyperConnection.connection!.setPoints(res.points);
         })
 
         console.log(nodeToCircleSegmentsMap);

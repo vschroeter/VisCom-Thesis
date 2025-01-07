@@ -120,17 +120,11 @@ export class CircleSegmentConnection implements SvgPathSegment {
         const radiusAtStart = startPoint.distanceTo(this.circle.center)[0];
         const radiusAtEnd = endPoint.distanceTo(this.circle.center)[0];
 
-        // const startDelta = Math.abs(radius - radiusAtStart);
-        // const endDelta = Math.abs(radius - radiusAtEnd);
-
         const startDelta = radius - radiusAtStart;
         const endDelta = radius - radiusAtEnd;
 
         const absStartDelta = Math.abs(startDelta);
         const absEndDelta = Math.abs(endDelta);
-
-        // const startControlPointDelta = radiusAtStart > radius ? absStartDelta : -absStartDelta;
-        // const endControlPointDelta = radiusAtEnd > radius ? absEndDelta : -absEndDelta;
 
         const startCircleCenterPoint =
             radiusAtStart < radius ?
@@ -167,11 +161,8 @@ export class CircleSegmentConnection implements SvgPathSegment {
             const anchorDistanceFactor = 0.4
             const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
 
-            // const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
-            // const endControlPoint = endAnchor.getPointInDirection(-distanceToControlPoint);
-
             const startControlPoint = startAnchor.getPointTowardsReference(distanceToControlPoint, endPoint);
-            const endControlPoint = endAnchor.getPointTowardsReference(-distanceToControlPoint, startPoint);
+            const endControlPoint = endAnchor.getPointTowardsReference(distanceToControlPoint, startPoint);
 
             const curve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
             this.directConnectionCurve = curve;
@@ -209,6 +200,15 @@ export class CircleSegmentConnection implements SvgPathSegment {
         const distanceStartToArcStart = startAnchor.anchorPoint.distanceTo(arcStartPoint)[0];
         const distanceEndToArcEnd = endAnchor.anchorPoint.distanceTo(arcEndPoint)[0];
         const distanceFactor = 0.5;
+
+        // this.parentNode?.debugShapes.push(new Segment(startAnchor.anchorPoint, startAnchor.getPointInDirection(10)));
+        // this.parentNode?.debugShapes.push(startAnchor.anchorPoint)
+
+        // const s = new Segment(endAnchor.anchorPoint, endAnchor.getPointInDirection(10));
+        // s._data = { stroke: "red" };
+        // this.parentNode?.debugShapes.push(s);
+        // this.parentNode?.debugShapes.push(endAnchor.anchorPoint)
+
 
         const startControlPoint1 = startPoint.translate(startAnchor.direction.multiply(distanceStartToArcStart * distanceFactor));
         const startControlPoint2 = arcStartPoint.translate(

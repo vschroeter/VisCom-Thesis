@@ -838,10 +838,12 @@ export class VisGraph {
                 connectedComms.forEach(comm => {
 
                     // Create a virtual node in the other community
-                    const virtualNode = new LayoutNode(this, `${node.id}_in_${comm.id}`);
-                    virtualNode.score = node.score;
-                    this.addNode(virtualNode, comm);
-                    // const virtualNode = node.clone(`${node.id}_in_${comm.id}`, false);
+
+                    const virtualNode = node.clone(`${node.id}_in_${comm.id}`, {
+                        cloneConnections: false,
+                        parent: comm
+                    });
+                    node.addSplitChild(virtualNode);
 
                     // Connect all nodes in the other community that are connected to the node with the virtual node
                     comm.children.forEach(node_in_comm => {
@@ -858,21 +860,21 @@ export class VisGraph {
                     const lIn = virtualNode.inConnections.length;
 
                     // Connect the node with the virtual node
-                    if (lOut > 0) {
-                        this.addHyperConnection(node, virtualNode, virtualNode.outConnections, true);
-                    }
-                    if (lIn > 0) {
-                        this.addHyperConnection(virtualNode, node, virtualNode.inConnections, true);
-                    }
+                    // if (lOut > 0) {
+                    //     this.addHyperConnection(node, virtualNode, virtualNode.outConnections, true);
+                    // }
+                    // if (lIn > 0) {
+                    //     this.addHyperConnection(virtualNode, node, virtualNode.inConnections, true);
+                    // }
 
                 })
             }
         })
 
-        connectionsToDelete.forEach(connection => {
-            console.log("Remove connection", `${connection.source.id} -> ${connection.target.id}`);
-            this.removeConnection(connection);
-        });
+        // connectionsToDelete.forEach(connection => {
+        //     console.log("Remove connection", `${connection.source.id} -> ${connection.target.id}`);
+        //     this.removeConnection(connection);
+        // });
 
 
 

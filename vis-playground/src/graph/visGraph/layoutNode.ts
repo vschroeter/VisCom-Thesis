@@ -33,12 +33,17 @@ export class LayoutNode {
         this.id = id;
     }
 
-    clone(id: string, cloneConnections: boolean = true): LayoutNode {
+    clone(id: string, props: { cloneConnections: boolean, parent?: LayoutNode } = {
+        cloneConnections: true
+    }): LayoutNode {
         const clone = new LayoutNode(this.visGraph, id);
         clone.label = this.label;
         clone.score = this.score;
-        this.visGraph.addNode(clone, this.parent);
-        if (cloneConnections) {
+
+        const parent = props.parent ?? this.parent;
+
+        this.visGraph.addNode(clone, parent);
+        if (props.cloneConnections) {
             this.outConnections.forEach(connection => {
                 this.visGraph.addLink(clone, connection.target, connection.getLinks());
             });

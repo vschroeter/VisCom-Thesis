@@ -38,7 +38,7 @@ export class Arrow2D {
     getSvgPath(anchor: Anchor) {
 
         const startPoint = anchor.anchorPoint
-        const direction = anchor.direction
+        const direction = anchor.direction.rotate(Math.PI) // Rotate by 180 degrees
 
         const points = Array.from(Arrow2D.narrowPoints);
         // if (this.closed) {
@@ -85,6 +85,14 @@ export class Connection2d extends SvgRenderable {
     // /** The points defining the connection */
     get points(): LayoutConnectionPoint[] {
         return this.layoutConnection.points
+    }
+
+    get startAnchor(): Anchor | undefined {
+        return this.layoutConnection.startAnchor;
+    }
+
+    get endAnchor(): Anchor | undefined {
+        return this.layoutConnection.endAnchor;
     }
 
     get curveStyle(): CurveStyle {
@@ -263,8 +271,8 @@ export class Connection2d extends SvgRenderable {
     getArrowPath(): string {
         // return this.arrow.getSvgPath(this.target.getAnchor(this.source.center))
         let targetAnchor: Anchor;
-        if (this.points.length > 0 && this.points[this.points.length - 1] instanceof Anchor) {
-            targetAnchor = this.points[this.points.length - 1] as Anchor
+        if (this.endAnchor) {
+            targetAnchor = this.endAnchor;
         } else {
             targetAnchor = this.target.getAnchor(this.source.center);
         }

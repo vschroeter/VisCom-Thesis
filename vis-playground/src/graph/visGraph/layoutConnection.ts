@@ -1,6 +1,6 @@
 
 
-import { Point, Shape } from "2d-geometry";
+import { Point, Shape, Vector } from "2d-geometry";
 import { CommunicationChannel, CommunicationGraph, CommunicationLink, CommunicationNode, CommunicationTopic } from "../commGraph";
 import { CommonSettings } from "../layouter/settings/commonSettings";
 
@@ -30,6 +30,7 @@ export class VisLink {
 }
 
 export type LayoutConnectionPoint = Point | Anchor | SvgPathSegment;
+export type LayoutConnectionPoints = LayoutConnectionPoint[] | {startAnchor?: Anchor, endAnchor?: Anchor, points?: LayoutConnectionPoint[] };
 
 export type CurveStyle = "linear" | "basis" | "natural" | d3.CurveFactory
 
@@ -104,19 +105,36 @@ export class LayoutConnection {
     /** The points that define the connection layout */
     points: LayoutConnectionPoint[] = []
 
-    /** Additional points at the start of the connection used for the actual layout points */
-    startPoints: LayoutConnectionPoint[] = []
+    /** The start anchor of the connection */
+    startAnchor?: Anchor = new Anchor(new Point(0, 0), new Vector(1, 0));
 
-    /** Additional points at the end of the connection used for the actual layout points */
-    endPoints: LayoutConnectionPoint[] = []
+    /** The end anchor of the connection */
+    endAnchor?: Anchor = new Anchor(new Point(0, 0), new Vector(1, 0));
 
     /** All points combined */
     get combinedPoints(): LayoutConnectionPoint[] {
-        return [
-            ...this.startPoints,
-            ...this.points,
-            ...this.endPoints
-        ]
+        const points: LayoutConnectionPoint[] = [];
+        if (this.points.length > 0 && this.points[0] != this.startAnchor) {
+            if (this.startAnchor) points.push(this.startAnchor);
+        }
+
+        points.push(...this.points);
+
+        if (this.points.length > 0 && this.points[this.points.length - 1] != this.endAnchor) {
+            if (this.endAnchor) points.push(this.endAnchor);
+        }
+
+        return points;
+    }
+
+    setPoints(points: LayoutConnectionPoints) {
+        if (Array.isArray(points)) {
+            this.points = points;
+        } else {
+            this.startAnchor = points.startAnchor;
+            this.endAnchor = points.endAnchor;
+            this.points = points.points ?? [];
+        }
     }
 
     finishedLayouting: boolean = false;
@@ -303,8 +321,8 @@ export class LayoutConnection {
     }
 
     resetPoints() {
-        this.startPoints = [];
-        this.endPoints = [];
+        this.startAnchor = new Anchor(new Point(0, 0), new Vector(1, 0));
+        this.endAnchor = new Anchor(new Point(0, 0), new Vector(1, 0));
         this.points = [];
         this.finishedLayouting = false;
     }

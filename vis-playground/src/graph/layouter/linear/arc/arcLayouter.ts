@@ -79,16 +79,16 @@ export class ArcConnector extends BaseNodeConnectionLayouter {
             const startPoint = startAnchor.anchorPoint.clone();
             const endPoint = endAnchor.anchorPoint.clone();
 
-            connection.points = [
+            connection.setPoints({
                 // new Point(source.x, source.y),
                 startAnchor,
-                new EllipticArc()
+                points: [new EllipticArc()
                     .radius(xDelta / 2)
                     .endPoint(endPoint)
-                // .direction(direction == "down" ? "clockwise" : "counter-clockwise")
-                ,
-                endAnchor,
-            ]
+                    // .direction(direction == "down" ? "clockwise" : "counter-clockwise")
+                ],
+                endAnchor
+            })
         });
 
     }

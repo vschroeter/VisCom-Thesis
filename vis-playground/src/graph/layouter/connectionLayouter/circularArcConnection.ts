@@ -56,15 +56,15 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
             // Make the parent circle slightly smaller
             const outerC = parent.innerCircle.clone()
             // outerC.r += 10 * parent.sizeFactor;
-            outerC.r -= 0.1 * Math.min(start.outerCircle.r, end.outerCircle.r);
+            outerC.r += 0.2 * Math.min(start.outerCircle.r, end.outerCircle.r);
             if (!parent) return;
 
-            connection.points = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+            connection.setPoints(RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
                 start.outerCircle,
                 end.outerCircle,
                 outerC,
                 "clockwise"
-            )
+            ));
             connection.finishedLayouting = true;
         });
 
@@ -78,14 +78,14 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
             // Make the parent circle slightly larger
             const outerC = parent.innerCircle.clone()
             // outerC.r += 10 * parent.sizeFactor;
-            outerC.r += 0.3 * Math.min(start.outerCircle.r, end.outerCircle.r);
+            outerC.r -= 0.1 * Math.min(start.outerCircle.r, end.outerCircle.r);
 
-            connection.points = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+            connection.setPoints(RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
                 start.outerCircle,
                 end.outerCircle,
                 outerC,
                 "counter-clockwise"
-            )
+            ));
         });
     }
 
