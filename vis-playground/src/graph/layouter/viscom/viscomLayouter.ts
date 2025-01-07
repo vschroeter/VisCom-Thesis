@@ -4,10 +4,11 @@ import { GraphLayouter } from "../layouter";
 import { RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
 import { Connection2dData } from "src/graph/graphical/Connection2d";
 import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/precalculator";
-import { RadialSplineConnectionLayouter, RadialSubConnectionLayouter } from "../connectionLayouter/splineConnection";
 import { BasicConnectionCombiner } from "../connectionLayouter/connectionCombiner";
 import { DirectCircularConnectionLayouter } from "../connectionLayouter/circularArcConnection";
 import { IdSorter } from "src/graph/algorithms/sortings/simple";
+import { RadialSplineConnectionLayouter } from "../connectionLayouter/splineConnection";
+import { RadialMultiConnectionLayouter } from "../connectionLayouter/multiConnection";
 
 
 export interface ViscomHyperLinkData extends Connection2dData {
@@ -92,7 +93,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         this.visGraph.setConnectionLayouter([
             new DirectCircularConnectionLayouter(),
             new RadialSplineConnectionLayouter(),
-            new RadialSubConnectionLayouter(),
+            new RadialMultiConnectionLayouter(),
             new BasicConnectionCombiner()
         ])
 

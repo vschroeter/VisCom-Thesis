@@ -44,6 +44,7 @@ export class BaseNodeConnectionLayouter {
         this.postHooks.push(hook);
     }
 
+
     layoutConnections(node: LayoutNode): void {
         this.preHooks.forEach(hook => hook(node));
         this.layoutConnectionsOfChildren(node);
@@ -51,10 +52,20 @@ export class BaseNodeConnectionLayouter {
         this.postHooks.forEach(hook => hook(node));
     }
 
+
+    /**
+     * This method is meant to finish the connection layouts of all child nodes of the node.
+     * @param node The node to layout the connections for its children.
+     */
     layoutConnectionsOfChildren(node: LayoutNode): void {
             
     }
 
+    /**
+     * Layout the connections of a node itself.
+     * For multi-step layouting, this method is meant to prepare the connections for the children layouter of the parent node.
+     * @param node The node to layout the connections for.
+     */
     layoutConnectionsOfNode(node: LayoutNode): void {
 
     }
