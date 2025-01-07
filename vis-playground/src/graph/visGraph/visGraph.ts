@@ -199,6 +199,16 @@ export class VisGraph {
                 communities.add(target.parent);
             }
         });
+
+        node.inConnections.forEach(connection => {
+            const source = connection.source;
+            if (!source.parent) return;
+
+            if (source.parent !== node.parent) {
+                communities.add(source.parent);
+            }
+        });
+
         return Array.from(communities);
     }
 
