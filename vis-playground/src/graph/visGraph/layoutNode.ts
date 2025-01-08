@@ -54,6 +54,10 @@ export class LayoutNode {
         return clone;
     }
 
+    remove() {
+        this.visGraph.removeNode(this);
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // #region Node relations
     ////////////////////////////////////////////////////////////////////////////
@@ -86,9 +90,69 @@ export class LayoutNode {
     // If this node is a split node, these are the children
     splitChildren: LayoutNode[] = [];
 
+
+    // If this node is a virtual node, this is the parent node
+    virtualParent?: LayoutNode;
+
+    get isVirtualNode(): boolean {
+        return this.virtualParent != undefined;
+    }
+
+    get hasVirtualChildren(): boolean {
+        return this.virtualChildren.length > 0;
+    }
+
+    // If the node is has virtual child nodes, these are the children
+    virtualChildren: LayoutNode[] = [];
+
+
+    // Map to store, if for a given node id, a virtual child node exists
+    existingVirtualChildren: Map<string, LayoutNode> = new Map();
+
     addSplitChild(child: LayoutNode) {
         this.splitChildren.push(child);
         child.splitParent = this;
+    }
+
+    addVirtualChild(child: LayoutNode) {
+        this.virtualChildren.push(child);
+        child.virtualParent = this;
+
+        child.parent?.existingVirtualChildren.set(this.id, child);
+    }
+
+    static moveNodesToParent(nodes: LayoutNode[], newParentNode: LayoutNode) {
+        nodes.forEach(node => {
+            const oldParent = node.parent;
+            // if (oldParent) {
+            //     oldParent.children.splice(oldParent.children.indexOf(node), 1);
+            // }
+            // node.parent = newParentNode;
+            // newParentNode.children.push(node);
+            node.moveNodeToParent(newParentNode);
+
+            // We can check here, if the old parent now only contains the new parent as single child
+            // If so, we can move the children of the new parent to the old parent and remove the new parent
+            if (oldParent && oldParent.children.length === 1 && oldParent.children[0] === newParentNode) {
+                LayoutNode.moveNodesToParent(Array.from(newParentNode.children), oldParent);
+                newParentNode.remove();
+            }
+
+        });
+    }
+
+    moveNodeToParent(newParent: LayoutNode) {
+        const oldParent = this.parent;
+        if (oldParent) {
+            oldParent.children.splice(oldParent.children.indexOf(this), 1);
+            const virtualParent = this.virtualParent;
+            if (virtualParent) {
+                oldParent.existingVirtualChildren.delete(virtualParent.id);
+                newParent.existingVirtualChildren.set(virtualParent.id, this);
+            }
+        }
+        this.parent = newParent;
+        newParent.children.push(this);        
     }
 
     ////////////////////////////////////////////////////////////////////////////

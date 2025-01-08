@@ -293,6 +293,60 @@ export class LayoutConnection {
         return nodes;
     }
 
+    getConnectionPathViaHyperAndVirtualNodes(): LayoutNode[] {
+        let startNode = this.source;
+        let endNode = this.target;
+
+        const nodes: LayoutNode[] = [];
+
+        const parentHyperConnection = this.parent;
+
+        if (!parentHyperConnection) {
+            return [startNode, endNode];
+        }
+
+        const hyperStart = parentHyperConnection.source;
+        const hyperEnd = parentHyperConnection.target;
+
+        let currentNode: LayoutNode | undefined = this.source;
+
+        nodes.push(startNode);
+        while (currentNode?.parent && currentNode != hyperStart) {
+            const virtualNode = currentNode.parent?.existingVirtualChildren.get(endNode.id);
+            if (virtualNode) {
+                // console.log("Virtual node found", {
+                //     virtualNode: virtualNode.id,
+                //     startNode: startNode.id,
+                //     endNode: endNode.id,
+                // });
+                nodes.push(virtualNode);
+            }
+            currentNode = currentNode.parent;
+            nodes.push(currentNode);
+        }
+
+        currentNode = this.target;
+        const endNodes: LayoutNode[] = [];
+        endNodes.push(this.target);
+        while (currentNode?.parent && currentNode != hyperEnd) {
+            const virtualNode = currentNode.parent?.existingVirtualChildren.get(endNode.id);
+            if (virtualNode) {
+                // console.log("Virtual node found", {
+                //     virtualNode: virtualNode.id,
+                //     startNode: startNode.id,
+                //     endNode: endNode.id,
+                // });
+                endNodes.push(virtualNode);
+            }
+            currentNode = currentNode.parent;
+            endNodes.push(currentNode);
+        }
+
+        nodes.push(...endNodes.reverse());
+
+        return nodes;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // #region Graphical methods
     ////////////////////////////////////////////////////////////////////////////

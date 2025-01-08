@@ -261,7 +261,9 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                 const parentHyperConnection = connection.parent!;
                 const hyperConnection = new MultiHyperConnection();
 
-                hyperConnection.nodePath = connection.getSubNodePathViaHypernodes();
+                // hyperConnection.nodePath = connection.getSubNodePathViaHypernodes();
+                hyperConnection.nodePath = connection.getConnectionPathViaHyperAndVirtualNodes();
+                console.log(hyperConnection.nodePath.map(node => node.id));
                 hyperConnection.hyperConnection = parentHyperConnection;
                 hyperConnection.connection = connection;
                 hyperConnections.push(hyperConnection);

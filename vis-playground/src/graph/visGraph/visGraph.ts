@@ -655,26 +655,7 @@ export class VisGraph {
     }
 
     moveNodesToParent(nodes: LayoutNode[], parentNode: LayoutNode) {
-        nodes.forEach(node => {
-            const oldParent = node.parent;
-            if (oldParent) {
-                oldParent.children.splice(oldParent.children.indexOf(node), 1);
-            }
-            node.parent = parentNode;
-            parentNode.children.push(node);
-
-            // // If the old parent has no children anymore, we can remove it
-            // if (oldParent && oldParent.children.length === 0) {
-            //     this.removeNode(oldParent);
-            // }
-            // We can check here, if the old parent now only contains the new parent as single child
-            // If so, we can move the children of the new parent to the old parent and remove the new parent
-            if (oldParent && oldParent.children.length === 1 && oldParent.children[0] === parentNode) {
-                this.moveNodesToParent(Array.from(parentNode.children), oldParent);
-                this.removeNode(parentNode);
-            }
-
-        });
+        LayoutNode.moveNodesToParent(nodes, parentNode);
     }
 
     combineNodesIntoHyperNode(nodes: LayoutNode[], parentNode: LayoutNode = this.rootNode) {
@@ -843,7 +824,8 @@ export class VisGraph {
                         cloneConnections: false,
                         parent: comm
                     });
-                    node.addSplitChild(virtualNode);
+                    // node.addSplitChild(virtualNode);
+                    node.addVirtualChild(virtualNode);
 
                     // Connect all nodes in the other community that are connected to the node with the virtual node
                     comm.children.forEach(node_in_comm => {
