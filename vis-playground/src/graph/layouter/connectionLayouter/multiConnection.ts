@@ -33,6 +33,8 @@ export class MultiHyperConnection {
     hyperConnection?: LayoutConnection;
     connection?: LayoutConnection;
 
+    segments: (CircleSegmentConnection)[] = [];
+
     constructor() {
 
     }
@@ -144,10 +146,12 @@ export class MultiHyperConnection {
             const endAnchor = circleSegmentAnchors[i];
 
             const parentNode = isForward ? startAnchor.parentNode : endAnchor.parentNode;
-            const circleSegment = new CircleSegmentConnection(parentNode.circle);
+            const circleSegment = new CircleSegmentConnection(
+                startAnchor.anchor,
+                endAnchor.anchor,
+                parentNode.circle
+            );
 
-            circleSegment.setStartAnchor(startAnchor.anchor);
-            circleSegment.setEndAnchor(endAnchor.anchor);
             circleSegment.parentNode = parentNode;
             circleSegment.connection = this.connection;
             // circleSegment.debug = true;
@@ -257,31 +261,6 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
     }
 
     override layoutConnectionsOfNode(node: LayoutNode): void {
-        // Different types of rendered connections:
-        // Direct connections:
-        // - Direct forward connections-- > rendered as circular arcs
-        // - Direct backward connections --> rendered as circular arcs, but with a larger radius
-        // Connections inside the circle of the parent node:
-        // - are rendered as splines
-        // - Outgoing connections, if the forward angular difference from node to target is below the threshold
-        // - Incoming connections, if the backward angular difference from start to node is below the threshold
-        // - Bidirectional connections always
-        // Connections outside the circle of the parent node:
-        // - are rendered as splines
-        // - Outgoing connections, if the forward angular difference from node to target is above the threshold
-        // - Incoming connections, if the backward angular difference from start to node is above the threshold
-
-        const connections = this.radialConnectionsHelper.getConnectionTypesFromNode(node);
-
-        const outgoingConnectionsInside: LayoutConnection[] = connections.outgoingConnectionsInside;
-        const incomingConnectionsInside: LayoutConnection[] = connections.incomingConnectionsInside;
-
-        const outgoingConnectionsOutside: LayoutConnection[] = connections.outgoingConnectionsOutside;
-        const incomingConnectionsOutside: LayoutConnection[] = connections.incomingConnectionsOutside;
-
-        const connectionsWithDifferentParents: LayoutConnection[] = connections.connectionsWithDifferentParents;
-
-        const selfConnections: LayoutConnection[] = connections.selfConnections;
 
         const multiConnections: MultiHyperConnection[] = [];
 

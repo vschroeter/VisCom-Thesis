@@ -1,6 +1,6 @@
 import { Circle, Point, Segment } from "2d-geometry";
 import { Anchor } from "../Anchor";
-import { SvgPathSegment } from "./PathSegment";
+import { PathSegment } from "./PathSegment";
 import { EllipticArc } from "./EllipticArc";
 import { CubicBezierCurve, QuadraticBezierCurve } from "./BezierCurve";
 import { ShapeUtil } from "src/graph/layouter/utils/shapeUtil";
@@ -8,7 +8,7 @@ import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialUtils } from "src/graph/layouter/utils/radialUtils";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
-export class CircleSegmentConnection implements SvgPathSegment {
+export class CircleSegmentConnection extends PathSegment {
 
     debug: boolean = false;
 
@@ -27,12 +27,12 @@ export class CircleSegmentConnection implements SvgPathSegment {
     parentNode?: LayoutNode;
     connection?: LayoutConnection;
 
-    get start(): Point {
-        return this.startAnchor?.anchorPoint ?? new Point(0, 0);
-    }
-    get end(): Point {
-        return this.endAnchor?.anchorPoint ?? new Point(0, 0);
-    }
+    // get start(): Point {
+    //     return this.startAnchor?.anchorPoint ?? new Point(0, 0);
+    // }
+    // get end(): Point {
+    //     return this.endAnchor?.anchorPoint ?? new Point(0, 0);
+    // }
 
     circle: Circle;
     startAnchor?: Anchor;
@@ -44,9 +44,13 @@ export class CircleSegmentConnection implements SvgPathSegment {
     directConnectionCurve?: CubicBezierCurve;
 
     constructor(
+        startAnchor: Anchor,
+        endAnchor: Anchor,
         circle: Circle,
     ) {
-        // this.startAnchor = startAnchor;
+        super();
+        this.startAnchor = startAnchor;
+        this.endAnchor = endAnchor;
         this.circle = circle.clone();
         // this.endAnchor = new Anchor(circle.center, new Vector(circle.center, startAnchor.anchorPoint).rotate90CW());
     }
@@ -65,13 +69,13 @@ export class CircleSegmentConnection implements SvgPathSegment {
         return this.circle.center;
     }
 
-    setStartAnchor(startAnchor: Anchor) {
-        this.startAnchor = startAnchor;
-    }
+    // setStartAnchor(startAnchor: Anchor) {
+    //     this.startAnchor = startAnchor;
+    // }
 
-    setEndAnchor(endAnchor: Anchor) {
-        this.endAnchor = endAnchor;
-    }
+    // setEndAnchor(endAnchor: Anchor) {
+    //     this.endAnchor = endAnchor;
+    // }
 
     get isOnCircle() {
         if (!this._calculated) {

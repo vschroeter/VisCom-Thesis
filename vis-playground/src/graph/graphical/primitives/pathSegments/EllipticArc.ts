@@ -1,5 +1,6 @@
-import { Point } from "2d-geometry";
-import { SvgPathSegment } from "./PathSegment";
+import { Point, Vector } from "2d-geometry";
+import { PathSegment } from "./PathSegment";
+import { Anchor } from "../Anchor";
 
 
 
@@ -33,7 +34,10 @@ function vectorAngle(ux: number, uy: number, vx: number, vy: number): number {
     return sign * angle;
 }
 
-export class EllipticArc implements SvgPathSegment {
+export class EllipticArc extends PathSegment {
+
+    static SWEEP_CLOCKWISE: 0 | 1 = 1;
+    static SWEEP_COUNTER_CLOCKWISE: 0 | 1 = 0;
 
     // Radius of the ellipse in the x direction
     _rx: number = 0;
@@ -57,11 +61,33 @@ export class EllipticArc implements SvgPathSegment {
     // The end point of the arc
     _end?: Point;
 
-    get start() {
-        return this._start ?? new Point(0, 0);
+    // get start() {
+    //     return this._start ?? new Point(0, 0);
+    // }
+    // get end() {
+    //     return this._end ?? new Point(0, 0);
+    // }
+
+    get startAnchor(): Anchor {
+        const params = this.getCenterParameters();
+        const _start = this._start ?? new Point(0, 0);
+        const _startVector = new Vector(_start, new Vector(params.startAngleGlobal));
+        if (this._sweep === EllipticArc.SWEEP_CLOCKWISE) {
+            return new Anchor(_start, _startVector.rotate90CW());
+        }
+        
+        return new Anchor(_start, _startVector.rotate90CCW());
     }
-    get end() {
-        return this._end ?? new Point(0, 0);
+
+    get endAnchor(): Anchor {
+        const params = this.getCenterParameters();
+        const _end = this._end ?? new Point(0, 0);
+        const _endVector = new Vector(_end, new Vector(params.endAngleGlobal));
+        if (this._sweep === EllipticArc.SWEEP_CLOCKWISE) {
+            return new Anchor(_end, _endVector.rotate90CCW());
+        }
+        
+        return new Anchor(_end, _endVector.rotate90CW());
     }
 
 
@@ -85,6 +111,7 @@ export class EllipticArc implements SvgPathSegment {
         largeArc: 0 | 1 = 0,
         sweep: 0 | 1 = 1
     ) {
+        super();
         this._start = start;
         this._end = end;
         this._rx = rx ?? 0;
@@ -151,7 +178,7 @@ export class EllipticArc implements SvgPathSegment {
         return this.toString();
     }
 
-    toString() {
+    override toString() {
         try {
             this.checkIfValid();
         } catch (e) {

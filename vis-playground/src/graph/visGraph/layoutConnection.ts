@@ -8,7 +8,7 @@ import * as d3 from "d3";
 import { LayoutNode } from "./layoutNode";
 import { Anchor, Connection2d, EllipticArc } from "../graphical";
 import { BaseConnectionLayouter } from "./layouterComponents/connectionLayouter";
-import { SvgPathSegment } from "../graphical/primitives/pathSegments/PathSegment";
+import { PathSegment } from "../graphical/primitives/pathSegments/PathSegment";
 
 export type InstanceOrGetter<T> = T | ((node: LayoutConnection) => T | undefined);
 
@@ -29,7 +29,7 @@ export class VisLink {
     }
 }
 
-export type LayoutConnectionPoint = Point | Anchor | SvgPathSegment;
+export type LayoutConnectionPoint = Point | Anchor | PathSegment;
 export type LayoutConnectionPoints = LayoutConnectionPoint[] | {startAnchor?: Anchor, endAnchor?: Anchor, points?: LayoutConnectionPoint[] };
 
 export type CurveStyle = "linear" | "basis" | "natural" | d3.CurveFactory

@@ -4,8 +4,6 @@ import { degToRad, RadialUtils, radToDeg } from "../utils/radialUtils";
 import { Circle, Line, Point, Segment, Vector } from "2d-geometry";
 import { Anchor, EllipticArc } from "src/graph/graphical";
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
-import { SvgPathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
-import { ShapeUtil } from "../utils/shapeUtil";
 
 
 export class RadialConnectionsHelper {

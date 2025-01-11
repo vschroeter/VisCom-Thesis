@@ -8,9 +8,19 @@ export class Anchor {
   /** The direction, in which the anchor is pointing. This is orthogonal to the edge at the anchor point */
   direction: Vector;
 
-  constructor(anchorPoint: Point, direction: Vector) {
+
+  constructor(anchorPoint: Point, directionalPoint: Point);
+  constructor(anchorPoint: Point, directionalVector: Vector);
+  constructor(anchorPoint: Point, direction: Vector | Point) {
     this.anchorPoint = anchorPoint;
-    this.direction = direction.length > 0 ? direction.normalize() : direction;
+
+    if (direction instanceof Point) {
+      this.direction = new Vector(anchorPoint, direction);
+    } else {
+      this.direction = direction;
+    }
+
+    this.direction = this.direction.length > 0 ? this.direction.normalize() : this.direction;
   }
 
   /**

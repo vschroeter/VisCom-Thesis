@@ -9,7 +9,7 @@ import { SvgRenderable } from "./Renderable";
 import { Point, ShapeTag } from "2d-geometry";
 import { CurveStyle, LayoutConnection, LayoutConnectionPoint } from "../visGraph/layoutConnection";
 import { LayoutNode } from "../visGraph/layoutNode";
-import { SvgPathSegment } from "./primitives/pathSegments/PathSegment";
+import { PathSegment } from "./primitives/pathSegments/PathSegment";
 
 export class Arrow2D {
 
@@ -176,8 +176,8 @@ export class Connection2d extends SvgRenderable {
         }
 
         // Otherwise, it will be a PathSegment
-        if ((this.points[0] as SvgPathSegment).start) {
-            return (this.points[0] as SvgPathSegment).start
+        if ((this.points[0] as PathSegment).start) {
+            return (this.points[0] as PathSegment).start
         }
 
         return this.source.center
@@ -204,8 +204,8 @@ export class Connection2d extends SvgRenderable {
         }
 
         // Otherwise, it will be a PathSegment
-        if ((lastPoint as SvgPathSegment).end) {
-            return (lastPoint as SvgPathSegment).end
+        if ((lastPoint as PathSegment).end) {
+            return (lastPoint as PathSegment).end
         }
 
         return this.target.center
@@ -248,7 +248,7 @@ export class Connection2d extends SvgRenderable {
                         path += pointLine(currentPoints) + " "
                         currentPoints = []
                     }
-                    path += (point as SvgPathSegment).getSvgPath() + " "
+                    path += (point as PathSegment).getSvgPath() + " "
                 }
             });
 
