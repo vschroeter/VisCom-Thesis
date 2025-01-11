@@ -82,12 +82,12 @@ export class EllipticArc extends PathSegment {
     get endAnchor(): Anchor {
         const params = this.getCenterParameters();
         const _end = this._end ?? new Point(0, 0);
-        const _endVector = new Vector(_end, new Vector(params.endAngleGlobal));
+        const _endVector = new Vector(params.endAngleGlobal);
         if (this._sweep === EllipticArc.SWEEP_CLOCKWISE) {
-            return new Anchor(_end, _endVector.rotate90CCW());
+            return new Anchor(_end, _endVector.rotate90CW());
         }
         
-        return new Anchor(_end, _endVector.rotate90CW());
+        return new Anchor(_end, _endVector.rotate90CCW());
     }
 
 

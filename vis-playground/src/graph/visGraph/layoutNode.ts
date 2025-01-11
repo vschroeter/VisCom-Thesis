@@ -3,7 +3,7 @@ import { CommunicationChannel, CommunicationGraph, CommunicationLink, Communicat
 import { CommonSettings } from "../layouter/settings/commonSettings";
 
 import * as d3 from "d3";
-import { VisGraph } from "./visGraph";
+import { LayoutNodeOrId, VisGraph } from "./visGraph";
 import { LayoutConnection } from "./layoutConnection";
 import { Sorter } from "../algorithms/sortings/sorting";
 import { BasicSizeCalculator } from "./layouterComponents/precalculator";
@@ -347,6 +347,11 @@ export class LayoutNode {
     ////////////////////////////////////////////////////////////////////////////
     // #region Connection Methods
     ////////////////////////////////////////////////////////////////////////////
+
+    getConnectionTo(node: LayoutNodeOrId): LayoutConnection | undefined {
+        const target = this.visGraph.getNode(node)
+        return this.visGraph.getConnectionBetweenNodes(this, target);
+    }
 
     getBidirectionalConnections(channels?: CommunicationChannel[]): LayoutConnection[] {
         return this.outConnections.filter(c => c.opposite !== undefined);

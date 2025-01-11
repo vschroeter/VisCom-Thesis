@@ -4,7 +4,7 @@ import { GraphLayouter } from "../layouter";
 import { RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
 import { Connection2dData } from "src/graph/graphical/Connection2d";
 import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/precalculator";
-import { BasicConnectionCombiner } from "../connectionLayouter/connectionCombiner";
+// import { BasicConnectionCombiner } from "../connectionLayouter/connectionCombiner";
 import { DirectCircularConnectionLayouter } from "../connectionLayouter/circularArcConnection";
 import { IdSorter } from "src/graph/algorithms/sortings/simple";
 import { RadialSplineConnectionLayouter } from "../connectionLayouter/splineConnection";
@@ -94,7 +94,6 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             new DirectCircularConnectionLayouter(),
             new RadialSplineConnectionLayouter(),
             new RadialMultiConnectionLayouter(),
-            new BasicConnectionCombiner()
         ])
 
         // console.log("Before layout", this.visGraph);

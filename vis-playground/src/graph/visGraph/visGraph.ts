@@ -340,8 +340,8 @@ export class VisGraph {
         return this.getAllConnectionsOfNodes(this.allLayoutNodes);
     }
 
-    getConnectionsBetweenNodes(source: LayoutNodeOrId, target: LayoutNodeOrId, channels?: CommunicationChannel[]): LayoutConnection[] {
-        return this.getNode(source).outConnections.filter(connection => connection.target === this.getNode(target));
+    getConnectionBetweenNodes(source: LayoutNodeOrId, target: LayoutNodeOrId, channels?: CommunicationChannel[]): LayoutConnection | undefined {
+        return this.mapSourceNodeIdToTargetNodeIdToConnection.get(this.getNode(source).id)?.get(this.getNode(target).id);
     }
 
 

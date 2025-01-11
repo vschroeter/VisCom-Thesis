@@ -6,6 +6,7 @@ import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponent
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialUtils } from "../utils/radialUtils";
 import { RadialConnectionsHelper } from "./radialConnections";
+import { PathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
 
 ////////////////////////////////////////////////////////////////////////////
 // #region Helper Classes
@@ -33,7 +34,7 @@ export class MultiHyperConnection {
     hyperConnection?: LayoutConnection;
     connection?: LayoutConnection;
 
-    segments: (CircleSegmentConnection)[] = [];
+    segments: PathSegment[] = [];
 
     constructor() {
 
@@ -51,6 +52,8 @@ export class MultiHyperConnection {
         
         // TODO: Circle segments having the same hyper connection as target don't need to be adapted in radius
 
+        this.segments = [];
+        
         for (let i = 1; i < this.nodePath.length; i++) {
             const prevNode = this.nodePath[i - 1];
             const nextNode = this.nodePath[i];
@@ -62,6 +65,13 @@ export class MultiHyperConnection {
 
             if (nextParent == prevParent) type = "fixed";
             if (prevParent == nextNode || nextParent == prevNode) type = "circleSegment";
+
+            if (type == "circleSegment") {
+                this.segments.push(new CircleSegmentConnection());
+            } else if (type == "fixed") {
+                const existingConnection = prevNode.getConnectionTo(nextNode);
+                this.segments.push(existingConnection?.pathSegment);
+            }
 
             console.log(prevNode.id, nextNode.id, type);
         }

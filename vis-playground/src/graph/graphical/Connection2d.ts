@@ -82,9 +82,9 @@ export class Connection2d extends SvgRenderable {
         return this.layoutConnection.id
     }
 
-    // /** The points defining the connection */
-    get points(): LayoutConnectionPoint[] {
-        return this.layoutConnection.points
+    /** The path segment of the connection */
+    get pathSegment(): PathSegment {
+        return this.layoutConnection.pathSegment
     }
 
     get startAnchor(): Anchor | undefined {
@@ -155,61 +155,68 @@ export class Connection2d extends SvgRenderable {
     }
 
     /** The start point of the connection (either the first defined point or the source node) */
+    // get startPoint(): Point {
+    //     if (this.points.length == 0) {
+    //         if (this.source == this.target) {
+    //             return this.source.center
+    //         }
+    //         return this.source.getAnchor(this.target.center).anchorPoint;
+    //     }
+
+    //     if ((this.points[0] as Point).tag == ShapeTag.Point) {
+    //         return this.points[0] as Point
+    //     }
+
+    //     // if (this.points[0] instanceof EllipticArc) {
+    //     //     return (this.points[0] as EllipticArc)._start ?? this.source.center
+    //     // }
+
+    //     if (this.points[0] instanceof Anchor) {
+    //         return (this.points[0] as Anchor).anchorPoint
+    //     }
+
+    //     // Otherwise, it will be a PathSegment
+    //     if ((this.points[0] as PathSegment).start) {
+    //         return (this.points[0] as PathSegment).start
+    //     }
+
+    //     return this.source.center
+    // }
     get startPoint(): Point {
-        if (this.points.length == 0) {
-            if (this.source == this.target) {
-                return this.source.center
-            }
-            return this.source.getAnchor(this.target.center).anchorPoint;
-        }
-
-        if ((this.points[0] as Point).tag == ShapeTag.Point) {
-            return this.points[0] as Point
-        }
-
-        // if (this.points[0] instanceof EllipticArc) {
-        //     return (this.points[0] as EllipticArc)._start ?? this.source.center
-        // }
-
-        if (this.points[0] instanceof Anchor) {
-            return (this.points[0] as Anchor).anchorPoint
-        }
-
-        // Otherwise, it will be a PathSegment
-        if ((this.points[0] as PathSegment).start) {
-            return (this.points[0] as PathSegment).start
-        }
-
-        return this.source.center
+        return this.pathSegment.start;
     }
 
-    /** The end point of the connection (either the last defined point or the target node) */
     get endPoint(): Point {
-        if (this.points.length == 0) {
-            if (this.source == this.target) {
-                return this.source.center
-            }
-            return this.target.getAnchor(this.source.center).anchorPoint;
-        }
-
-        const lastPoint = this.points[this.points.length - 1]
-
-
-        if ((lastPoint as Point).tag == ShapeTag.Point) {
-            return lastPoint as Point
-        }
-
-        if (lastPoint instanceof Anchor) {
-            return lastPoint.anchorPoint
-        }
-
-        // Otherwise, it will be a PathSegment
-        if ((lastPoint as PathSegment).end) {
-            return (lastPoint as PathSegment).end
-        }
-
-        return this.target.center
+        return this.pathSegment.end;
     }
+
+    // /** The end point of the connection (either the last defined point or the target node) */
+    // get endPoint(): Point {
+    //     if (this.points.length == 0) {
+    //         if (this.source == this.target) {
+    //             return this.source.center
+    //         }
+    //         return this.target.getAnchor(this.source.center).anchorPoint;
+    //     }
+
+    //     const lastPoint = this.points[this.points.length - 1]
+
+
+    //     if ((lastPoint as Point).tag == ShapeTag.Point) {
+    //         return lastPoint as Point
+    //     }
+
+    //     if (lastPoint instanceof Anchor) {
+    //         return lastPoint.anchorPoint
+    //     }
+
+    //     // Otherwise, it will be a PathSegment
+    //     if ((lastPoint as PathSegment).end) {
+    //         return (lastPoint as PathSegment).end
+    //     }
+
+    //     return this.target.center
+    // }
 
     /** The curve factory to use for the line */
     get curveFactory(): d3.CurveFactory {
@@ -259,13 +266,14 @@ export class Connection2d extends SvgRenderable {
     }
 
     getSvgPath(): string {
-        let points = this.points
-        if (points.length == 0) {
-            // points = [this.source.center, this.target.center]
-            points = [this.startPoint, this.endPoint]
-        }
-        const path = this.pathGenerator(points) ?? ""
-        return path
+        return this.pathSegment.getSvgPath();
+        // let points = this.points
+        // if (points.length == 0) {
+        //     // points = [this.source.center, this.target.center]
+        //     points = [this.startPoint, this.endPoint]
+        // }
+        // const path = this.pathGenerator(points) ?? ""
+        // return path
     }
 
     getArrowPath(): string {

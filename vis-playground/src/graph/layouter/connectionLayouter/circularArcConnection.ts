@@ -59,12 +59,12 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
             outerC.r += 0.1 * Math.min(start.outerCircle.r, end.outerCircle.r);
             if (!parent) return;
 
-            connection.setPoints(RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+            connection.pathSegment = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
                 start.outerCircle,
                 end.outerCircle,
                 outerC,
                 "clockwise"
-            ));
+            );
             connection.finishedLayouting = true;
         });
 
@@ -80,12 +80,12 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
             // outerC.r += 10 * parent.sizeFactor;
             outerC.r -= 0.2 * Math.min(start.outerCircle.r, end.outerCircle.r);
 
-            connection.setPoints(RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+            connection.pathSegment = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
                 start.outerCircle,
                 end.outerCircle,
                 outerC,
                 "counter-clockwise"
-            ));
+            );
         });
     }
 

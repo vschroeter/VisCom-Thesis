@@ -1,5 +1,7 @@
 import { Point, Vector } from "2d-geometry";
 import { Anchor } from "../Anchor";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
+import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
 // export interface SvgPathSegment {
 //     start: Point;
@@ -37,4 +39,50 @@ export abstract class PathSegment {
 
     /** THe svg path string of the segment */
     abstract getSvgPath(): string;
+}
+
+export class DefaultPathSegment extends PathSegment {
+    
+    layoutConnection: LayoutConnection;
+
+    get startAnchor(): Anchor | undefined {
+        return new Anchor(this.layoutConnection.source.center, this.layoutConnection.target.center);
+    }
+
+    get endAnchor(): Anchor | undefined {
+        return new Anchor(this.layoutConnection.target.center, new Vector(this.layoutConnection.source.center, this.layoutConnection.target.center));
+    }
+
+    constructor(layoutConnection: LayoutConnection) {
+        super();
+        this.layoutConnection = layoutConnection;
+    }
+
+    getSvgPath(): string {
+        return `M ${this.start.x} ${this.start.y} L ${this.end.x} ${this.end.y}`;
+    }
+
+}
+
+export class CombinedPathSegment extends PathSegment {
+
+    segments: PathSegment[] = [];
+
+    get startAnchor(): Anchor | undefined {
+        if (this.segments.length === 0) {
+            return undefined;
+        }
+        return this.segments[0].startAnchor;
+    }
+
+    get endAnchor(): Anchor | undefined {
+        if (this.segments.length === 0) {
+            return undefined;
+        }
+        return this.segments[this.segments.length - 1].endAnchor;
+    }
+
+    override getSvgPath(): string {
+        return this.segments.map(s => s.getSvgPath()).join(" ");
+    }
 }
