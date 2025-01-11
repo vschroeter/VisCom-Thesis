@@ -25,6 +25,8 @@ export class CircleSegmentAnchor {
     }
 }
 
+export type MultiConnectionType = "unknown" | "fixed" | "circleSegment" | "";
+
 export class MultiHyperConnection {
 
     nodePath: LayoutNode[] = [];
@@ -32,6 +34,35 @@ export class MultiHyperConnection {
     connection?: LayoutConnection;
 
     constructor() {
+
+    }
+
+    prepareSegments() {
+        
+        // There are fixed segments along the path:
+        // - already calculated hyper connections 
+        // There are fixed parts along the path:
+        // - real nodes, where the anchors will start from and end at
+        // - virtual nodes, the path will pass through
+        // - hyper nodes, that circular segments will placed on 
+        
+        
+        // TODO: Circle segments having the same hyper connection as target don't need to be adapted in radius
+
+        for (let i = 1; i < this.nodePath.length; i++) {
+            const prevNode = this.nodePath[i - 1];
+            const nextNode = this.nodePath[i];
+
+            const prevParent = prevNode.parent;
+            const nextParent = nextNode.parent;
+
+            let type: MultiConnectionType = "unknown";
+
+            if (nextParent == prevParent) type = "fixed";
+            if (prevParent == nextNode || nextParent == prevNode) type = "circleSegment";
+
+            console.log(prevNode.id, nextNode.id, type);
+        }
 
     }
 
@@ -215,7 +246,7 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
 
     radialConnectionsHelper: RadialConnectionsHelper;
 
-    hyperConnections: MultiHyperConnection[] = [];
+    multiConnections: MultiHyperConnection[] = [];
 
     constructor() {
         super();
@@ -252,21 +283,24 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
 
         const selfConnections: LayoutConnection[] = connections.selfConnections;
 
-        const hyperConnections: MultiHyperConnection[] = [];
+        const multiConnections: MultiHyperConnection[] = [];
 
         node.outConnections.forEach(connection => {
             if (connection.hasParentHyperConnection) {
                 // if (!(connection.source.id == "flint_node" && connection.target.id == "system_information")) return;
 
                 const parentHyperConnection = connection.parent!;
-                const hyperConnection = new MultiHyperConnection();
+                const multiConnection = new MultiHyperConnection();
 
                 // hyperConnection.nodePath = connection.getSubNodePathViaHypernodes();
-                hyperConnection.nodePath = connection.getConnectionPathViaHyperAndVirtualNodes();
-                console.log(hyperConnection.nodePath.map(node => node.id));
-                hyperConnection.hyperConnection = parentHyperConnection;
-                hyperConnection.connection = connection;
-                hyperConnections.push(hyperConnection);
+                multiConnection.nodePath = connection.getConnectionPathViaHyperAndVirtualNodes();
+                console.log(multiConnection.nodePath.map(node => node.id));
+                
+                multiConnection.hyperConnection = parentHyperConnection;
+                multiConnection.connection = connection;
+                multiConnections.push(multiConnection);
+
+                multiConnection.prepareSegments();
                 // hyperConnections.forEach(hyperConnection => {
                 //     connection.points = hyperConnection.calculatePoints();
                 // })
@@ -276,24 +310,27 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
         })
 
 
-        this.hyperConnections.push(...hyperConnections);
+        this.multiConnections.push(...multiConnections);
     }
     override layoutConnectionsOfChildren(node: LayoutNode): void {
+
+        // Here we adapt the circle segment radius, so that they are not all the same size
+        // We only do this for the root node, so that it is done at the end when all connections are calculated
         if (node != node.visGraph.rootNode) {
             return;
         }
-        // return;
-        // Get all hyper connections of child nodes
-        const hyperConnections: MultiHyperConnection[] = [];
+
+        // Get all multi connections of child nodes
+        const multiConnections: MultiHyperConnection[] = [];
         node.children.forEach(child => {
             const layouter = child.getConnectionLayouterByTag(this.TAG) as RadialMultiConnectionLayouter;
 
             if (layouter !== undefined) {
-                hyperConnections.push(...layouter.hyperConnections);
+                multiConnections.push(...layouter.multiConnections);
             }
         });
 
-        if (this.hyperConnections.length == 0) {
+        if (this.multiConnections.length == 0) {
             return;
         }
 
@@ -301,8 +338,8 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
 
         const nodeToCircleSegmentsMap = new Map<LayoutNode, CircleSegmentConnection[]>();
 
-        this.hyperConnections.forEach(hyperConnection => {
-            const res = hyperConnection.calculatePoints();
+        this.multiConnections.forEach(multiConnection => {
+            const res = multiConnection.calculatePoints();
 
             res.circleSegments.forEach(circleSegment => {
                 if (!circleSegment.parentNode) return;
@@ -313,12 +350,14 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                 nodeToCircleSegmentsMap.get(circleSegment.parentNode)!.push(circleSegment);
             })
 
-            hyperConnection.connection!.setPoints(res.points);
+            multiConnection.connection!.setPoints(res.points);
         })
 
         console.log(nodeToCircleSegmentsMap);
 
+        // Adapt the circle segment radius, so that each has a different size
         nodeToCircleSegmentsMap.forEach((circleSegments, parentNode) => {
+            // Do this only for circle segments, that are along the circle, direct bezier connections are not adapted
             const segmentsOnCircle = circleSegments.filter(circleSegment => circleSegment.isOnCircle);
             const min = 0.9
             const max = 1.1

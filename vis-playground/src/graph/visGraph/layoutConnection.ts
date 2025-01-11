@@ -294,8 +294,8 @@ export class LayoutConnection {
     }
 
     getConnectionPathViaHyperAndVirtualNodes(): LayoutNode[] {
-        let startNode = this.source;
-        let endNode = this.target;
+        const startNode = this.source;
+        const endNode = this.target;
 
         const nodes: LayoutNode[] = [];
 
