@@ -385,7 +385,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
                         d.append('circle')
                             .attr('cx', p.x)
                             .attr('cy', p.y)
-                            .attr('r', 0.5)
+                            .attr('r', 1)
                             .attr('fill', p._data?.fill ?? 'green')
                             .attr('stroke', 'none')
                         break;

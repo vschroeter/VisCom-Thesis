@@ -1,14 +1,11 @@
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { RadialPositioner, RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
-import { RadialUtils, radToDeg } from "../utils/radialUtils";
-import { LayoutConnection, LayoutConnectionPoint, LayoutConnectionPoints } from "src/graph/visGraph/layoutConnection";
-import { Circle, Line, Point, Ray, Segment, Vector } from "2d-geometry";
+import { RadialUtils } from "../utils/radialUtils";
+import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
+import { Segment } from "2d-geometry";
 import { Anchor } from "src/graph/graphical";
 import { RadialConnectionsHelper } from "./radialConnections";
-import { CubicBezierCurve } from "src/graph/graphical/primitives/pathSegments/BezierCurve";
-import { ShapeUtil } from "../utils/shapeUtil";
-import { CircleSegmentConnection } from "src/graph/graphical/primitives/pathSegments/CircleSegment";
+import { SplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
 
 ////////////////////////////////////////////////////////////////////////////
 // #region Continuum
@@ -43,6 +40,7 @@ class Continuum {
         return this.connectionContinuum.get(connection)!;
     }
 }
+
 
 ////////////////////////////////////////////////////////////////////////////
 // #region Spline Layouter
@@ -222,7 +220,14 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                 const isArray = Array.isArray(connections);
                 const connection = isArray ? connections[0] : connections;
 
+                if (isArray) {
+                    connections.forEach(connection => {
+                        connection.pathSegment = connection.pathSegment ?? new SplineSegment(connection);
+                    })
+                }
 
+                const spline = (connection.pathSegment ?? new SplineSegment(connection)) as SplineSegment;
+                connection.pathSegment = spline;
 
                 // For the inside connections, we first determine the available range to positions connections 
                 // without overlapping with the adjacent nodes
@@ -279,22 +284,23 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                 if (!isArray) {
                     if (isOutgoing) {
                         // connection.startPoints = [anchor];
-                        connection.startAnchor = anchor;
+                        spline.startAnchor = anchor;
                     } else {
-                        connection.endAnchor = anchorReversed;
+                        spline.endAnchor = anchorReversed;
                     }
                 } else {
                     connections.forEach(connection => {
                         const isOutgoing = connection.source == node;
-                        const translationDistance = (1 / continuumSize) * node.outerCircle.r * slopeDiff / (Math.PI * 2);
+                        const smallerR = Math.min(connection.source.outerCircle.r, connection.target.outerCircle.r);
+                        const translationDistance = (1 / continuumSize) * smallerR * slopeDiff / (Math.PI * 2);
                         if (isOutgoing) {
                             // The outgoing anchor should be translated a little bit to the left (so the vector rotated by 90 degrees CCW)
                             const anchor = new Anchor(intersectionPoints[0].translate(slopeVector.rotate90CCW().multiply(translationDistance)), slopeVector);
-                            connection.startAnchor = anchor;
+                            connection.pathSegment!.startAnchor = anchor;
                         } else {
                             // The incoming anchor should be translated a little bit to the right (so the vector rotated by 90 degrees CW)
                             const anchor = new Anchor(intersectionPoints[0].translate(slopeVector.rotate90CW().multiply(translationDistance)), slopeVector.rotate(Math.PI));
-                            connection.endAnchor = anchor;
+                            connection.pathSegment!.endAnchor = anchor;
                         }
                     })
                 }
@@ -314,6 +320,9 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
 
             // Now we distribute the connections inside the parent circle
             outsideConnections.forEach((connection, index) => {
+                
+                const spline = (connection.pathSegment ?? new SplineSegment(connection)) as SplineSegment;
+                connection.pathSegment = spline;
 
                 // For the inside connections, we first determine the available range to positions connections 
                 // without overlapping with the adjacent nodes
@@ -357,128 +366,16 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
 
                 if (isOutgoing) {
                     const anchor = new Anchor(intersectionPoints[0], slopeVector);
-                    connection.startAnchor = anchor;
+                    spline.startAnchor = anchor;
                 } else {
                     const anchor = new Anchor(intersectionPoints[0], slopeVector.rotate90CW());
-                    connection.endAnchor = anchor;
+                    spline.endAnchor = anchor;
                 }
             })
         }
     }
 
     override layoutConnectionsOfChildren(parent: LayoutNode): void {
-        parent.children.forEach(node => {
-            // Different types of rendered connections:
-            // Direct connections:
-            // - Direct forward connections-- > rendered as circular arcs
-            // - Direct backward connections --> rendered as circular arcs, but with a larger radius
-            // Connections inside the circle of the parent node:
-            // - are rendered as splines
-            // - Outgoing connections, if the forward angular difference from node to target is below the threshold
-            // - Incoming connections, if the backward angular difference from start to node is below the threshold
-            // - Bidirectional connections always
-            // Connections outside the circle of the parent node:
-            // - are rendered as splines
-            // - Outgoing connections, if the forward angular difference from node to target is above the threshold
-            // - Incoming connections, if the backward angular difference from start to node is above the threshold
-
-            const connections = this.radialConnectionsHelper.getConnectionTypesFromNode(node);
-
-            const outgoingConnectionsInside: LayoutConnection[] = connections.outgoingConnectionsInside;
-            const incomingConnectionsInside: LayoutConnection[] = connections.incomingConnectionsInside;
-
-            const outgoingConnectionsOutside: LayoutConnection[] = connections.outgoingConnectionsOutside;
-            const incomingConnectionsOutside: LayoutConnection[] = connections.incomingConnectionsOutside;
-
-            const connectionsWithDifferentParents: LayoutConnection[] = connections.connectionsWithDifferentParents;
-
-            const selfConnections: LayoutConnection[] = connections.selfConnections;
-
-            // Render connections inside the parent circle
-
-            // TODO: Add arrow control points
-            if (outgoingConnectionsInside.length > 0) {
-
-                const insideConnections = [...outgoingConnectionsInside];
-
-                // Now we distribute the connections inside the parent circle
-                insideConnections.forEach((connection, index) => {
-                    const sizeArrow = 10;
-
-                    const startAnchor = connection.startAnchor;
-                    const endAnchor = connection.endAnchor;
-
-                    if (startAnchor && endAnchor) {
-
-                        // When having the anchors, we want to add two further control points for the spline
-                        // These control points depend on the distance between the anchor points
-                        const distanceBetweenAnchors = startAnchor.anchorPoint.distanceTo(endAnchor.anchorPoint)[0];
-                        const anchorDistanceFactor = 0.4
-                        const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
-
-                        const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
-                        const endControlPoint = endAnchor.getPointInDirection(-distanceToControlPoint);
-
-
-                        // connection.startPoints = [startAnchor, startControlPoint];
-                        // connection.endPoints = [endControlPoint, endAnchor];
-
-                        const bezierCurve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
-                        connection.points = [bezierCurve];
-
-                        // node.debugShapes.push(new Circle(startControlPoint, 2));
-                        // node.debugShapes.push(new Circle(endControlPoint, 3));
-                    } else {
-                        console.warn("No anchor points found for connection", connection);
-                    }
-
-
-                    connection.curveStyle = "basis";
-
-
-                })
-
-            }
-
-            if (outgoingConnectionsOutside.length > 0) {
-
-                const outsideConnections = [...outgoingConnectionsOutside];
-
-                // Now we distribute the connections inside the parent circle
-                outsideConnections.forEach((connection, index) => {
-                    const sizeArrow = 10;
-                    
-                    const startAnchor = connection.startAnchor;
-                    const endAnchor = connection.endAnchor;
-
-                    if (startAnchor && endAnchor) {
-
-                        // When having the anchors, we want to add two further control points for the spline
-                        // These control points depend on the distance between the anchor points
-                        const distanceBetweenAnchors = startAnchor.anchorPoint.distanceTo(endAnchor.anchorPoint)[0];
-                        const anchorDistanceFactor = 0.4
-                        const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
-
-                        const startControlPoint = startAnchor.getPointInDirection(distanceToControlPoint);
-                        const endControlPoint = endAnchor.getPointInDirection(-distanceToControlPoint);
-
-
-                        // connection.startPoints = [startAnchor, startControlPoint];
-                        // connection.endPoints = [endControlPoint, endAnchor];
-
-                        const bezierCurve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
-                        connection.points = [bezierCurve];
-
-                        // node.debugShapes.push(new Circle(startControlPoint, 2));
-                        // node.debugShapes.push(new Circle(endControlPoint, 3));
-                    }
-
-
-                    connection.curveStyle = "basis";
-
-
-                })
-            }
-        })
+        
     }
 }

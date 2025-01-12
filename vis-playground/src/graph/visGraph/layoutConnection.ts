@@ -103,7 +103,11 @@ export class LayoutConnection {
     }
 
     // The object defining the path of the connection
-    pathSegment: PathSegment = new DefaultPathSegment(this);
+    pathSegment?: PathSegment = undefined;
+
+    get pathOrDefault(): PathSegment {
+        return this.pathSegment ?? new DefaultPathSegment(this);
+    }
 
     /** The start anchor of the connection */
     get startAnchor(): Anchor | undefined {
@@ -380,12 +384,13 @@ export class LayoutConnection {
     }
 
     resetPoints() {
-        // this.startAnchor = new Anchor(new Point(0, 0), new Vector(1, 0));
-        // this.endAnchor = new Anchor(new Point(0, 0), new Vector(1, 0));
-        // this.points = [];
-        this.pathSegment = new DefaultPathSegment(this);
+        // this.pathSegment = new DefaultPathSegment(this);
+        this.pathSegment = undefined;
+        
         this.finishedLayouting = false;
     }
+
+
 
 
 

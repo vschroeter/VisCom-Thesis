@@ -1,8 +1,4 @@
-import { CommunicationLink } from "../commGraph";
-import { Node2d } from "./";
 import { Anchor } from "./";
-import { EllipticArc } from "./";
-// import { Point } from "./";
 
 import * as d3 from "d3"
 import { SvgRenderable } from "./Renderable";
@@ -84,7 +80,7 @@ export class Connection2d extends SvgRenderable {
 
     /** The path segment of the connection */
     get pathSegment(): PathSegment {
-        return this.layoutConnection.pathSegment
+        return this.layoutConnection.pathOrDefault
     }
 
     get startAnchor(): Anchor | undefined {

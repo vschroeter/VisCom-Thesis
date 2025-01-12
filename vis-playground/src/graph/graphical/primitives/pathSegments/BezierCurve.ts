@@ -3,22 +3,18 @@ import { PathSegment } from "./PathSegment";
 import { Anchor } from "../Anchor";
 
 export class QuadraticBezierCurve extends PathSegment {
-
-    // // The start point of the curve
-    // start: Point;
-    // // The end point of the curve
-    // end: Point;
-    // The control point of the curve
     
     startAnchor: Anchor;
     endAnchor: Anchor;
     
     _control: Point;
 
+    /** The control point of the curve */
     get control(): Point {
         return this._control;
     }
 
+    /** The control point of the curve */
     set control(value: Point) {
         this._control = value;
         this.startAnchor.direction = new Vector(this.start, value);
@@ -48,17 +44,12 @@ export class QuadraticBezierCurve extends PathSegment {
 
 export class CubicBezierCurve extends PathSegment {
 
-    // // The start point of the curve
-    // start: Point;
-    // // The end point of the curve
-    // end: Point;
-
     startAnchor: Anchor;
     endAnchor: Anchor;
 
-    // The first control point of the curve (closer to the start point)
+    /** The first control point of the curve (closer to the start point) */
     _control1: Point;
-    // The second control point of the curve (closer to the end point)
+    /** The second control point of the curve (closer to the end point) */
     _control2: Point;
 
     get control1(): Point {
@@ -82,7 +73,7 @@ export class CubicBezierCurve extends PathSegment {
     constructor(start: Point, control1: Point, control2: Point, end: Point) {
         super();
         this.startAnchor = new Anchor(start, control1);
-        this.endAnchor = new Anchor(control2, end);
+        this.endAnchor = new Anchor(end, new Vector(control2, end));
 
         this._control1 = control1;
         this._control2 = control2;
