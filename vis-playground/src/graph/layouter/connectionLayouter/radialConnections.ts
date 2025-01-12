@@ -216,6 +216,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
     }
 
     static getCircularArcBetweenCircles(
+        connection: LayoutConnection,
         startCircle: Circle,
         endCircle: Circle,
         parentCircle: Circle,
@@ -249,7 +250,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
 
         if (intersectionsStart.length == 0 || intersectionsEnd.length == 0) {
             console.error("No intersections found between circles", startCircle, endCircle, parentCircle);
-            return new EllipticArc();
+            return new EllipticArc(connection);
         }
 
         // Get the intersections, that are closer to the mid point between the two nodes
@@ -274,7 +275,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
 
         // const straightEndPartForArrow = endAnchor.getPointInDirection(link.maxWidth);
 
-        const arc = new EllipticArc()
+        const arc = new EllipticArc(connection)
             .radius(radius)
             .startPoint(startAnchor.anchorPoint)
             .endPoint(endAnchor.anchorPoint)
@@ -284,13 +285,6 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
 
         return arc;
         
-        // return {
-        //     startAnchor: startAnchor,
-        //     points: [arc],
-        //     endAnchor: endAnchor
-        // }
-
-
     }
 
     protected getDirectCircularLink(
@@ -298,7 +292,9 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         endNode: LayoutNode,
         parent: LayoutNode,
     ): PathSegment {
+        const connection = startNode.getConnectionTo(endNode)!;
         return RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+            connection,
             startNode.outerCircle,
             endNode.outerCircle,
             parent.innerCircle
@@ -367,6 +363,8 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         const startIndex = startNode.index;
         const endIndex = endNode.index;
 
+        const connection = startNode.getConnectionTo(endNode)!;
+
         const startAngleRad = RadialUtils.radOfPoint(startNode, parent);
         const endAngleRad = RadialUtils.radOfPoint(endNode, parent);
         const startAngleDeg = radToDeg(startAngleRad);
@@ -409,7 +407,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
             startAnchor.anchorPoint = startAnchor.getPointInDirection((startNode.outerRadius - startNode.radius));
             endAnchor.anchorPoint = endAnchor.getPointInDirection((endNode.outerRadius - endNode.radius));
 
-            return new StraightLineSegment(startAnchor.anchorPoint, endAnchor.anchorPoint);
+            return new StraightLineSegment(connection, startAnchor.anchorPoint, endAnchor.anchorPoint);
         }
 
 
@@ -499,7 +497,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         // Construct the arc
         const direction = angleDiffForwardDeg > this.straightForwardLineAtDegreeDelta ? "clockwise" : "counter-clockwise";
 
-        const arc = new EllipticArc()
+        const arc = new EllipticArc(connection)
             .radius(arcRadius)
             .startPoint(startAnchor.anchorPoint)
             .endPoint(endAnchor.anchorPoint)
@@ -515,6 +513,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         endNode: LayoutNode,
         parent: LayoutNode,
     ): PathSegment {
+        const connection = startNode.getConnectionTo(endNode)!;
 
         // Given Constants
         const startAngleRad = RadialUtils.radOfPoint(startNode, parent);
@@ -684,7 +683,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         // 2.) The angle difference is above the threshold --> take the long arc
         const largeArc = angleDiffBackwardDeg > this.backwardLineCurvature ? 1 : 0;
 
-        const arc = new EllipticArc()
+        const arc = new EllipticArc(connection)
             .radius(arcRadius)
             .startPoint(startAnchor.anchorPoint)
             .endPoint(endAnchor.anchorPoint)

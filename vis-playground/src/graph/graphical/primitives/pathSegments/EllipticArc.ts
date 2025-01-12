@@ -1,6 +1,7 @@
 import { Point, Vector } from "2d-geometry";
 import { PathSegment } from "./PathSegment";
 import { Anchor } from "../Anchor";
+import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
 
 
@@ -61,22 +62,19 @@ export class EllipticArc extends PathSegment {
     // The end point of the arc
     _end?: Point;
 
-    // get start() {
-    //     return this._start ?? new Point(0, 0);
-    // }
-    // get end() {
-    //     return this._end ?? new Point(0, 0);
-    // }
-
     get startAnchor(): Anchor {
         const params = this.getCenterParameters();
         const _start = this._start ?? new Point(0, 0);
-        const _startVector = new Vector(_start, new Vector(params.startAngleGlobal));
+        const _startVector = new Vector(params.startAngleGlobal);
         if (this._sweep === EllipticArc.SWEEP_CLOCKWISE) {
             return new Anchor(_start, _startVector.rotate90CW());
         }
         
         return new Anchor(_start, _startVector.rotate90CCW());
+    }
+
+    set startAnchor(anchor: Anchor | undefined) {
+        this._start = anchor?.anchorPoint ?? new Point(0, 0);
     }
 
     get endAnchor(): Anchor {
@@ -88,6 +86,10 @@ export class EllipticArc extends PathSegment {
         }
         
         return new Anchor(_end, _endVector.rotate90CCW());
+    }
+
+    set endAnchor(anchor: Anchor | undefined) {
+        this._end = anchor?.anchorPoint;
     }
 
 
@@ -103,6 +105,7 @@ export class EllipticArc extends PathSegment {
      * @param sweep If true, the arc will be drawn in a "positive-angle" direction, i.e., the arc will be drawn in the direction of increasing angles.
      */
     constructor(
+        connection: LayoutConnection,
         start?: Point,
         end?: Point,
         rx?: number,
@@ -111,7 +114,7 @@ export class EllipticArc extends PathSegment {
         largeArc: 0 | 1 = 0,
         sweep: 0 | 1 = 1
     ) {
-        super();
+        super(connection);
         this._start = start;
         this._end = end;
         this._rx = rx ?? 0;

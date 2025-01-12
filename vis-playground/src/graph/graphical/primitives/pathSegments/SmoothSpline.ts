@@ -12,12 +12,10 @@ export class SplineSegment extends PathSegment {
     override startAnchor?: Anchor | undefined;
     override endAnchor?: Anchor | undefined;
 
-    connection: LayoutConnection;
-
     controlPointDistanceFactor = 0.4;
 
     constructor(connection: LayoutConnection ,startAnchor?: Anchor, endAnchor?: Anchor) {
-        super();
+        super(connection);
         this.connection = connection;
         this.startAnchor = startAnchor;
         this.endAnchor = endAnchor;
@@ -44,7 +42,7 @@ export class SplineSegment extends PathSegment {
         // this.connection.debugShapes.push(new Point(startControlPoint.x, startControlPoint.y));
         // this.connection.debugShapes.push(new Point(endControlPoint.x, endControlPoint.y));
         
-        const bezierCurve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
+        const bezierCurve = new CubicBezierCurve(this.connection, startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
         return bezierCurve.getSvgPath();
     }
 

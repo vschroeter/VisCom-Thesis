@@ -1,6 +1,7 @@
 import { Point, Vector } from "2d-geometry";
 import { PathSegment } from "./PathSegment";
 import { Anchor } from "../Anchor";
+import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
 export class QuadraticBezierCurve extends PathSegment {
     
@@ -29,8 +30,8 @@ export class QuadraticBezierCurve extends PathSegment {
         this.endAnchor = new Anchor(this.control, value);
     }
 
-    constructor(start: Point, control: Point, end: Point) {
-        super();
+    constructor(connection: LayoutConnection ,start: Point, control: Point, end: Point) {
+        super(connection);
         this.startAnchor = new Anchor(start, control);
         this.endAnchor = new Anchor(control, end);
         this._control = control;
@@ -70,8 +71,8 @@ export class CubicBezierCurve extends PathSegment {
         this.endAnchor.direction = new Vector(value, this.end);
     }
 
-    constructor(start: Point, control1: Point, control2: Point, end: Point) {
-        super();
+    constructor(connection: LayoutConnection, start: Point, control1: Point, control2: Point, end: Point) {
+        super(connection);
         this.startAnchor = new Anchor(start, control1);
         this.endAnchor = new Anchor(end, new Vector(control2, end));
 

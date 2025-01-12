@@ -60,6 +60,7 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
             if (!parent) return;
 
             connection.pathSegment = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+                connection,
                 start.outerCircle,
                 end.outerCircle,
                 outerC,
@@ -81,6 +82,7 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
             outerC.r -= 0.2 * Math.min(start.outerCircle.r, end.outerCircle.r);
 
             connection.pathSegment = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+                connection,
                 start.outerCircle,
                 end.outerCircle,
                 outerC,

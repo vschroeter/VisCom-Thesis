@@ -25,14 +25,6 @@ export class CircleSegmentConnection extends PathSegment {
     }
 
     parentNode?: LayoutNode;
-    connection?: LayoutConnection;
-
-    // get start(): Point {
-    //     return this.startAnchor?.anchorPoint ?? new Point(0, 0);
-    // }
-    // get end(): Point {
-    //     return this.endAnchor?.anchorPoint ?? new Point(0, 0);
-    // }
 
     circle: Circle;
     startAnchor?: Anchor;
@@ -44,14 +36,15 @@ export class CircleSegmentConnection extends PathSegment {
     directConnectionCurve?: CubicBezierCurve;
 
     constructor(
-        startAnchor: Anchor,
-        endAnchor: Anchor,
-        circle: Circle,
+        connection: LayoutConnection,
+        startAnchor?: Anchor,
+        endAnchor?: Anchor,
+        circle?: Circle,
     ) {
-        super();
+        super(connection);
         this.startAnchor = startAnchor;
         this.endAnchor = endAnchor;
-        this.circle = circle.clone();
+        this.circle = circle?.clone() ?? new Circle(new Point(0, 0), 0);
         // this.endAnchor = new Anchor(circle.center, new Vector(circle.center, startAnchor.anchorPoint).rotate90CW());
     }
 
@@ -68,14 +61,6 @@ export class CircleSegmentConnection extends PathSegment {
     get center(): Point {
         return this.circle.center;
     }
-
-    // setStartAnchor(startAnchor: Anchor) {
-    //     this.startAnchor = startAnchor;
-    // }
-
-    // setEndAnchor(endAnchor: Anchor) {
-    //     this.endAnchor = endAnchor;
-    // }
 
     get isOnCircle() {
         if (!this._calculated) {
@@ -168,7 +153,7 @@ export class CircleSegmentConnection extends PathSegment {
             const startControlPoint = startAnchor.getPointTowardsReference(distanceToControlPoint, endPoint);
             const endControlPoint = endAnchor.getPointTowardsReference(distanceToControlPoint, startPoint);
 
-            const curve = new CubicBezierCurve(startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
+            const curve = new CubicBezierCurve(this.connection, startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
             this.directConnectionCurve = curve;
             return curve.getSvgPath();
         }
@@ -180,7 +165,7 @@ export class CircleSegmentConnection extends PathSegment {
         const arcStartPoint = ShapeUtil.getClosestShapeToPoint(startIntersections, endAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
         const arcEndPoint = ShapeUtil.getClosestShapeToPoint(endIntersections, startAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
 
-        const arc = new EllipticArc(arcStartPoint, arcEndPoint);
+        const arc = new EllipticArc(this.connection, arcStartPoint, arcEndPoint);
         arc.radius(radius);
 
         const arcStartRad = RadialUtils.radOfPoint(arcStartPoint, this.circle.center);
@@ -228,8 +213,8 @@ export class CircleSegmentConnection extends PathSegment {
         );
         const endControlPoint2 = endPoint.translate(endAnchor.direction.rotate(Math.PI).multiply(distanceEndToArcEnd * distanceFactor));
 
-        const startCurve = new CubicBezierCurve(startPoint, startControlPoint1, startControlPoint2, arcStartPoint);
-        const endCurve = new CubicBezierCurve(arcEndPoint, endControlPoint1, endControlPoint2, endPoint);
+        const startCurve = new CubicBezierCurve(this.connection, startPoint, startControlPoint1, startControlPoint2, arcStartPoint);
+        const endCurve = new CubicBezierCurve(this.connection, arcEndPoint, endControlPoint1, endControlPoint2, endPoint);
 
         this.startCurve = startCurve;
         this.endCurve = endCurve;

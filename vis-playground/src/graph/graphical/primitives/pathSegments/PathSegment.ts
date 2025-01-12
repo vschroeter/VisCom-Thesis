@@ -11,6 +11,11 @@ import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
 export abstract class PathSegment {
 
+    connection: LayoutConnection;
+    constructor(connection: LayoutConnection) {
+        this.connection = connection;
+    }
+
     /** The start anchor of the path segment */
     abstract startAnchor?: Anchor;
 
@@ -43,19 +48,17 @@ export abstract class PathSegment {
 
 export class DefaultPathSegment extends PathSegment {
     
-    layoutConnection: LayoutConnection;
-
     get startAnchor(): Anchor | undefined {
-        return new Anchor(this.layoutConnection.source.center, this.layoutConnection.target.center);
+        return new Anchor(this.connection!.source.center, this.connection!.target.center);
     }
 
     get endAnchor(): Anchor | undefined {
-        return new Anchor(this.layoutConnection.target.center, new Vector(this.layoutConnection.source.center, this.layoutConnection.target.center));
+        return new Anchor(this.connection!.target.center, new Vector(this.connection!.source.center, this.connection!.target.center));
     }
 
     constructor(layoutConnection: LayoutConnection) {
-        super();
-        this.layoutConnection = layoutConnection;
+        super(layoutConnection);
+        this.connection = layoutConnection;
     }
 
     getSvgPath(): string {

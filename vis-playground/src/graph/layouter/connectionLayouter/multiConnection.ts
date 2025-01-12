@@ -6,7 +6,7 @@ import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponent
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialUtils } from "../utils/radialUtils";
 import { RadialConnectionsHelper } from "./radialConnections";
-import { PathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
+import { CombinedPathSegment, PathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
 
 ////////////////////////////////////////////////////////////////////////////
 // #region Helper Classes
@@ -28,32 +28,37 @@ export class CircleSegmentAnchor {
 
 export type MultiConnectionType = "unknown" | "fixed" | "circleSegment" | "";
 
-export class MultiHyperConnection {
+export class MultiHyperConnection extends CombinedPathSegment {
 
     nodePath: LayoutNode[] = [];
     hyperConnection?: LayoutConnection;
-    connection?: LayoutConnection;
 
-    segments: PathSegment[] = [];
-
-    constructor() {
-
+    constructor(layoutConnection: LayoutConnection) {
+        super(layoutConnection);
     }
 
     prepareSegments() {
-        
+
         // There are fixed segments along the path:
         // - already calculated hyper connections 
         // There are fixed parts along the path:
         // - real nodes, where the anchors will start from and end at
         // - virtual nodes, the path will pass through
         // - hyper nodes, that circular segments will placed on 
-        
-        
+
+
         // TODO: Circle segments having the same hyper connection as target don't need to be adapted in radius
 
         this.segments = [];
-        
+        const types: MultiConnectionType[] = [];
+
+        const source = this.connection.source;
+        const target = this.connection.target;
+
+        if (source.id == "image_preprocessor" && target.id == "obstacle_detector") {
+            const x = 5;
+        }
+
         for (let i = 1; i < this.nodePath.length; i++) {
             const prevNode = this.nodePath[i - 1];
             const nextNode = this.nodePath[i];
@@ -67,14 +72,62 @@ export class MultiHyperConnection {
             if (prevParent == nextNode || nextParent == prevNode) type = "circleSegment";
 
             if (type == "circleSegment") {
-                this.segments.push(new CircleSegmentConnection());
+                const circleSegmentConnection = new CircleSegmentConnection(this.connection);
+                const parent = prevParent == nextNode ? prevParent : nextParent;
+                circleSegmentConnection.parentNode = parent
+                circleSegmentConnection.circle = parent!.circle.clone();
+
+                this.segments.push(circleSegmentConnection);
+
             } else if (type == "fixed") {
                 const existingConnection = prevNode.getConnectionTo(nextNode);
-                this.segments.push(existingConnection?.pathSegment);
+                const existingPathSegment = existingConnection?.pathSegment;
+
+                if (!existingPathSegment) {
+                    throw new Error("No path segment found");
+                }
+
+                this.segments.push(existingPathSegment);
             }
 
-            console.log(prevNode.id, nextNode.id, type);
+            types.push(type);
+
+            // console.log(prevNode.id, nextNode.id, type);
         }
+
+
+        console.log(this.segments.map(seg => seg.constructor.name));
+
+        for (let i = 0; i < this.segments.length; i++) {
+            const seg = this.segments[i];
+            const prevSegment = i > 0 ? this.segments[i - 1] : undefined;
+            const nextSegment = i < this.segments.length - 1 ? this.segments[i + 1] : undefined;
+
+            const type = types[i];
+            const prevType = i > 0 ? types[i - 1] : undefined;
+            const nextType = i < this.segments.length - 1 ? types[i + 1] : undefined;
+
+            if (type == "circleSegment") {
+                if (!prevSegment) {
+                    seg.startAnchor = source.getAnchor(target.center);
+                }
+                if (!nextSegment) {
+                    seg.endAnchor = target.getAnchor(source.center).cloneReversed();
+                } 
+            }
+            else if (type == "fixed") {
+                if (prevSegment && prevType == "circleSegment") {
+                    prevSegment.endAnchor = seg.startAnchor;
+                }
+                if (nextSegment && nextType == "circleSegment") {
+                    nextSegment.startAnchor = seg.endAnchor;
+                }
+
+            }
+        }
+
+        console.log(this.segments);
+
 
     }
 
@@ -157,6 +210,7 @@ export class MultiHyperConnection {
 
             const parentNode = isForward ? startAnchor.parentNode : endAnchor.parentNode;
             const circleSegment = new CircleSegmentConnection(
+                this.connection,
                 startAnchor.anchor,
                 endAnchor.anchor,
                 parentNode.circle
@@ -279,14 +333,15 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                 // if (!(connection.source.id == "flint_node" && connection.target.id == "system_information")) return;
 
                 const parentHyperConnection = connection.parent!;
-                const multiConnection = new MultiHyperConnection();
+                const multiConnection = new MultiHyperConnection(connection);
+                connection.pathSegment = multiConnection;
 
                 // hyperConnection.nodePath = connection.getSubNodePathViaHypernodes();
                 multiConnection.nodePath = connection.getConnectionPathViaHyperAndVirtualNodes();
                 console.log(multiConnection.nodePath.map(node => node.id));
-                
+
                 multiConnection.hyperConnection = parentHyperConnection;
-                multiConnection.connection = connection;
+                // multiConnection.connection = connection;
                 multiConnections.push(multiConnection);
 
                 multiConnection.prepareSegments();
@@ -302,7 +357,7 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
         this.multiConnections.push(...multiConnections);
     }
     override layoutConnectionsOfChildren(node: LayoutNode): void {
-
+        return;
         // Here we adapt the circle segment radius, so that they are not all the same size
         // We only do this for the root node, so that it is done at the end when all connections are calculated
         if (node != node.visGraph.rootNode) {

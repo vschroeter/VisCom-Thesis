@@ -299,10 +299,11 @@ export class VisGraph {
     }
 
     moveConnectionsBetweenNodes(oldSource: LayoutNode, oldTarget: LayoutNode, newSource: LayoutNode, newTarget: LayoutNode, deleteInstantly = true): { newConnections: LayoutConnection[], connectionsToDelete: LayoutConnection[] } {
-        const connections = this.getConnectionsBetweenNodes(oldSource, oldTarget);
+        const connections = [this.getConnectionBetweenNodes(oldSource, oldTarget)];
         const newConnections: LayoutConnection[] = [];
         const connectionsToDelete: LayoutConnection[] = [];
         connections.forEach(connection => {
+            if (!connection) return;
             console.log("Move connection", `${oldSource.id} -> ${oldTarget.id}`, "to", `${newSource.id} -> ${newTarget.id}`);
             if (deleteInstantly) {
                 this.removeConnection(connection);
