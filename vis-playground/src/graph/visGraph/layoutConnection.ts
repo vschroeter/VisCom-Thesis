@@ -46,7 +46,7 @@ export class LayoutConnection {
         return `${this.fromId}->${this.toId}`;
     }
 
-    debugShapes: Shape[] = [];
+    debugShapes: (Shape | Anchor)[] = [];
 
     /** ID of the source node */
     get fromId(): string {
@@ -338,7 +338,7 @@ export class LayoutConnection {
         const endNodes: LayoutNode[] = [];
         endNodes.push(this.target);
         while (currentNode?.parent && currentNode != hyperEnd) {
-            const virtualNode = currentNode.parent?.existingVirtualChildren.get(endNode.id);
+            const virtualNode = currentNode.parent?.existingVirtualChildren.get(startNode.id);
             if (virtualNode) {
                 // console.log("Virtual node found", {
                 //     virtualNode: virtualNode.id,

@@ -7,6 +7,7 @@ import { ShapeUtil } from "src/graph/layouter/utils/shapeUtil";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialUtils } from "src/graph/layouter/utils/radialUtils";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
+import { SplineSegment } from "./SmoothSpline";
 
 export class CircleSegmentSegment extends PathSegment {
 
@@ -24,16 +25,22 @@ export class CircleSegmentSegment extends PathSegment {
         this.directConnectionCurve = undefined;
     }
 
+    /** The node the circle segment belongs to */
     parentNode?: LayoutNode;
-
+    
+    /** The circle of the circle segment */
     circle: Circle;
+    
+    /** If the path should cross a node */
+    crossNode?: LayoutNode;
+
     startAnchor?: Anchor;
     endAnchor?: Anchor;
 
     startCurve?: CubicBezierCurve;
     endCurve?: CubicBezierCurve;
     circleArc?: EllipticArc;
-    directConnectionCurve?: CubicBezierCurve;
+    directConnectionCurve?: PathSegment;
 
     constructor(
         connection: LayoutConnection,
@@ -97,9 +104,7 @@ export class CircleSegmentSegment extends PathSegment {
             return "";
         }
 
-        if (this.connection?.source.id == "1" && this.connection.target.id == "3") {
-            const x = 5;
-        }
+
 
         const startPoint = startAnchor.anchorPoint;
         const endPoint = endAnchor.anchorPoint;
@@ -112,26 +117,57 @@ export class CircleSegmentSegment extends PathSegment {
         const startDelta = radius - radiusAtStart;
         const endDelta = radius - radiusAtEnd;
 
-        const absStartDelta = Math.abs(startDelta);
-        const absEndDelta = Math.abs(endDelta);
+        const absStartDelta = Math.abs(startDelta) * 2;
+        const absEndDelta = Math.abs(endDelta) * 2;
 
-        const startCircleCenterPoint =
-            radiusAtStart < radius ?
-                startAnchor.getPointAwayFromReference(absStartDelta, center) :
-                startAnchor.getPointTowardsReference(absStartDelta, center);
-        const endCircleCenterPoint =
-            radiusAtEnd < radius ?
-                endAnchor.getPointAwayFromReference(absEndDelta, center) :
-                endAnchor.getPointTowardsReference(absEndDelta, center);
+        // In the normal case, we want to have the center of the intersection circles to be on the parent circle
+        // So we calculate the intersection of the anchor and the parent circle
+        const _startCircleCenterPointIntersections = startAnchor.getRay().intersect(this.circle);
+        const _endCircleCenterPointIntersections = endAnchor.getRay(true).intersect(this.circle);
 
-        const startCircleForIntersection = new Circle(startCircleCenterPoint, absStartDelta);
-        const endCircleForIntersection = new Circle(endCircleCenterPoint, absEndDelta);
+        // this.connection.debugShapes.push(startAnchor.getRay());
+        // this.connection.debugShapes.push(endAnchor.getRay(true));
 
-        // this.connection.debugShapes.push(startCircleForIntersection);
-        // this.connection.debugShapes.push(endCircleForIntersection);
+        if (_startCircleCenterPointIntersections.length === 0 || _endCircleCenterPointIntersections.length === 0) {
+            // throw new Error("No intersection found");
+            console.error("No intersection found", _startCircleCenterPointIntersections, _endCircleCenterPointIntersections);
+            return "";
+        }
 
+        let startCircleCenterPoint = _startCircleCenterPointIntersections[0];
+        let endCircleCenterPoint = _endCircleCenterPointIntersections[0];
+
+        // The circle is then defined by the intersection point as center and the distance to the anchor point as radius
+        const startCircleForIntersection = new Circle(startCircleCenterPoint, startCircleCenterPoint.distanceTo(startPoint)[0]);
+        const endCircleForIntersection = new Circle(endCircleCenterPoint, endCircleCenterPoint.distanceTo(endPoint)[0]);
+
+
+        // let startCircleCenterPoint =
+        //     radiusAtStart < radius ?
+        //         startAnchor.getPointAwayFromReference(absStartDelta, center) :
+        //         startAnchor.getPointTowardsReference(absStartDelta, center);
+        // let endCircleCenterPoint =
+        //     radiusAtEnd < radius ?
+        //         endAnchor.getPointAwayFromReference(absEndDelta, center) :
+        //         endAnchor.getPointTowardsReference(absEndDelta, center);
+        
+        // If there is a cross node defined, we want the center of the intersection circles to be closer to the cross node center 
+        // if (this.crossNode) {
+        //     startCircleCenterPoint = startAnchor.getPointTowardsReference(absStartDelta, this.crossNode.center);
+        //     endCircleCenterPoint = endAnchor.getPointTowardsReference(absEndDelta, this.crossNode.center);
+        // }
+
+        // const startCircleCenterPoint = startAnchor.getPointTowardsReference(absStartDelta, endPoint);
+        // const endCircleCenterPoint = endAnchor.getPointTowardsReference(absEndDelta, startPoint);
+
+        // const startCircleForIntersection = new Circle(startCircleCenterPoint, absStartDelta);
+        // const endCircleForIntersection = new Circle(endCircleCenterPoint, absEndDelta);
+
+
+        
+        
         // If the the start and end circle are close together and intersect, we just draw a cubic bezier curve
-        const intersections = startCircleForIntersection.intersect(endCircleForIntersection);
+        const startEndIntersections = startCircleForIntersection.intersect(endCircleForIntersection);
         const startContainsEnd = startCircleForIntersection.contains(endCircleForIntersection);
         const endContainsStart = endCircleForIntersection.contains(startCircleForIntersection);
 
@@ -146,27 +182,79 @@ export class CircleSegmentSegment extends PathSegment {
             this.parentNode?.debugShapes.push(endCircleCenterPoint);
         }
 
-        if (intersections.length > 0 || startContainsEnd || endContainsStart) {
+        if (startEndIntersections.length > 0 || startContainsEnd || endContainsStart) {
+            const segment = new SplineSegment(this.connection, startAnchor, endAnchor, 0.4);
 
-            // The control points are the same like in the normal spline connection
-            const distanceBetweenAnchors = startAnchor.anchorPoint.distanceTo(endAnchor.anchorPoint)[0];
-            const anchorDistanceFactor = 0.4
-            const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
+            this.directConnectionCurve = segment;
+            return segment.getSvgPath();
 
-            const startControlPoint = startAnchor.getPointTowardsReference(distanceToControlPoint, endPoint);
-            const endControlPoint = endAnchor.getPointTowardsReference(distanceToControlPoint, startPoint);
+            // // The control points are the same like in the normal spline connection
+            // const distanceBetweenAnchors = startAnchor.anchorPoint.distanceTo(endAnchor.anchorPoint)[0];
+            // const anchorDistanceFactor = 0.4
+            // const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
 
-            const curve = new CubicBezierCurve(this.connection, startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
-            this.directConnectionCurve = curve;
-            return curve.getSvgPath();
+            // const startControlPoint = startAnchor.getPointTowardsReference(distanceToControlPoint, endPoint);
+            // const endControlPoint = endAnchor.getPointTowardsReference(distanceToControlPoint, startPoint);
+
+            // const curve = new CubicBezierCurve(this.connection, startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
+            // this.directConnectionCurve = curve;
+            // return curve.getSvgPath();
         }
 
 
         const startIntersections = startCircleForIntersection.intersect(this.circle);
         const endIntersections = endCircleForIntersection.intersect(this.circle);
 
-        const arcStartPoint = ShapeUtil.getClosestShapeToPoint(startIntersections, endAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
-        const arcEndPoint = ShapeUtil.getClosestShapeToPoint(endIntersections, startAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
+        const combinations: [Point, Point][] = [
+            [startIntersections[0], endIntersections[0]],
+            [startIntersections[0], endIntersections[1]],
+            [startIntersections[1], endIntersections[0]],
+            [startIntersections[1], endIntersections[1]],
+        ]
+
+        // Find the combination with the smallest radial distance between the points
+        let minDistance = Number.MAX_VALUE;
+        let minCombination: [Point, Point] | undefined = undefined;
+        for (const combination of combinations) {
+            
+            const rad1 = RadialUtils.radOfPoint(combination[0], this.circle.center);
+            const rad2 = RadialUtils.radOfPoint(combination[1], this.circle.center);
+
+            const dist1 = RadialUtils.normalizeRad(RadialUtils.radBetweenPoints(combination[0], combination[1], this.circle.center), true);
+            const dist2 = RadialUtils.normalizeRad(RadialUtils.radBetweenPoints(combination[1], combination[0], this.circle.center), true);
+
+            // const dist1 = RadialUtils.radialDistance(rad1, rad2, this.circle.r);
+            // const dist2 = RadialUtils.radialDistance(rad2, rad1, this.circle.r);
+            const dist = Math.min(dist1, dist2);
+
+            if (dist < minDistance) {
+                minDistance = dist;
+                minCombination = combination;
+            }
+        }
+
+        const arcStartPoint = minCombination[0];
+        const arcEndPoint = minCombination[1];
+
+        
+        // let arcStartPoint = ShapeUtil.getClosestShapeToPoint(startIntersections, endAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
+        // let arcEndPoint = ShapeUtil.getClosestShapeToPoint(endIntersections, startAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
+
+        // if (this.crossNode) {
+
+        //     const startSlopes = [
+        //         RadialUtils.getEnclosingAngle(startAnchor.anchorPoint, this.crossNode.center, startIntersections[0]),
+        //         RadialUtils.getEnclosingAngle(startAnchor.anchorPoint, this.crossNode.center, startIntersections[1]),
+        //     ]
+
+        //     const endSlopes = [
+        //         RadialUtils.getEnclosingAngle(endAnchor.anchorPoint, this.crossNode.center, endIntersections[0]),
+        //         RadialUtils.getEnclosingAngle(endAnchor.anchorPoint, this.crossNode.center, endIntersections[1]),
+        //     ]
+
+        //     arcStartPoint = startSlopes[0] > startSlopes[1] ? startIntersections[0] : startIntersections[1];
+        //     arcEndPoint = endSlopes[0] > endSlopes[1] ? endIntersections[0] : endIntersections[1];            
+        // }
 
         const arc = new EllipticArc(this.connection, arcStartPoint, arcEndPoint);
         arc.radius(radius);
@@ -182,6 +270,36 @@ export class CircleSegmentSegment extends PathSegment {
         if (radDiff > Math.PI) {
             radDiff -= Math.PI * 2;
         }
+
+        let debug = false;
+        if (this.connection?.source.id == "1obstacle_detector" && this.connection.target.id == "1drive_manager") {
+        // if (this.connection?.source.id == "drive_manager" && this.connection.target.id == "camera") {
+            debug = true;
+        }
+        if (debug) {
+            const getRandomColor = () => {
+                return "#" + Math.floor(Math.random() * 16777215).toString(16);
+            }
+            const randomColor = getRandomColor();
+            this.stroke = randomColor;
+
+            startCircleForIntersection._data = { stroke: randomColor };
+            endCircleForIntersection._data = { stroke: randomColor };
+            startPoint._data = { fill: randomColor };
+            endPoint._data = { fill: randomColor };
+            arcStartPoint._data = { fill: randomColor };
+            arcEndPoint._data = { fill: randomColor };
+
+            this.connection.debugShapes.push(startCircleForIntersection);
+            this.connection.debugShapes.push(endCircleForIntersection);
+            this.connection.debugShapes.push(startPoint);
+            this.connection.debugShapes.push(endPoint);
+            this.connection.debugShapes.push(arcStartPoint);
+            this.connection.debugShapes.push(arcEndPoint);
+            this.connection.debugShapes.push(startAnchor);
+            this.connection.debugShapes.push(endAnchor);
+        }
+
 
         const arcDirection = radDiff > 0 ? "clockwise" : "counter-clockwise";
         arc.direction(arcDirection);

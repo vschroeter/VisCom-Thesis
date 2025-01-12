@@ -99,7 +99,7 @@ export class RadialUtils extends ShapeUtil {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Vectors
+    // #region Vectors
     ////////////////////////////////////////////////////////////////////////////
 
     static radToVector(rad: number): Vector {
@@ -107,7 +107,7 @@ export class RadialUtils extends ShapeUtil {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Angles in a circle
+    // #region Angles in a circle
     ////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -177,9 +177,17 @@ export class RadialUtils extends ShapeUtil {
         return radToDeg(RadialUtils.forwardRadBetweenPoints(point1, point2, center));
     }
 
+    static getEnclosingAngle(point1: PointLike, point2: PointLike, point3: PointLike): number {
+        const angle = RadialUtils.normalizeRad(RadialUtils.radBetweenPoints(point1, point3, point2), true);
+        if (angle > Math.PI) return Math.PI * 2 - angle;
+        return angle;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
-    // Positions on a circle
+    // #region Positions on a circle
     ////////////////////////////////////////////////////////////////////////////
+
+
 
     /**
      * Calculates the position on a circle at a given angle in radians.
@@ -210,7 +218,7 @@ export class RadialUtils extends ShapeUtil {
 
 
     ////////////////////////////////////////////////////////////////////////////
-    // Distances between points
+    // #region Distances between points
     ////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -243,7 +251,7 @@ export class RadialUtils extends ShapeUtil {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Tangents
+    // #region Tangents
     ////////////////////////////////////////////////////////////////////////////
 
     static getTangentsToCircle(point: Point, circle: Circle): Segment[] {

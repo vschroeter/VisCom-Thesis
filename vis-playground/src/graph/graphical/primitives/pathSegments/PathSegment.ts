@@ -10,6 +10,7 @@ import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 // }
 
 export abstract class PathSegment {
+    stroke?: string;
 
     connection: LayoutConnection;
     constructor(connection: LayoutConnection) {
@@ -44,6 +45,10 @@ export abstract class PathSegment {
 
     /** THe svg path string of the segment */
     abstract getSvgPath(): string;
+
+    get svgPath(): string {
+        return this.getSvgPath();
+    }
 }
 
 export class DefaultPathSegment extends PathSegment {

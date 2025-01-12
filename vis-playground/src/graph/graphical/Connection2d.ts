@@ -104,7 +104,19 @@ export class Connection2d extends SvgRenderable {
     arrow: Arrow2D = new Arrow2D()
 
     opacity: number = 1
-    stroke?: string
+    // stroke?: string
+
+    get stroke(): string | undefined {
+        return this.layoutConnection.pathSegment?.stroke;
+    }
+
+    set stroke(value: string | undefined) {
+        if (!this.layoutConnection.pathSegment) {
+            return;
+        }
+        this.layoutConnection.pathSegment.stroke = value;
+    }
+
     strokeWidth: number = 1
 
     maxWidth = 10
@@ -325,7 +337,7 @@ export class Connection2d extends SvgRenderable {
 
     //++++ Stroke ++++//
 
-    private applyStrokeAttributs(selection: d3.Selection<any, any, any, any>) {
+    private applyStrokeAttributes(selection: d3.Selection<any, any, any, any>) {
         selection
             .attr('stroke', this.stroke ?? "black")
             .attr('stroke-width', this.strokeWidth)
@@ -333,8 +345,8 @@ export class Connection2d extends SvgRenderable {
     }
 
     renderStyleStroke(selection: d3.Selection<any, any, any, any>) {
-        this.applyStrokeAttributs(this.selectSubElement('path.link'));
-        this.applyStrokeAttributs(this.selectSubElement('path.arrow')).attr('fill', this.stroke ?? "none");
+        this.applyStrokeAttributes(this.selectSubElement('path.link'));
+        this.applyStrokeAttributes(this.selectSubElement('path.arrow')).attr('fill', this.stroke ?? "none");
 
         this.renderPath(selection)
     }

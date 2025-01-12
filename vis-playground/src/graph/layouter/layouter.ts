@@ -1,6 +1,6 @@
-import { Circle, Point, Segment, Shape, ShapeTag } from "2d-geometry";
+import { Circle, Point, Ray, Segment, Shape, ShapeTag } from "2d-geometry";
 import { CommunicationGraph, CommunicationNode } from "../commGraph";
-import { Connection2d, Node2d } from "../graphical";
+import { Anchor, Connection2d, Node2d } from "../graphical";
 import { MouseEvents, UserInteractions } from "../visualizations/interactions";
 import { CommonSettings } from "./settings/commonSettings";
 import { GraphLayouterSettings } from "./settings/settings";
@@ -60,8 +60,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
 
     // debugShapes: Shape[] = [];
 
-    get debugShapes(): Shape[] {
-        const shapes: Shape[] = [];
+    get debugShapes(): (Shape | Anchor)[] {
+        const shapes: (Shape | Anchor)[] = [];
         this.visGraph?.allGraphicalNodes.forEach(n => {
             if (n.layoutNode.debugShapes.length > 0) {
                 shapes.push(...n.layoutNode.debugShapes);
@@ -365,7 +365,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
                             .attr('r', c.r)
                             .attr('fill', 'none')
                             .attr('stroke', c._data?.stroke ?? 'blue')
-                            .attr('stroke-width', 0.25)
+                            .attr('stroke-width', 0.5)
+                            .attr('opacity', 0.5)
 
                         break;
                     }
@@ -376,7 +377,8 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
                             .attr('x2', (shape as Segment).end.x)
                             .attr('y2', (shape as Segment).end.y)
                             .attr('stroke', shape._data?.stroke ?? 'green')
-                            .attr('stroke-width', 0.25)
+                            .attr('stroke-width', 0.5)
+                            .attr('opacity', 0.5)
 
                         break;
                     }
@@ -388,7 +390,49 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
                             .attr('r', 1)
                             .attr('fill', p._data?.fill ?? 'green')
                             .attr('stroke', 'none')
+                            .attr('opacity', 0.5)
                         break;
+                    }
+                    case ShapeTag.Ray: {
+                        const ray = shape as Ray;
+
+                        const length = 500;
+                        const end = ray.pt.translate(ray.norm.rotate90CCW().multiply(length));
+
+                        d.append('line')
+                            .attr('x1', ray.start.x)
+                            .attr('y1', ray.start.y)
+                            .attr('x2', end.x)
+                            .attr('y2', end.y)
+                            .attr('stroke', 'blue')
+                            .attr('stroke-width', 0.5)
+                            .attr('opacity', 0.5)
+                        break;
+                    }
+
+                    case "Anchor": {
+                        const anchor = shape as Anchor;
+
+                        d.append('circle')
+                            .attr('cx', anchor.anchorPoint.x)
+                            .attr('cy', anchor.anchorPoint.y)
+                            .attr('r', 1)
+                            .attr('fill', anchor.anchorPoint._data?.fill ?? 'green')
+                            .attr('stroke', 'none')
+                            .attr('opacity', 0.5)
+                        
+                        d.append('line')
+                            .attr('x1', anchor.anchorPoint.x)
+                            .attr('y1', anchor.anchorPoint.y)
+                            .attr('x2', anchor.anchorPoint.x + anchor.direction.x * 10)
+                            .attr('y2', anchor.anchorPoint.y + anchor.direction.y * 10)
+                            .attr('stroke', 'red')
+                            .attr('stroke-width', 0.5)
+                            .attr('opacity', 0.5)
+
+                        
+                        
+                        
                     }
                 }
 

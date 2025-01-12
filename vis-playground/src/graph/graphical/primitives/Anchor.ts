@@ -1,7 +1,9 @@
 
-import { Point, Vector } from "2d-geometry";
+import { Line, Point, Ray, Vector } from "2d-geometry";
 
 export class Anchor {
+  tag = "Anchor";
+
   /** The point, where the anchor is located */
   anchorPoint: Point;
 
@@ -70,5 +72,16 @@ export class Anchor {
 
   cloneReversed() {
     return new Anchor(this.anchorPoint.clone(), this.direction.clone().multiply(-1));
+  }
+
+  getLine() {
+    return new Line(this.anchorPoint, this.direction.rotate90CW());
+  }
+
+  getRay(reversed = false) {
+    if (reversed) {
+      return new Ray(this.anchorPoint, this.direction.multiply(-1).rotate90CW());
+    }
+    return new Ray(this.anchorPoint, this.direction.rotate90CW());
   }
 }
