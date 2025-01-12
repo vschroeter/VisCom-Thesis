@@ -8,7 +8,7 @@ import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialUtils } from "src/graph/layouter/utils/radialUtils";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
-export class CircleSegmentConnection extends PathSegment {
+export class CircleSegmentSegment extends PathSegment {
 
     debug: boolean = false;
 
@@ -126,6 +126,9 @@ export class CircleSegmentConnection extends PathSegment {
 
         const startCircleForIntersection = new Circle(startCircleCenterPoint, absStartDelta);
         const endCircleForIntersection = new Circle(endCircleCenterPoint, absEndDelta);
+
+        // this.connection.debugShapes.push(startCircleForIntersection);
+        // this.connection.debugShapes.push(endCircleForIntersection);
 
         // If the the start and end circle are close together and intersect, we just draw a cubic bezier curve
         const intersections = startCircleForIntersection.intersect(endCircleForIntersection);

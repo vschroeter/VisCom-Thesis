@@ -1,6 +1,6 @@
 import { Circle, Point } from "2d-geometry";
 import { Anchor } from "src/graph/graphical";
-import { CircleSegmentConnection } from "src/graph/graphical/primitives/pathSegments/CircleSegment";
+import { CircleSegmentSegment } from "src/graph/graphical/primitives/pathSegments/CircleSegment";
 import { LayoutConnection, LayoutConnectionPoint, LayoutConnectionPoints } from "src/graph/visGraph/layoutConnection";
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
@@ -28,10 +28,27 @@ export class CircleSegmentAnchor {
 
 export type MultiConnectionType = "unknown" | "fixed" | "circleSegment" | "";
 
+type MultiSegmentInformation = {
+    type: MultiConnectionType,
+    prevType?: MultiConnectionType,
+    nextType?: MultiConnectionType,
+
+    segment: PathSegment,
+    prevSegment?: PathSegment,
+    nextSegment?: PathSegment,
+
+    sourceNode: LayoutNode,
+    targetNode: LayoutNode,
+}
+
 export class MultiHyperConnection extends CombinedPathSegment {
 
     nodePath: LayoutNode[] = [];
     hyperConnection?: LayoutConnection;
+
+    types: MultiConnectionType[] = [];
+
+    info: MultiSegmentInformation[] = [];
 
     constructor(layoutConnection: LayoutConnection) {
         super(layoutConnection);
@@ -50,7 +67,8 @@ export class MultiHyperConnection extends CombinedPathSegment {
         // TODO: Circle segments having the same hyper connection as target don't need to be adapted in radius
 
         this.segments = [];
-        const types: MultiConnectionType[] = [];
+        this.types = [];
+        const types = this.types;
 
         const source = this.connection.source;
         const target = this.connection.target;
@@ -72,7 +90,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
             if (prevParent == nextNode || nextParent == prevNode) type = "circleSegment";
 
             if (type == "circleSegment") {
-                const circleSegmentConnection = new CircleSegmentConnection(this.connection);
+                const circleSegmentConnection = new CircleSegmentSegment(this.connection);
                 const parent = prevParent == nextNode ? prevParent : nextParent;
                 circleSegmentConnection.parentNode = parent
                 circleSegmentConnection.circle = parent!.circle.clone();
@@ -96,39 +114,139 @@ export class MultiHyperConnection extends CombinedPathSegment {
         }
 
 
-        console.log(this.segments.map(seg => seg.constructor.name));
+        this.info = this.segments.map((segment, index) => {
+            const prevSegment = index > 0 ? this.segments[index - 1] : undefined;
+            const nextSegment = index < this.segments.length - 1 ? this.segments[index + 1] : undefined;
 
+            const prevType = index > 0 ? types[index - 1] : undefined;
+            const nextType = index < this.segments.length - 1 ? types[index + 1] : undefined;
+            const type = types[index];
+
+            const sourceNode = this.nodePath[index];
+            const targetNode = this.nodePath[index + 1];
+
+            return {
+                type: type,
+                prevType: prevType,
+                nextType: nextType,
+
+                segment: segment,
+                prevSegment: prevSegment,
+                nextSegment: nextSegment,
+
+                sourceNode: sourceNode,
+                targetNode: targetNode,
+            }
+        })
+
+
+
+        // Set fixed anchors to adjacent circle segments
         for (let i = 0; i < this.segments.length; i++) {
-            const seg = this.segments[i];
-            const prevSegment = i > 0 ? this.segments[i - 1] : undefined;
-            const nextSegment = i < this.segments.length - 1 ? this.segments[i + 1] : undefined;
-
-            const type = types[i];
-            const prevType = i > 0 ? types[i - 1] : undefined;
-            const nextType = i < this.segments.length - 1 ? types[i + 1] : undefined;
+            const info = this.info[i];
+            const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = info;
 
             if (type == "circleSegment") {
                 if (!prevSegment) {
-                    seg.startAnchor = source.getAnchor(target.center);
+                    // seg.startAnchor = source.getAnchor(target.center);
                 }
                 if (!nextSegment) {
-                    seg.endAnchor = target.getAnchor(source.center).cloneReversed();
-                } 
+                    // seg.endAnchor = target.getAnchor(source.center).cloneReversed();
+                }
             }
             else if (type == "fixed") {
                 if (prevSegment && prevType == "circleSegment") {
-                    prevSegment.endAnchor = seg.startAnchor;
+                    prevSegment.endAnchor = segment.startAnchor;
                 }
                 if (nextSegment && nextType == "circleSegment") {
-                    nextSegment.startAnchor = seg.endAnchor;
+                    nextSegment.startAnchor = segment.endAnchor;
                 }
-
             }
         }
 
-        console.log(this.segments);
+        console.log(this.segments.map(seg => seg.constructor.name), this.segments);
 
+        let changed = true;
+        
+        // Calculate the undefined anchors for the circle segments
+        // Do this until no more changes are made
+        while (changed) {
+            changed = false;
+            for (let i = 0; i < this.segments.length; i++) {
+                const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = this.info[i];
 
+                // We only adapt circle segment's anchors
+                // We should always have at least one fixed segment, that defines the adjacent circle segment's anchor
+                if (type == "circleSegment") {
+                    if (!segment.startAnchor && segment.endAnchor) {
+                        const node = this.nodePath[i];
+                        segment.startAnchor = this.calculateCircleSegmentAnchor(node, segment)
+                        changed = true;
+
+                        // Propagate the anchor to the previous circle segment
+                        if (prevType == "circleSegment" && prevSegment && !prevSegment.endAnchor) {
+                            prevSegment.endAnchor = segment.startAnchor;
+                        }
+                    }
+                    if (!segment.endAnchor && segment.startAnchor) {
+                        const node = this.nodePath[i + 1];
+                        segment.endAnchor = this.calculateCircleSegmentAnchor(node, segment)
+                        changed = true;
+
+                        // Propagate the anchor to the next circle segment
+                        if (nextType == "circleSegment" && nextSegment && !nextSegment.startAnchor) {
+                            nextSegment.startAnchor = segment.endAnchor;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    calculateCircleSegmentAnchor(anchorNode: LayoutNode, segment: PathSegment): Anchor {
+        const parentCenter = anchorNode.parent?.center ?? new Point(0, 0);
+        const nodeCenter = anchorNode.center;
+
+        // Valid outer angles
+        const intersections = anchorNode.outerCircle.intersect(anchorNode.parent?.innerCircle ?? new Circle(new Point(0, 0), 0));
+        const radNodeCenter = RadialUtils.radOfPoint(nodeCenter, parentCenter);
+        let rad0 = RadialUtils.radOfPoint(intersections[0], nodeCenter);
+        let rad1 = RadialUtils.radOfPoint(intersections[1], nodeCenter);
+
+        if (RadialUtils.forwardRadBetweenAngles(radNodeCenter, rad0) < RadialUtils.forwardRadBetweenAngles(radNodeCenter, rad1)) {
+            [rad0, rad1] = [rad1, rad0];
+        }
+
+        const radRange = RadialUtils.forwardRadBetweenAngles(rad0, rad1);
+        const radMid = rad0 + radRange / 2;
+        const radFactor = 0.8;
+        rad0 = radMid - radRange * radFactor / 2;
+        rad1 = radMid + radRange * radFactor / 2;
+        rad0 %= 2 * Math.PI;
+        rad1 %= 2 * Math.PI;
+
+        const existingAnchor = segment.startAnchor ?? segment.endAnchor;
+
+        if (!existingAnchor) {
+            throw new Error("No existing anchor found");
+        }
+
+        const newAnchorIsEndAnchor = !(segment.endAnchor == existingAnchor);
+
+        const anchorRad = RadialUtils.radOfPoint(existingAnchor.anchorPoint, nodeCenter);
+
+        // this.connection?.source.debugShapes.push(new Circle(intersections[0], 2));
+        // this.connection?.source.debugShapes.push(new Circle(intersections[1], 2));
+        // this.connection?.source.debugShapes.push(new Circle(lastAnchor.anchor.anchorPoint, 2));
+
+        const chosenRad = RadialUtils.putRadBetween(rad0, rad1, anchorRad);
+        const chosenVector = RadialUtils.radToVector(chosenRad).multiply(anchorNode.outerCircle.r);
+        const reverseVector = chosenVector.rotate(Math.PI);
+        const chosenPoint = nodeCenter.translate(chosenVector);
+
+        // this.connection?.source.debugShapes.push(new Circle(chosenPoint, 2));
+
+        return new Anchor(chosenPoint, newAnchorIsEndAnchor ? reverseVector : chosenVector);
     }
 
     calculateAnchors(
@@ -201,15 +319,15 @@ export class MultiHyperConnection extends CombinedPathSegment {
     getCircleSegmentConnections(
         circleSegmentAnchors: CircleSegmentAnchor[],
         isForward: boolean
-    ): CircleSegmentConnection[] {
-        const _circleSegmentConnections: CircleSegmentConnection[] = [];
+    ): CircleSegmentSegment[] {
+        const _circleSegmentConnections: CircleSegmentSegment[] = [];
         for (let i = 1; i < circleSegmentAnchors.length; i++) {
 
             const startAnchor = circleSegmentAnchors[i - 1];
             const endAnchor = circleSegmentAnchors[i];
 
             const parentNode = isForward ? startAnchor.parentNode : endAnchor.parentNode;
-            const circleSegment = new CircleSegmentConnection(
+            const circleSegment = new CircleSegmentSegment(
                 this.connection,
                 startAnchor.anchor,
                 endAnchor.anchor,
@@ -230,7 +348,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
     };
 
     calculatePoints(): {
-        circleSegments: CircleSegmentConnection[],
+        circleSegments: CircleSegmentSegment[],
         points: LayoutConnectionPoints
     } {
         const nodesFromHyperConnectionToStart: LayoutNode[] = [];
@@ -273,7 +391,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
 
         const anchorsFromStartToHyperStart = Array.from(anchorsFromHyperStartToStart).reverse();
 
-        const circleSegmentConnections: CircleSegmentConnection[] = [];
+        const circleSegmentConnections: CircleSegmentSegment[] = [];
 
         const startCircleSegmentConnections = this.getCircleSegmentConnections(anchorsFromStartToHyperStart, true);
         const endCircleSegmentConnections = this.getCircleSegmentConnections(anchorsFromHyperEndToEnd, false);
@@ -357,49 +475,57 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
         this.multiConnections.push(...multiConnections);
     }
     override layoutConnectionsOfChildren(node: LayoutNode): void {
-        return;
+        // return;
         // Here we adapt the circle segment radius, so that they are not all the same size
         // We only do this for the root node, so that it is done at the end when all connections are calculated
         if (node != node.visGraph.rootNode) {
             return;
         }
 
+        // console.log(this.multiConnections);
+        // return;
+
         // Get all multi connections of child nodes
-        const multiConnections: MultiHyperConnection[] = [];
-        node.children.forEach(child => {
-            const layouter = child.getConnectionLayouterByTag(this.TAG) as RadialMultiConnectionLayouter;
+        // const multiConnections: MultiHyperConnection[] = [];
+        // node.children.forEach(child => {
+        //     const layouter = child.getConnectionLayouterByTag(this.TAG) as RadialMultiConnectionLayouter;
 
-            if (layouter !== undefined) {
-                multiConnections.push(...layouter.multiConnections);
-            }
-        });
+        //     if (layouter !== undefined) {
+        //         multiConnections.push(...layouter.multiConnections);
+        //     }
+        // });
 
-        if (this.multiConnections.length == 0) {
+        const multiConnections = this.multiConnections;
+        if (multiConnections.length == 0) {
             return;
         }
 
         // console.log(node.id, hyperConnections);
 
-        const nodeToCircleSegmentsMap = new Map<LayoutNode, CircleSegmentConnection[]>();
+        
+        // At the end, we want to adapt the circle segment radius, so that they are not all the same size
+        // We only do this for circle segments, that have the same parent node and different hyper connections as target
 
-        this.multiConnections.forEach(multiConnection => {
-            const res = multiConnection.calculatePoints();
+        const nodeToCircleSegmentsMap = new Map<LayoutNode, CircleSegmentSegment[]>();
 
-            res.circleSegments.forEach(circleSegment => {
-                if (!circleSegment.parentNode) return;
+        multiConnections.forEach(multiConnection => {
+            multiConnection.info.forEach(segmentInfo => {
+                const { segment, sourceNode, targetNode, type } = segmentInfo;
+                if (type != "circleSegment") return;
+
+                const circleSegment = segment as CircleSegmentSegment;
+                if (circleSegment.parentNode == undefined) return;
 
                 if (!nodeToCircleSegmentsMap.has(circleSegment.parentNode)) {
                     nodeToCircleSegmentsMap.set(circleSegment.parentNode, []);
                 }
                 nodeToCircleSegmentsMap.get(circleSegment.parentNode)!.push(circleSegment);
             })
-
-            multiConnection.connection!.setPoints(res.points);
         })
 
         console.log(nodeToCircleSegmentsMap);
-
-        // Adapt the circle segment radius, so that each has a different size
+        
+        // // Adapt the circle segment radius, so that each has a different size
         nodeToCircleSegmentsMap.forEach((circleSegments, parentNode) => {
             // Do this only for circle segments, that are along the circle, direct bezier connections are not adapted
             const segmentsOnCircle = circleSegments.filter(circleSegment => circleSegment.isOnCircle);
@@ -411,6 +537,38 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                 circleSegment.calculate(true)
             });
         })
+
+        // const nodeToCircleSegmentsMap = new Map<LayoutNode, CircleSegmentSegment[]>();
+
+        // this.multiConnections.forEach(multiConnection => {
+        //     const res = multiConnection.calculatePoints();
+
+        //     res.circleSegments.forEach(circleSegment => {
+        //         if (!circleSegment.parentNode) return;
+
+        //         if (!nodeToCircleSegmentsMap.has(circleSegment.parentNode)) {
+        //             nodeToCircleSegmentsMap.set(circleSegment.parentNode, []);
+        //         }
+        //         nodeToCircleSegmentsMap.get(circleSegment.parentNode)!.push(circleSegment);
+        //     })
+
+        //     multiConnection.connection!.setPoints(res.points);
+        // })
+
+        // console.log(nodeToCircleSegmentsMap);
+
+        // // Adapt the circle segment radius, so that each has a different size
+        // nodeToCircleSegmentsMap.forEach((circleSegments, parentNode) => {
+        //     // Do this only for circle segments, that are along the circle, direct bezier connections are not adapted
+        //     const segmentsOnCircle = circleSegments.filter(circleSegment => circleSegment.isOnCircle);
+        //     const min = 0.9
+        //     const max = 1.1
+
+        //     segmentsOnCircle.forEach((circleSegment, index) => {
+        //         circleSegment.circle.r *= min + (max - min) * ((index + 1) / (segmentsOnCircle.length + 1));
+        //         circleSegment.calculate(true)
+        //     });
+        // })
 
     }
 }
