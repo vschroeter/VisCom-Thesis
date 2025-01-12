@@ -28,6 +28,10 @@
 
                         <g ref="refGZoom">
 
+                            <rect :x="visibleArea?.x" :y="visibleArea?.y" :width="visibleArea?.width"
+                                :height="visibleArea?.height" fill="none" stroke="red" stroke-width="1" />
+                            
+                            <circle cx="0" cy="0" r="10" fill="red" />
                             <g ref="refGRoot">
                             </g>
                         </g>
@@ -101,7 +105,28 @@ const refGNodes = ref<SVGGElement | null>(null)
 const refGLabels = ref<SVGGElement | null>(null)
 const refDivIconButtons = ref<HTMLDivElement | null>(null)
 const refGZoom = ref<SVGGElement | null>(null)
-const interactiveRef = svgInteractiveRef(refSVG, refGZoom, undefined, undefined)
+const interactiveRef = svgInteractiveRef(refSVG, refGZoom, onZoomed, undefined)
+
+const visibleArea = ref<{ x: number, y: number, width: number, height: number } | null>(null)
+
+function onZoomed(transform: d3.ZoomTransform) {
+
+    const contentBbox = bBox.value;
+    if (!contentBbox) {
+        return;
+    } 
+
+    const _visibleArea = {
+        x: (contentBbox.x - transform.x) / transform.k,
+        y: (contentBbox.y - transform.y) / transform.k,
+        width: contentBbox.width / transform.k,
+        height: contentBbox.height / transform.k
+    }
+
+    visibleArea.value = _visibleArea;
+
+    console.log("Zoomed", visibleArea, transform) //transform, contentBbox)
+}
 
 ////////////////////////////////////////////////////////////////////////////
 // Refs and Computed values

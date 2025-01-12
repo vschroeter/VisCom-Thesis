@@ -65,6 +65,10 @@ export class UserInteractions {
         const nodeIds = Array.isArray(nodeId) ? nodeId : [nodeId]
         const nodes = nodeIds.map(id => this.visGraph.getNode(id))
 
+        if (nodes.length > 0) {
+            console.log(nodes[0].center)
+        }
+
         nodes.forEach(node => this.hoveredNodeIds.add(node.id))
 
         if (addDescendants) {

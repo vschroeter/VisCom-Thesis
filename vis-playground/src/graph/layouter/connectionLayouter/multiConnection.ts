@@ -77,6 +77,8 @@ export class MultiHyperConnection extends CombinedPathSegment {
             const x = 5;
         }
 
+        let indexOfHyperConnection = -1;
+
         for (let i = 1; i < this.nodePath.length; i++) {
             const prevNode = this.nodePath[i - 1];
             const nextNode = this.nodePath[i];
@@ -88,6 +90,10 @@ export class MultiHyperConnection extends CombinedPathSegment {
 
             if (nextParent == prevParent) type = "fixed";
             if (prevParent == nextNode || nextParent == prevNode) type = "circleSegment";
+
+            if (prevNode == this.hyperConnection?.source && nextNode == this.hyperConnection?.target) {
+                indexOfHyperConnection = i;
+            }
 
             if (type == "circleSegment") {
                 const circleSegmentConnection = new CircleSegmentSegment(this.connection);
@@ -135,10 +141,15 @@ export class MultiHyperConnection extends CombinedPathSegment {
             }
         })
 
-
-
+        function range(start: number, end: number): number[] {
+            return Array.from({ length: end - start }, (_, i) => start + i);
+        }
+        
+        const processIndices = [...range(0, indexOfHyperConnection).reverse(), ...range(indexOfHyperConnection, this.segments.length)]; 
         // Set fixed anchors to adjacent circle segments
-        for (let i = 0; i < this.segments.length; i++) {
+        // for (let i = 0; i < this.segments.length; i++) {
+        for (let pi = 0; pi < processIndices.length; pi++) {
+            const i = processIndices[pi];
             const info = this.info[i];
             const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = info;
 
