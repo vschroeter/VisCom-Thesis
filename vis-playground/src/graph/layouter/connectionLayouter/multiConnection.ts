@@ -169,6 +169,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
         while (changed) {
             changed = false;
             for (let i = 0; i < this.segments.length; i++) {
+                const info = this.info[i];
                 const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = this.info[i];
 
                 // We only adapt circle segment's anchors
@@ -176,7 +177,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
                 if (type == "circleSegment") {
                     if (!segment.startAnchor && segment.endAnchor) {
                         const node = this.nodePath[i];
-                        segment.startAnchor = this.calculateCircleSegmentAnchor(node, segment)
+                        segment.startAnchor = this.calculateCircleSegmentAnchor(node, info);
                         changed = true;
 
                         // Propagate the anchor to the previous circle segment
@@ -186,7 +187,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
                     }
                     if (!segment.endAnchor && segment.startAnchor) {
                         const node = this.nodePath[i + 1];
-                        segment.endAnchor = this.calculateCircleSegmentAnchor(node, segment)
+                        segment.endAnchor = this.calculateCircleSegmentAnchor(node, info)
                         changed = true;
 
                         // Propagate the anchor to the next circle segment
@@ -199,7 +200,9 @@ export class MultiHyperConnection extends CombinedPathSegment {
         }
     }
 
-    calculateCircleSegmentAnchor(anchorNode: LayoutNode, segment: PathSegment): Anchor {
+    calculateCircleSegmentAnchor(anchorNode: LayoutNode, info: MultiSegmentInformation): Anchor {
+        const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = info;
+
         const parentCenter = anchorNode.parent?.center ?? new Point(0, 0);
         const nodeCenter = anchorNode.center;
 
@@ -221,8 +224,8 @@ export class MultiHyperConnection extends CombinedPathSegment {
         rad0 %= 2 * Math.PI;
         rad1 %= 2 * Math.PI;
 
+        
         const existingAnchor = segment.startAnchor ?? segment.endAnchor;
-
         if (!existingAnchor) {
             throw new Error("No existing anchor found");
         }
@@ -242,7 +245,27 @@ export class MultiHyperConnection extends CombinedPathSegment {
 
         // this.connection?.source.debugShapes.push(new Circle(chosenPoint, 2));
 
-        return new Anchor(chosenPoint, newAnchorIsEndAnchor ? reverseVector : chosenVector);
+        if (this.connection?.source.id == "image_preprocessor" && this.connection.target.id == "obstacle_detector") {
+            this.connection.debugShapes.push(chosenPoint);
+            this.connection.debugShapes.push(intersections[0]);
+            this.connection.debugShapes.push(intersections[1]);
+            this.connection.debugShapes.push(nodeCenter);
+            // this.connection.debugShapes.push(existingAnchor);
+            // if (segment.startAnchor) this.connection.debugShapes.push(segment.startAnchor);
+            // if (segment.endAnchor) this.connection.debugShapes.push(segment.endAnchor);
+            this.connection.debugShapes.push(new Anchor(chosenPoint, chosenVector));
+            console.log(anchorNode.id)
+        }
+
+        if (anchorNode.parent == sourceNode) {
+            return new Anchor(chosenPoint, reverseVector);
+        }
+
+
+
+        // return new Anchor(chosenPoint, newAnchorIsEndAnchor ? reverseVector : chosenVector);
+        return new Anchor(chosenPoint, chosenVector);
+        // return new Anchor(chosenPoint, reverseVector);
     }
 
     // calculateAnchors(

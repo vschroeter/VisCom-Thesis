@@ -130,9 +130,19 @@ export class CircleSegmentSegment extends PathSegment {
 
         if (_startCircleCenterPointIntersections.length === 0 || _endCircleCenterPointIntersections.length === 0) {
             // throw new Error("No intersection found");
-            console.error("No intersection found", _startCircleCenterPointIntersections, _endCircleCenterPointIntersections);
+
+            if (this.connection?.source.id == "car_simulator" && this.connection.target.id == "traffic_light_detection") {
+                this.connection.debugShapes.push(startAnchor.getRay());
+                this.connection.debugShapes.push(endAnchor.getRay(true));
+                this.connection.debugShapes.push(endAnchor);
+                this.connection.debugShapes.push(startAnchor);
+                this.connection.debugShapes.push(this.circle);
+            }
+
+            console.error("No intersection found", this.connection.id, _startCircleCenterPointIntersections, _endCircleCenterPointIntersections);
             return "";
         }
+
 
         let startCircleCenterPoint = _startCircleCenterPointIntersections[0];
         let endCircleCenterPoint = _endCircleCenterPointIntersections[0];
@@ -272,7 +282,7 @@ export class CircleSegmentSegment extends PathSegment {
         }
 
         let debug = false;
-        if (this.connection?.source.id == "1obstacle_detector" && this.connection.target.id == "1drive_manager") {
+        if (this.connection?.source.id == "car_simulator" && this.connection.target.id == "traffic_light_detection ") {
         // if (this.connection?.source.id == "drive_manager" && this.connection.target.id == "camera") {
             debug = true;
         }
