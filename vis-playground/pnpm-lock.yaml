@@ -20,6 +20,9 @@ importers:
       '@types/dagre-d3':
         specifier: ^0.6.6
         version: 0.6.6
+      '@types/rtree':
+        specifier: ^1.4.30
+        version: 1.4.30
       '@vueuse/core':
         specifier: ^10.11.0
         version: 10.11.1(vue@3.5.12(typescript@5.3.3))
@@ -47,6 +50,9 @@ importers:
       quasar:
         specifier: ^2.16.0
         version: 2.17.1
+      rtree:
+        specifier: ^1.4.2
+        version: 1.4.2
       vue:
         specifier: ^3.4.18
         version: 3.5.12(typescript@5.3.3)
@@ -871,6 +877,9 @@ packages:
 
   '@types/range-parser@1.2.7':
     resolution: {integrity: sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==}
+
+  '@types/rtree@1.4.30':
+    resolution: {integrity: sha512-FjELrbtL0ZT6adCFFROkhPmxnXXx0nyPG1xDL972Te7yfsBhE3wfqtobicu+ok1xg91NFccEc4UnHQ+JdlDmJw==}
 
   '@types/semver@7.5.8':
     resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
@@ -2444,6 +2453,9 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
+  rtree@1.4.2:
+    resolution: {integrity: sha512-ghyCuNLgwDv4tiMT1bUrIFv/q2OSSBm4Ohjsz0NW0vFw9OF6wixMELK6empeOlAcv+mQ34W/aDgJk7aLGLeU5g==}
+
   run-applescript@7.0.0:
     resolution: {integrity: sha512-9by4Ij99JUr/MCFBUkDKLWK3G9HVXmabKz9U5MlIAIuvuzkiOicRYs8XJLxX+xahD+mLiiCYDqF9dKAgtzKP1A==}
     engines: {node: '>=18'}
@@ -3696,6 +3708,8 @@ snapshots:
   '@types/qs@6.9.16': {}
 
   '@types/range-parser@1.2.7': {}
+
+  '@types/rtree@1.4.30': {}
 
   '@types/semver@7.5.8': {}
 
@@ -5488,6 +5502,8 @@ snapshots:
       '@rollup/rollup-win32-ia32-msvc': 4.24.0
       '@rollup/rollup-win32-x64-msvc': 4.24.0
       fsevents: 2.3.3
+
+  rtree@1.4.2: {}
 
   run-applescript@7.0.0: {}
 

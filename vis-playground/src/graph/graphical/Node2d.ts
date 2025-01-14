@@ -6,10 +6,10 @@ import { Anchor } from './';
 import { StrokeStyle } from './primitives/StrokeStyle';
 
 import * as d3 from 'd3';
-import { SvgRenderable } from './Renderable';
 import mitt from 'mitt';
 import { Circle, Point, Vector } from '2d-geometry';
 import { LayoutNode } from '../visGraph/layoutNode';
+import { BoundingBox, SvgRenderable } from '../visGraph/renderer/renderer';
 
 export interface Node2dData {
   id: string;
@@ -36,6 +36,9 @@ export class Node2d extends SvgRenderable { // <NodeData>
   // The related layout node defining this node's properties
   layoutNode: LayoutNode
 
+  elNode?: d3.Selection<SVGCircleElement, unknown, null, undefined>;
+  elLabel?: d3.Selection<SVGTextElement, unknown, null, undefined>;
+
   // The id of the node
   get id() {
     return this.layoutNode.id;
@@ -54,7 +57,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
   get circle() {
     return new Circle(this.center, this.radius);
   }
-  
+
   // The score of the node (e.g. for ranking the significance of nodes)
   // score: number = 0;
   get score() {
@@ -105,7 +108,8 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
   constructor(layoutNode: LayoutNode) {
 
-    super("circle", "node2d");
+    // super("circle", "node2d");
+    super(layoutNode.visGraph.renderer);
 
     this.center = new Point(0, 0);
     // this.center.x = data.x ?? 0;
@@ -113,7 +117,8 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
     this.layoutNode = layoutNode;
 
-    this.updateCallbacks.push(...[this.renderStyleFill, this.renderStyleStroke, this.renderStyleOpacity, this.renderPositionAndSize]);
+    this.updateBoundingBox();
+    this.updateCallbacks.push(...[this.renderStyleFill, this.renderStyleStroke, this.renderStyleOpacity, this.renderPositionAndSize, this.renderLabel]);
   }
 
   requireUpdate({
@@ -121,12 +126,14 @@ export class Node2d extends SvgRenderable { // <NodeData>
     fill = false,
     stroke = false,
     opacity = false,
+    label = false
   }: {
     position?: boolean,
     fill?: boolean,
     stroke?: boolean,
     opacity?: boolean,
-  } = {position: true, fill: true, stroke: true, opacity: true}) {
+    label?: boolean
+  } = { position: true, fill: true, stroke: true, opacity: true }) {
     if (position) {
       this.addUpdateCallback(this.renderPositionAndSize)
     }
@@ -139,56 +146,76 @@ export class Node2d extends SvgRenderable { // <NodeData>
     if (opacity) {
       this.addUpdateCallback(this.renderStyleOpacity)
     }
+    if (label) {
+      this.addUpdateCallback(this.renderLabel)
+    }
   }
 
-  // ////////////////////////////////////////////////////////////////////////////
-  // // Anchor methods
-  // ////////////////////////////////////////////////////////////////////////////
+  updateBoundingBox() {
+    this.setBoundingBox({
+      x: this.center.x - this.radius,
+      y: this.center.y - this.radius,
+      w: this.radius * 2,
+      h: this.radius * 2
+    })
+  }
+
+  override subElementsExist(): boolean {
+    return this.elNode !== undefined && this.elLabel !== undefined;
+  }
+
+  override addSubElements(): void {
+    this.elNode = this.elNode ?? this.addSubElement('circle', 'node')
+      .on("mouseenter", () => {
+
+        const id = this.id;
+        if (id) {
+          const visGraph = this.layoutNode.visGraph;
+          const userInteractions = visGraph?.userInteractions;
+          if (!userInteractions) {
+            console.error("No user interactions found for ", visGraph);
+            return
+          }
+          userInteractions.addHoveredNode(id, true)
+        }
+      })
+      .on("mouseleave", () => {
+
+        const id = this.id;
+        if (id) {
+          const visGraph = this.layoutNode.visGraph;
+          const userInteractions = visGraph?.userInteractions;
+          if (!userInteractions) {
+            console.error("No user interactions found for ", visGraph);
+            return
+          }
+          userInteractions.removeHoveredNode(id, true)
+        }
+
+      })
 
 
-  // /**
-  //  * Get the anchor of the node directed towards a given point
-  //  * @param point The point, towards which the anchor should be directed
-  //  */
-  // getAnchor(point: Point): Anchor2d;
-  // /**
-  //  * Get the anchor of the node directed towards a given vector
-  //  * @param vector The vector originating from the node's center, towards which the anchor should be directed
-  //  */
-  // getAnchor(vector: Vector): Anchor2d;
-  // getAnchor(param: Point | Vector): Anchor2d {
+    this.elLabel = this.elLabel ?? this.addSubElement('text', 'node-label')
+      .attr('domain-baseline', 'middle')
+      .attr('pointer-events', 'none');
+  }
 
-  //   let vector: Vector | null = null;
-  //   if (param instanceof Point) {
-  //     vector = new Vector(param.x - this.center.x, param.y - this.center.y);
-  //   } else if (param instanceof Vector) {
-  //     vector = param;
-  //   }
+  override removeSubElements(): void {
+    this.elNode?.remove();
+    this.elLabel?.remove();
+  }
 
-  //   if (!vector) {
-  //     throw new Error("Invalid parameter type");
-  //   }
-
-  //   // For the abstract circle node, the direction is the same as the vector
-  //   // The anchor point is the intersection of the circle and the vector
-
-  //   const direction = vector;
-  //   // console.log('[NODE] getAnchor', direction, this);
-  //   let anchorPoint: Point;
-  //   if (direction.length == 0) {
-  //     anchorPoint = this.center;
-  //   } else {
-  //     anchorPoint = this.center.translate(direction.normalize().multiply(this.radius));
-  //   }
-  //   return new Anchor2d(anchorPoint, direction);
-
-  // }
+  fontSize: number = 20;
+  override updateVisibleArea(visibleArea: BoundingBox): void {
+    const fontSize = Math.min(20, this.layoutNode.radius * 2 * 0.6) * visibleArea.w / 500;
+    this.updateLabel(fontSize);
+  }
 
   //++++ Fill ++++//
 
   renderStyleFill() {
     // console.log('[NODE] renderStyleFill', this.fill, this.selectElement());
-    this.selectElement().attr('fill', this.filled ? this.fill : 'none');
+    this.elNode?.attr('fill', this.filled ? this.fill : 'none');
   }
 
   updateStyleFill(fill: string) {
@@ -201,8 +228,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
   renderStyleStroke() {
     // console.log('[NODE] renderStyleStroke', this.strokeStyle);
-    this.selectElement()
-      .attr('stroke', this.strokeStyle.stroke ?? "white")
+    this.elNode?.attr('stroke', this.strokeStyle.stroke ?? "white")
       .attr('stroke-width', this.strokeStyle.strokeWidth)
       .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
   }
@@ -219,7 +245,8 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
   renderStyleOpacity() {
     // console.log('[NODE] renderStyleOpacity', this.opacity);
-    this.selectElement().attr('opacity', this.opacity);
+    this.elNode?.attr('opacity', this.opacity);
+    this.elLabel?.attr('opacity', this.opacity);
   }
   updateStyleOpacity(opacity: number) {
     this.checkValueAndAddUpdateCallback([
@@ -231,8 +258,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
   renderPositionAndSize() {
     // console.log('[NODE] renderPositionAndSize', this.x, this.y, this.radius);
-    this.selectElement()
-      .attr('cx', this.x)
+    this.elNode?.attr('cx', this.x)
       .attr('cy', this.y)
       .attr('r', this.radius);
   }
@@ -243,8 +269,37 @@ export class Node2d extends SvgRenderable { // <NodeData>
       { currentValuePath: '_radius', newValue: radius }
     ], this.renderPositionAndSize);
     if (updated) {
+      this.updateBoundingBox();
       this.emitter.emit("positionUpdated");
     }
+  }
+
+  //++++ Label ++++//
+  renderLabel() {
+    this.elLabel?.text(this.layoutNode.label ?? this.layoutNode.id)
+      .attr('font-size', this.fontSize)
+
+    // Get the size of the label
+    const bbox = this.elLabel?.node()?.getBBox();
+
+    // If the label fits in the node, center it
+    if (bbox) {
+
+      if (bbox.width > this.radius * 2) {
+        this.elLabel?.attr('x', this.center.x - bbox.width / 2)
+          .attr('y', this.center.y + bbox.height / 4);
+      } else {
+        this.elLabel?.attr('x', this.center.x)
+          .attr('y', this.center.y + bbox.height / 4);
+      }
+
+    }
+  }
+
+  updateLabel(fontSize: number) {
+    this.checkValueAndAddUpdateCallback([
+      { currentValuePath: 'fontSize', newValue: fontSize }
+    ], this.renderLabel);
   }
 
 }

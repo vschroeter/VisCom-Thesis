@@ -210,6 +210,9 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
     // #region Render methods
     ////////////////////////////////////////////////////////////////////////////
 
+    get renderer() {
+        return this.visGraph?.renderer;
+    }
 
 
     updateStyle() {

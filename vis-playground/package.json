@@ -18,6 +18,7 @@
     "@quasar/extras": "^1.16.4",
     "@types/d3": "^7.4.3",
     "@types/dagre-d3": "^0.6.6",
+    "@types/rtree": "^1.4.30",
     "@vueuse/core": "^10.11.0",
     "d3": "^7.9.0",
     "dagre-d3": "^0.6.4",
@@ -27,6 +28,7 @@
     "path-intersection": "^3.1.0",
     "pinia": "^2.0.11",
     "quasar": "^2.16.0",
+    "rtree": "^1.4.2",
     "vue": "^3.4.18",
     "vue-router": "^4.0.12"
   },

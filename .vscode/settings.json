@@ -8,6 +8,8 @@
         "layouted",
         "layouter",
         "Layouting",
-        "precalculator"
+        "precalculator",
+        "renderable",
+        "rtree"
     ]
 }

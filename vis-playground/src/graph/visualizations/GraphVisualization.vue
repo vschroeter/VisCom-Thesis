@@ -28,8 +28,8 @@
 
                         <g ref="refGZoom">
 
-                            <rect :x="visibleArea?.x" :y="visibleArea?.y" :width="visibleArea?.width"
-                                :height="visibleArea?.height" fill="none" stroke="red" stroke-width="1" />
+                            <rect :x="visibleArea?.x" :y="visibleArea?.y" :width="visibleArea?.w"
+                                :height="visibleArea?.h" fill="none" stroke="red" stroke-width="1" />
                             
                             <circle cx="0" cy="0" r="10" fill="red" />
                             <g ref="refGRoot">
@@ -107,7 +107,14 @@ const refDivIconButtons = ref<HTMLDivElement | null>(null)
 const refGZoom = ref<SVGGElement | null>(null)
 const interactiveRef = svgInteractiveRef(refSVG, refGZoom, onZoomed, undefined)
 
-const visibleArea = ref<{ x: number, y: number, width: number, height: number } | null>(null)
+const visibleArea = ref<{ x: number, y: number, w: number, h: number } | null>(null)
+
+const updateVisibleAreaThrottled = useThrottleFn(() => {
+    if (!layouter) {
+        return;
+    }
+    layouter.visGraph.renderer.renderAll(visibleArea.value);
+}, 100, true, true)
 
 function onZoomed(transform: d3.ZoomTransform) {
 
@@ -119,13 +126,12 @@ function onZoomed(transform: d3.ZoomTransform) {
     const _visibleArea = {
         x: (contentBbox.x - transform.x) / transform.k,
         y: (contentBbox.y - transform.y) / transform.k,
-        width: contentBbox.width / transform.k,
-        height: contentBbox.height / transform.k
+        w: contentBbox.width / transform.k,
+        h: contentBbox.height / transform.k
     }
 
     visibleArea.value = _visibleArea;
-
-    console.log("Zoomed", visibleArea, transform) //transform, contentBbox)
+    updateVisibleAreaThrottled();
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -208,54 +214,64 @@ function layoutUpdated() {
         return
     }
 
-    layouter.setParentGroup(d3.select(refGRoot.value));
-    layouter.renderAll({
-        nodesEvents: {
-            mouseenter: (d: Node2d) => {
-                // return;
-                if (!isSelected.value) return;
-                const id = d?.id;
-                if (id) {
-                    const visGraph = layouter?.visGraph;
-                    const userInteractions = visGraph?.userInteractions;
-                    if (!userInteractions) {
-                        console.error("No user interactions found for ", visGraph);
-                        return
-                    }
-                    userInteractions.addHoveredNode(id, true)
-                }
-            },
-            mouseleave: (d: Node2d) => {
-                // return;
-                if (!isSelected.value) return;
 
-                const id = d?.id;
-                if (id) {
-                    const visGraph = layouter?.visGraph;
-                    const userInteractions = visGraph?.userInteractions;
-                    if (!userInteractions) {
-                        console.error("No user interactions found for ", visGraph);
-                        return
-                    }
-                    userInteractions.removeHoveredNode(id, true)
-                }
-            },
-        },
-        linksEvents: {
-            mouseenter: (d: Connection2d) => {
-                if (!isSelected.value) return;
-                const userInteractions = layouter?.visGraph?.userInteractions;
-                userInteractions?.addHoveredConnection(d.layoutConnection)
-                // console.log("Mouse enter", d)
-            },
-            mouseleave: (d: any) => {
-                if (!isSelected.value) return;
-                const userInteractions = layouter?.visGraph?.userInteractions;
-                userInteractions?.removeHoveredConnection(d.layoutConnection)
-                // console.log("Mouse leave", d)
-            },
-        }
-    });
+    const visGraph = layouter.visGraph;
+    const renderer = visGraph.renderer;
+
+    // renderer.
+
+
+    renderer.setRoot(d3.select(refGRoot.value));
+    renderer.renderAll(visibleArea.value)
+
+    // layouter.setParentGroup(d3.select(refGRoot.value));
+    // layouter.renderAll({
+    //     nodesEvents: {
+    //         mouseenter: (d: Node2d) => {
+    //             // return;
+    //             if (!isSelected.value) return;
+    //             const id = d?.id;
+    //             if (id) {
+    //                 const visGraph = layouter?.visGraph;
+    //                 const userInteractions = visGraph?.userInteractions;
+    //                 if (!userInteractions) {
+    //                     console.error("No user interactions found for ", visGraph);
+    //                     return
+    //                 }
+    //                 userInteractions.addHoveredNode(id, true)
+    //             }
+    //         },
+    //         mouseleave: (d: Node2d) => {
+    //             // return;
+    //             if (!isSelected.value) return;
+
+    //             const id = d?.id;
+    //             if (id) {
+    //                 const visGraph = layouter?.visGraph;
+    //                 const userInteractions = visGraph?.userInteractions;
+    //                 if (!userInteractions) {
+    //                     console.error("No user interactions found for ", visGraph);
+    //                     return
+    //                 }
+    //                 userInteractions.removeHoveredNode(id, true)
+    //             }
+    //         },
+    //     },
+    //     linksEvents: {
+    //         mouseenter: (d: Connection2d) => {
+    //             if (!isSelected.value) return;
+    //             const userInteractions = layouter?.visGraph?.userInteractions;
+    //             userInteractions?.addHoveredConnection(d.layoutConnection)
+    //             // console.log("Mouse enter", d)
+    //         },
+    //         mouseleave: (d: any) => {
+    //             if (!isSelected.value) return;
+    //             const userInteractions = layouter?.visGraph?.userInteractions;
+    //             userInteractions?.removeHoveredConnection(d.layoutConnection)
+    //             // console.log("Mouse leave", d)
+    //         },
+    //     }
+    // });
 
     // console.log("BBox", bBox.value, refGRoot.value)
     bBox.value = refGRoot.value?.getBBox() ?? null
@@ -312,6 +328,7 @@ onMounted(() => {
 
         const cls = layouterMapping[props.layoutType].layouter;
 
+        layouter?.renderer?.clear();
         layouter?.on('update', null);
         layouter?.on('end', null);
         if (layouter?.calculateMetrics) {

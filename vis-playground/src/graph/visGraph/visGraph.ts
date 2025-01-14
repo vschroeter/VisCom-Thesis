@@ -11,6 +11,7 @@ import { BasicSizeCalculator } from "./layouterComponents/precalculator";
 import { BasePositioner } from "./layouterComponents/positioner";
 import { UserInteractions } from "../visualizations/interactions";
 import { BaseConnectionLayouter, BaseNodeConnectionLayouter } from "./layouterComponents/connectionLayouter";
+import { Renderer } from "./renderer/renderer";
 
 export type LayoutNodeOrId = LayoutNode | string;
 
@@ -464,6 +465,8 @@ export class VisGraph {
     ////////////////////////////////////////////////////////////////////////////
     // #region Rendering methods
     ////////////////////////////////////////////////////////////////////////////
+
+    renderer: Renderer = new Renderer(this);
 
     getAllGraphicalNodes(): Node2d[] {
         return this.allGraphicalNodes;

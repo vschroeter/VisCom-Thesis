@@ -1,11 +1,12 @@
 import { Anchor } from "./";
 
 import * as d3 from "d3"
-import { SvgRenderable } from "./Renderable";
+// import { SvgRenderable } from "./Renderable";
 import { Point, ShapeTag } from "2d-geometry";
 import { CurveStyle, LayoutConnection, LayoutConnectionPoint } from "../visGraph/layoutConnection";
 import { LayoutNode } from "../visGraph/layoutNode";
 import { PathSegment } from "./primitives/pathSegments/PathSegment";
+import { BoundingBox, SvgRenderable } from "../visGraph/renderer/renderer";
 
 export class Arrow2D {
 
@@ -71,6 +72,7 @@ export interface Connection2dData {
 export class Connection2d extends SvgRenderable {
 
 
+
     /** The defining layout connection */
     layoutConnection: LayoutConnection;
 
@@ -121,10 +123,14 @@ export class Connection2d extends SvgRenderable {
 
     maxWidth = 10
 
+    elGroup?: d3.Selection<SVGGElement, unknown, null, undefined>
+    elPath?: d3.Selection<SVGPathElement, unknown, null, undefined>
+    elArrow?: d3.Selection<SVGPathElement, unknown, null, undefined>
+
     constructor(
         layoutConnection: LayoutConnection,
     ) {
-        super('g', 'connection2d');
+        super(layoutConnection.source.visGraph.renderer);
 
         this.layoutConnection = layoutConnection
         this.source = layoutConnection.source
@@ -162,34 +168,6 @@ export class Connection2d extends SvgRenderable {
         return this.layoutConnection.weight ?? 1
     }
 
-    /** The start point of the connection (either the first defined point or the source node) */
-    // get startPoint(): Point {
-    //     if (this.points.length == 0) {
-    //         if (this.source == this.target) {
-    //             return this.source.center
-    //         }
-    //         return this.source.getAnchor(this.target.center).anchorPoint;
-    //     }
-
-    //     if ((this.points[0] as Point).tag == ShapeTag.Point) {
-    //         return this.points[0] as Point
-    //     }
-
-    //     // if (this.points[0] instanceof EllipticArc) {
-    //     //     return (this.points[0] as EllipticArc)._start ?? this.source.center
-    //     // }
-
-    //     if (this.points[0] instanceof Anchor) {
-    //         return (this.points[0] as Anchor).anchorPoint
-    //     }
-
-    //     // Otherwise, it will be a PathSegment
-    //     if ((this.points[0] as PathSegment).start) {
-    //         return (this.points[0] as PathSegment).start
-    //     }
-
-    //     return this.source.center
-    // }
     get startPoint(): Point {
         return this.pathSegment.start;
     }
@@ -197,34 +175,6 @@ export class Connection2d extends SvgRenderable {
     get endPoint(): Point {
         return this.pathSegment.end;
     }
-
-    // /** The end point of the connection (either the last defined point or the target node) */
-    // get endPoint(): Point {
-    //     if (this.points.length == 0) {
-    //         if (this.source == this.target) {
-    //             return this.source.center
-    //         }
-    //         return this.target.getAnchor(this.source.center).anchorPoint;
-    //     }
-
-    //     const lastPoint = this.points[this.points.length - 1]
-
-
-    //     if ((lastPoint as Point).tag == ShapeTag.Point) {
-    //         return lastPoint as Point
-    //     }
-
-    //     if (lastPoint instanceof Anchor) {
-    //         return lastPoint.anchorPoint
-    //     }
-
-    //     // Otherwise, it will be a PathSegment
-    //     if ((lastPoint as PathSegment).end) {
-    //         return (lastPoint as PathSegment).end
-    //     }
-
-    //     return this.target.center
-    // }
 
     /** The curve factory to use for the line */
     get curveFactory(): d3.CurveFactory {
@@ -307,8 +257,8 @@ export class Connection2d extends SvgRenderable {
     ////////////////////////////////////////////////////////////////////////////
 
     //++++ Path ++++//
-    renderPath(selection: d3.Selection<any, any, any, any>) {
-        this.selectSubElement('path.link').attr('d', this.getSvgPath())
+    renderPath() {
+        this.elPath?.attr('d', this.getSvgPath())
 
         // Check the length of the connection and scale down the arrow if necessary
         const length = this.length
@@ -317,7 +267,7 @@ export class Connection2d extends SvgRenderable {
         const size = Math.min(baseSize, length / 2 * 0.6)
         this.arrow.size = size
 
-        this.selectSubElement('path.arrow').attr('d', this.getArrowPath())
+        this.elArrow?.attr('d', this.getArrowPath())
     }
 
     updatePath() {
@@ -326,8 +276,8 @@ export class Connection2d extends SvgRenderable {
 
     //++++ Opacity ++++//
 
-    renderStyleOpacity(selection: d3.Selection<any, any, any, any>) {
-        selection.attr('opacity', this.opacity);
+    renderStyleOpacity() {
+        this.elGroup?.attr('opacity', this.opacity);
     }
     updateStyleOpacity(opacity: number) {
         this.checkValueAndAddUpdateCallback([
@@ -337,18 +287,21 @@ export class Connection2d extends SvgRenderable {
 
     //++++ Stroke ++++//
 
-    private applyStrokeAttributes(selection: d3.Selection<any, any, any, any>) {
+    private applyStrokeAttributes(selection?: d3.Selection<any, unknown, null, undefined>) {
+        if (!selection) {
+            return selection
+        }
         selection
             .attr('stroke', this.stroke ?? "black")
             .attr('stroke-width', this.strokeWidth)
         return selection
     }
 
-    renderStyleStroke(selection: d3.Selection<any, any, any, any>) {
-        this.applyStrokeAttributes(this.selectSubElement('path.link'));
-        this.applyStrokeAttributes(this.selectSubElement('path.arrow')).attr('fill', this.stroke ?? "none");
+    renderStyleStroke() {
+        this.applyStrokeAttributes(this.elPath);
+        this.applyStrokeAttributes(this.elArrow)?.attr('fill', this.stroke ?? "none");
 
-        this.renderPath(selection)
+        this.renderPath()
     }
 
     updateStyleStroke(stroke?: string, strokeWidth?: number) {
@@ -363,11 +316,23 @@ export class Connection2d extends SvgRenderable {
     ////////////////////////////////////////////////////////////////////////////
 
     override addSubElements(): void {
-        this.addSubElement('path', 'link')
+        this.elGroup = this.elGroup ?? this.addSubElement('g', 'connection')
+        this.elPath = this.elPath ?? this.addSubElement('path', 'link', this.elGroup)
             .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
         // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
-        this.addSubElement('path', 'arrow')
+        this.elArrow = this.elArrow ?? this.addSubElement('path', 'arrow', this.elGroup)
             // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
             .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
+    }
+
+    override updateVisibleArea(visibleArea: BoundingBox): void {
+        
+    }
+    override subElementsExist(): boolean {
+        return this.elPath !== undefined && this.elArrow !== undefined;
+    }
+    override removeSubElements(): void {
+        this.elPath?.remove();
+        this.elArrow?.remove();
     }
 }
