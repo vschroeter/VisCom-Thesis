@@ -221,6 +221,7 @@ function layoutUpdated() {
     // renderer.
 
 
+    // TODO: dont do this every time
     renderer.setRoot(d3.select(refGRoot.value));
     renderer.renderAll(visibleArea.value)
 

@@ -10,6 +10,7 @@ import mitt from 'mitt';
 import { Circle, Point, Vector } from '2d-geometry';
 import { LayoutNode } from '../visGraph/layoutNode';
 import { BoundingBox, SvgRenderable } from '../visGraph/renderer/renderer';
+import { Label2d } from './Label2d';
 
 export interface Node2dData {
   id: string;
@@ -37,7 +38,9 @@ export class Node2d extends SvgRenderable { // <NodeData>
   layoutNode: LayoutNode
 
   elNode?: d3.Selection<SVGCircleElement, unknown, null, undefined>;
-  elLabel?: d3.Selection<SVGTextElement, unknown, null, undefined>;
+  elLabel?: d3.Selection<SVGGElement, unknown, null, undefined>;
+
+  label?: Label2d;
 
   // The id of the node
   get id() {
@@ -194,21 +197,33 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
       })
 
+      
+      this.elLabel = this.elLabel ?? this.addSubElement('g', 'node-label')    
+      
+          // this.elLabel = this.elLabel ?? this.addSubElement('text', 'node-label')
+          //   .attr('domain-baseline', 'middle')
+          //   .attr('pointer-events', 'none');
 
-    this.elLabel = this.elLabel ?? this.addSubElement('text', 'node-label')
-      .attr('domain-baseline', 'middle')
-      .attr('pointer-events', 'none');
+    this.label = new Label2d(this.elLabel).text(this.layoutNode.label ?? this.layoutNode.id);
+    // console.log('Node2d label', this.label);
+    
   }
 
   override removeSubElements(): void {
     this.elNode?.remove();
+    this.label?.removeSubElements();
     this.elLabel?.remove();
   }
 
   fontSize: number = 20;
   override updateVisibleArea(visibleArea: BoundingBox): void {
-    const fontSize = Math.min(20, this.layoutNode.radius * 2 * 0.6) * visibleArea.w / 500;
-    this.updateLabel(fontSize);
+    // const fontSize = Math.min(20, this.layoutNode.radius * 2 * 0.6) * visibleArea.w / 500;
+
+    const textHeight = this.layoutNode.radius;
+    this.label?.setHeight(textHeight).setAlign("center").setPos(this.center.x, this.center.y);
+
+
+    // this.updateLabel(fontSize);
   }
 
   //++++ Fill ++++//
@@ -276,24 +291,24 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
   //++++ Label ++++//
   renderLabel() {
-    this.elLabel?.text(this.layoutNode.label ?? this.layoutNode.id)
-      .attr('font-size', this.fontSize)
+    // this.elLabel?.text(this.layoutNode.label ?? this.layoutNode.id)
+    //   .attr('font-size', this.fontSize)
 
-    // Get the size of the label
-    const bbox = this.elLabel?.node()?.getBBox();
+    // // Get the size of the label
+    // const bbox = this.elLabel?.node()?.getBBox();
 
-    // If the label fits in the node, center it
-    if (bbox) {
+    // // If the label fits in the node, center it
+    // if (bbox) {
 
-      if (bbox.width > this.radius * 2) {
-        this.elLabel?.attr('x', this.center.x - bbox.width / 2)
-          .attr('y', this.center.y + bbox.height / 4);
-      } else {
-        this.elLabel?.attr('x', this.center.x)
-          .attr('y', this.center.y + bbox.height / 4);
-      }
+    //   if (bbox.width > this.radius * 2) {
+    //     this.elLabel?.attr('x', this.center.x - bbox.width / 2)
+    //       .attr('y', this.center.y + bbox.height / 4);
+    //   } else {
+    //     this.elLabel?.attr('x', this.center.x)
+    //       .attr('y', this.center.y + bbox.height / 4);
+    //   }
 
-    }
+    // }
   }
 
   updateLabel(fontSize: number) {
