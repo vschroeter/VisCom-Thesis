@@ -26,11 +26,12 @@
                     <svg ref="refSVG" :width="svgWidth" :height="svgHeight" :viewBox="viewBox"
                         xmlns="http://www.w3.org/2000/svg">
 
+
                         <g ref="refGZoom">
 
                             <rect :x="visibleArea?.x" :y="visibleArea?.y" :width="visibleArea?.w"
                                 :height="visibleArea?.h" fill="none" stroke="red" stroke-width="1" />
-                            
+
                             <circle cx="0" cy="0" r="10" fill="red" />
                             <g ref="refGRoot">
                             </g>
@@ -121,7 +122,7 @@ function onZoomed(transform: d3.ZoomTransform) {
     const contentBbox = bBox.value;
     if (!contentBbox) {
         return;
-    } 
+    }
 
     const _visibleArea = {
         x: (contentBbox.x - transform.x) / transform.k,
@@ -275,13 +276,26 @@ function layoutUpdated() {
     // });
 
     // console.log("BBox", bBox.value, refGRoot.value)
-    bBox.value = refGRoot.value?.getBBox() ?? null
 
+    const newBBox = refGRoot.value?.getBBox() ?? null
+
+    if (!bBox.value) bBox.value = newBBox;
+    else {
+        // Check if it is larger than the current one
+        if (newBBox) {
+            if (newBBox.width > bBox.value.width || newBBox.height > bBox.value.height) {
+                bBox.value = newBBox;
+            }
+        }
+    }
+
+    // bBox.value = refGRoot.value?.getBBox() ?? null
 }
 
 
 function layoutFinished() {
     layoutUpdated();
+    interactiveRef.resetZoom();
 
     layouter?.visGraph.userInteractions?.emitter.on('update', () => {
         throttledUpdateUserInteractions()
@@ -316,8 +330,6 @@ function deleteItem() {
 onMounted(() => {
 
     console.log("[VIS] Mounted"); //, props.settings);
-
-
 
     watch(commGraph, (newVal) => {
         //updateSimulation();

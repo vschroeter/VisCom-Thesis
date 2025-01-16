@@ -256,6 +256,19 @@ export class Connection2d extends SvgRenderable {
     // Style update methods
     ////////////////////////////////////////////////////////////////////////////
 
+    updateBoundingBox() {
+
+        const bbox = this.elPath?.node()?.getBBox();
+        if (bbox) {
+            this.setBoundingBox({
+                x: bbox.x,
+                y: bbox.y,
+                w: bbox.width,
+                h: bbox.height
+            })
+        }
+    }
+
     //++++ Path ++++//
     renderPath() {
         this.elPath?.attr('d', this.getSvgPath())
@@ -268,7 +281,10 @@ export class Connection2d extends SvgRenderable {
         this.arrow.size = size
 
         this.elArrow?.attr('d', this.getArrowPath())
+
+        this.updateBoundingBox();
     }
+
 
     updatePath() {
         this.addUpdateCallback(this.renderPath)
@@ -326,7 +342,6 @@ export class Connection2d extends SvgRenderable {
     }
 
     override updateVisibleArea(visibleArea: BoundingBox): void {
-        
     }
     override subElementsExist(): boolean {
         return this.elPath !== undefined && this.elArrow !== undefined;

@@ -103,6 +103,7 @@ export abstract class SvgRenderable {
 
     constructor(public renderer?: Renderer) {
         renderer?.allElements.push(this);
+        renderer?.renderQueue.push(this);
     }
 
     setBoundingBox(bBox: BoundingBox) {

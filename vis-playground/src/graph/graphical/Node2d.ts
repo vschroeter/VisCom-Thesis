@@ -197,16 +197,12 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
       })
 
-      
-      this.elLabel = this.elLabel ?? this.addSubElement('g', 'node-label')    
-      
-          // this.elLabel = this.elLabel ?? this.addSubElement('text', 'node-label')
-          //   .attr('domain-baseline', 'middle')
-          //   .attr('pointer-events', 'none');
+
+    this.elLabel = this.elLabel ?? this.addSubElement('g', 'node-label')
 
     this.label = new Label2d(this.elLabel).text(this.layoutNode.label ?? this.layoutNode.id);
-    // console.log('Node2d label', this.label);
-    
+    this.label!.isVisible = this.layoutNode.showLabel;
+
   }
 
   override removeSubElements(): void {
@@ -219,10 +215,15 @@ export class Node2d extends SvgRenderable { // <NodeData>
   override updateVisibleArea(visibleArea: BoundingBox): void {
     // const fontSize = Math.min(20, this.layoutNode.radius * 2 * 0.6) * visibleArea.w / 500;
 
-    const textHeight = this.layoutNode.radius;
-    this.label?.setHeight(textHeight).setAlign("center").setPos(this.center.x, this.center.y);
+    const heightWhenInNode = Math.min(this.label?.getHeightForWidth(this.layoutNode.radius * 2) ?? 0, this.layoutNode.radius * 2);
+    const widthWhenOutsideNode = this.label?.getWidthForHeight(this.layoutNode.radius) ?? -1;
+    if (heightWhenInNode / visibleArea.h > 0.03 || widthWhenOutsideNode > visibleArea.w) {
 
-
+      this.label?.setHeight(heightWhenInNode).setAlignment("center").setAnchorPos(this.center.x, this.center.y);
+    } else {
+      const textHeight = this.layoutNode.radius;
+      this.label?.setHeight(textHeight).setAlignment("center").setAnchorPos(this.center.x, this.center.y);
+    }
     // this.updateLabel(fontSize);
   }
 
