@@ -14,6 +14,8 @@ export class Renderer {
 
     allElements: SvgRenderable[] = [];
 
+    parent: d3.Selection<SVGGElement | null, unknown, null, undefined> | null = null;
+
     constructor(public visGraph: VisGraph) {
     }
 
@@ -34,6 +36,7 @@ export class Renderer {
             return;
         }
 
+        this.parent = group;
         this.allElements.forEach(element => {
             element.parentElement = group;
         });
@@ -58,13 +61,16 @@ export class Renderer {
     }
 
 
-    
-    renderAll(visibleArea?: BoundingBox | null) {
 
+    renderAll(visibleArea?: BoundingBox | null) {
+        let newElements = false;
         if (!visibleArea) {
             this.allElements.forEach(element => {
-                element.update();
+                newElements = element.update() || newElements;
             });
+            if (newElements) {
+                this.sortDomElements();
+            }
             return;
         }
 
@@ -77,17 +83,45 @@ export class Renderer {
         });
 
         updateElements.forEach(element => {
-            element.update();
+            newElements = element.update() || newElements;
         });
 
         this.renderQueue = [];
+
+        if (newElements) {
+            this.sortDomElements();
+        }
+    }
+
+    sortDomElements() {
+        // this.allElements.sort((a, b) => a.zOrder - b.zOrder);
+
+        const parent = this.parent;
+        const parentNode = parent?.node();
+        if (!parentNode) {
+            console.error("Parent group not set");
+            return;
+        }
+
+
+        const elements = Array.from(parentNode.children ?? []) as Element[];
+
+        elements.sort((a, b) => {
+            const aZ = parseInt(a.getAttribute('z-order') ?? '1000');
+            const bZ = parseInt(b.getAttribute('z-order') ?? '1000');
+            return aZ - bZ;
+        });
+
+        elements.forEach(element => {
+            parentNode.appendChild(element);
+        });
     }
 
     ////////////////////////////////////////////////////////////////////////////
     // Debug Shapes
     ////////////////////////////////////////////////////////////////////////////
 
-    
+
     renderDebuggingShapes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
         selection.selectChildren('g.debug')
             .data(this.visGraph.debugShapes)
@@ -163,7 +197,7 @@ export class Renderer {
                             .attr('fill', anchor.anchorPoint._data?.fill ?? 'green')
                             .attr('stroke', 'none')
                             .attr('opacity', 0.5)
-                        
+
                         d.append('line')
                             .attr('x1', anchor.anchorPoint.x)
                             .attr('y1', anchor.anchorPoint.y)
@@ -173,9 +207,9 @@ export class Renderer {
                             .attr('stroke-width', 0.5)
                             .attr('opacity', 0.5)
 
-                        
-                        
-                        
+
+
+
                     }
                 }
 
@@ -203,6 +237,8 @@ export abstract class SvgRenderable {
     parentElement: d3.Selection<SVGGElement | any, any, any, any> | null = null;
 
     boundingBox: BoundingBox | undefined = { x: 0, y: 0, w: 0, h: 0 };
+
+    zOrder = 1000;
 
     constructor(public renderer?: Renderer) {
         renderer?.allElements.push(this);
@@ -302,6 +338,7 @@ export abstract class SvgRenderable {
         if (className) {
             sub.classed(className, true);
         }
+        sub.attr('z-order', this.zOrder);
         return sub;
     }
 
@@ -334,11 +371,13 @@ export abstract class SvgRenderable {
     /**
      * Method to update the renderable elements in the selection
      */
-    update(): void {
-        if (!this.parentElement) return;
+    update(): boolean {
+        if (!this.parentElement) return false;
+        let somethingEntered = false;
 
         if (!this.subElementsExist()) {
             this.enter();
+            somethingEntered = true;
         }
 
         // Call all update callbacks
@@ -346,11 +385,13 @@ export abstract class SvgRenderable {
 
         // Clear the update callbacks
         this.updateCallbacks = [];
+
+        return somethingEntered;
     }
 
 
 
-    
+
 
 }
 

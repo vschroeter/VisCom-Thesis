@@ -24,6 +24,8 @@ export class Label2d extends SvgRenderable {
         }
 
         this._isVisible = value;
+
+        this.zOrder = 1500;
     }
 
     x: number = 0;

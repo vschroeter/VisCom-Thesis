@@ -113,6 +113,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
     // super("circle", "node2d");
     super(layoutNode.visGraph.renderer);
+    this.zOrder = 800;
 
     this.center = new Point(0, 0);
     // this.center.x = data.x ?? 0;
