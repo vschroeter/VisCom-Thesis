@@ -22,7 +22,7 @@ export class Label2d extends SvgRenderable {
     anchor: Point = new Point(0, 0);
 
     // The alignment of the label
-    // alignment: Alignment = 'center';
+    alignment: Alignment = 'center';
 
     constructor(parent?: d3.Selection<SVGGElement, unknown, null, undefined>) {
         console.log('Creating Label2d', parent);
@@ -50,6 +50,8 @@ export class Label2d extends SvgRenderable {
         this.elText = this.elText ?? this.elSvg.append("text")
             .attr("x", 0).attr("y", 0).attr('pointer-events', 'none');
         
+        this.setTextAlign('top-left');
+        
         console.log('Added sub elements for Label2d', this.elRoot, this.elSvg, this.elText);
     }
     override removeSubElements(): void {
@@ -68,8 +70,9 @@ export class Label2d extends SvgRenderable {
         return this;
     }
 
-    setPos(x: number, y: number) {
-        this.elRoot?.attr('transform', `translate(${x}, ${y})`);
+    setAnchorPos(x: number, y: number) {
+        this.anchor = new Point(x, y);
+        this.updateTranslate();
     }
 
     updateBBox() {
@@ -101,8 +104,67 @@ export class Label2d extends SvgRenderable {
         return this;
     }
 
+    setAlignment(align: Alignment) {
+        this.alignment = align;
+        this.updateTranslate();
+        return this;
+    }
 
-    setAlign(align: Alignment) {
+
+
+    protected updateTranslate() {
+
+        const p = this.anchor;
+        const a = this.alignment;
+        const w = this.width;
+        const h = this.height;
+
+        let x: Number = 0;
+        let y: Number = 0;
+
+        switch (a) {
+            case 'center-left':
+                x = p.x;
+                y = p.y - h / 2;
+                break;
+            case 'center-right':
+                x = p.x - w;
+                y = p.y - h / 2;
+                break;
+            case 'center-top':
+                x = p.x - w / 2;
+                y = p.y;
+                break;
+            case 'center-bottom':
+                x = p.x - w / 2;
+                y = p.y - h;
+                break;
+            case 'top-left':
+                x = p.x;
+                y = p.y;
+                break;
+            case 'top-right':
+                x = p.x - w;
+                y = p.y;
+                break;
+            case 'bottom-left':
+                x = p.x;
+                y = p.y - h;
+                break;
+            case 'bottom-right':
+                x = p.x - w;
+                y = p.y - h;
+                break;
+            case 'center':
+                x = p.x - w / 2;
+                y = p.y - h / 2;
+        }
+
+        this.elRoot?.attr('transform', `translate(${x}, ${y})`);
+
+    }
+
+    protected setTextAlign(align: Alignment) {
         switch (align) {
             case 'center-left':
                 this.elText?.attr('dominant-baseline', 'middle');
