@@ -256,7 +256,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
 
         // this.connection?.source.debugShapes.push(new Circle(chosenPoint, 2));
 
-        if (this.connection?.source.id == "image_preprocessor" && this.connection.target.id == "obstacle_detector") {
+        if (this.connection?.source.id == "11image_preprocessor" && this.connection.target.id == "11obstacle_detector") {
             this.connection.debugShapes.push(chosenPoint);
             this.connection.debugShapes.push(intersections[0]);
             this.connection.debugShapes.push(intersections[1]);

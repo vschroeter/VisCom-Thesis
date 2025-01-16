@@ -2,15 +2,19 @@ import _ from 'lodash';
 import { CommunicationNode } from '../commGraph';
 import { NodeCommunities } from '../commGraph/community';
 import { RenderArgs } from '../layouter/layouter';
-import { Anchor } from './';
+import { Anchor, EllipticArc } from './';
 import { StrokeStyle } from './primitives/StrokeStyle';
 
 import * as d3 from 'd3';
 import mitt from 'mitt';
-import { Circle, Point, Vector } from '2d-geometry';
+import { Circle, Line, Point, Segment, Vector } from '2d-geometry';
 import { LayoutNode } from '../visGraph/layoutNode';
 import { BoundingBox, SvgRenderable } from '../visGraph/renderer/renderer';
 import { Label2d } from './Label2d';
+import { RadialUtils } from '../layouter/utils/radialUtils';
+import { LayoutConnection } from '../visGraph/layoutConnection';
+import { StraightLineSegment } from './primitives/pathSegments/LineSegment';
+import { CombinedPathSegment } from './primitives/pathSegments/PathSegment';
 
 export interface Node2dData {
   id: string;
@@ -40,6 +44,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
   elGroup?: d3.Selection<SVGGElement, unknown, null, undefined>;
   elNode?: d3.Selection<SVGCircleElement, unknown, null, undefined>;
   elLabel?: d3.Selection<SVGGElement, unknown, null, undefined>;
+  elVirtualMarker?: d3.Selection<SVGPathElement, unknown, null, undefined>;
 
   label?: Label2d;
 
@@ -208,6 +213,10 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
       })
 
+    if (this.layoutNode.isVirtual) {
+      this.elVirtualMarker = this.elVirtualMarker ?? this.addSubElement('path', 'virtual-marker', this.elGroup); //.attr("fill", "black").attr("stroke", "black").attr("stroke-width", 1);
+      this.renderVirtualMarker();
+    }
 
     this.elLabel = this.elLabel ?? this.addSubElement('g', 'node-label', undefined, 1500);
 
@@ -263,7 +272,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
   updateVirtualNode(visibleArea: BoundingBox) {
     if (this.layoutNode.isVirtual) {
-      
+
       const maxOpacity = 1;
       const minOpacity = 0;
       const maxOpacityAtParentNodeFraction = 0.4;
@@ -276,7 +285,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
       const fractionRange = maxOpacityAtParentNodeFraction - minOpacityAtParentNodeFraction;
 
       const factor = fractionAboveMin / fractionRange;
-      
+
       const opacity = minOpacity + factor * (maxOpacity - minOpacity);
 
       this.updateStyleOpacity(opacity);
@@ -291,11 +300,12 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
   renderStyleFill() {
     // console.log('[NODE] renderStyleFill', this.fill, this.selectElement());
-    
+
     this.elNode?.attr('fill', this.filled ? this.fill : 'none');
     if (!this.layoutNode.isVirtual) {
     } else {
       this.elNode?.attr('fill-opacity', 0.5);
+      this.elVirtualMarker?.attr('fill', this.fill).attr('fill-opacity', 0.5);
     }
 
 
@@ -316,12 +326,20 @@ export class Node2d extends SvgRenderable { // <NodeData>
       this.elNode?.attr('stroke', this.strokeStyle.stroke ?? "white")
         .attr('stroke-width', this.strokeStyle.strokeWidth)
         .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
+
     } else {
-      
+
       this.elNode?.attr('stroke', this.fill ?? "white")
         .attr('stroke-width', this.strokeStyle.strokeWidth)
         .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
-      // this.elNode?.attr('stroke', this.fill).attr('stroke-width', 2).attr('stroke-opacity', 0.5);
+
+        this.elVirtualMarker?.attr('stroke', this.fill ?? "white")
+        .attr('stroke-width', this.strokeStyle.strokeWidth / 2)
+        .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
+      
+      // this.elVirtualMarker?.attr('stroke', "none")
+      //   .attr('stroke-width', 0)
+      //   .attr('stroke-opacity', 0);
     }
 
   }
@@ -339,10 +357,8 @@ export class Node2d extends SvgRenderable { // <NodeData>
   renderStyleOpacity() {
     // console.log('[NODE] renderStyleOpacity', this.opacity);
     this.elNode?.attr('opacity', this.opacity);
-
-    // this.elNode?.transition().duration(50).attr('opacity', this.opacity);
-
     this.elLabel?.attr('opacity', this.opacity);
+    this.elVirtualMarker?.attr('opacity', this.opacity);
   }
 
   updateStyleOpacity(opacity: number) {
@@ -370,6 +386,67 @@ export class Node2d extends SvgRenderable { // <NodeData>
       this.emitter.emit("positionUpdated");
     }
   }
+
+
+  //++++ Virtual marker ++++//
+
+  renderVirtualMarker() {
+
+    // We want to render a virtual marker for virtual nodes
+    // This marker is a triangle pointing to the parent node
+    // The base line of the triangle is a circular arc around the node
+    // There is a small gap between the base line and the node
+
+    const gap = 0.15;
+    const sizeFactor = 0.3;
+
+    if (this.layoutNode.isVirtual) {
+      const parent = this.layoutNode.virtualParent;
+      if (parent) {
+
+        const lineFromNodeToParent = new Segment(this.center, parent.center);
+        const tipCircle = new Circle(this.center, this.radius * (1 + gap + sizeFactor));
+        const baseCircle = new Circle(this.center, this.radius * (1 + gap));
+
+        const tipIntersections = tipCircle.intersect(lineFromNodeToParent);
+        const baseIntersections = baseCircle.intersect(lineFromNodeToParent);
+
+        if (tipIntersections.length > 0 && baseIntersections.length > 0) {
+
+          const tip = tipIntersections[0];
+          const baseMiddle = baseIntersections[0];
+
+          const radAtBaseMiddle = RadialUtils.radOfPoint(baseMiddle, this.center);
+
+          const hOfTriangle = this.radius * sizeFactor;
+          const hRad = hOfTriangle / (Math.PI * 2 * this.radius) * Math.PI * 2;
+          // const radDif = RadialUtils.degToRad(4);
+          const radDif = hRad / 2;
+
+          const basePoint1 = RadialUtils.positionOnCircleAtRad(radAtBaseMiddle - radDif, baseCircle.r, this.center);
+          const basePoint2 = RadialUtils.positionOnCircleAtRad(radAtBaseMiddle + radDif, baseCircle.r, this.center);
+
+          const conn = new LayoutConnection(this.layoutNode, this.layoutNode.virtualParent!)
+          const arc = new EllipticArc(conn)
+          arc.startPoint(basePoint1).endPoint(basePoint2).radius(baseCircle.r).direction("clockwise");
+
+          const line1 = new StraightLineSegment(conn, basePoint2, tip, true);
+          // const line2 = new StraightLineSegment(conn, tip, basePoint1);
+
+          const combined = new CombinedPathSegment(conn);
+          // combined.segments.push(arc, line1, line2);
+          combined.segments.push(arc, line1);
+
+          this.elVirtualMarker?.attr('d', combined.svgPath + " z");
+          console.log('Rendered virtual marker', this.elVirtualMarker);
+
+          // this.layoutNode.debugShapes.push(...[tip, basePoint1, basePoint2]);
+        }
+      }
+    }
+
+  }
+
 
 
 }
