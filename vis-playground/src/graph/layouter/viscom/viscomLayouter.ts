@@ -76,6 +76,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             sizeMultiplier: 50,
             marginFactor: 1.1,
             adaptRadiusBasedOnScore: this.commonSettings.showNodeScore.getValue() ?? true,
+            virtualNodeMultiplier: 0.5
         }));
 
         const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);

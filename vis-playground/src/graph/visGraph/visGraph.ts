@@ -844,6 +844,7 @@ export class VisGraph {
                         cloneConnections: false,
                         parent: comm
                     });
+                    virtualNode.label = node.label ?? node.id;
                     // node.addSplitChild(virtualNode);
                     node.addVirtualChild(virtualNode);
 

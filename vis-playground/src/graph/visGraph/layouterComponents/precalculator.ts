@@ -17,7 +17,7 @@ export class BasicSizeCalculator {
     minSizeScore: number = 0.1;
 
     // At this score the node will have the maximal size
-    maxSizeScore: number = 1; 
+    maxSizeScore: number = 1;
 
     marginFactor = 1.1;
 
@@ -25,25 +25,30 @@ export class BasicSizeCalculator {
 
     adaptRadiusBasedOnScore: boolean;
 
+    virtualNodeMultiplier: number;
+
     constructor({
         sizeMultiplier = 10,
         minSizeScore = 0.1,
         marginFactor = 1.1,
-        adaptRadiusBasedOnScore = true
+        adaptRadiusBasedOnScore = true,
+        virtualNodeMultiplier = 0.7
     }: {
-            sizeMultiplier?: number;
-            minSizeScore?: number;
-            marginFactor?: number;
-            adaptRadiusBasedOnScore?: boolean;
-        } = {}) {
+        sizeMultiplier?: number;
+        minSizeScore?: number;
+        marginFactor?: number;
+        adaptRadiusBasedOnScore?: boolean;
+        virtualNodeMultiplier?: number;
+    } = {}) {
         this.sizeMultiplier = sizeMultiplier;
         this.minSizeScore = minSizeScore;
         this.marginFactor = marginFactor;
         this.adaptRadiusBasedOnScore = adaptRadiusBasedOnScore;
+        this.virtualNodeMultiplier = virtualNodeMultiplier;
 
         this.scaleScoreToSizeFraction = d3.scaleLog()
-        // this.scaleScoreToSizeFraction = d3.scaleLinear()
-        .domain([this.minSizeScore, this.maxSizeScore])
+            // this.scaleScoreToSizeFraction = d3.scaleLinear()
+            .domain([this.minSizeScore, this.maxSizeScore])
             .range([this.minSizeFraction, 1]);
     }
 
@@ -51,10 +56,16 @@ export class BasicSizeCalculator {
         if (node.children.length == 0) {
             if (!this.adaptRadiusBasedOnScore) {
                 node.radius = this.sizeMultiplier;
+                if (node.isVirtual) {
+                    node.radius *= this.virtualNodeMultiplier;
+                }
+
             } else {
                 node.radius = this.scaleScoreToSizeFraction(Math.max(node.score, this.minSizeScore)) * this.sizeMultiplier;
+                if (node.isVirtual) {
+                    node.radius *= this.virtualNodeMultiplier;
+                }
             }
-            // node.radius = node.score * this.sizeMultiplier;
         } else {
             // If the node size has not been calculated by the layouter, we have to calculate it here
             // For that we just take the max size and the node position extent of the children

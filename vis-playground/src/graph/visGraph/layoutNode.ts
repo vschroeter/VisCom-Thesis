@@ -94,7 +94,7 @@ export class LayoutNode {
     // If this node is a virtual node, this is the parent node
     virtualParent?: LayoutNode;
 
-    get isVirtualNode(): boolean {
+    get isVirtual(): boolean {
         return this.virtualParent != undefined;
     }
 

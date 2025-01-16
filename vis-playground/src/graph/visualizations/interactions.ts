@@ -46,7 +46,7 @@ export class UserInteractions {
             connection.children.forEach(child => this.hoveredConnection.add(child))
         }
 
-        console.log("Hovered connections", Array.from(this.hoveredConnection))
+        // console.log("Hovered connections", Array.from(this.hoveredConnection))
 
         this.emitter.emit("update")
     }
@@ -66,7 +66,7 @@ export class UserInteractions {
         const nodes = nodeIds.map(id => this.visGraph.getNode(id))
 
         if (nodes.length > 0) {
-            console.log(nodes[0].center)
+            // console.log(nodes[0].center)
         }
 
         nodes.forEach(node => this.hoveredNodeIds.add(node.id))
@@ -85,6 +85,10 @@ export class UserInteractions {
 
             if (node.splitChildren.length > 0) {
                 node.splitChildren.map(child => child.id).forEach(id => this.hoveredNodeIds.add(id))
+            }
+
+            if (node.isVirtual) {
+                this.hoveredNodeIds.add(node.virtualParent!.id)
             }
 
         });
@@ -139,7 +143,12 @@ export class UserInteractions {
             if (node.splitChildren.length > 0) {
                 node.splitChildren.map(child => child.id).forEach(id => this.hoveredNodeIds.delete(id))
             }
+
+            if (node.isVirtual) {
+                this.hoveredNodeIds.delete(node.virtualParent!.id)
+            }
         });
+
 
         this.emitter.emit("update")
     }

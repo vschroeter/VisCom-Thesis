@@ -101,9 +101,9 @@ export class MultiHyperConnection extends CombinedPathSegment {
                 circleSegmentConnection.parentNode = parent
                 circleSegmentConnection.circle = parent!.circle.clone();
 
-                if (prevNode.isVirtualNode) {
+                if (prevNode.isVirtual) {
                     circleSegmentConnection.crossNode = prevNode;
-                } else if (nextNode.isVirtualNode) {
+                } else if (nextNode.isVirtual) {
                     circleSegmentConnection.crossNode = nextNode;
                 }
 

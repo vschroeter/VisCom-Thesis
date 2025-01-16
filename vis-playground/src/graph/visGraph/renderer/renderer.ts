@@ -327,7 +327,12 @@ export abstract class SvgRenderable {
      * @param subElement Type of the sub element (e.g. "circle", "rect", etc.)
      * @param className Optional class name of the sub element
      */
-    addSubElement(subElement: string, className?: string, parentElement?: d3.Selection<SVGGElement | any, any, any, any>): d3.Selection<SVGGElement | any, any, any, any> {
+    addSubElement(
+        subElement: string,
+        className?: string,
+        parentElement?: d3.Selection<SVGGElement | any, any, any, any>,
+        zOrder?: number
+    ): d3.Selection<SVGGElement | any, any, any, any> {
         const p = parentElement ?? this.parentElement;
         if (!p) {
             // console.error("Root selection not set");
@@ -338,7 +343,7 @@ export abstract class SvgRenderable {
         if (className) {
             sub.classed(className, true);
         }
-        sub.attr('z-order', this.zOrder);
+        sub.attr('z-order', zOrder ?? this.zOrder);
         return sub;
     }
 

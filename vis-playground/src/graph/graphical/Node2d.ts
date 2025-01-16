@@ -37,6 +37,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
   // The related layout node defining this node's properties
   layoutNode: LayoutNode
 
+  elGroup?: d3.Selection<SVGGElement, unknown, null, undefined>;
   elNode?: d3.Selection<SVGCircleElement, unknown, null, undefined>;
   elLabel?: d3.Selection<SVGGElement, unknown, null, undefined>;
 
@@ -109,6 +110,11 @@ export class Node2d extends SvgRenderable { // <NodeData>
     positionUpdated: void
   }>();
 
+
+  ////////////////////////////////////////////////////////////////////////////
+  // #region Constructor
+  ////////////////////////////////////////////////////////////////////////////
+
   constructor(layoutNode: LayoutNode) {
 
     // super("circle", "node2d");
@@ -122,21 +128,23 @@ export class Node2d extends SvgRenderable { // <NodeData>
     this.layoutNode = layoutNode;
 
     this.updateBoundingBox();
-    this.updateCallbacks.push(...[this.renderStyleFill, this.renderStyleStroke, this.renderStyleOpacity, this.renderPositionAndSize, this.renderLabel]);
+    this.updateCallbacks.push(...[this.renderStyleFill, this.renderStyleStroke, this.renderStyleOpacity, this.renderPositionAndSize]);
   }
+
+  ////////////////////////////////////////////////////////////////////////////
+  // #region Update methods
+  ////////////////////////////////////////////////////////////////////////////
 
   requireUpdate({
     position = false,
     fill = false,
     stroke = false,
     opacity = false,
-    label = false
   }: {
     position?: boolean,
     fill?: boolean,
     stroke?: boolean,
     opacity?: boolean,
-    label?: boolean
   } = { position: true, fill: true, stroke: true, opacity: true }) {
     if (position) {
       this.addUpdateCallback(this.renderPositionAndSize)
@@ -150,9 +158,6 @@ export class Node2d extends SvgRenderable { // <NodeData>
     if (opacity) {
       this.addUpdateCallback(this.renderStyleOpacity)
     }
-    if (label) {
-      this.addUpdateCallback(this.renderLabel)
-    }
   }
 
   updateBoundingBox() {
@@ -164,12 +169,17 @@ export class Node2d extends SvgRenderable { // <NodeData>
     })
   }
 
+  ////////////////////////////////////////////////////////////////////////////
+  // #region Sub element management
+  ////////////////////////////////////////////////////////////////////////////
+
   override subElementsExist(): boolean {
     return this.elNode !== undefined && this.elLabel !== undefined;
   }
 
   override addSubElements(): void {
-    this.elNode = this.elNode ?? this.addSubElement('circle', 'node')
+    this.elGroup = this.elGroup ?? this.addSubElement('g', 'node-group');
+    this.elNode = this.elNode ?? this.addSubElement('circle', 'node', this.elGroup)
       .on("mouseenter", () => {
 
         const id = this.id;
@@ -199,7 +209,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
       })
 
 
-    this.elLabel = this.elLabel ?? this.addSubElement('g', 'node-label')
+    this.elLabel = this.elLabel ?? this.addSubElement('g', 'node-label', undefined, 1500);
 
     this.label = new Label2d(this.elLabel)
     this.label!.isVisible = this.layoutNode.showLabel;
@@ -214,10 +224,17 @@ export class Node2d extends SvgRenderable { // <NodeData>
     this.elNode = this.elLabel = this.label = undefined;
   }
 
+  ////////////////////////////////////////////////////////////////////////////
+  // #region Visible area update
+  ////////////////////////////////////////////////////////////////////////////
+
   fontSize: number = 20;
   override updateVisibleArea(visibleArea: BoundingBox): void {
-    // const fontSize = Math.min(20, this.layoutNode.radius * 2 * 0.6) * visibleArea.w / 500;
+    this.updateLabel(visibleArea);
+    this.updateVirtualNode(visibleArea);
+  }
 
+  updateLabel(visibleArea: BoundingBox) {
     if (this.label) {
 
       const r = this.layoutNode.radius * 0.9;
@@ -242,14 +259,46 @@ export class Node2d extends SvgRenderable { // <NodeData>
       }
       this.label?.text(this.layoutNode.label ?? this.layoutNode.id);
     }
-    // this.updateLabel(fontSize);
   }
+
+  updateVirtualNode(visibleArea: BoundingBox) {
+    if (this.layoutNode.isVirtual) {
+      
+      const maxOpacity = 1;
+      const minOpacity = 0;
+      const maxOpacityAtParentNodeFraction = 0.4;
+      const minOpacityAtParentNodeFraction = 0.1;
+
+      const parent = this.layoutNode.parent;
+      const parentNodeFractionOfVisibleArea = parent ? (parent.radius * 2) / (Math.min(visibleArea.w, visibleArea.h)) : 0.1;
+
+      const fractionAboveMin = Math.max(0, parentNodeFractionOfVisibleArea - minOpacityAtParentNodeFraction);
+      const fractionRange = maxOpacityAtParentNodeFraction - minOpacityAtParentNodeFraction;
+
+      const factor = fractionAboveMin / fractionRange;
+      
+      const opacity = minOpacity + factor * (maxOpacity - minOpacity);
+
+      this.updateStyleOpacity(opacity);
+    }
+  }
+
+  ////////////////////////////////////////////////////////////////////////////
+  // #region Render methods
+  ////////////////////////////////////////////////////////////////////////////
 
   //++++ Fill ++++//
 
   renderStyleFill() {
     // console.log('[NODE] renderStyleFill', this.fill, this.selectElement());
+    
     this.elNode?.attr('fill', this.filled ? this.fill : 'none');
+    if (!this.layoutNode.isVirtual) {
+    } else {
+      this.elNode?.attr('fill-opacity', 0.5);
+    }
+
+
   }
 
   updateStyleFill(fill: string) {
@@ -262,9 +311,19 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
   renderStyleStroke() {
     // console.log('[NODE] renderStyleStroke', this.strokeStyle);
-    this.elNode?.attr('stroke', this.strokeStyle.stroke ?? "white")
-      .attr('stroke-width', this.strokeStyle.strokeWidth)
-      .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
+
+    if (!this.layoutNode.isVirtual) {
+      this.elNode?.attr('stroke', this.strokeStyle.stroke ?? "white")
+        .attr('stroke-width', this.strokeStyle.strokeWidth)
+        .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
+    } else {
+      
+      this.elNode?.attr('stroke', this.fill ?? "white")
+        .attr('stroke-width', this.strokeStyle.strokeWidth)
+        .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
+      // this.elNode?.attr('stroke', this.fill).attr('stroke-width', 2).attr('stroke-opacity', 0.5);
+    }
+
   }
 
   updateStyleStroke(stroke?: string, strokeWidth?: number, strokeOpacity?: number) {
@@ -280,8 +339,12 @@ export class Node2d extends SvgRenderable { // <NodeData>
   renderStyleOpacity() {
     // console.log('[NODE] renderStyleOpacity', this.opacity);
     this.elNode?.attr('opacity', this.opacity);
+
+    // this.elNode?.transition().duration(50).attr('opacity', this.opacity);
+
     this.elLabel?.attr('opacity', this.opacity);
   }
+
   updateStyleOpacity(opacity: number) {
     this.checkValueAndAddUpdateCallback([
       { currentValuePath: 'opacity', newValue: opacity }
@@ -308,32 +371,5 @@ export class Node2d extends SvgRenderable { // <NodeData>
     }
   }
 
-  //++++ Label ++++//
-  renderLabel() {
-    // this.elLabel?.text(this.layoutNode.label ?? this.layoutNode.id)
-    //   .attr('font-size', this.fontSize)
-
-    // // Get the size of the label
-    // const bbox = this.elLabel?.node()?.getBBox();
-
-    // // If the label fits in the node, center it
-    // if (bbox) {
-
-    //   if (bbox.width > this.radius * 2) {
-    //     this.elLabel?.attr('x', this.center.x - bbox.width / 2)
-    //       .attr('y', this.center.y + bbox.height / 4);
-    //   } else {
-    //     this.elLabel?.attr('x', this.center.x)
-    //       .attr('y', this.center.y + bbox.height / 4);
-    //   }
-
-    // }
-  }
-
-  updateLabel(fontSize: number) {
-    this.checkValueAndAddUpdateCallback([
-      { currentValuePath: 'fontSize', newValue: fontSize }
-    ], this.renderLabel);
-  }
 
 }
