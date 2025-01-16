@@ -73,10 +73,6 @@ export class MultiHyperConnection extends CombinedPathSegment {
         const source = this.connection.source;
         const target = this.connection.target;
 
-        if (source.id == "image_preprocessor" && target.id == "obstacle_detector") {
-            const x = 5;
-        }
-
         let indexOfHyperConnection = -1;
 
         for (let i = 1; i < this.nodePath.length; i++) {
@@ -278,180 +274,17 @@ export class MultiHyperConnection extends CombinedPathSegment {
         return new Anchor(chosenPoint, chosenVector);
         // return new Anchor(chosenPoint, reverseVector);
     }
-
-    // calculateAnchors(
-    //     anchorList: CircleSegmentAnchor[],
-    //     path: LayoutNode[],
-    //     isBeforeHyperConnection: boolean
-    // ) {
-    //     path.forEach((node, index) => {
-    //         if (node == this.hyperConnection!.source || node == this.hyperConnection!.target) {
-    //             return;
-    //         }
-
-    //         const parentCenter = node.parent?.center ?? new Point(0, 0);
-    //         const nodeCenter = node.center;
-
-    //         // Valid outer angles
-    //         const intersections = node.outerCircle.intersect(node.parent?.innerCircle ?? new Circle(new Point(0, 0), 0));
-    //         const radNodeCenter = RadialUtils.radOfPoint(nodeCenter, parentCenter);
-    //         let rad0 = RadialUtils.radOfPoint(intersections[0], nodeCenter);
-    //         let rad1 = RadialUtils.radOfPoint(intersections[1], nodeCenter);
-
-    //         if (RadialUtils.forwardRadBetweenAngles(radNodeCenter, rad0) < RadialUtils.forwardRadBetweenAngles(radNodeCenter, rad1)) {
-    //             [rad0, rad1] = [rad1, rad0];
-    //         }
-
-    //         // console.log({
-    //         //     node: node.id,
-    //         //     rad0: radToDeg(rad0),
-    //         //     rad1: radToDeg(rad1),
-    //         // })
-
-    //         const radRange = RadialUtils.forwardRadBetweenAngles(rad0, rad1);
-    //         const radMid = rad0 + radRange / 2;
-    //         const radFactor = 0.8;
-    //         rad0 = radMid - radRange * radFactor / 2;
-    //         rad1 = radMid + radRange * radFactor / 2;
-    //         rad0 %= 2 * Math.PI;
-    //         rad1 %= 2 * Math.PI;
-
-    //         const lastAnchor = anchorList[anchorList.length - 1];
-    //         const anchorRad = RadialUtils.radOfPoint(lastAnchor.anchor.anchorPoint, nodeCenter);
-
-    //         // this.connection?.source.debugShapes.push(new Circle(intersections[0], 2));
-    //         // this.connection?.source.debugShapes.push(new Circle(intersections[1], 2));
-    //         // this.connection?.source.debugShapes.push(new Circle(lastAnchor.anchor.anchorPoint, 2));
-
-    //         const chosenRad = RadialUtils.putRadBetween(rad0, rad1, anchorRad);
-    //         const chosenVector = RadialUtils.radToVector(chosenRad).multiply(node.outerCircle.r);
-    //         const reverseVector = chosenVector.rotate(Math.PI);
-    //         const chosenPoint = nodeCenter.translate(chosenVector);
-
-    //         // console.log({
-    //         //     node: node.id,
-    //         //     rad0: radToDeg(rad0),
-    //         //     rad1: radToDeg(rad1),
-    //         //     radRange: radToDeg(radRange),
-    //         //     anchorRad: radToDeg(anchorRad),
-    //         //     chosenRad: radToDeg(chosenRad),
-    //         // })
-
-    //         // this.connection?.source.debugShapes.push(new Circle(chosenPoint, 2));
-
-    //         const anchor = new Anchor(chosenPoint, isBeforeHyperConnection ? chosenVector : reverseVector);
-    //         const circleSegmentAnchor = new CircleSegmentAnchor(anchor, node.parent!);
-    //         anchorList.push(circleSegmentAnchor);
-    //     })
-    // }
-
-
-    // getCircleSegmentConnections(
-    //     circleSegmentAnchors: CircleSegmentAnchor[],
-    //     isForward: boolean
-    // ): CircleSegmentSegment[] {
-    //     const _circleSegmentConnections: CircleSegmentSegment[] = [];
-    //     for (let i = 1; i < circleSegmentAnchors.length; i++) {
-
-    //         const startAnchor = circleSegmentAnchors[i - 1];
-    //         const endAnchor = circleSegmentAnchors[i];
-
-    //         const parentNode = isForward ? startAnchor.parentNode : endAnchor.parentNode;
-    //         const circleSegment = new CircleSegmentSegment(
-    //             this.connection,
-    //             startAnchor.anchor,
-    //             endAnchor.anchor,
-    //             parentNode.circle
-    //         );
-
-    //         circleSegment.parentNode = parentNode;
-    //         circleSegment.connection = this.connection;
-    //         // circleSegment.debug = true;
-
-    //         _circleSegmentConnections.push(circleSegment);
-    //     }
-
-    //     // At the end we add the last anchor point
-    //     const lastAnchor = circleSegmentAnchors[circleSegmentAnchors.length - 1];
-
-    //     return [..._circleSegmentConnections];
-    // };
-
-    // calculatePoints(): {
-    //     circleSegments: CircleSegmentSegment[],
-    //     points: LayoutConnectionPoints
-    // } {
-        // const nodesFromHyperConnectionToStart: LayoutNode[] = [];
-        // const nodesFromHyperConnectionToEnd: LayoutNode[] = [];
-
-        // if (this.hyperConnection === undefined) {
-        //     return { circleSegments: [], points: [] };
-        // }
-
-        // let isStart = true;
-        // this.nodePath.forEach((node, index) => {
-        //     if (isStart) {
-        //         nodesFromHyperConnectionToStart.push(node);
-        //     } else {
-        //         nodesFromHyperConnectionToEnd.push(node);
-        //     }
-        //     if (node == this.hyperConnection!.source) {
-        //         isStart = false;
-        //     }
-        // })
-        // nodesFromHyperConnectionToStart.reverse();
-
-        // // From hyper start to path start calculate the anchor points:
-        // // Each node has based on its parent circle a outer range of valid anchor points
-
-        // const anchorsFromHyperStartToStart: CircleSegmentAnchor[] = [];
-        // const anchorsFromHyperEndToEnd: CircleSegmentAnchor[] = [];
-
-        // const hyperStartAnchor = this.hyperConnection.startAnchor;
-        // const hyperEndAnchor = this.hyperConnection.endAnchor;
-        // if (hyperStartAnchor) {
-        //     anchorsFromHyperStartToStart.push(new CircleSegmentAnchor(hyperStartAnchor, this.hyperConnection.source.parent!));
-        // }
-        // if (hyperEndAnchor) {
-        //     anchorsFromHyperEndToEnd.push(new CircleSegmentAnchor(hyperEndAnchor, this.hyperConnection.target.parent!));
-        // }
-
-        // this.calculateAnchors(anchorsFromHyperStartToStart, nodesFromHyperConnectionToStart, true);
-        // this.calculateAnchors(anchorsFromHyperEndToEnd, nodesFromHyperConnectionToEnd, false);
-
-        // const anchorsFromStartToHyperStart = Array.from(anchorsFromHyperStartToStart).reverse();
-
-        // const circleSegmentConnections: CircleSegmentSegment[] = [];
-
-        // const startCircleSegmentConnections = this.getCircleSegmentConnections(anchorsFromStartToHyperStart, true);
-        // const endCircleSegmentConnections = this.getCircleSegmentConnections(anchorsFromHyperEndToEnd, false);
-
-        // circleSegmentConnections.push(...startCircleSegmentConnections);
-        // circleSegmentConnections.push(...endCircleSegmentConnections);
-
-        // const combinedPoints: LayoutConnectionPoint[] = [
-        //     ...startCircleSegmentConnections,
-        //     ...this.hyperConnection.points,
-        //     ...endCircleSegmentConnections
-        // ];
-
-        // const startAnchor = startCircleSegmentConnections[0]?.startAnchor?.clone() ?? this.hyperConnection.startAnchor?.clone();
-        // const endAnchor = endCircleSegmentConnections[endCircleSegmentConnections.length - 1]?.endAnchor?.clone() ?? this.hyperConnection.endAnchor?.clone();
-        // if (!startAnchor) console.warn("No start anchor found", this.connection);
-        // if (!endAnchor) console.warn("No end anchor found", this.connection);
-
-        // const points: LayoutConnectionPoints = {
-        //     startAnchor: startAnchor,
-        //     endAnchor: endAnchor,
-        //     points: combinedPoints
-        // }
-
-        // return {
-        //     points: points,
-        //     circleSegments: circleSegmentConnections
-        // }
-    // }
 }
+
+// export class ConnectionBundlePort {
+
+//     node: LayoutNode;
+//     type: "outgoing" | "incoming";
+
+//     hyperConnection: LayoutConnection;
+
+
+// }
 
 ////////////////////////////////////////////////////////////////////////////
 // #region Multi Connection Layouter
@@ -484,18 +317,14 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                 const multiConnection = new MultiHyperConnection(connection);
                 connection.pathSegment = multiConnection;
 
-                // hyperConnection.nodePath = connection.getSubNodePathViaHypernodes();
                 multiConnection.nodePath = connection.getConnectionPathViaHyperAndVirtualNodes();
                 console.log(multiConnection.nodePath.map(node => node.id));
 
                 multiConnection.hyperConnection = parentHyperConnection;
-                // multiConnection.connection = connection;
                 multiConnections.push(multiConnection);
 
                 multiConnection.prepareSegments();
-                // hyperConnections.forEach(hyperConnection => {
-                //     connection.points = hyperConnection.calculatePoints();
-                // })
+                
             } else {
                 // console.log(connection.weight);
             }
@@ -511,19 +340,6 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
         if (node != node.visGraph.rootNode) {
             return;
         }
-
-        // console.log(this.multiConnections);
-        // return;
-
-        // Get all multi connections of child nodes
-        // const multiConnections: MultiHyperConnection[] = [];
-        // node.children.forEach(child => {
-        //     const layouter = child.getConnectionLayouterByTag(this.TAG) as RadialMultiConnectionLayouter;
-
-        //     if (layouter !== undefined) {
-        //         multiConnections.push(...layouter.multiConnections);
-        //     }
-        // });
 
         const multiConnections = this.multiConnections;
         if (multiConnections.length == 0) {

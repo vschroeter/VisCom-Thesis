@@ -229,8 +229,10 @@ export class Node2d extends SvgRenderable { // <NodeData>
     this.elNode?.remove();
     this.label?.removeSubElements();
     this.elLabel?.remove();
+    this.elVirtualMarker?.remove();
+    this.elGroup?.remove();
 
-    this.elNode = this.elLabel = this.label = undefined;
+    this.elNode = this.elLabel = this.label = this.elVirtualMarker = this.elGroup = undefined;
   }
 
   ////////////////////////////////////////////////////////////////////////////
