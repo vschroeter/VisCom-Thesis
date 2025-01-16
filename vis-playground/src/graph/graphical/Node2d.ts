@@ -215,14 +215,29 @@ export class Node2d extends SvgRenderable { // <NodeData>
   override updateVisibleArea(visibleArea: BoundingBox): void {
     // const fontSize = Math.min(20, this.layoutNode.radius * 2 * 0.6) * visibleArea.w / 500;
 
-    const heightWhenInNode = Math.min(this.label?.getHeightForWidth(this.layoutNode.radius * 2) ?? 0, this.layoutNode.radius * 2);
-    const widthWhenOutsideNode = this.label?.getWidthForHeight(this.layoutNode.radius) ?? -1;
-    if (heightWhenInNode / visibleArea.h > 0.03 || widthWhenOutsideNode > visibleArea.w) {
+    if (this.label) {
 
-      this.label?.setHeight(heightWhenInNode).setAlignment("center").setAnchorPos(this.center.x, this.center.y);
-    } else {
-      const textHeight = this.layoutNode.radius;
-      this.label?.setHeight(textHeight).setAlignment("center").setAnchorPos(this.center.x, this.center.y);
+      const r = this.layoutNode.radius * 0.9;
+      const heightWhenInNode = Math.min(this.label?.getHeightForWidth(r * 2) ?? 0, r * 2);
+      const widthWhenOutsideNode = this.label?.getWidthForHeight(r) ?? -1;
+      if (heightWhenInNode / visibleArea.h > 0.02 || widthWhenOutsideNode > visibleArea.w * 0.66) {
+
+        this.label?.setHeight(heightWhenInNode).setAlignment("center").setAnchorPos(this.center.x, this.center.y);
+      } else {
+        const textHeight = r;
+
+        if (this.layoutNode.parent) {
+          if (this.center.x > this.layoutNode.parent.x) {
+            this.label?.setAlignment("center-left").setAnchorPos(this.center.x + this.layoutNode.radius * 1.1, this.center.y);
+          } else {
+            this.label?.setAlignment("center-right").setAnchorPos(this.center.x - this.layoutNode.radius * 1.1, this.center.y);
+          }
+        } else {
+          this.label?.setAlignment("center").setAnchorPos(this.center.x, this.center.y);
+        }
+        this.label?.setHeight(textHeight);
+      }
+
     }
     // this.updateLabel(fontSize);
   }

@@ -30,7 +30,7 @@ export class VisLink {
 }
 
 export type LayoutConnectionPoint = Point | Anchor | PathSegment;
-export type LayoutConnectionPoints = LayoutConnectionPoint[] | {startAnchor?: Anchor, endAnchor?: Anchor, points?: LayoutConnectionPoint[] };
+export type LayoutConnectionPoints = LayoutConnectionPoint[] | { startAnchor?: Anchor, endAnchor?: Anchor, points?: LayoutConnectionPoint[] };
 
 export type CurveStyle = "linear" | "basis" | "natural" | d3.CurveFactory
 
@@ -111,11 +111,11 @@ export class LayoutConnection {
 
     /** The start anchor of the connection */
     get startAnchor(): Anchor | undefined {
-        return this.pathSegment?.startAnchor;
+        return this.pathOrDefault.startAnchor;
     }
     /** The end anchor of the connection */
     get endAnchor(): Anchor | undefined {
-        return this.pathSegment?.endAnchor;
+        return this.pathOrDefault.endAnchor;
     }
 
 
@@ -376,7 +376,9 @@ export class LayoutConnection {
     }
 
     createGraphicalElements() {
-        this.connection2d = new Connection2d(this);
+        if (!this.connection2d) {
+            this.connection2d = new Connection2d(this);
+        }
     }
 
     updatePoints() {
@@ -386,7 +388,7 @@ export class LayoutConnection {
     resetPoints() {
         // this.pathSegment = new DefaultPathSegment(this);
         this.pathSegment = undefined;
-        
+
         this.finishedLayouting = false;
     }
 

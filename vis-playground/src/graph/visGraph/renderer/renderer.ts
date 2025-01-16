@@ -216,15 +216,7 @@ export abstract class SvgRenderable {
      * Method to add the renderable elements to the selection
      */
     enter(): void {
-        if (this.subElementsExist()) {
-            console.error("Renderable group already exists");
-            return;
-        }
-
         this.addSubElements();
-        // console.log("enter", this.renderableSelection)
-
-        // this.update(selection);
     }
 
     /**
@@ -241,12 +233,11 @@ export abstract class SvgRenderable {
         if (!this.parentElement) return;
 
         if (!this.subElementsExist()) {
+            console.log("Renderable sub elements do not exist", this);
             this.enter();
         }
 
         // Call all update callbacks
-        // this.updateCallbacks.forEach(callback => element.call(callback.bind(this)));
-        // this.updateCallbacks.forEach(callback => callback());
         this.updateCallbacks.forEach(callback => callback.bind(this)());
 
         // Clear the update callbacks

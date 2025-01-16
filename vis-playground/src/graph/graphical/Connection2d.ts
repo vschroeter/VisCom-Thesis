@@ -140,7 +140,6 @@ export class Connection2d extends SvgRenderable {
         // this.target.emitter.on("positionUpdated", () => this.addUpdateCallback(this.renderPath))
 
         this.updateCallbacks.push(...[this.renderPath, this.renderStyleOpacity, this.renderStyleStroke])
-
     }
 
     requireUpdate({
@@ -334,20 +333,23 @@ export class Connection2d extends SvgRenderable {
     override addSubElements(): void {
         this.elGroup = this.elGroup ?? this.addSubElement('g', 'connection')
         this.elPath = this.elPath ?? this.addSubElement('path', 'link', this.elGroup)
-            .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
+        .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
         // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
         this.elArrow = this.elArrow ?? this.addSubElement('path', 'arrow', this.elGroup)
-            // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
-            .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
+        // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
+        .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
     }
 
     override updateVisibleArea(visibleArea: BoundingBox): void {
     }
     override subElementsExist(): boolean {
-        return this.elPath !== undefined && this.elArrow !== undefined;
+        return this.elPath !== undefined && this.elArrow !== undefined && this.elGroup !== undefined;
     }
     override removeSubElements(): void {
         this.elPath?.remove();
         this.elArrow?.remove();
+        this.elGroup?.remove();
+
+        this.elPath = this.elArrow = this.elGroup = undefined;
     }
 }

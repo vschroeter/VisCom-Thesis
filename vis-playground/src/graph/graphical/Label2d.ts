@@ -9,6 +9,7 @@ export class Label2d extends SvgRenderable {
     elGroup?: d3.Selection<SVGGElement, unknown, null, undefined>;
     elSvg?: d3.Selection<SVGSVGElement, unknown, null, undefined>;
     elText?: d3.Selection<SVGTextElement, unknown, null, undefined>;
+    elBgText?: d3.Selection<SVGTextElement, unknown, null, undefined>;
 
     bBox: BoundingBox = { x: 0, y: 0, w: 0, h: 0 };
 
@@ -17,9 +18,17 @@ export class Label2d extends SvgRenderable {
         return this._isVisible;
     }
     set isVisible(value: boolean) {
-        if (!value) this.elText?.text("");
+        if (!value) {
+            this.elText?.text("");
+            this.elBgText?.text("");
+        }
+
         this._isVisible = value;
     }
+
+    x: number = 0;
+
+    y: number = 0;
 
     // The width of the label
     width: number = 0;
@@ -46,7 +55,7 @@ export class Label2d extends SvgRenderable {
         return;
     }
     override subElementsExist(): boolean {
-        return this.elSvg !== undefined && this.elText !== undefined && this.elGroup !== undefined;
+        return this.elSvg !== undefined && this.elText !== undefined && this.elGroup !== undefined && this.elRoot !== undefined && this.elBgText !== undefined;
     }
     override addSubElements(): void {
         if (!this.parentElement) {
@@ -57,15 +66,29 @@ export class Label2d extends SvgRenderable {
         this.elRoot = this.elRoot ?? this.parentElement.append("g");
         this.elSvg = this.elSvg ?? this.elRoot.append("svg")
         this.elGroup = this.elGroup ?? this.elSvg.append("g");
+
+        this.elBgText = this.elBgText ?? this.elGroup.append("text")
+            .attr("x", 0).attr("y", 0).attr('pointer-events', 'none')
+            .attr('fill', 'white').attr('stroke', 'white').attr('stroke-width', 2).attr('stroke-linejoin', 'round')
+            .attr("opacity", 0.8);
         this.elText = this.elText ?? this.elGroup.append("text")
             .attr("x", 0).attr("y", 0).attr('pointer-events', 'none');
+
 
         this.setTextAlign('bottom-left');
     }
     override removeSubElements(): void {
         this.elText?.remove();
+        this.elBgText?.remove();
         this.elGroup?.remove();
         this.elSvg?.remove();
+        this.elRoot?.remove();
+
+        this.elText = undefined;
+        this.elBgText = undefined;
+        this.elGroup = undefined;
+        this.elSvg = undefined;
+        this.elRoot = undefined;
     }
 
     // The text of the label
@@ -75,6 +98,7 @@ export class Label2d extends SvgRenderable {
         if (!this.isVisible) return this;
         this._text = text;
         this.elText?.text(text);
+        this.elBgText?.text(text);
 
         this.updateBBox();
         return this;
@@ -90,9 +114,9 @@ export class Label2d extends SvgRenderable {
         if (!this.isVisible) return this;
 
         // const bbox = this.elText?.node()?.getBBox();
-        const bbox = this.elGroup?.node()?.getBBox({stroke: true, fill: true});
+        const bbox = this.elGroup?.node()?.getBBox({ stroke: true, fill: true });
         if (bbox) {
-            this.bBox = { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
+            this.bBox = { x: bbox.x - 2, y: bbox.y - 2, w: bbox.width + 4, h: bbox.height + 4 };
         }
 
 
@@ -107,6 +131,10 @@ export class Label2d extends SvgRenderable {
 
         this.width = w;
         this.height = h;
+
+        this.x = this.anchor.x - w / 2;
+        this.y = this.anchor.y - h / 2;
+        this.updateTranslate();
 
         return this;
     }
@@ -126,6 +154,10 @@ export class Label2d extends SvgRenderable {
 
         this.width = w;
         this.height = h;
+
+        this.x = this.anchor.x - w / 2;
+        this.y = this.anchor.y - h / 2;
+        this.updateTranslate();
 
         return this;
     }
@@ -196,40 +228,40 @@ export class Label2d extends SvgRenderable {
     protected setTextAlign(align: Alignment) {
         switch (align) {
             case 'center-left':
-                this.elText?.attr('dominant-baseline', 'middle');
-                this.elText?.attr('anchor', 'end');
+                this.elText?.attr('dominant-baseline', 'middle').attr('anchor', 'end');
+                this.elBgText?.attr('dominant-baseline', 'middle').attr('anchor', 'end');
                 break;
             case 'center-right':
-                this.elText?.attr('dominant-baseline', 'middle');
-                this.elText?.attr('anchor', 'start');
+                this.elText?.attr('dominant-baseline', 'middle').attr('anchor', 'start');
+                this.elBgText?.attr('dominant-baseline', 'middle').attr('anchor', 'start');
                 break;
             case 'center-top':
-                this.elText?.attr('dominant-baseline', 'hanging');
-                this.elText?.attr('anchor', 'middle');
+                this.elText?.attr('dominant-baseline', 'hanging').attr('anchor', 'middle');
+                this.elBgText?.attr('dominant-baseline', 'hanging').attr('anchor', 'middle');
                 break;
             case 'center-bottom':
-                this.elText?.attr('dominant-baseline', 'auto');
-                this.elText?.attr('anchor', 'middle');
+                this.elText?.attr('dominant-baseline', 'auto').attr('anchor', 'middle');
+                this.elBgText?.attr('dominant-baseline', 'auto').attr('anchor', 'middle');
                 break;
             case 'top-left':
-                this.elText?.attr('dominant-baseline', 'hanging');
-                this.elText?.attr('anchor', 'end');
+                this.elText?.attr('dominant-baseline', 'hanging').attr('anchor', 'end');
+                this.elBgText?.attr('dominant-baseline', 'hanging').attr('anchor', 'end');
                 break;
             case 'top-right':
-                this.elText?.attr('dominant-baseline', 'hanging');
-                this.elText?.attr('anchor', 'start');
+                this.elText?.attr('dominant-baseline', 'hanging').attr('anchor', 'start');
+                this.elBgText?.attr('dominant-baseline', 'hanging').attr('anchor', 'start');
                 break;
             case 'bottom-left':
-                this.elText?.attr('dominant-baseline', 'auto');
-                this.elText?.attr('anchor', 'end');
+                this.elText?.attr('dominant-baseline', 'auto').attr('anchor', 'end');
+                this.elBgText?.attr('dominant-baseline', 'auto').attr('anchor', 'end');
                 break;
             case 'bottom-right':
-                this.elText?.attr('dominant-baseline', 'auto');
-                this.elText?.attr('anchor', 'start');
+                this.elText?.attr('dominant-baseline', 'auto').attr('anchor', 'start');
+                this.elBgText?.attr('dominant-baseline', 'auto').attr('anchor', 'start');
                 break;
             case 'center':
-                this.elText?.attr('dominant-baseline', 'middle');
-                this.elText?.attr('anchor', 'middle');
+                this.elText?.attr('dominant-baseline', 'middle').attr('anchor', 'middle');
+                this.elBgText?.attr('dominant-baseline', 'middle').attr('anchor', 'middle');
                 break;
         }
 

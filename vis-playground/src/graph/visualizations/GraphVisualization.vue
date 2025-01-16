@@ -106,7 +106,7 @@ const refGNodes = ref<SVGGElement | null>(null)
 const refGLabels = ref<SVGGElement | null>(null)
 const refDivIconButtons = ref<HTMLDivElement | null>(null)
 const refGZoom = ref<SVGGElement | null>(null)
-const interactiveRef = svgInteractiveRef(refSVG, refGZoom, onZoomed, undefined)
+const interactiveRef = svgInteractiveRef(refSVG, refGZoom, onZoomed, () => updateBbox(true))
 
 const visibleArea = ref<{ x: number, y: number, w: number, h: number } | null>(null)
 
@@ -279,7 +279,15 @@ function layoutUpdated() {
 
     const newBBox = refGRoot.value?.getBBox() ?? null
 
-    if (!bBox.value) bBox.value = newBBox;
+    if (!bBox.value) {
+        if (newBBox) {
+            newBBox.x = newBBox.x - newBBox.width * 0.1;
+            newBBox.y = newBBox.y - newBBox.height * 0.1;
+            newBBox.width = newBBox.width * 1.2;
+            newBBox.height = newBBox.height * 1.2;
+            bBox.value = newBBox;
+        }
+    }
     else {
         // Check if it is larger than the current one
         if (newBBox) {
@@ -290,6 +298,33 @@ function layoutUpdated() {
     }
 
     // bBox.value = refGRoot.value?.getBBox() ?? null
+}
+
+function updateBbox(reset = false) {
+
+    if (reset) {
+        bBox.value = null;
+    }
+    
+    const newBBox = refGRoot.value?.getBBox() ?? null
+
+    if (!bBox.value) {
+        if (newBBox) {
+            newBBox.x = newBBox.x - newBBox.width * 0.1;
+            newBBox.y = newBBox.y - newBBox.height * 0.1;
+            newBBox.width = newBBox.width * 1.2;
+            newBBox.height = newBBox.height * 1.2;
+            bBox.value = newBBox;
+        }
+    }
+    else {
+        // Check if it is larger than the current one
+        if (newBBox) {
+            if (newBBox.width > bBox.value.width || newBBox.height > bBox.value.height) {
+                bBox.value = newBBox;
+            }
+        }
+    }
 }
 
 
@@ -342,6 +377,7 @@ onMounted(() => {
         const cls = layouterMapping[props.layoutType].layouter;
 
         layouter?.renderer?.clear();
+        bBox.value = null;
         layouter?.on('update', null);
         layouter?.on('end', null);
         if (layouter?.calculateMetrics) {
