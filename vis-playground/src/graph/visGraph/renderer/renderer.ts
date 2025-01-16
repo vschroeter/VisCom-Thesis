@@ -3,6 +3,10 @@ import _ from "lodash";
 import rtreeLib from "rtree"
 import { VisGraph } from "../visGraph";
 
+import * as d3 from 'd3';
+import { Circle, Point, Ray, Segment, ShapeTag } from "2d-geometry";
+import { Anchor } from "src/graph/graphical";
+
 export class Renderer {
 
     rtree = rtreeLib(4);
@@ -79,8 +83,107 @@ export class Renderer {
         this.renderQueue = [];
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Debug Shapes
+    ////////////////////////////////////////////////////////////////////////////
+
+    
+    renderDebuggingShapes(selection: d3.Selection<SVGGElement | null, unknown, null, undefined>) {
+        selection.selectChildren('g.debug')
+            .data(this.visGraph.debugShapes)
+            .join('g').classed('debug', true)
+            .each((shape, i, g) => {
+                const d = d3.select(g[i]);
+                d.selectChildren('*').remove();
+
+                switch (shape.tag) {
+                    // case ShapeTag.Segment: {
+                    //     drawSegment(shape as Segment); break
+                    // }
+                    case ShapeTag.Circle: {
+                        const c = shape as Circle;
+                        d.append('circle')
+                            .attr('cx', c.center.x)
+                            .attr('cy', c.center.y)
+                            .attr('r', c.r)
+                            .attr('fill', 'none')
+                            .attr('stroke', c._data?.stroke ?? 'blue')
+                            .attr('stroke-width', 0.5)
+                            .attr('opacity', 0.5)
+
+                        break;
+                    }
+                    case ShapeTag.Segment: {
+                        d.append('line')
+                            .attr('x1', (shape as Segment).start.x)
+                            .attr('y1', (shape as Segment).start.y)
+                            .attr('x2', (shape as Segment).end.x)
+                            .attr('y2', (shape as Segment).end.y)
+                            .attr('stroke', shape._data?.stroke ?? 'green')
+                            .attr('stroke-width', 0.5)
+                            .attr('opacity', 0.5)
+
+                        break;
+                    }
+                    case ShapeTag.Point: {
+                        const p = shape as Point;
+                        d.append('circle')
+                            .attr('cx', p.x)
+                            .attr('cy', p.y)
+                            .attr('r', 1)
+                            .attr('fill', p._data?.fill ?? 'green')
+                            .attr('stroke', 'none')
+                            .attr('opacity', 0.5)
+                        break;
+                    }
+                    case ShapeTag.Ray: {
+                        const ray = shape as Ray;
+
+                        const length = 500;
+                        const end = ray.pt.translate(ray.norm.rotate90CCW().multiply(length));
+
+                        d.append('line')
+                            .attr('x1', ray.start.x)
+                            .attr('y1', ray.start.y)
+                            .attr('x2', end.x)
+                            .attr('y2', end.y)
+                            .attr('stroke', 'blue')
+                            .attr('stroke-width', 0.5)
+                            .attr('opacity', 0.5)
+                        break;
+                    }
+
+                    case "Anchor": {
+                        const anchor = shape as Anchor;
+
+                        d.append('circle')
+                            .attr('cx', anchor.anchorPoint.x)
+                            .attr('cy', anchor.anchorPoint.y)
+                            .attr('r', 1)
+                            .attr('fill', anchor.anchorPoint._data?.fill ?? 'green')
+                            .attr('stroke', 'none')
+                            .attr('opacity', 0.5)
+                        
+                        d.append('line')
+                            .attr('x1', anchor.anchorPoint.x)
+                            .attr('y1', anchor.anchorPoint.y)
+                            .attr('x2', anchor.anchorPoint.x + anchor.direction.x * 10)
+                            .attr('y2', anchor.anchorPoint.y + anchor.direction.y * 10)
+                            .attr('stroke', 'red')
+                            .attr('stroke-width', 0.5)
+                            .attr('opacity', 0.5)
+
+                        
+                        
+                        
+                    }
+                }
+
+            })
+    }
 
 }
+
 
 
 export type BoundingBox = {
@@ -223,7 +326,9 @@ export abstract class SvgRenderable {
      * Method to remove the renderable elements from the selection
      */
     exit(): void {
+        this.updateCallbacks = [];
         this.removeSubElements();
+        console.log("Exit", this);
     }
 
     /**
@@ -233,7 +338,6 @@ export abstract class SvgRenderable {
         if (!this.parentElement) return;
 
         if (!this.subElementsExist()) {
-            console.log("Renderable sub elements do not exist", this);
             this.enter();
         }
 
@@ -243,6 +347,10 @@ export abstract class SvgRenderable {
         // Clear the update callbacks
         this.updateCallbacks = [];
     }
+
+
+
+    
 
 }
 

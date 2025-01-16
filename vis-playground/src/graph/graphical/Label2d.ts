@@ -96,6 +96,9 @@ export class Label2d extends SvgRenderable {
 
     text(text: string) {
         if (!this.isVisible) return this;
+
+        if (text === this._text) return this;
+
         this._text = text;
         this.elText?.text(text);
         this.elBgText?.text(text);
@@ -126,12 +129,15 @@ export class Label2d extends SvgRenderable {
 
     setWidth(w: number) {
         if (!this.isVisible) return this;
+
         const h = this.getHeightForWidth(w);
-        this.elSvg?.attr('width', w).attr('height', h);
+
+        if (w === this.width && h === this.height) return this;
 
         this.width = w;
         this.height = h;
 
+        this.elSvg?.attr('width', w).attr('height', h);
         this.x = this.anchor.x - w / 2;
         this.y = this.anchor.y - h / 2;
         this.updateTranslate();
@@ -150,10 +156,12 @@ export class Label2d extends SvgRenderable {
     setHeight(h: number) {
         if (!this.isVisible) return this;
         const w = this.getWidthForHeight(h);
-        this.elSvg?.attr('width', w).attr('height', h);
+
+        if (w === this.width && h === this.height) return this;
 
         this.width = w;
         this.height = h;
+        this.elSvg?.attr('width', w).attr('height', h);
 
         this.x = this.anchor.x - w / 2;
         this.y = this.anchor.y - h / 2;
@@ -180,8 +188,8 @@ export class Label2d extends SvgRenderable {
         const w = this.width;
         const h = this.height;
 
-        let x: Number = -10;
-        let y: Number = -10;
+        let x = -10;
+        let y = -10;
 
         switch (a) {
             case 'center-left':

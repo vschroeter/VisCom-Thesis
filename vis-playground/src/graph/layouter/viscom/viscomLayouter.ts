@@ -34,7 +34,6 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
 
     override initVisGraph(): Promise<void> {
         // Transform visgraph to hypergraph
-
         this.resetVisGraph();
 
         console.log({

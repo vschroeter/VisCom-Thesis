@@ -1,4 +1,4 @@
-import { Point } from "2d-geometry";
+import { Point, Shape } from "2d-geometry";
 import { CommunicationChannel, CommunicationGraph, CommunicationLink, CommunicationNode, CommunicationTopic } from "../commGraph";
 import { CommonSettings } from "../layouter/settings/commonSettings";
 
@@ -6,7 +6,7 @@ import * as d3 from "d3";
 import { LayoutConnection, VisLink } from "./layoutConnection";
 import { LayoutNode } from "./layoutNode";
 import { Sorter } from "../algorithms/sortings/sorting";
-import { Connection2d, Node2d } from "../graphical";
+import { Anchor, Connection2d, Node2d } from "../graphical";
 import { BasicSizeCalculator } from "./layouterComponents/precalculator";
 import { BasePositioner } from "./layouterComponents/positioner";
 import { UserInteractions } from "../visualizations/interactions";
@@ -502,6 +502,22 @@ export class VisGraph {
         this.allLayoutNodes.forEach(node => {
             node.updateGraphicalLayout();
         });
+    }
+
+    get debugShapes(): (Shape | Anchor)[] {
+        const shapes: (Shape | Anchor)[] = [];
+        this.allGraphicalNodes.forEach(n => {
+            if (n.layoutNode.debugShapes.length > 0) {
+                shapes.push(...n.layoutNode.debugShapes);
+            }
+        });
+
+        this.allGraphicalConnections.forEach(l => {
+            if (l.layoutConnection.debugShapes.length > 0) {
+                shapes.push(...l.layoutConnection.debugShapes);
+            }
+        });
+        return shapes;
     }
 
     ////////////////////////////////////////////////////////////////////////////

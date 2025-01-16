@@ -29,10 +29,10 @@
 
                         <g ref="refGZoom">
 
-                            <rect :x="visibleArea?.x" :y="visibleArea?.y" :width="visibleArea?.w"
+                            <!-- <rect :x="visibleArea?.x" :y="visibleArea?.y" :width="visibleArea?.w"
                                 :height="visibleArea?.h" fill="none" stroke="red" stroke-width="1" />
 
-                            <circle cx="0" cy="0" r="10" fill="red" />
+                            <circle cx="0" cy="0" r="10" fill="red" /> -->
                             <g ref="refGRoot">
                             </g>
                         </g>
@@ -124,11 +124,34 @@ function onZoomed(transform: d3.ZoomTransform) {
         return;
     }
 
+    // Get the DOM size of the svg
+    const svg = refSVG.value;
+    if (!svg) {
+        return;
+    }
+
+    const svgBbox = svg.getBBox();
+
+    // Stretch the visible area bbox to the svg sizes
+
+
+    // // Make the contentBbox quadratic
+    const quadraticSize = Math.max(contentBbox.width, contentBbox.height);
+    const widthDiff = quadraticSize - contentBbox.width;
+    const heightDiff = quadraticSize - contentBbox.height;
+
+    const quadraticBbox = {
+        x: contentBbox.x - widthDiff / 2,
+        y: contentBbox.y - heightDiff / 2,
+        width: quadraticSize,
+        height: quadraticSize
+    }
+
     const _visibleArea = {
-        x: (contentBbox.x - transform.x) / transform.k,
-        y: (contentBbox.y - transform.y) / transform.k,
-        w: contentBbox.width / transform.k,
-        h: contentBbox.height / transform.k
+        x: (quadraticBbox.x - transform.x) / transform.k,
+        y: (quadraticBbox.y - transform.y) / transform.k,
+        w: quadraticBbox.width / transform.k,
+        h: quadraticBbox.height / transform.k
     }
 
     visibleArea.value = _visibleArea;
@@ -225,6 +248,8 @@ function layoutUpdated() {
     // TODO: dont do this every time
     renderer.setRoot(d3.select(refGRoot.value));
     renderer.renderAll(visibleArea.value)
+1
+    renderer.renderDebuggingShapes(d3.select(refGRoot.value));
 
     // layouter.setParentGroup(d3.select(refGRoot.value));
     // layouter.renderAll({
@@ -277,25 +302,27 @@ function layoutUpdated() {
 
     // console.log("BBox", bBox.value, refGRoot.value)
 
-    const newBBox = refGRoot.value?.getBBox() ?? null
+    updateBbox();
 
-    if (!bBox.value) {
-        if (newBBox) {
-            newBBox.x = newBBox.x - newBBox.width * 0.1;
-            newBBox.y = newBBox.y - newBBox.height * 0.1;
-            newBBox.width = newBBox.width * 1.2;
-            newBBox.height = newBBox.height * 1.2;
-            bBox.value = newBBox;
-        }
-    }
-    else {
-        // Check if it is larger than the current one
-        if (newBBox) {
-            if (newBBox.width > bBox.value.width || newBBox.height > bBox.value.height) {
-                bBox.value = newBBox;
-            }
-        }
-    }
+    // const newBBox = refGRoot.value?.getBBox() ?? null
+
+    // if (!bBox.value) {
+    //     if (newBBox) {
+    //         newBBox.x = newBBox.x - newBBox.width * 0.1;
+    //         newBBox.y = newBBox.y - newBBox.height * 0.1;
+    //         newBBox.width = newBBox.width * 1.2;
+    //         newBBox.height = newBBox.height * 1.2;
+    //         bBox.value = newBBox;
+    //     }
+    // }
+    // else {
+    //     // Check if it is larger than the current one
+    //     if (newBBox) {
+    //         if (newBBox.width > bBox.value.width || newBBox.height > bBox.value.height) {
+    //             bBox.value = newBBox;
+    //         }
+    //     }
+    // }
 
     // bBox.value = refGRoot.value?.getBBox() ?? null
 }
@@ -330,7 +357,10 @@ function updateBbox(reset = false) {
 
 function layoutFinished() {
     layoutUpdated();
-    interactiveRef.resetZoom();
+    setTimeout(() => {
+        updateBbox(true);
+        interactiveRef.resetZoom();
+    }, 100)
 
     layouter?.visGraph.userInteractions?.emitter.on('update', () => {
         throttledUpdateUserInteractions()

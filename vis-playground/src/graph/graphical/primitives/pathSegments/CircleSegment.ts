@@ -144,8 +144,8 @@ export class CircleSegmentSegment extends PathSegment {
         }
 
 
-        let startCircleCenterPoint = _startCircleCenterPointIntersections[0];
-        let endCircleCenterPoint = _endCircleCenterPointIntersections[0];
+        const startCircleCenterPoint = _startCircleCenterPointIntersections[0];
+        const endCircleCenterPoint = _endCircleCenterPointIntersections[0];
 
         // The circle is then defined by the intersection point as center and the distance to the anchor point as radius
         const startCircleForIntersection = new Circle(startCircleCenterPoint, startCircleCenterPoint.distanceTo(startPoint)[0]);
@@ -243,8 +243,8 @@ export class CircleSegmentSegment extends PathSegment {
             }
         }
 
-        const arcStartPoint = minCombination[0];
-        const arcEndPoint = minCombination[1];
+        const arcStartPoint = minCombination![0];
+        const arcEndPoint = minCombination![1];
 
         
         // let arcStartPoint = ShapeUtil.getClosestShapeToPoint(startIntersections, endAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);

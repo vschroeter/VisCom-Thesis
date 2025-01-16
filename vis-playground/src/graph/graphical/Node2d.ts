@@ -200,7 +200,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
     this.elLabel = this.elLabel ?? this.addSubElement('g', 'node-label')
 
-    this.label = new Label2d(this.elLabel).text(this.layoutNode.label ?? this.layoutNode.id);
+    this.label = new Label2d(this.elLabel)
     this.label!.isVisible = this.layoutNode.showLabel;
 
   }
@@ -209,6 +209,8 @@ export class Node2d extends SvgRenderable { // <NodeData>
     this.elNode?.remove();
     this.label?.removeSubElements();
     this.elLabel?.remove();
+
+    this.elNode = this.elLabel = this.label = undefined;
   }
 
   fontSize: number = 20;
@@ -235,9 +237,9 @@ export class Node2d extends SvgRenderable { // <NodeData>
         } else {
           this.label?.setAlignment("center").setAnchorPos(this.center.x, this.center.y);
         }
-        this.label?.setHeight(textHeight);
+        this.label?.setHeight(textHeight)
       }
-
+      this.label?.text(this.layoutNode.label ?? this.layoutNode.id);
     }
     // this.updateLabel(fontSize);
   }
