@@ -22,7 +22,7 @@ export class LayoutNode {
     id: string;
 
     // Rendered shapes for debugging 
-    debugShapes: Shape[] = [];
+    debugShapes: (Shape | Anchor)[] = [];
 
     ////////////////////////////////////////////////////////////////////////////
     // #region Constructor

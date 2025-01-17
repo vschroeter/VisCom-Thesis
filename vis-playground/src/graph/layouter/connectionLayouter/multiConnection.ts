@@ -1,4 +1,4 @@
-import { Circle, Point } from "2d-geometry";
+import { Circle, Point, Segment } from "2d-geometry";
 import { Anchor } from "src/graph/graphical";
 import { CircleSegmentSegment } from "src/graph/graphical/primitives/pathSegments/CircleSegment";
 import { LayoutConnection, LayoutConnectionPoint, LayoutConnectionPoints } from "src/graph/visGraph/layoutConnection";
@@ -7,24 +7,11 @@ import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialUtils } from "../utils/radialUtils";
 import { RadialConnectionsHelper } from "./radialConnections";
 import { CombinedPathSegment, PathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
+import { ShapeUtil } from "../utils/shapeUtil";
 
 ////////////////////////////////////////////////////////////////////////////
 // #region Helper Classes
 ///////////////////////////////////////////////////////////////////////////
-
-
-/**
- * Helper class to store the anchor point and the parent node of a circle segment connection.
- */
-export class CircleSegmentAnchor {
-    anchor: Anchor;
-    parentNode: LayoutNode;
-
-    constructor(anchor: Anchor, parentNode: LayoutNode) {
-        this.anchor = anchor;
-        this.parentNode = parentNode;
-    }
-}
 
 export type MultiConnectionType = "unknown" | "fixed" | "circleSegment" | "";
 
@@ -37,43 +24,207 @@ type MultiSegmentInformation = {
     prevSegment?: PathSegment,
     nextSegment?: PathSegment,
 
+    prevHyperConnection?: LayoutConnection,
+    nextHyperConnection?: LayoutConnection,
+
     sourceNode: LayoutNode,
     targetNode: LayoutNode,
+}
+
+export class ConnectionBundlePort {
+
+
+    node: LayoutNode;
+    nodeID: string;
+    type: "outgoing" | "incoming";
+
+    hyperConnection: LayoutConnection;
+    calculated: boolean = false;
+    portAnchor?: Anchor;
+    // outAnchor?: Anchor;
+    // inAnchor?: Anchor;
+
+    segments: PathSegment[] = [];
+
+    constructor(node: LayoutNode, type: "outgoing" | "incoming", hyperConnection: LayoutConnection) {
+        this.node = node;
+        this.nodeID = node.id;
+        this.type = type;
+        this.hyperConnection = hyperConnection;
+    }
+
+    inPorts: (ConnectionBundlePort | Anchor)[] = [];
+    outPorts: (ConnectionBundlePort | Anchor)[] = [];
+
+    addInPort(port?: ConnectionBundlePort | Anchor) {
+        if (!port) return;
+        this.inPorts.push(port);
+
+        if (port instanceof ConnectionBundlePort) {
+            port.outPorts.push(this);
+        }
+    }
+
+    addOutPort(port?: ConnectionBundlePort | Anchor) {
+        if (!port) return;
+        this.outPorts.push(port);
+
+        if (port instanceof ConnectionBundlePort) {
+            port.inPorts.push(this);
+        }
+    }
+
+    addSegment(segment: PathSegment) {
+        this.segments.push(segment);
+    }
+
+    applyToSegments() {
+        this.segments.forEach(segment => {
+            if (this.portAnchor) {
+                if (this.type == "outgoing") {
+                    segment.endAnchor = this.portAnchor;
+                } else {
+                    segment.startAnchor = this.portAnchor;
+                }
+            }
+        })
+    }
+}
+
+export class ConnectionBundlePortChain {
+
+    layers: ConnectionBundlePort[][] = [];
+
+    constructor(port: ConnectionBundlePort) {
+
+        // Find the first layer
+        while (port.inPorts.length > 0 && port.inPorts.some(port => port instanceof ConnectionBundlePort)) {
+            port = port.inPorts.find(port => port instanceof ConnectionBundlePort) as ConnectionBundlePort;
+        }
+
+        let currentLayer = [port];
+        this.layers.push(currentLayer);
+
+        while (currentLayer.length > 0) {
+            const nextLayer: ConnectionBundlePort[] = [];
+            currentLayer.forEach(port => {
+                nextLayer.push(...port.outPorts.filter(port => port instanceof ConnectionBundlePort) as ConnectionBundlePort[]);
+            })
+            if (nextLayer.length == 0) break;
+            this.layers.push(nextLayer);
+            currentLayer = nextLayer;
+        }
+    }
+
+    calculate() {
+        console.log("CALC PORTS", this.layers);
+
+        this.layers.forEach((layer, i) => {
+            layer.forEach(port => {
+
+                const definingArray = port.type == "outgoing" ? port.outPorts : port.inPorts;
+                const otherArray = port.type == "outgoing" ? port.inPorts : port.outPorts;
+                const node = port.node;
+                const parentNode = node.parent;
+
+                // 1. Case:
+                // Type == outgoing && only outgoing ports
+                // Type == incoming && only incoming ports
+                if (definingArray.length > 0 && otherArray.length == 0) {
+                    //TODO: Improve this case to use elliptic arcs
+                    console.log("CASE 1 (node to port)", port.nodeID, port.type, i);
+
+                    // In this case, there is only one side of the port defined (by an anchor or the mean of multiple anchors).
+                    // The other side of the port is the node and thus open to be defined.
+                    // We construct a new anchor, that allows a smooth transition from the node center to the defined side of the port.
+
+                    const anchors = definingArray.filter(port => port instanceof Anchor) as Anchor[];
+                    const meanAnchor = Anchor.mean(anchors, parentNode?.circle);
+                    if (!meanAnchor) {
+                        throw new Error("No mean anchor found");
+                    }
+
+                    const distance = node.center.distanceTo(meanAnchor.anchorPoint)[0];
+                    const circle1 = new Circle(node.center, distance);
+                    const circle2 = new Circle(meanAnchor.anchorPoint, distance);
+                    const intersections = circle1.intersect(circle2);
+
+                    if (intersections.length != 2) {
+                        throw new Error("No intersection found");
+                    }
+
+                    const circleIntersectionLine = new Segment(intersections[0], intersections[1]);
+                    const intersectionsWithAnchor = meanAnchor.getLine().intersect(circleIntersectionLine);
+                    if (intersectionsWithAnchor.length != 1) {
+                        throw new Error("No intersection with anchor found");
+                    }
+
+                    const _nodeAnchor = new Anchor(node.center, intersectionsWithAnchor[0]);
+                    const nodeAnchor = port.type == "outgoing" ? _nodeAnchor : _nodeAnchor.cloneReversed();
+
+                    port.portAnchor = nodeAnchor;
+
+                    // // In this case, the port-anchor is defined by the mean of the anchors
+                    // const anchors = definingArray.filter(port => port instanceof Anchor) as Anchor[];
+                } else if (definingArray.length == 0 && otherArray.length > 0) {
+                    throw new Error("THIS SHOULD NOT HAPPEN" + port.nodeID);
+                } else if (definingArray.length > 0 && otherArray.length > 0) {
+                    console.log("CASE 2 (mean of port anchors)");
+
+                    // In this case, the port-anchor is defined by the mean of the anchors
+                    const outAnchors = port.outPorts.map(port => port instanceof Anchor ? port : port.portAnchor).filter(port => port) as Anchor[];
+                    const inAnchors = port.inPorts.map(port => port instanceof Anchor ? port : port.portAnchor).filter(port => port) as Anchor[];
+
+                    const meanOutAnchor = Anchor.mean(outAnchors, undefined);
+                    const meanInAnchor = Anchor.mean(inAnchors, undefined);
+
+                    const meanAnchor = Anchor.mean([meanOutAnchor, meanInAnchor]);
+                    meanAnchor.anchorPoint = node.center;
+                    meanAnchor.anchorPoint = meanAnchor.getPointInDirection(node.radius);
+                    
+                    // TODO: Check, if the anchors lie in the allowed range of the node
+
+                    port.portAnchor = meanAnchor;
+                }
+                else {
+                    console.log("UNKNOWN CASE", port.nodeID, port.type, i);
+                }
+
+
+                if (port.portAnchor) port.node.debugShapes.push(port.portAnchor);
+                port.calculated = true;
+            })
+        })
+    }
+
+
 }
 
 export class MultiHyperConnection extends CombinedPathSegment {
 
     nodePath: LayoutNode[] = [];
-    hyperConnection?: LayoutConnection;
+    hyperConnection: LayoutConnection;
+
+    hyperConnections: (LayoutConnection | undefined)[] = [];
 
     types: MultiConnectionType[] = [];
 
     info: MultiSegmentInformation[] = [];
 
-    constructor(layoutConnection: LayoutConnection) {
+    indexOfHyperConnection: number = -1;
+
+    multiConnections: RadialMultiConnectionLayouter;
+
+    constructor(layoutConnection: LayoutConnection, hyperConnection: LayoutConnection, connections: RadialMultiConnectionLayouter) {
         super(layoutConnection);
+        this.hyperConnection = hyperConnection;
+        this.multiConnections = connections;
     }
 
-    prepareSegments() {
 
-        // There are fixed segments along the path:
-        // - already calculated hyper connections 
-        // There are fixed parts along the path:
-        // - real nodes, where the anchors will start from and end at
-        // - virtual nodes, the path will pass through
-        // - hyper nodes, that circular segments will placed on 
-
-
-        // TODO: Circle segments having the same hyper connection as target don't need to be adapted in radius
-
+    private calculateTypesAndSegments() {
         this.segments = [];
         this.types = [];
-        const types = this.types;
-
-        const source = this.connection.source;
-        const target = this.connection.target;
-
-        let indexOfHyperConnection = -1;
 
         for (let i = 1; i < this.nodePath.length; i++) {
             const prevNode = this.nodePath[i - 1];
@@ -82,14 +233,15 @@ export class MultiHyperConnection extends CombinedPathSegment {
             const prevParent = prevNode.parent;
             const nextParent = nextNode.parent;
 
+            if (prevNode == this.hyperConnection?.source && nextNode == this.hyperConnection?.target) {
+                this.indexOfHyperConnection = i - 1;
+            }
+
             let type: MultiConnectionType = "unknown";
 
             if (nextParent == prevParent) type = "fixed";
             if (prevParent == nextNode || nextParent == prevNode) type = "circleSegment";
-
-            if (prevNode == this.hyperConnection?.source && nextNode == this.hyperConnection?.target) {
-                indexOfHyperConnection = i;
-            }
+            this.types.push(type);
 
             if (type == "circleSegment") {
                 const circleSegmentConnection = new CircleSegmentSegment(this.connection);
@@ -104,6 +256,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
                 }
 
                 this.segments.push(circleSegmentConnection);
+                this.hyperConnections.push(undefined);
 
             } else if (type == "fixed") {
                 const existingConnection = prevNode.getConnectionTo(nextNode);
@@ -114,97 +267,193 @@ export class MultiHyperConnection extends CombinedPathSegment {
                 }
 
                 this.segments.push(existingPathSegment);
+                this.hyperConnections.push(existingConnection);
             }
-
-            types.push(type);
-
-            // console.log(prevNode.id, nextNode.id, type);
         }
+    }
 
+    private calculateSegmentInformation() {
 
         this.info = this.segments.map((segment, index) => {
+
+            const prevHyperConnection = this.hyperConnections.slice(0, index).reverse().find((seg, i) => this.types[index - i - 1] == "fixed");
+            const nextHyperConnection = this.hyperConnections.slice(index + 1).find((seg, i) => this.types[index + i + 1] == "fixed");
+
             return {
-                type: types[index],
-                prevType: index > 0 ? types[index - 1] : undefined,
-                nextType: index < this.segments.length - 1 ? types[index + 1] : undefined,
+                type: this.types[index],
+                prevType: index > 0 ? this.types[index - 1] : undefined,
+                nextType: index < this.segments.length - 1 ? this.types[index + 1] : undefined,
 
                 segment: segment,
                 prevSegment: index > 0 ? this.segments[index - 1] : undefined,
                 nextSegment: index < this.segments.length - 1 ? this.segments[index + 1] : undefined,
+
+                prevHyperConnection,
+                nextHyperConnection,
 
                 sourceNode: this.nodePath[index],
                 targetNode: this.nodePath[index + 1],
             }
         })
 
-        function range(start: number, end: number): number[] {
-            return Array.from({ length: end - start }, (_, i) => start + i);
-        }
-        
-        const processIndices = [...range(0, indexOfHyperConnection).reverse(), ...range(indexOfHyperConnection, this.segments.length)]; 
-        // Set fixed anchors to adjacent circle segments
-        // for (let i = 0; i < this.segments.length; i++) {
-        for (let pi = 0; pi < processIndices.length; pi++) {
-            const i = processIndices[pi];
-            const info = this.info[i];
-            const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = info;
 
-            if (type == "circleSegment") {
-                if (!prevSegment) {
-                    // seg.startAnchor = source.getAnchor(target.center);
+    }
+
+    prepareBundlePorts() {
+
+        console.log(this.nodePath.map(node => node.id));
+
+        let lastAnchorOrPort: ConnectionBundlePort | Anchor | undefined = undefined;
+        this.info.forEach((info, i) => {
+            const type = info.type;
+            const segment = info.segment;
+            const isBeforeHyperConnection = i <= this.indexOfHyperConnection;
+            const lastWasBeforeHyperConnection = i > 0 && i - 1 <= this.indexOfHyperConnection;
+
+            const ids = this.nodePath.map(node => node.id);
+            const connId = ids[i] + "->" + ids[i + 1];
+            console.log(connId, type, lastWasBeforeHyperConnection, isBeforeHyperConnection);
+
+            if (type == "fixed") {
+
+                if (lastAnchorOrPort && lastAnchorOrPort instanceof ConnectionBundlePort) {
+                    console.log(connId, "Fixed: ADD OUT PORT", lastAnchorOrPort.node.id);
+                    lastAnchorOrPort.addOutPort(info.segment.startAnchor);
+                    // if (lastWasBeforeHyperConnection) {
+                    //     console.log(connId, "Fixed: ADD OUT PORT", lastAnchorOrPort.node.id);
+                    //     lastAnchorOrPort.addOutPort(info.segment.startAnchor);
+                    // } else {
+                    //     console.log(connId, "Fixed: ADD IN PORT", lastAnchorOrPort.node.id);
+                    //     lastAnchorOrPort.addInPort(info.segment.endAnchor);
+                    // }
                 }
-                if (!nextSegment) {
-                    // seg.endAnchor = target.getAnchor(source.center).cloneReversed();
+
+                lastAnchorOrPort = isBeforeHyperConnection ? info.segment.endAnchor : info.segment.startAnchor;
+            } else if (type == "circleSegment") {
+                const node = isBeforeHyperConnection ? info.sourceNode : info.targetNode;
+                const direction = isBeforeHyperConnection ? "outgoing" : "incoming";
+
+                const hyperConnection = isBeforeHyperConnection ? info.nextHyperConnection : info.prevHyperConnection;
+                if (!hyperConnection) {
+                    console.log(this.nodePath.map(node => node.id), {
+                        index: i,
+                        indexOfHyperConnection: this.indexOfHyperConnection,
+                        info,
+                        infos: this.info,
+                        lastAnchorOrPort,
+                    });
+                    throw new Error("No hyper connection found, THIS SHOULD NOT HAPPEN");
                 }
+
+                const bundlePort = this.multiConnections.getBundlePort(node, hyperConnection, direction);
+                bundlePort.addSegment(segment);
+                if (lastAnchorOrPort) {
+
+                    console.log(connId, "Circle: ADD IN PORT", bundlePort.node.id);
+                    bundlePort.addInPort(lastAnchorOrPort);
+
+                    // if (isBeforeHyperConnection) {
+                    //     console.log(connId, "Circle: ADD IN PORT", bundlePort.node.id);
+                    //     bundlePort.addInPort(lastAnchorOrPort);
+                    // } else {
+                    //     console.log(connId, "Circle: ADD OUT PORT", bundlePort.node.id);
+                    //     bundlePort.addOutPort(lastAnchorOrPort);
+                    // }
+                }
+                lastAnchorOrPort = bundlePort;
             }
-            else if (type == "fixed") {
-                if (prevSegment && prevType == "circleSegment") {
-                    prevSegment.endAnchor = segment.startAnchor;
-                }
-                if (nextSegment && nextType == "circleSegment") {
-                    nextSegment.startAnchor = segment.endAnchor;
-                }
-            }
-        }
+        })
 
-        console.log(this.segments.map(seg => seg.constructor.name), this.segments);
 
-        let changed = true;
-        
-        // Calculate the undefined anchors for the circle segments
-        // Do this until no more changes are made
-        while (changed) {
-            changed = false;
-            for (let i = 0; i < this.segments.length; i++) {
-                const info = this.info[i];
-                const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = this.info[i];
+    }
 
-                // We only adapt circle segment's anchors
-                // We should always have at least one fixed segment, that defines the adjacent circle segment's anchor
-                if (type == "circleSegment") {
-                    if (!segment.startAnchor && segment.endAnchor) {
-                        const node = this.nodePath[i];
-                        segment.startAnchor = this.calculateCircleSegmentAnchor(node, info);
-                        changed = true;
+    prepareSegments() {
 
-                        // Propagate the anchor to the previous circle segment
-                        if (prevType == "circleSegment" && prevSegment && !prevSegment.endAnchor) {
-                            prevSegment.endAnchor = segment.startAnchor;
-                        }
-                    }
-                    if (!segment.endAnchor && segment.startAnchor) {
-                        const node = this.nodePath[i + 1];
-                        segment.endAnchor = this.calculateCircleSegmentAnchor(node, info)
-                        changed = true;
+        // There are fixed segments along the path:
+        // - already calculated hyper connections 
+        // There are fixed parts along the path:
+        // - real nodes, where the anchors will start from and end at
+        // - virtual nodes, the path will pass through
+        // - hyper nodes, that circular segments will placed on 
 
-                        // Propagate the anchor to the next circle segment
-                        if (nextType == "circleSegment" && nextSegment && !nextSegment.startAnchor) {
-                            nextSegment.startAnchor = segment.endAnchor;
-                        }
-                    }
-                }
-            }
-        }
+
+        // TODO: Circle segments having the same hyper connection as target don't need to be adapted in radius
+
+        this.calculateTypesAndSegments();
+        this.calculateSegmentInformation();
+
+        this.prepareBundlePorts();
+
+        return;
+
+        // function range(start: number, end: number): number[] {
+        //     return Array.from({ length: end - start }, (_, i) => start + i);
+        // }
+
+        // const processIndices = [...range(0, this.indexOfHyperConnection).reverse(), ...range(this.indexOfHyperConnection, this.segments.length)];
+        // // Set fixed anchors to adjacent circle segments
+        // // for (let i = 0; i < this.segments.length; i++) {
+        // for (let pi = 0; pi < processIndices.length; pi++) {
+        //     const i = processIndices[pi];
+        //     const info = this.info[i];
+        //     const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = info;
+
+        //     if (type == "circleSegment") {
+        //         if (!prevSegment) {
+        //             // seg.startAnchor = source.getAnchor(target.center);
+        //         }
+        //         if (!nextSegment) {
+        //             // seg.endAnchor = target.getAnchor(source.center).cloneReversed();
+        //         }
+        //     }
+        //     else if (type == "fixed") {
+        //         if (prevSegment && prevType == "circleSegment") {
+        //             prevSegment.endAnchor = segment.startAnchor;
+        //         }
+        //         if (nextSegment && nextType == "circleSegment") {
+        //             nextSegment.startAnchor = segment.endAnchor;
+        //         }
+        //     }
+        // }
+
+        // console.log(this.connection.id, this.segments.map(seg => seg.constructor.name), this.segments);
+
+        // let changed = true;
+
+        // // Calculate the undefined anchors for the circle segments
+        // // Do this until no more changes are made
+        // while (changed) {
+        //     changed = false;
+        //     for (let i = 0; i < this.segments.length; i++) {
+        //         const info = this.info[i];
+        //         const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = this.info[i];
+
+        //         // We only adapt circle segment's anchors
+        //         // We should always have at least one fixed segment, that defines the adjacent circle segment's anchor
+        //         if (type == "circleSegment") {
+        //             if (!segment.startAnchor && segment.endAnchor) {
+        //                 const node = this.nodePath[i];
+        //                 segment.startAnchor = this.calculateCircleSegmentAnchor(node, info);
+        //                 changed = true;
+
+        //                 // Propagate the anchor to the previous circle segment
+        //                 if (prevType == "circleSegment" && prevSegment && !prevSegment.endAnchor) {
+        //                     prevSegment.endAnchor = segment.startAnchor;
+        //                 }
+        //             }
+        //             if (!segment.endAnchor && segment.startAnchor) {
+        //                 const node = this.nodePath[i + 1];
+        //                 segment.endAnchor = this.calculateCircleSegmentAnchor(node, info)
+        //                 changed = true;
+
+        //                 // Propagate the anchor to the next circle segment
+        //                 if (nextType == "circleSegment" && nextSegment && !nextSegment.startAnchor) {
+        //                     nextSegment.startAnchor = segment.endAnchor;
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     calculateCircleSegmentAnchor(anchorNode: LayoutNode, info: MultiSegmentInformation): Anchor {
@@ -231,7 +480,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
         rad0 %= 2 * Math.PI;
         rad1 %= 2 * Math.PI;
 
-        
+
         const existingAnchor = segment.startAnchor ?? segment.endAnchor;
         if (!existingAnchor) {
             throw new Error("No existing anchor found");
@@ -276,16 +525,6 @@ export class MultiHyperConnection extends CombinedPathSegment {
     }
 }
 
-// export class ConnectionBundlePort {
-
-//     node: LayoutNode;
-//     type: "outgoing" | "incoming";
-
-//     hyperConnection: LayoutConnection;
-
-
-// }
-
 ////////////////////////////////////////////////////////////////////////////
 // #region Multi Connection Layouter
 ///////////////////////////////////////////////////////////////////////////
@@ -297,6 +536,9 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
 
     multiConnections: MultiHyperConnection[] = [];
 
+    mapNodeToBundlePorts: Map<LayoutNode, ConnectionBundlePort[]> = new Map();
+
+
     constructor() {
         super();
 
@@ -305,31 +547,40 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
         });
     }
 
+
+    getBundlePort(node: LayoutNode, hyperConnection: LayoutConnection, direction: "outgoing" | "incoming") {
+        const portsOfNode = this.mapNodeToBundlePorts.get(node) ?? [];
+        const port = portsOfNode.find(port => port.hyperConnection == hyperConnection && port.type == direction);
+
+        if (port) return port;
+
+        const newPort = new ConnectionBundlePort(node, direction, hyperConnection);
+        portsOfNode.push(newPort);
+        this.mapNodeToBundlePorts.set(node, portsOfNode);
+        return newPort;
+    }
+
     override layoutConnectionsOfNode(node: LayoutNode): void {
 
         const multiConnections: MultiHyperConnection[] = [];
 
         node.outConnections.forEach(connection => {
             if (connection.hasParentHyperConnection) {
-                // if (!(connection.source.id == "flint_node" && connection.target.id == "system_information")) return;
-
                 const parentHyperConnection = connection.parent!;
-                const multiConnection = new MultiHyperConnection(connection);
+                const multiConnection = new MultiHyperConnection(connection, parentHyperConnection, this);
                 connection.pathSegment = multiConnection;
 
                 multiConnection.nodePath = connection.getConnectionPathViaHyperAndVirtualNodes();
-                console.log(multiConnection.nodePath.map(node => node.id));
+                // console.log(multiConnection.nodePath.map(node => node.id));
 
-                multiConnection.hyperConnection = parentHyperConnection;
                 multiConnections.push(multiConnection);
 
                 multiConnection.prepareSegments();
-                
+
             } else {
                 // console.log(connection.weight);
             }
         })
-
 
         this.multiConnections.push(...multiConnections);
     }
@@ -346,9 +597,15 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
             return;
         }
 
+        this.calculatePortChains();
+        console.log("[BUNDLE PORTS]");
+        console.log(Array.from(this.mapNodeToBundlePorts.values()));
+
+        return;
+
         // console.log(node.id, hyperConnections);
 
-        
+
         // At the end, we want to adapt the circle segment radius, so that they are not all the same size
         // We only do this for circle segments, that have the same parent node and different hyper connections as target
 
@@ -370,7 +627,7 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
         })
 
         console.log(nodeToCircleSegmentsMap);
-        
+
         // // Adapt the circle segment radius, so that each has a different size
         nodeToCircleSegmentsMap.forEach((circleSegments, parentNode) => {
             // Do this only for circle segments, that are along the circle, direct bezier connections are not adapted
@@ -384,4 +641,26 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
             });
         })
     }
+
+
+    calculatePortChains() {
+
+        const ports = Array.from(this.mapNodeToBundlePorts.values()).flat();
+
+        ports.forEach(port => {
+
+            // if (port.node.id == "drive_manager_in___hypernode_0") {
+            //     port.node.debugShapes.push(...port.outPorts);
+            //     port.node.debugShapes.push(...port.inPorts);
+            // }
+
+            if (port.calculated) return;
+
+            const chain = new ConnectionBundlePortChain(port);
+            chain.calculate();
+        })
+
+
+    }
+
 }

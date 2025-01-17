@@ -1,5 +1,6 @@
 
-import { Line, Point, Ray, Vector } from "2d-geometry";
+import { Circle, Line, Point, Ray, Vector } from "2d-geometry";
+import { RadialUtils } from "src/graph/layouter/utils/radialUtils";
 
 export class Anchor {
   tag = "Anchor";
@@ -84,4 +85,42 @@ export class Anchor {
     }
     return new Ray(this.anchorPoint, this.direction.rotate90CW());
   }
+
+  static mean(anchors: Anchor[], circle?: Circle) {
+    if (anchors.length === 0) {
+      return new Anchor(new Point(0, 0), new Vector(0, 0));
+    }
+
+    // In this case, we just take the mean of the anchor directions
+    if (circle === undefined) {
+      let vector = new Vector(0, 0);
+      anchors.forEach(anchor => {
+        vector = vector.add(anchor.direction);
+      });
+      return new Anchor(new Point(0, 0), vector);
+    }
+
+    // For each anchor get the rad on the circle
+    const angles = anchors.map(anchor => {
+      return RadialUtils.radOfPoint(anchor.anchorPoint, circle.center);
+    });
+
+    // Calculate the mean angle
+    const meanAngle = angles.reduce((acc, angle) => {
+      return acc + angle;
+    }, 0) / angles.length;
+
+    // Calculate the mean point
+    const meanPoint = RadialUtils.positionOnCircleAtRad(meanAngle, circle.r, circle.center);
+
+    const a = new Anchor(meanPoint, new Vector(meanPoint, circle.center));
+
+    // If the anchors were away from the circle, the direction is inverted
+    if (circle.contains(anchors[0].getPointInDirection(circle.r))) {
+      return a;
+    }
+
+    return a.cloneReversed();
+  }
+
 }
