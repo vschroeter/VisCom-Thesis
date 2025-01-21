@@ -1,5 +1,6 @@
 import { Circle, Line, Point, PointLike, Segment, Vector } from "2d-geometry";
 import { ShapeUtil } from "./shapeUtil";
+import { Anchor } from "src/graph/graphical";
 
 /**
  * Converts radians to degrees.
@@ -279,5 +280,65 @@ export class RadialUtils extends ShapeUtil {
             return [];
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // #region Circle Construction
+    ////////////////////////////////////////////////////////////////////////////
+
+    static getCircleFromThreePoints(point1: Point, point2: Point, point3: Point): Circle {
+
+        const maxDistanceBetweenPoints = Math.max(
+            point1.distanceTo(point2)[0],
+            point1.distanceTo(point3)[0],
+            point2.distanceTo(point3)[0]
+        );
+
+        const circle1 = new Circle(point1, maxDistanceBetweenPoints);
+        const circle2 = new Circle(point2, maxDistanceBetweenPoints);
+        const circle3 = new Circle(point3, maxDistanceBetweenPoints);
+
+        const intersectionPoints1 = circle1.intersect(circle2);
+        const intersectionPoints2 = circle2.intersect(circle3);
+
+        if (intersectionPoints1.length < 2 || intersectionPoints2.length < 2) {
+            throw new Error("No intersection points found.");
+        }
+
+        const line1 = new Line(intersectionPoints1[0], intersectionPoints1[1]);
+        const line2 = new Line(intersectionPoints2[0], intersectionPoints2[1]);
+
+        const lineIntersections = line1.intersect(line2);
+
+        if (lineIntersections.length < 1) {
+            throw new Error("No intersection points found.");
+        }
+
+        const center = lineIntersections[0];
+        const radius = center.distanceTo(point1)[0];
+
+        return new Circle(center, radius); 
+    }
+
+    static getCircleFromCoincidentPointAndTangentAnchor(coincidentPoint: Point, anchor: Anchor): Circle {
+
+        const midPoint = Anchor.getMidPointBetweenPointAndAnchor(coincidentPoint, anchor);
+        const segToMidPoint = new Segment(coincidentPoint, midPoint);
+
+        // We dont have to rotate the anchors, because the line construction takes normal vectors
+        const perpLine1 = new Line(coincidentPoint, segToMidPoint.vector);
+        const perpLine2 = new Line(anchor.anchorPoint, anchor.direction);
+
+        const intersection = perpLine1.intersect(perpLine2);
+
+        if (intersection.length < 1) {
+            throw new Error("No intersection found");
+        }
+
+        const center = intersection[0];
+        const radius = center.distanceTo(coincidentPoint)[0];
+
+        return new Circle(center, radius);
+    }
+
 
 }

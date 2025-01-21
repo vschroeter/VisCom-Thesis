@@ -5,7 +5,7 @@ export class ShapeUtil {
     static getClosestShapeToPoint<T>(
         shapes: T[],
         point: Point,
-        pointGetter: (shape: T) => Point,
+        pointGetter: (shape: T) => Point = (shape: T) => shape as unknown as Point
     ): T | undefined {
         if (shapes.length === 0) {
             return undefined;

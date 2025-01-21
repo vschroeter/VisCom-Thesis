@@ -1,4 +1,4 @@
-import { Circle, Point, Segment } from "2d-geometry";
+import { Circle, Point, Segment, Vector } from "2d-geometry";
 import { Anchor } from "src/graph/graphical";
 import { CircleSegmentSegment } from "src/graph/graphical/primitives/pathSegments/CircleSegment";
 import { LayoutConnection, LayoutConnectionPoint, LayoutConnectionPoints } from "src/graph/visGraph/layoutConnection";
@@ -131,12 +131,12 @@ export class ConnectionBundlePortChain {
                 // Type == outgoing && only outgoing ports
                 // Type == incoming && only incoming ports
                 if (definingArray.length > 0 && otherArray.length == 0) {
-                    //TODO: Improve this case to use elliptic arcs
                     console.log("CASE 1 (node to port)", port.nodeID, port.type, i);
 
                     // In this case, there is only one side of the port defined (by an anchor or the mean of multiple anchors).
                     // The other side of the port is the node and thus open to be defined.
                     // We construct a new anchor, that allows a smooth transition from the node center to the defined side of the port.
+                    // This is done by finding a fitting circle segment between the node and the defined side of the port.
 
                     const anchors = definingArray.filter(port => port instanceof Anchor) as Anchor[];
                     const meanAnchor = Anchor.mean(anchors, parentNode?.circle);
@@ -144,45 +144,88 @@ export class ConnectionBundlePortChain {
                         throw new Error("No mean anchor found");
                     }
 
-                    const distance = node.center.distanceTo(meanAnchor.anchorPoint)[0];
-                    const circle1 = new Circle(node.center, distance);
-                    const circle2 = new Circle(meanAnchor.anchorPoint, distance);
-                    const intersections = circle1.intersect(circle2);
+                    const tangentCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(node.center, meanAnchor);
+                    const midPoint = Anchor.getMidPointBetweenPointAndAnchor(node.center, meanAnchor);
 
-                    if (intersections.length != 2) {
-                        throw new Error("No intersection found");
+                    // From the tangent circle, we get the intersections with the node circle
+                    const intersections = node.outerCircle.intersect(tangentCircle);
+                    const anchorPoint = ShapeUtil.getClosestShapeToPoint(intersections, midPoint);
+
+                    if (!anchorPoint) {
+                        throw new Error("No anchor point found");
                     }
 
-                    const circleIntersectionLine = new Segment(intersections[0], intersections[1]);
-                    const intersectionsWithAnchor = meanAnchor.getLine().intersect(circleIntersectionLine);
-                    if (intersectionsWithAnchor.length != 1) {
-                        throw new Error("No intersection with anchor found");
-                    }
+                    const _intersectionVector = new Vector(tangentCircle.center, anchorPoint)
 
-                    const _nodeAnchor = new Anchor(node.center, intersectionsWithAnchor[0]);
+                    const radDiff = RadialUtils.normalizeRad(RadialUtils.radBetweenPoints(node.center, anchorPoint, tangentCircle.center));
+                    const _nodeAnchor = radDiff > 0 ? new Anchor(anchorPoint, _intersectionVector.rotate90CW()) : new Anchor(anchorPoint, _intersectionVector.rotate90CCW());
+
+
+                    // const _nodeAnchor = new Anchor(node.center, midPoint);
                     const nodeAnchor = port.type == "outgoing" ? _nodeAnchor : _nodeAnchor.cloneReversed();
 
                     port.portAnchor = nodeAnchor;
 
-                    // // In this case, the port-anchor is defined by the mean of the anchors
-                    // const anchors = definingArray.filter(port => port instanceof Anchor) as Anchor[];
+                    // if (port.nodeID.startsWith("obstacle_detector")) {
+                    //     port.node.debugShapes.push(port.portAnchor);
+                    //     // port.node.debugShapes.push(meanAnchor);
+                    //     // port.node.debugShapes.push(tangentCircle)
+                    //     // port.node.debugShapes.push(node.center)
+                    //     // port.node.debugShapes.push(Anchor.getMidPointBetweenPointAndAnchor(node.center, meanAnchor))                        
+                    // }
+
                 } else if (definingArray.length == 0 && otherArray.length > 0) {
                     throw new Error("THIS SHOULD NOT HAPPEN" + port.nodeID);
                 } else if (definingArray.length > 0 && otherArray.length > 0) {
-                    console.log("CASE 2 (mean of port anchors)");
 
                     // In this case, the port-anchor is defined by the mean of the anchors
                     const outAnchors = port.outPorts.map(port => port instanceof Anchor ? port : port.portAnchor).filter(port => port) as Anchor[];
                     const inAnchors = port.inPorts.map(port => port instanceof Anchor ? port : port.portAnchor).filter(port => port) as Anchor[];
 
+                    console.log("CASE 2 (mean of port anchors)", outAnchors.length, inAnchors.length);
+
+
                     const meanOutAnchor = Anchor.mean(outAnchors, undefined);
                     const meanInAnchor = Anchor.mean(inAnchors, undefined);
 
-                    const meanAnchor = Anchor.mean([meanOutAnchor, meanInAnchor]);
-                    meanAnchor.anchorPoint = node.center;
-                    meanAnchor.anchorPoint = meanAnchor.getPointInDirection(node.radius);
-                    
+                    if (!meanOutAnchor || !meanInAnchor) {
+                        throw new Error("No mean anchor found");
+                    }
+
+                    // TODO: Atm mean causes the loss of the anchor point, so we reset it here
+                    meanOutAnchor.anchorPoint = outAnchors[0].anchorPoint;
+                    meanInAnchor.anchorPoint = inAnchors[0].anchorPoint;
+
+                    // The mean anchors are now adapted based on their distances to the node center (inverse proportionality)
+                    const distanceIn = meanInAnchor.anchorPoint.distanceTo(node.center)[0];
+                    const distanceOut = meanOutAnchor.anchorPoint.distanceTo(node.center)[0];
+
+                    const stretchedVectorIn = meanInAnchor.direction.multiply(1 / distanceIn);
+                    const stretchedVectorOut = meanOutAnchor.direction.multiply(1 / distanceOut);
+
+                    const meanVector = stretchedVectorIn.add(stretchedVectorOut);
+                    const _meanAnchor = new Anchor(node.center, meanVector);
+
+                    const meanAnchor = _meanAnchor.move(port.type == "outgoing" ? node.outerRadius : -node.outerRadius);
+                    // new Anchor(_meanAnchor.getPointInDirection(node.outerRadius), meanVector);
+
+                    if (!meanAnchor) {
+                        throw new Error("No mean anchor found");
+                    }
+
+                    // meanAnchor.anchorPoint = node.center;
+                    // meanAnchor.anchorPoint = meanAnchor.getPointInDirection(node.outerRadius);
+
                     // TODO: Check, if the anchors lie in the allowed range of the node
+
+                    // if (port.nodeID.startsWith("drive_manager_in") && port.type == "incoming") {
+                    //     console.log("PORT", distanceIn, distanceOut);
+                    //     outAnchors.forEach(anchor => port.node.debugShapes.push(anchor));
+                    //     inAnchors.forEach(anchor => port.node.debugShapes.push(anchor));
+                    //     port.node.debugShapes.push(meanAnchor);
+                    //     // port.node.debugShapes.push(meanInAnchor);
+                    //     // port.node.debugShapes.push(meanOutAnchor);
+                    // }
 
                     port.portAnchor = meanAnchor;
                 }
@@ -191,7 +234,12 @@ export class ConnectionBundlePortChain {
                 }
 
 
+                // if (port.nodeID.startsWith("drive_manager_in")) {
+                // if (port.nodeID.startsWith("drive_manager_in")) {
+                //     if (port.portAnchor) port.node.debugShapes.push(port.portAnchor);
+                // }
                 if (port.portAnchor) port.node.debugShapes.push(port.portAnchor);
+
                 port.calculated = true;
             })
         })
@@ -214,6 +262,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
     indexOfHyperConnection: number = -1;
 
     multiConnections: RadialMultiConnectionLayouter;
+    ports: (ConnectionBundlePort | undefined)[] = [];
 
     constructor(layoutConnection: LayoutConnection, hyperConnection: LayoutConnection, connections: RadialMultiConnectionLayouter) {
         super(layoutConnection);
@@ -315,20 +364,15 @@ export class MultiHyperConnection extends CombinedPathSegment {
             console.log(connId, type, lastWasBeforeHyperConnection, isBeforeHyperConnection);
 
             if (type == "fixed") {
-
                 if (lastAnchorOrPort && lastAnchorOrPort instanceof ConnectionBundlePort) {
                     console.log(connId, "Fixed: ADD OUT PORT", lastAnchorOrPort.node.id);
                     lastAnchorOrPort.addOutPort(info.segment.startAnchor);
-                    // if (lastWasBeforeHyperConnection) {
-                    //     console.log(connId, "Fixed: ADD OUT PORT", lastAnchorOrPort.node.id);
-                    //     lastAnchorOrPort.addOutPort(info.segment.startAnchor);
-                    // } else {
-                    //     console.log(connId, "Fixed: ADD IN PORT", lastAnchorOrPort.node.id);
-                    //     lastAnchorOrPort.addInPort(info.segment.endAnchor);
-                    // }
                 }
 
                 lastAnchorOrPort = isBeforeHyperConnection ? info.segment.endAnchor : info.segment.startAnchor;
+
+                this.ports.push(undefined);
+
             } else if (type == "circleSegment") {
                 const node = isBeforeHyperConnection ? info.sourceNode : info.targetNode;
                 const direction = isBeforeHyperConnection ? "outgoing" : "incoming";
@@ -351,16 +395,10 @@ export class MultiHyperConnection extends CombinedPathSegment {
 
                     console.log(connId, "Circle: ADD IN PORT", bundlePort.node.id);
                     bundlePort.addInPort(lastAnchorOrPort);
-
-                    // if (isBeforeHyperConnection) {
-                    //     console.log(connId, "Circle: ADD IN PORT", bundlePort.node.id);
-                    //     bundlePort.addInPort(lastAnchorOrPort);
-                    // } else {
-                    //     console.log(connId, "Circle: ADD OUT PORT", bundlePort.node.id);
-                    //     bundlePort.addOutPort(lastAnchorOrPort);
-                    // }
                 }
                 lastAnchorOrPort = bundlePort;
+
+                this.ports.push(bundlePort);
             }
         })
 
@@ -600,6 +638,10 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
         this.calculatePortChains();
         console.log("[BUNDLE PORTS]");
         console.log(Array.from(this.mapNodeToBundlePorts.values()));
+
+        multiConnections.forEach(multiConnection => {
+            console.log(multiConnection.ports);
+        })
 
         return;
 
