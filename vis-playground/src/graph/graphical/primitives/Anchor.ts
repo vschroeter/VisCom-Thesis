@@ -97,7 +97,7 @@ export class Anchor {
   // #region Static construction methods
   ////////////////////////////////////////////////////////////////////////////
 
-  static mean(anchors: (Anchor | undefined)[], circle?: Circle): Anchor | undefined {
+  static mean(anchors: (Anchor | undefined)[], circle?: Circle, preserveAnchorPoint = false): Anchor | undefined {
     const filteredAnchors = anchors.filter(a => a !== undefined) as Anchor[];
     if (filteredAnchors.length === 0) {
       return undefined;
@@ -110,7 +110,9 @@ export class Anchor {
         if (anchor === undefined) return;
         vector = vector.add(anchor.direction);
       });
-      return new Anchor(new Point(0, 0), vector);
+
+      if (!preserveAnchorPoint) return new Anchor(new Point(0, 0), vector);
+      return new Anchor(filteredAnchors[0].anchorPoint, vector);
     }
 
     // For each anchor get the rad on the circle

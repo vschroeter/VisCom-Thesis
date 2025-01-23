@@ -8,7 +8,7 @@ import { CubicBezierCurve } from "./BezierCurve";
 import { PathSegment } from "./PathSegment";
 import { Point } from "2d-geometry";
 
-export class SplineSegment extends PathSegment {
+export class SmoothSplineSegment extends PathSegment {
     override startAnchor?: Anchor | undefined;
     override endAnchor?: Anchor | undefined;
 

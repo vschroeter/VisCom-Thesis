@@ -5,7 +5,7 @@ import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { Segment } from "2d-geometry";
 import { Anchor } from "src/graph/graphical";
 import { RadialConnectionsHelper } from "./radialConnections";
-import { SplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
+import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
 
 ////////////////////////////////////////////////////////////////////////////
 // #region Continuum
@@ -222,11 +222,11 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
 
                 if (isArray) {
                     connections.forEach(connection => {
-                        connection.pathSegment = connection.pathSegment ?? new SplineSegment(connection);
+                        connection.pathSegment = connection.pathSegment ?? new SmoothSplineSegment(connection);
                     })
                 }
 
-                const spline = (connection.pathSegment ?? new SplineSegment(connection)) as SplineSegment;
+                const spline = (connection.pathSegment ?? new SmoothSplineSegment(connection)) as SmoothSplineSegment;
                 connection.pathSegment = spline;
 
                 // For the inside connections, we first determine the available range to positions connections 
@@ -321,7 +321,7 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
             // Now we distribute the connections inside the parent circle
             outsideConnections.forEach((connection, index) => {
                 
-                const spline = (connection.pathSegment ?? new SplineSegment(connection)) as SplineSegment;
+                const spline = (connection.pathSegment ?? new SmoothSplineSegment(connection)) as SmoothSplineSegment;
                 connection.pathSegment = spline;
 
                 // For the inside connections, we first determine the available range to positions connections 

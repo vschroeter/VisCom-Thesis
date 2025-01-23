@@ -7,7 +7,7 @@ import { ShapeUtil } from "src/graph/layouter/utils/shapeUtil";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialUtils } from "src/graph/layouter/utils/radialUtils";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
-import { SplineSegment } from "./SmoothSpline";
+import { SmoothSplineSegment } from "./SmoothSpline";
 
 export class CircleSegmentSegment extends PathSegment {
 
@@ -34,9 +34,30 @@ export class CircleSegmentSegment extends PathSegment {
     /** If the path should cross a node */
     crossNode?: LayoutNode;
 
-    startAnchor?: Anchor;
-    endAnchor?: Anchor;
+    _startAnchor?: Anchor;
+    _endAnchor?: Anchor;
 
+    set startAnchor(anchor: Anchor | undefined) {
+        this._startAnchor = anchor;
+    }
+
+    set endAnchor(anchor: Anchor | undefined) {
+        this._endAnchor = anchor;
+    }
+
+    get startAnchor(): Anchor | undefined {
+        return this._startAnchor ?? this.intermediateStartAnchor;
+    }
+
+    get endAnchor(): Anchor | undefined {
+        return this._endAnchor ?? this.intermediateEndAnchor;
+    }
+
+    intermediateStartAnchor?: Anchor;
+    intermediateEndAnchor?: Anchor;
+
+    intermediateStartCurve?: SmoothSplineSegment;
+    intermediateEndCurve?: SmoothSplineSegment;
     startCurve?: CubicBezierCurve;
     endCurve?: CubicBezierCurve;
     circleArc?: EllipticArc;
@@ -83,28 +104,52 @@ export class CircleSegmentSegment extends PathSegment {
         }
 
         if (this.directConnectionCurve) {
-            return this.directConnectionCurve.getSvgPath();
+            return [
+                this.intermediateStartCurve?.getSvgPath(),
+                this.directConnectionCurve.getSvgPath(),
+                this.intermediateEndCurve?.getSvgPath(),
+            ].join(" ");
         }
+        
+        return [
+            this.intermediateStartCurve?.getSvgPath(),
+            this.startCurve?.getSvgPath(),
+            this.circleArc?.getSvgPath(),
+            this.endCurve?.getSvgPath(),
+            this.intermediateEndCurve?.getSvgPath(),
+        ].filter((s) => s).join(" ");
 
-        return `${this.startCurve?.getSvgPath()} ${this.circleArc?.getSvgPath()} ${this.endCurve?.getSvgPath()}`;
+
+        // return `${this.startCurve?.getSvgPath()} ${this.circleArc?.getSvgPath()} ${this.endCurve?.getSvgPath()}`;
     }
     calculate(force = false): string {
         if (this._calculated && !force) {
             return this.getSvgPath();
         }
+
+        this._calculated = true;
+
         // Contains 3 forms:
         // - a start connection quadratic bezier curve from the start anchor to the circle
         // - a circle arc
         // - a end connection quadratic bezier curve from the circle to the end anchor
 
-        const startAnchor = this.startAnchor;
-        const endAnchor = this.endAnchor;
-
-        if (!endAnchor || !startAnchor) {
+        if (!this.endAnchor || !this.startAnchor) {
             return "";
         }
 
+        // let intermediateStartCurve: SmoothSplineSegment | undefined = undefined;
+        // let intermediateEndCurve: SmoothSplineSegment | undefined = undefined;
 
+        if (this.startAnchor && this.intermediateStartAnchor) {
+            this.intermediateStartCurve = new SmoothSplineSegment(this.connection, this.startAnchor, this.intermediateStartAnchor, 0.4);
+        }
+        if (this.endAnchor && this.intermediateEndAnchor) {
+            this.intermediateEndCurve = new SmoothSplineSegment(this.connection, this.intermediateEndAnchor, this.endAnchor, 0.4);
+        }
+
+        const startAnchor = this.intermediateStartAnchor ?? this.startAnchor;
+        const endAnchor = this.intermediateEndAnchor ?? this.endAnchor;
 
         const startPoint = startAnchor.anchorPoint;
         const endPoint = endAnchor.anchorPoint;
@@ -193,7 +238,7 @@ export class CircleSegmentSegment extends PathSegment {
         }
 
         if (startEndIntersections.length > 0 || startContainsEnd || endContainsStart) {
-            const segment = new SplineSegment(this.connection, startAnchor, endAnchor, 0.4);
+            const segment = new SmoothSplineSegment(this.connection, startAnchor, endAnchor, 0.4);
 
             this.directConnectionCurve = segment;
             return segment.getSvgPath();
@@ -350,7 +395,10 @@ export class CircleSegmentSegment extends PathSegment {
         this.startCurve = startCurve;
         this.endCurve = endCurve;
         this.circleArc = arc;
-        return `${startCurve.getSvgPath()} ${arc.getSvgPath()} ${endCurve.getSvgPath()}`;
+
+        return this.getSvgPath();
+
+        // return `${startCurve.getSvgPath()} ${arc.getSvgPath()} ${endCurve.getSvgPath()}`;
     }
 
 }
