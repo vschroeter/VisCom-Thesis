@@ -1,6 +1,7 @@
 
 import { Circle, Line, Point, Ray, Segment, Vector } from "2d-geometry";
 import { RadialUtils } from "src/graph/layouter/utils/radialUtils";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
 
 export class Anchor {
   tag = "Anchor";
@@ -10,6 +11,7 @@ export class Anchor {
 
   /** The direction, in which the anchor is pointing. This is orthogonal to the edge at the anchor point */
   direction: Vector;
+  _data?: { stroke?: string; length?: number };
 
 
   constructor(anchorPoint: Point, directionalPoint: Point);
@@ -145,7 +147,7 @@ export class Anchor {
    * @param point 
    * @param anchor 
    */
-  static getMidPointBetweenPointAndAnchor(point: Point, anchor: Anchor) {
+  static getMidPointBetweenPointAndAnchor(point: Point, anchor: Anchor): Point | undefined {
     const distance = point.distanceTo(anchor.anchorPoint)[0];
 
     // 2 Circles to create the intersection line
@@ -154,13 +156,13 @@ export class Anchor {
     const intersections = circle1.intersect(circle2);
 
     if (intersections.length != 2) {
-      throw new Error("No intersection found");
+      return undefined;
     }
     // The intersection line is then intersected with the anchor line to get the midpoint
-    const circleIntersectionLine = new Segment(intersections[0], intersections[1]);
+    const circleIntersectionLine = new Line(intersections[0], intersections[1]);
     const intersectionsWithAnchor = anchor.getLine().intersect(circleIntersectionLine);
-    if (intersectionsWithAnchor.length != 1) {
-      throw new Error("No intersection with anchor found");
+    if (intersectionsWithAnchor.length < 1) {
+      return undefined;
     }
 
     return intersectionsWithAnchor[0];
@@ -168,3 +170,94 @@ export class Anchor {
   }
 
 }
+
+
+////////////////////////////////////////////////////////////////////////////
+// #region Node Anchor
+////////////////////////////////////////////////////////////////////////////
+
+export class NodeAnchor {
+
+
+  // The parent node of the anchor
+  node: LayoutNode
+
+  readonly nodeId: string
+
+  anchor: Anchor
+  curvingAnchor?: Anchor
+
+  constructor(node: LayoutNode, anchor: Anchor, curvingAnchor?: Anchor) {
+    this.node = node;
+    this.nodeId = node.id;
+    this.anchor = anchor;
+    this.curvingAnchor = curvingAnchor;
+  }
+
+  get circle() {
+    return this.node.outerCircle;
+  }
+}
+
+
+
+export class RadialAnchor {
+
+
+  // The parent node of the anchor
+  node: LayoutNode
+
+  readonly nodeId: string
+
+  // The anchor's angle in radians (relative to the node's center)
+  angle: number
+
+  constructor(node: LayoutNode, angle?: number) {
+    this.node = node;
+    this.nodeId = node.id;
+
+    if (angle) this.angle = angle;
+    else {
+
+      const validRange = node.getValidOuterRadRange();
+
+      this.angle = validRange[0] + (RadialUtils.forwardRadBetweenAngles(validRange[0], validRange[1]) / 2);
+
+    }
+
+  }
+
+  get circle() {
+    return this.node.outerCircle;
+  }
+
+  rotate(angle: number) {
+    return new RadialAnchor(this.node, this.angle + angle);
+  }
+
+  rotate90CW() {
+    return this.rotate(Math.PI / 2);
+  }
+
+  rotate90CCW() {
+    return this.rotate(-Math.PI / 2);
+  }
+
+  rotate180() {
+    return this.rotate(Math.PI);
+  }
+
+  static fromAnchor(sourceNode: LayoutNode, startAnchor: Anchor): RadialAnchor {
+    const angle = RadialUtils.radOfPoint(startAnchor.anchorPoint, sourceNode.center);
+    return new RadialAnchor(sourceNode, angle);
+  }
+
+  getAnchor(): Anchor {
+    const a = new Anchor(this.node.center, new Vector(this.angle));
+    a.anchorPoint = a.getPointInDirection(this.node.outerRadius);
+    return a;
+  }
+
+
+}
+

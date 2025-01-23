@@ -681,13 +681,15 @@ export class LayoutNode {
         return [nextRad, prevRad];
     }
 
-    getValidOuterRadRange(): [number, number] {
+    getValidOuterRadRange(factor = 1): [number, number] {
 
         const parent = this.parent;
         const nextNode = this.getNextNodeInSorting();
         const previousNode = this.getPreviousNodeInSorting();
+        let range = [0, 0];
+
         if (!parent || !nextNode || !previousNode) {
-            return [0, 0];
+            return range as [number, number];
         }
 
         const nextTangents = RadialUtils.getTangentsToCircle(this.center, nextNode.outerCircle);
@@ -702,24 +704,32 @@ export class LayoutNode {
         }
 
         if (!nextTangent || !prevTangent) {
-            return [0, 0];
+            return range as [number, number];
         }
 
         const nextRad = RadialUtils.radOfPoint(nextTangent.end, this.center);
         const prevRad = RadialUtils.radOfPoint(prevTangent.end, this.center);
+
+        range = [prevRad, nextRad];
 
         if (nextNode == previousNode) {
 
             const nodeRad = RadialUtils.radOfPoint(nextNode.center, this.center);
 
             if (RadialUtils.radIsBetween(nodeRad, prevRad, nextRad)) {
-                return [nextRad, prevRad];
+                range = [nextRad, prevRad];
             } else {
-                return [prevRad, nextRad];
+                range = [prevRad, nextRad];
             }
         }
 
-        return [prevRad, nextRad];
+        if (factor != 1) {
+            const diff = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
+            const mid = range[0] + diff / 2;
+            range = [mid - diff / 2 * factor, mid + diff / 2 * factor];
+        }
+        
+        return range as [number, number];
     }
 
     ////////////////////////////////////////////////////////////////////////////

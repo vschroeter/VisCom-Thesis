@@ -1,4 +1,4 @@
-import { Circle, Point, Segment, Vector } from "2d-geometry";
+import { Circle, Line, Point, Segment, Vector } from "2d-geometry";
 import { Anchor } from "src/graph/graphical";
 import { CircleSegmentSegment } from "src/graph/graphical/primitives/pathSegments/CircleSegment";
 import { LayoutConnection, LayoutConnectionPoint, LayoutConnectionPoints } from "src/graph/visGraph/layoutConnection";
@@ -8,6 +8,7 @@ import { RadialUtils } from "../utils/radialUtils";
 import { RadialConnectionsHelper } from "./radialConnections";
 import { CombinedPathSegment, PathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
 import { ShapeUtil } from "../utils/shapeUtil";
+import { NodeAnchor, RadialAnchor } from "src/graph/graphical/primitives/Anchor";
 
 ////////////////////////////////////////////////////////////////////////////
 // #region Helper Classes
@@ -29,6 +30,13 @@ type MultiSegmentInformation = {
 
     sourceNode: LayoutNode,
     targetNode: LayoutNode,
+
+    nodePort?: NodePort;
+    nextPort?: NodePort;
+    prevPort?: NodePort;
+
+    index: number;
+    isBeforeHyperConnection: boolean;
 }
 
 export class ConnectionBundlePort {
@@ -91,6 +99,423 @@ export class ConnectionBundlePort {
     }
 }
 
+
+export class NodePort {
+    
+
+
+    node: LayoutNode;
+    nodeID: string;
+
+    type: "outgoing" | "incoming";
+    hyperConnection: LayoutConnection;
+
+    calculated: boolean = false;
+    anchor?: NodeAnchor;
+
+    radialAnchor: RadialAnchor;
+
+    anchors: (NodePort | NodeAnchor)[] = [];
+
+    forces: NodePortForce[] = [];
+    currentForce: number = 0;
+
+    // nodePorts: (ConnectionBundlePort | NodeAnchor)[] = [];
+    // externalPorts: (ConnectionBundlePort | NodeAnchor)[] = [];
+
+    // segments: PathSegment[] = [];
+
+    constructor(node: LayoutNode, type: "outgoing" | "incoming", hyperConnection: LayoutConnection) {
+        this.node = node;
+        this.nodeID = node.id;
+        this.type = type;
+        this.hyperConnection = hyperConnection;
+
+        this.radialAnchor = new RadialAnchor(this.node);
+    }
+
+    getAnchor(): Anchor {
+        const a = this.radialAnchor.getAnchor();
+        if (this.type == "outgoing") {
+            return a;
+        }
+        return a.cloneReversed();
+    }
+
+    applyForces(alpha: number) {
+        const delta = this.currentForce * alpha;
+        this.radialAnchor = this.radialAnchor.rotate(delta);
+        this.currentForce = 0;
+        return Math.abs(delta);
+    }
+
+    addAnchor(port?: NodePort | NodeAnchor) {
+        if (!port) return;
+        this.anchors.push(port);
+    }
+
+    addForce(force: NodePortForce) {
+        this.forces.push(force);
+    }
+
+}
+
+export abstract class NodePortForce {
+    strength: number = 1;
+
+    constructor(
+        public port: NodePort
+    ) { }
+
+
+    update() { }
+
+    abstract applyLazy(): void;
+
+    static getAttractiveRadialForce(currentAngleRad: number, targetAngleRad: number, strength: number = 1): number {
+        return Math.sin(targetAngleRad - currentAngleRad) * strength;
+    }
+}
+
+export class CenterForce extends NodePortForce {
+
+    node: LayoutNode;
+    centerAnchor: RadialAnchor;
+
+
+    constructor(port: NodePort) {
+        super(port);
+        this.strength = 0.2
+        this.node = port.node;
+        this.centerAnchor = new RadialAnchor(port.node)
+    }
+
+    override applyLazy() {
+        this.port.currentForce += NodePortForce.getAttractiveRadialForce(
+            this.port.radialAnchor.angle,
+            this.centerAnchor.angle,
+            this.strength
+        );
+    }
+
+}
+
+export class AttractiveAnchorForce extends NodePortForce {
+
+    anchor: NodeAnchor | NodePort;
+    node: LayoutNode;
+
+    radialAnchor!: RadialAnchor;
+
+    validOuterRange: number[];
+
+    constructor(port: NodePort, anchor: NodeAnchor | NodePort) {
+        super(port);
+        this.anchor = anchor;
+        this.node = port.node;
+        this.port = port;
+
+        this.validOuterRange = this.node.getValidOuterRadRange(0.8);
+
+        // this.update();
+    }
+
+    override applyLazy() {
+
+        const portAngle = this.port.radialAnchor.angle;
+        const thisAngle = this.radialAnchor.angle;
+        const force = NodePortForce.getAttractiveRadialForce(portAngle, thisAngle, this.strength);
+
+        if (this.port.node.id == "obstacle_detector") {
+
+            console.log("FORCE Attractive",
+                {
+                    port: this.port,
+                    anchor: this.anchor,
+                    portAngle,
+                    thisAngle,
+                    force,
+                    currentForce: this.port.currentForce
+                });
+        }
+
+        this.port.currentForce += NodePortForce.getAttractiveRadialForce(
+            this.port.radialAnchor.angle,
+            this.radialAnchor.angle,
+            this.strength
+        );
+    }
+
+    override update() {
+
+        // The given anchor should be an attractive force on the node's radial anchor.
+        // To be an attractive anchor, we first have to calculate the radial anchor on the node's circle from the given node anchor.
+        // There are two cases:
+        // 1. The node anchor has the same node as the given node. In this case, the anchor is on the other side of the port, so we have to calculate the fitting counter anchor.
+        // 2. The node anchor has a different node than the given node (so the other node is an outer node of this node). 
+        //    In this case we expand the outer nodes anchor to the node.
+        // In either case, the anchors must be put between the valid outer range of the node's circle.
+
+
+        const anchor = this.anchor instanceof NodeAnchor ? this.anchor.anchor : this.anchor.radialAnchor!.getAnchor();
+        const curvingAnchor = (this.anchor instanceof NodeAnchor ? this.anchor.curvingAnchor : undefined) ?? anchor;
+        const anchorNode = this.anchor.node;
+
+        // Case 1
+        if (anchorNode == this.node) {
+            // For a smoother transition, we extend the curve from the curving anchor via the anchor to the node's circle
+            // We just assume, that the slope of the anchor changes proportionally to the distance
+            const curvingSlope = curvingAnchor.direction.slope;
+            const anchorSlope = anchor.direction.slope;
+
+            // Here we differentiate between positive and negative curvature
+            let radDiff = RadialUtils.forwardRadBetweenAngles(curvingSlope, anchorSlope);
+            if (radDiff > Math.PI) radDiff -= Math.PI * 2;
+
+            const distanceBetweenCurvingAnchors = anchor.anchorPoint.distanceTo(curvingAnchor.anchorPoint)[0];
+
+            const distForCalculation = anchorNode == this.node ? this.node.outerRadius : anchor.anchorPoint.distanceTo(this.node.center)[0];
+
+            // The slope difference is added to the anchor slope, proportionally to the node radius            
+            let slopeAtOtherSideOfNode = distanceBetweenCurvingAnchors > 0 ?
+                anchorSlope + radDiff * (distForCalculation / distanceBetweenCurvingAnchors) :
+                anchorSlope;
+
+            // If the port is an incoming port, we have to rotate the slope by 180° to get it on the incoming side
+            if (this.port.type == "incoming") {
+                slopeAtOtherSideOfNode += Math.PI;
+            }
+
+            // console.log("RAD", {
+            //     id: this.node.id,
+            //     slopeAtOtherSideOfNode,
+            //     min: this.validOuterRange[0],
+            //     max: this.validOuterRange[1],
+            //     minNorm: RadialUtils.normalizeRad(this.validOuterRange[0], true),
+            //     maxNorm: RadialUtils.normalizeRad(this.validOuterRange[1], true),
+            //     put: RadialUtils.putRadBetween(slopeAtOtherSideOfNode, this.validOuterRange[0], this.validOuterRange[1])
+            // })
+
+            // New we only have to put the slope between the valid outer range of the node's circle
+            // slopeAtOtherSideOfNode = RadialUtils.putRadBetween(slopeAtOtherSideOfNode, this.validOuterRange[0], this.validOuterRange[1]);
+
+            // console.log("RADs", this.node.id, { t: this, radDiff, curvingSlope, anchorSlope, slopeAtOtherSideOfNode, distanceBetweenCurvingAnchors, r: this.node.outerRadius });
+
+            this.radialAnchor = new RadialAnchor(this.node, slopeAtOtherSideOfNode);
+            this.strength = 1;
+            // const a = this.radialAnchor.getAnchor()
+            // a._data = { stroke: "blue" };
+            // this.node.debugShapes.push(a);
+        }
+        // Case 2
+        // Here we draw a circular arc from the anchor to the node's circle
+        else {
+            this.strength = 5;
+            try {
+                const circle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(this.node.center, anchor);
+
+                if (circle) {
+                    const intersections = this.node.outerCircle.intersect(circle);
+                    let intersection = ShapeUtil.getClosestShapeToPoint(intersections, anchor.anchorPoint);
+
+                    // If there is no intersection, the anchor and its circle are inside of a parent node
+                    // In this case, we calculate the intersection from the anchor line with the node's circle
+                    if (!intersection) {
+                        const lineIntersections = anchor.getLine().intersect(this.node.outerCircle);
+                        intersection = ShapeUtil.getClosestShapeToPoint(lineIntersections, anchor.anchorPoint);
+                    }
+
+                    const intersectionVector = new Vector(this.node.center, intersection);
+                    const slope = intersectionVector.slope
+                    // TODO:: A RadialAnchor might not be the best option, because it is alyways a straight anchor at the given angle. Sometimes slanted vectors are better
+                    this.radialAnchor = new RadialAnchor(this.node, slope);
+
+                }
+                // If the anchor is directly perpendicular to the node's center, we just set the nodes anchor to the anchor
+                else {
+                    this.radialAnchor = new RadialAnchor(this.node, RadialUtils.radBetweenPoints(this.node.center, anchor.anchorPoint));
+                }
+
+
+                // Check if the slope is in the valid range
+                if (!RadialUtils.radIsBetween(this.radialAnchor.angle, this.validOuterRange[0], this.validOuterRange[1])) {
+                    this.strength = 0.01
+                }
+
+                // const a = this.radialAnchor.getAnchor()
+                // a._data = { stroke: "green" };
+                // this.node.debugShapes.push(a);
+
+            } catch (e) {
+
+                // this.node.debugShapes.push(anchor);
+                // this.node.debugShapes.push(this.node.center);
+                // this.node.debugShapes.push(this.node.outerCircle);
+
+                // anchor._data = { stroke: "red", length: 1000 };
+                // this.node.debugShapes.push(anchor);
+                // this.node.debugShapes.push(this.node.center);
+
+                // const point = this.node.center;
+                // const distance = point.distanceTo(anchor.anchorPoint)[0];
+
+                // const circle1 = new Circle(point, distance);
+                // const circle2 = new Circle(anchor.anchorPoint, distance);
+                // const intersections = circle1.intersect(circle2);
+
+                // // The intersection line is then intersected with the anchor line to get the midpoint
+                // const circleIntersectionLine = new Segment(intersections[0], intersections[1]);
+                // const intersectionsWithAnchor = anchor.getLine().intersect(circleIntersectionLine);
+
+                // this.node.debugShapes.push(circle1);
+                // this.node.debugShapes.push(circle2);
+                // this.node.debugShapes.push(circleIntersectionLine);
+                // this.node.debugShapes.push(...intersections);
+                throw e;
+            }
+
+        }
+
+
+    }
+}
+
+export class RepulsiveForce extends NodePortForce {
+
+    constructor(port: NodePort, public otherPort: NodePort) {
+        super(port);
+    }
+    override applyLazy() {
+    }
+}
+
+export class NodePortSimulation {
+
+
+    ports: NodePort[] = [];
+
+    nodeToPorts: Map<LayoutNode, NodePort[]> = new Map();
+
+    constructor(ports: NodePort[]) {
+        this.ports = ports;
+
+        ports.forEach(port => {
+            const node = port.node;
+            const portsOfNode = this.nodeToPorts.get(node) ?? [];
+            portsOfNode.push(port);
+            this.nodeToPorts.set(node, portsOfNode);
+        })
+    }
+
+    simulate() {
+
+        console.log("SIMULATE PORTS", this.ports);
+
+        // Each port is simulated by a number of forces, dragging it to the correct position on the parent node's circle
+        // The forces are:
+        // - repulsive:
+        //   - to ports on the same node (there are different ports for outgoing/incoming and for each different hyper connection)
+        //   - to the limitation points for the valid range of the parent node's circle
+        // - attractive:
+        //   - to the anchors of the port
+        // -> anchor point is always on the circle
+        // -> anchor point must be between the valid range of the parent node's circle
+
+        //++++ Add the forces ++++//
+        this.ports.forEach(port => {
+            // port.addForce(new CenterForce(port));
+
+            port.anchors.forEach(anchor => {
+                port.addForce(new AttractiveAnchorForce(port, anchor));
+            })
+        })
+
+        this.nodeToPorts.forEach((ports, node) => {
+            ports.forEach(port => {
+                ports.forEach(otherPort => {
+                    if (port == otherPort) return;
+                    // port.addForce(new RepulsiveForce(port, otherPort));
+                })
+            })
+        })
+
+        //++++ Init the ports to the center of the outer node range ++++//
+        this.ports.forEach(port => {
+            port.radialAnchor = new RadialAnchor(port.node)
+            // port.node.debugShapes.push(port.radialAnchor.getAnchor());
+
+            const validOuterRange = port.node.getValidOuterRadRange();
+            const validInnerRange = port.node.getValidInnerRadRange();
+
+            // const segment1 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validOuterRange[0], port.node.outerRadius, port.node.center));
+            // const segment2 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validOuterRange[1], port.node.outerRadius, port.node.center));
+            // const segment3 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validInnerRange[0], port.node.innerRadius, port.node.center));
+            // const segment4 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validInnerRange[1], port.node.innerRadius, port.node.center));
+
+
+            // segment1._data = { stroke: "orange" };
+            // segment2._data = { stroke: "red" };
+            // segment3._data = { stroke: "lightgreen" };
+            // segment4._data = { stroke: "green" };
+
+
+            // port.node.debugShapes.push(segment1);
+            // port.node.debugShapes.push(segment2);
+            // port.node.debugShapes.push(segment3);
+            // port.node.debugShapes.push(segment4);
+        })
+
+
+
+        this.ports.forEach(port => {
+            port.forces.forEach(force => force.update());
+        });
+
+        //++++ Simulate the forces ++++//
+        const maxIterations = 100;
+        let alpha = 1;
+        const minAlpha = 0.01;
+        const alphaDecay = 1 - Math.pow(minAlpha, 1 / maxIterations);
+        console.log("ALPHA", alphaDecay);
+
+        for (let i = 0; i < maxIterations; i++) {
+            let totalDelta = 0;
+            this.ports.forEach(port => {
+                port.forces.forEach(force => force.update());
+            })
+
+            this.ports.forEach(port => {
+                port.forces.forEach(force => {
+                    force.applyLazy();
+                })
+                const delta = port.applyForces(alpha);
+                totalDelta += Math.abs(delta);
+
+                if (port.node.id == "obstacle_detector") {
+                    console.log("PORT", port.radialAnchor.angle, delta, alpha);
+                }
+
+            })
+
+            console.log("ITERATION", i, totalDelta, alpha);
+            if (totalDelta < 0.01) break;
+
+            alpha += (-alpha) * alphaDecay;
+            console.log("ALPHA AFTER", alpha);
+        }
+
+        this.ports.forEach(port => {
+            // port.radialAnchor = port.radialAnchor.rotate(Math.PI);
+            port.node.debugShapes.push(port.radialAnchor.getAnchor());
+        })
+
+
+
+
+    }
+
+}
+
 export class ConnectionBundlePortChain {
 
     layers: ConnectionBundlePort[][] = [];
@@ -115,6 +540,8 @@ export class ConnectionBundlePortChain {
             currentLayer = nextLayer;
         }
     }
+
+
 
     calculate() {
         console.log("CALC PORTS", this.layers);
@@ -176,13 +603,13 @@ export class ConnectionBundlePortChain {
                         port.node.debugShapes.push(meanAnchor);
                         port.node.debugShapes.push(tangentCircle)
                         port.node.debugShapes.push(node.center)
-                        port.node.debugShapes.push(Anchor.getMidPointBetweenPointAndAnchor(node.center, meanAnchor))                        
+                        port.node.debugShapes.push(Anchor.getMidPointBetweenPointAndAnchor(node.center, meanAnchor))
                     }
 
                 } else if (definingArray.length == 0 && otherArray.length > 0) {
                     // console.log("CASE 3 (port to node)", port);
                     // throw new Error("THIS SHOULD NOT HAPPEN " + port.nodeID);
-                    
+
                     console.log("CASE 3 (port with one undefined side)", port.nodeID, port.type, i);
 
                     const meanAnchor = Anchor.mean(otherArray);
@@ -197,7 +624,7 @@ export class ConnectionBundlePortChain {
                 } else if (definingArray.length > 0 && otherArray.length == 0) {
                     // console.log("CASE 3 (port to node)", port);
                     // throw new Error("THIS SHOULD NOT HAPPEN " + port.nodeID);
-                    
+
                     console.log("CASE 4 (port with one undefined side)", port.nodeID, port.type, i);
 
                     const meanAnchor = Anchor.mean(definingArray);
@@ -209,7 +636,7 @@ export class ConnectionBundlePortChain {
 
                     port.portAnchor = meanAnchor;
 
-                } 
+                }
                 else if (definingArray.length > 0 && otherArray.length > 0) {
 
                     // In this case, the port-anchor is defined by the mean of the anchors
@@ -244,7 +671,7 @@ export class ConnectionBundlePortChain {
                     const stretchedVectorIn = meanInAnchor.direction.multiply(1 / distanceIn);
                     const stretchedVectorOut = meanOutAnchor.direction.multiply(1 / distanceOut);
 
-                    
+
                     // const stretchedVectorIn = meanInAnchor.direction.normalize().multiply(1 * distanceIn);
                     // const stretchedVectorOut = meanOutAnchor.direction.normalize().multiply(1 * distanceOut);
 
@@ -307,7 +734,13 @@ export class MultiHyperConnection extends CombinedPathSegment {
     indexOfHyperConnection: number = -1;
 
     multiConnections: RadialMultiConnectionLayouter;
-    ports: (ConnectionBundlePort | undefined)[] = [];
+    // ports: (ConnectionBundlePort | undefined)[] = [];
+    // ports: (NodePort | undefined)[] = [];
+
+    get ports() {
+        return this.info.map(info => info.nodePort);
+    }
+
 
     constructor(layoutConnection: LayoutConnection, hyperConnection: LayoutConnection, connections: RadialMultiConnectionLayouter) {
         super(layoutConnection);
@@ -368,25 +801,53 @@ export class MultiHyperConnection extends CombinedPathSegment {
 
     private calculateSegmentInformation() {
 
-        this.info = this.segments.map((segment, index) => {
+        this.info = this.segments.map((segment, i) => {
 
-            const prevHyperConnection = this.hyperConnections.slice(0, index).reverse().find((seg, i) => this.types[index - i - 1] == "fixed");
-            const nextHyperConnection = this.hyperConnections.slice(index + 1).find((seg, i) => this.types[index + i + 1] == "fixed");
+            const prevHyperConnection = this.hyperConnections.slice(0, i).reverse().find((seg, j) => this.types[i - j - 1] == "fixed");
+            const nextHyperConnection = this.hyperConnections.slice(i + 1).find((seg, j) => this.types[i + j + 1] == "fixed");
+
+            const sourceNode = this.nodePath[i];
+            const targetNode = this.nodePath[i + 1];
+
+            const isBeforeHyperConnection = i <= this.indexOfHyperConnection;
+            const direction = isBeforeHyperConnection ? "outgoing" : "incoming";
+            const hyperConnection = isBeforeHyperConnection ? nextHyperConnection : prevHyperConnection;
+
+            const portsNode = isBeforeHyperConnection ? sourceNode : targetNode;
+            const port = this.types[i] == "fixed" ? undefined : this.multiConnections.getNodePort(portsNode, hyperConnection, direction)
 
             return {
-                type: this.types[index],
-                prevType: index > 0 ? this.types[index - 1] : undefined,
-                nextType: index < this.segments.length - 1 ? this.types[index + 1] : undefined,
+                type: this.types[i],
+
+                index: i,
+                isBeforeHyperConnection,
+
+                prevType: i > 0 ? this.types[i - 1] : undefined,
+                nextType: i < this.segments.length - 1 ? this.types[i + 1] : undefined,
 
                 segment: segment,
-                prevSegment: index > 0 ? this.segments[index - 1] : undefined,
-                nextSegment: index < this.segments.length - 1 ? this.segments[index + 1] : undefined,
+                prevSegment: i > 0 ? this.segments[i - 1] : undefined,
+                nextSegment: i < this.segments.length - 1 ? this.segments[i + 1] : undefined,
 
                 prevHyperConnection,
                 nextHyperConnection,
 
-                sourceNode: this.nodePath[index],
-                targetNode: this.nodePath[index + 1],
+                sourceNode,
+                targetNode,
+
+                prevPort: undefined,
+                nodePort: port,
+                nextPort: undefined,
+            }
+        })
+
+        this.info.forEach((info, i) => {
+            // Fill in the next and previous port
+            if (i > 0) {
+                this.info[i - 1].nextPort = info.nodePort;
+            }
+            if (i < this.info.length - 1) {
+                this.info[i + 1].prevPort = info.nodePort;
             }
         })
 
@@ -395,59 +856,110 @@ export class MultiHyperConnection extends CombinedPathSegment {
 
     prepareBundlePorts() {
 
-        console.log(this.nodePath.map(node => node.id));
+        // console.log(this.nodePath.map(node => node.id));
 
-        let lastAnchorOrPort: ConnectionBundlePort | Anchor | undefined = undefined;
+        // let lastAnchorOrPort: ConnectionBundlePort | Anchor | undefined = undefined;
+        // this.info.forEach((info, i) => {
+        //     const type = info.type;
+        //     const segment = info.segment;
+        //     const isBeforeHyperConnection = i <= this.indexOfHyperConnection;
+        //     const lastWasBeforeHyperConnection = i > 0 && i - 1 <= this.indexOfHyperConnection;
+
+        //     const ids = this.nodePath.map(node => node.id);
+        //     const connId = ids[i] + "->" + ids[i + 1];
+        //     console.log(connId, type, lastWasBeforeHyperConnection, isBeforeHyperConnection);
+
+        //     if (type == "fixed") {
+        //         if (lastAnchorOrPort && lastAnchorOrPort instanceof ConnectionBundlePort) {
+        //             console.log(connId, "Fixed: ADD OUT PORT", lastAnchorOrPort.node.id);
+        //             lastAnchorOrPort.addOutPort(info.segment.startAnchor);
+        //         }
+
+        //         lastAnchorOrPort = isBeforeHyperConnection ? info.segment.endAnchor : info.segment.startAnchor;
+
+        //         this.ports.push(undefined);
+
+        //     } else if (type == "circleSegment") {
+        //         const node = isBeforeHyperConnection ? info.sourceNode : info.targetNode;
+        //         const direction = isBeforeHyperConnection ? "outgoing" : "incoming";
+
+        //         const hyperConnection = isBeforeHyperConnection ? info.nextHyperConnection : info.prevHyperConnection;
+        //         if (!hyperConnection) {
+        //             console.log(this.nodePath.map(node => node.id), {
+        //                 index: i,
+        //                 indexOfHyperConnection: this.indexOfHyperConnection,
+        //                 info,
+        //                 infos: this.info,
+        //                 lastAnchorOrPort,
+        //             });
+        //             throw new Error("No hyper connection found, THIS SHOULD NOT HAPPEN");
+        //         }
+
+        //         const bundlePort = this.multiConnections.getBundlePort(node, hyperConnection, direction);
+        //         bundlePort.addSegment(segment);
+        //         if (lastAnchorOrPort) {
+
+        //             console.log(connId, "Circle: ADD IN PORT", bundlePort.node.id);
+        //             bundlePort.addInPort(lastAnchorOrPort);
+        //         }
+        //         lastAnchorOrPort = bundlePort;
+
+        //         this.ports.push(bundlePort);
+        //     }
+        // })
+    }
+
+    prepareNodePorts() {
+        const ids = this.nodePath.map(node => node.id);
+
+        console.log(ids);
+        console.log(this.info, this.hyperConnections)
+
         this.info.forEach((info, i) => {
             const type = info.type;
             const segment = info.segment;
-            const isBeforeHyperConnection = i <= this.indexOfHyperConnection;
-            const lastWasBeforeHyperConnection = i > 0 && i - 1 <= this.indexOfHyperConnection;
+            const isBeforeHyperConnection = info.isBeforeHyperConnection;
 
-            const ids = this.nodePath.map(node => node.id);
             const connId = ids[i] + "->" + ids[i + 1];
-            console.log(connId, type, lastWasBeforeHyperConnection, isBeforeHyperConnection);
+            console.log(connId, type, isBeforeHyperConnection);
 
             if (type == "fixed") {
-                if (lastAnchorOrPort && lastAnchorOrPort instanceof ConnectionBundlePort) {
-                    console.log(connId, "Fixed: ADD OUT PORT", lastAnchorOrPort.node.id);
-                    lastAnchorOrPort.addOutPort(info.segment.startAnchor);
+                // At the fixed type, the node port should be undefined
+                if (info.nodePort) {
+                    throw new Error("Node port should be undefined");
                 }
 
-                lastAnchorOrPort = isBeforeHyperConnection ? info.segment.endAnchor : info.segment.startAnchor;
+                if (!segment.startAnchor || !segment.endAnchor) {
+                    throw new Error("No anchor found");
+                }
 
-                this.ports.push(undefined);
+                // The fixed segment influences the adjacent node ports
+
+                // TODO: Atm we just rotate by 180, but this should be actually smoothed by a fitting circle segment
+                if (isBeforeHyperConnection) {
+                    info.prevPort?.addAnchor(new NodeAnchor(info.sourceNode, segment.startAnchor, segment.endAnchor));
+                    info.nextPort?.addAnchor(new NodeAnchor(info.targetNode, segment.endAnchor, segment.startAnchor));
+                } else {
+                    info.prevPort?.addAnchor(new NodeAnchor(info.sourceNode, segment.startAnchor, segment.endAnchor));
+                    info.nextPort?.addAnchor(new NodeAnchor(info.targetNode, segment.endAnchor, segment.startAnchor));
+                }
 
             } else if (type == "circleSegment") {
-                const node = isBeforeHyperConnection ? info.sourceNode : info.targetNode;
-                const direction = isBeforeHyperConnection ? "outgoing" : "incoming";
 
-                const hyperConnection = isBeforeHyperConnection ? info.nextHyperConnection : info.prevHyperConnection;
-                if (!hyperConnection) {
-                    console.log(this.nodePath.map(node => node.id), {
-                        index: i,
-                        indexOfHyperConnection: this.indexOfHyperConnection,
-                        info,
-                        infos: this.info,
-                        lastAnchorOrPort,
-                    });
-                    throw new Error("No hyper connection found, THIS SHOULD NOT HAPPEN");
+                // At the circle segment type, the node port should be defined
+                if (!info.nodePort) {
+                    throw new Error("Node port should be defined");
                 }
 
-                const bundlePort = this.multiConnections.getBundlePort(node, hyperConnection, direction);
-                bundlePort.addSegment(segment);
-                if (lastAnchorOrPort) {
-
-                    console.log(connId, "Circle: ADD IN PORT", bundlePort.node.id);
-                    bundlePort.addInPort(lastAnchorOrPort);
-                }
-                lastAnchorOrPort = bundlePort;
-
-                this.ports.push(bundlePort);
+                // This node port influences adjacent node ports, if existing 
+                // (This only happens if multiple circle segments are adjacent)
+                info.prevPort?.addAnchor(info.nodePort);
+                info.nextPort?.addAnchor(info.nodePort);
             }
         })
 
-
+        console.log("PREPARED NODE PORTS", ids)
+        console.log(this.info.map(info => info.nodePort));
     }
 
     prepareSegments() {
@@ -465,7 +977,8 @@ export class MultiHyperConnection extends CombinedPathSegment {
         this.calculateTypesAndSegments();
         this.calculateSegmentInformation();
 
-        this.prepareBundlePorts();
+        // this.prepareBundlePorts();
+        this.prepareNodePorts();
 
         return;
 
@@ -577,7 +1090,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
         // this.connection?.source.debugShapes.push(new Circle(intersections[1], 2));
         // this.connection?.source.debugShapes.push(new Circle(lastAnchor.anchor.anchorPoint, 2));
 
-        const chosenRad = RadialUtils.putRadBetween(rad0, rad1, anchorRad);
+        const chosenRad = RadialUtils.putRadBetween(anchorRad, rad0, rad1);
         const chosenVector = RadialUtils.radToVector(chosenRad).multiply(anchorNode.outerCircle.r);
         const reverseVector = chosenVector.rotate(Math.PI);
         const chosenPoint = nodeCenter.translate(chosenVector);
@@ -620,6 +1133,7 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
     multiConnections: MultiHyperConnection[] = [];
 
     mapNodeToBundlePorts: Map<LayoutNode, ConnectionBundlePort[]> = new Map();
+    mapNodeToPorts: Map<LayoutNode, NodePort[]> = new Map();
 
 
     constructor() {
@@ -640,6 +1154,21 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
         const newPort = new ConnectionBundlePort(node, direction, hyperConnection);
         portsOfNode.push(newPort);
         this.mapNodeToBundlePorts.set(node, portsOfNode);
+        return newPort;
+    }
+
+    getNodePort(node: LayoutNode, hyperConnection?: LayoutConnection, direction: "outgoing" | "incoming" = "outgoing") {
+        if (!hyperConnection) {
+            return undefined;
+        }
+        const portsOfNode = this.mapNodeToPorts.get(node) ?? [];
+        const port = portsOfNode.find(port => port.hyperConnection == hyperConnection && port.type == direction);
+
+        if (port) return port;
+
+        const newPort = new NodePort(node, direction, hyperConnection);
+        portsOfNode.push(newPort);
+        this.mapNodeToPorts.set(node, portsOfNode);
         return newPort;
     }
 
@@ -684,7 +1213,22 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
         console.log("[BUNDLE PORTS]");
         console.log(Array.from(this.mapNodeToBundlePorts.values()));
 
+        const portSimulation = new NodePortSimulation(Array.from(this.mapNodeToPorts.values()).flat());
+        portSimulation.simulate();
+
         multiConnections.forEach(multiConnection => {
+
+            multiConnection.ports.forEach(port => {
+
+                port?.anchors.forEach(anchor => {
+                    if (anchor instanceof NodeAnchor) {
+                        port?.node.debugShapes.push(anchor.anchor);
+                    }
+                })
+            })
+
+            // return;
+
 
             // let lastAnchor: Anchor | undefined = undefined;
 
@@ -703,16 +1247,16 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
 
                 if (info.type == "circleSegment") {
                     if (port) {
-                        if (isBeforeHyperConnection) (segment as CircleSegmentSegment).intermediateStartAnchor = port.portAnchor;
-                        else (segment as CircleSegmentSegment).intermediateEndAnchor = port.portAnchor;
+                        if (isBeforeHyperConnection) (segment as CircleSegmentSegment).intermediateStartAnchor = port.getAnchor();
+                        else (segment as CircleSegmentSegment).intermediateEndAnchor = port.getAnchor();
 
 
                         if (info.prevType == "circleSegment") {
-                            if (info.prevSegment) info.prevSegment.endAnchor = port.portAnchor;
+                            if (info.prevSegment) info.prevSegment.endAnchor = port.getAnchor();
                         }
 
                         if (info.nextType == "circleSegment") {
-                            if (info.nextSegment) info.nextSegment.startAnchor = port.portAnchor;
+                            if (info.nextSegment) info.nextSegment.startAnchor = port.getAnchor();
                         }
 
                     }

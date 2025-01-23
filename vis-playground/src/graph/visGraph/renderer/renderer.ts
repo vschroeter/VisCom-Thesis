@@ -201,9 +201,9 @@ export class Renderer {
                         d.append('line')
                             .attr('x1', anchor.anchorPoint.x)
                             .attr('y1', anchor.anchorPoint.y)
-                            .attr('x2', anchor.anchorPoint.x + anchor.direction.x * 10)
-                            .attr('y2', anchor.anchorPoint.y + anchor.direction.y * 10)
-                            .attr('stroke', 'red')
+                            .attr('x2', anchor.anchorPoint.x + anchor.direction.x * (anchor._data?.length ?? 10))
+                            .attr('y2', anchor.anchorPoint.y + anchor.direction.y * (anchor._data?.length ?? 10))
+                            .attr('stroke', anchor._data?.stroke ?? 'red')
                             .attr('stroke-width', 0.5)
                             .attr('opacity', 0.5)
 

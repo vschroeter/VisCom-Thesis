@@ -66,7 +66,7 @@ export class RadialUtils extends ShapeUtil {
      * @param endRad The maximum radian value.
      * @param targetRad The target radian value.
      */
-    static putRadBetween(startRad: number, endRad: number, targetRad: number): number {
+    static putRadBetween(targetRad: number, startRad: number, endRad: number): number {
 
         startRad = RadialUtils.normalizeRad(startRad);
         endRad = RadialUtils.normalizeRad(endRad);
@@ -333,9 +333,15 @@ export class RadialUtils extends ShapeUtil {
         return new Circle(center, radius); 
     }
 
-    static getCircleFromCoincidentPointAndTangentAnchor(coincidentPoint: Point, anchor: Anchor): Circle {
+    static getCircleFromCoincidentPointAndTangentAnchor(coincidentPoint: Point, anchor: Anchor): Circle | undefined{
 
         const midPoint = Anchor.getMidPointBetweenPointAndAnchor(coincidentPoint, anchor);
+
+        if (!midPoint) {
+            return undefined
+            // throw new Error("No mid point found.");
+        }
+
         const segToMidPoint = new Segment(coincidentPoint, midPoint);
 
         // We dont have to rotate the anchors, because the line construction takes normal vectors
@@ -345,7 +351,8 @@ export class RadialUtils extends ShapeUtil {
         const intersection = perpLine1.intersect(perpLine2);
 
         if (intersection.length < 1) {
-            throw new Error("No intersection found");
+            // throw new Error("No intersection found");
+            return undefined;
         }
 
         const center = intersection[0];
