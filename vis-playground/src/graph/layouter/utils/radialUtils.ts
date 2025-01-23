@@ -145,6 +145,20 @@ export class RadialUtils extends ShapeUtil {
     }
 
     /**
+     * Check if the given rad is between the start and end rad.
+     * @param rad The rad to check
+     * @param startRad The start rad
+     * @param endRad The end rad
+     */
+    static radIsBetween(rad: number, startRad: number, endRad: number): boolean {
+        const forwardRad = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
+        const forwardStartToRad = RadialUtils.forwardRadBetweenAngles(startRad, rad);
+        const forwardRadToEnd = RadialUtils.forwardRadBetweenAngles(rad, endRad);
+
+        return forwardStartToRad < forwardRad && forwardRadToEnd < forwardRad;
+    }
+
+    /**
      * Calculates the angle in degrees between two points relative to a center point.
      * @param point1 - The first point.
      * @param point2 - The second point.

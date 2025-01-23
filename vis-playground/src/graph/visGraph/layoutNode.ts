@@ -10,6 +10,7 @@ import { BasicSizeCalculator } from "./layouterComponents/precalculator";
 import { BasePositioner } from "./layouterComponents/positioner";
 import { BaseConnectionLayouter, BaseNodeConnectionLayouter } from "./layouterComponents/connectionLayouter";
 import { Anchor, Node2d } from "../graphical";
+import { RadialUtils } from "../layouter/utils/radialUtils";
 
 export type InstanceOrGetter<T> = T | ((node: LayoutNode) => T);
 
@@ -152,7 +153,7 @@ export class LayoutNode {
             }
         }
         this.parent = newParent;
-        newParent.children.push(this);        
+        newParent.children.push(this);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -639,7 +640,87 @@ export class LayoutNode {
 
     }
 
+    getValidInnerRadRange(): [number, number] {
 
+        const parent = this.parent;
+        const nextNode = this.getNextNodeInSorting();
+        const previousNode = this.getPreviousNodeInSorting();
+        if (!parent || !nextNode || !previousNode) {
+            return [0, 0];
+        }
+
+        const nextTangents = RadialUtils.getTangentsToCircle(this.center, nextNode.outerCircle);
+        const prevTangents = RadialUtils.getTangentsToCircle(this.center, previousNode.outerCircle);
+
+        let nextTangent = RadialUtils.getClosestShapeToPoint(nextTangents, parent.center, (tangent) => tangent.end);
+        let prevTangent = RadialUtils.getClosestShapeToPoint(prevTangents, parent.center, (tangent) => tangent.end);
+
+        if (nextNode == previousNode) {
+            nextTangent = nextTangents[0];
+            prevTangent = nextTangents[1];
+        }
+
+        if (!nextTangent || !prevTangent) {
+            return [0, 0];
+        }
+
+        const nextRad = RadialUtils.radOfPoint(nextTangent.end, this.center);
+        const prevRad = RadialUtils.radOfPoint(prevTangent.end, this.center);
+
+        if (nextNode == previousNode) {
+
+            const nodeRad = RadialUtils.radOfPoint(nextNode.center, this.center);
+
+            if (RadialUtils.radIsBetween(nodeRad, prevRad, nextRad)) {
+                return [prevRad, nextRad];
+            } else {
+                return [nextRad, prevRad];
+            }
+        }
+
+        return [nextRad, prevRad];
+    }
+
+    getValidOuterRadRange(): [number, number] {
+
+        const parent = this.parent;
+        const nextNode = this.getNextNodeInSorting();
+        const previousNode = this.getPreviousNodeInSorting();
+        if (!parent || !nextNode || !previousNode) {
+            return [0, 0];
+        }
+
+        const nextTangents = RadialUtils.getTangentsToCircle(this.center, nextNode.outerCircle);
+        const prevTangents = RadialUtils.getTangentsToCircle(this.center, previousNode.outerCircle);
+
+        let nextTangent = RadialUtils.getFurthestShapeToPoint(nextTangents, parent.center, (tangent) => tangent.end);
+        let prevTangent = RadialUtils.getFurthestShapeToPoint(prevTangents, parent.center, (tangent) => tangent.end);
+
+        if (nextNode == previousNode) {
+            nextTangent = nextTangents[0];
+            prevTangent = nextTangents[1];
+        }
+
+        if (!nextTangent || !prevTangent) {
+            return [0, 0];
+        }
+
+        const nextRad = RadialUtils.radOfPoint(nextTangent.end, this.center);
+        const prevRad = RadialUtils.radOfPoint(prevTangent.end, this.center);
+
+        if (nextNode == previousNode) {
+
+            const nodeRad = RadialUtils.radOfPoint(nextNode.center, this.center);
+
+            if (RadialUtils.radIsBetween(nodeRad, prevRad, nextRad)) {
+                return [nextRad, prevRad];
+            } else {
+                return [prevRad, nextRad];
+            }
+        }
+
+        return [prevRad, nextRad];
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // #region Layouting methods
