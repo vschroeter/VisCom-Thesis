@@ -280,7 +280,11 @@ export class Node2d extends SvgRenderable { // <NodeData>
       const maxOpacityAtParentNodeFraction = 0.4;
       const minOpacityAtParentNodeFraction = 0.1;
 
-      const parent = this.layoutNode.parent;
+      let parent = this.layoutNode.parent;
+      while (parent?.parent && parent.children.length < 5) {
+        parent = parent.parent;
+      }
+
       const parentNodeFractionOfVisibleArea = parent ? (parent.radius * 2) / (Math.min(visibleArea.w, visibleArea.h)) : 0.1;
 
       const fractionAboveMin = Math.max(0, parentNodeFractionOfVisibleArea - minOpacityAtParentNodeFraction);

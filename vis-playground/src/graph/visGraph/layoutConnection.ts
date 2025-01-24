@@ -89,6 +89,8 @@ export class LayoutConnection {
         return this.parent !== undefined;
     }
 
+    isThroughVirtualNodes: boolean = false;
+
     /**
      * After combining links, the opposite links are stored here.
      */

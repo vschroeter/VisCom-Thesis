@@ -818,6 +818,7 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                 connection.pathSegment = multiConnection;
 
                 multiConnection.nodePath = connection.getConnectionPathViaHyperAndVirtualNodes();
+                connection.isThroughVirtualNodes = multiConnection.nodePath.some(node => node.isVirtual);
                 // console.log(multiConnection.nodePath.map(node => node.id));
 
                 multiConnections.push(multiConnection);
@@ -932,18 +933,18 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
 
         console.log(nodeToCircleSegmentsMap);
 
-        // // Adapt the circle segment radius, so that each has a different size
-        nodeToCircleSegmentsMap.forEach((circleSegments, parentNode) => {
-            // Do this only for circle segments, that are along the circle, direct bezier connections are not adapted
-            const segmentsOnCircle = circleSegments.filter(circleSegment => circleSegment.isOnCircle);
-            const min = 0.9
-            const max = 1.1
+        // // // Adapt the circle segment radius, so that each has a different size
+        // nodeToCircleSegmentsMap.forEach((circleSegments, parentNode) => {
+        //     // Do this only for circle segments, that are along the circle, direct bezier connections are not adapted
+        //     const segmentsOnCircle = circleSegments.filter(circleSegment => circleSegment.isOnCircle);
+        //     const min = 0.9
+        //     const max = 1.1
 
-            segmentsOnCircle.forEach((circleSegment, index) => {
-                circleSegment.circle.r *= min + (max - min) * ((index + 1) / (segmentsOnCircle.length + 1));
-                circleSegment.calculate(true)
-            });
-        })
+        //     segmentsOnCircle.forEach((circleSegment, index) => {
+        //         circleSegment.circle.r *= min + (max - min) * ((index + 1) / (segmentsOnCircle.length + 1));
+        //         circleSegment.calculate(true)
+        //     });
+        // })
     }
 
 }

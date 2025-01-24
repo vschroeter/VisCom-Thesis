@@ -136,7 +136,7 @@ function onZoomed(transform: d3.ZoomTransform) {
 
 
     // // Make the contentBbox quadratic
-    const quadraticSize = Math.max(contentBbox.width, contentBbox.height);
+    const quadraticSize = Math.min(contentBbox.width, contentBbox.height) * 2;
     const widthDiff = quadraticSize - contentBbox.width;
     const heightDiff = quadraticSize - contentBbox.height;
 

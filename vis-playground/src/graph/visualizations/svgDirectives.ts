@@ -73,7 +73,7 @@ export function svgInteractiveRef(
 
         zoom.value = d3
             .zoom<SVGSVGElement, unknown>()
-            .scaleExtent([0.05, 20])
+            .scaleExtent([0.05, 100])
             .on('zoom', zoomed);
 
         svg.call(zoom.value).on('dblclick.zoom', () => {

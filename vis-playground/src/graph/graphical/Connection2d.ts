@@ -377,7 +377,7 @@ export class Connection2d extends SvgRenderable {
 
     override updateVisibleArea(visibleArea: BoundingBox): void {
 
-        if (this.layoutConnection.hasParentHyperConnection) {
+        if (this.layoutConnection.isThroughVirtualNodes) {
 
             if (!this.boundingBox) {
                 this.updateBoundingBox();
@@ -407,7 +407,7 @@ export class Connection2d extends SvgRenderable {
             } else {
                 const area = w * h;
                 const totalArea = bbox.w * bbox.h;
-                opacity = (area / totalArea) ** 2;
+                opacity = (area / (totalArea)) ** 2;
             }
 
             if (this.layoutConnection.id == "drive_manager->camera") {
