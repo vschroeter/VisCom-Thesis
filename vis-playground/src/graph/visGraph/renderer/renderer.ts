@@ -370,7 +370,6 @@ export abstract class SvgRenderable {
     exit(): void {
         this.updateCallbacks = [];
         this.removeSubElements();
-        console.log("Exit", this);
     }
 
     /**

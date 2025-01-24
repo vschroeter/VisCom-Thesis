@@ -168,8 +168,9 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
             node.x = 0;
             node.y = 0;
         });
-        this.updateStyle();
-        this.layout();
+        this.updateLayout();
+        // this.updateStyle();
+        // this.layout();
     }
 
     protected emitEvent(type: "update" | "end") {

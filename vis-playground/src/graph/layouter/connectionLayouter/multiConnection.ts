@@ -39,66 +39,6 @@ type MultiSegmentInformation = {
     isBeforeHyperConnection: boolean;
 }
 
-export class ConnectionBundlePort {
-
-
-    node: LayoutNode;
-    nodeID: string;
-    type: "outgoing" | "incoming";
-
-    hyperConnection: LayoutConnection;
-    calculated: boolean = false;
-    portAnchor?: Anchor;
-    // outAnchor?: Anchor;
-    // inAnchor?: Anchor;
-
-    segments: PathSegment[] = [];
-
-    constructor(node: LayoutNode, type: "outgoing" | "incoming", hyperConnection: LayoutConnection) {
-        this.node = node;
-        this.nodeID = node.id;
-        this.type = type;
-        this.hyperConnection = hyperConnection;
-    }
-
-    inPorts: (ConnectionBundlePort | Anchor)[] = [];
-    outPorts: (ConnectionBundlePort | Anchor)[] = [];
-
-    addInPort(port?: ConnectionBundlePort | Anchor) {
-        if (!port) return;
-        this.inPorts.push(port);
-
-        if (port instanceof ConnectionBundlePort) {
-            port.outPorts.push(this);
-        }
-    }
-
-    addOutPort(port?: ConnectionBundlePort | Anchor) {
-        if (!port) return;
-        this.outPorts.push(port);
-
-        if (port instanceof ConnectionBundlePort) {
-            port.inPorts.push(this);
-        }
-    }
-
-    addSegment(segment: PathSegment) {
-        this.segments.push(segment);
-    }
-
-    applyToSegments() {
-        this.segments.forEach(segment => {
-            if (this.portAnchor) {
-                if (this.type == "outgoing") {
-                    segment.endAnchor = this.portAnchor;
-                } else {
-                    segment.startAnchor = this.portAnchor;
-                }
-            }
-        })
-    }
-}
-
 
 export class NodePort {
 
@@ -123,7 +63,7 @@ export class NodePort {
     // nodePorts: (ConnectionBundlePort | NodeAnchor)[] = [];
     // externalPorts: (ConnectionBundlePort | NodeAnchor)[] = [];
 
-    // segments: PathSegment[] = [];
+    segments: PathSegment[] = [];
 
     constructor(node: LayoutNode, type: "outgoing" | "incoming", hyperConnection: LayoutConnection) {
         this.node = node;
@@ -339,31 +279,43 @@ export class AttractiveAnchorForce extends NodePortForce {
 
             // Check if the slope is in the valid range
             if (!RadialUtils.radIsBetween(this.radialAnchor.angle, this.validOuterRange[0], this.validOuterRange[1])) {
-                
+
                 // Get the distance to the closest valid range
                 const dist1 = RadialUtils.normalizeRad(RadialUtils.forwardRadBetweenAngles(this.radialAnchor.angle, this.validOuterRange[0]));
                 const dist2 = RadialUtils.normalizeRad(RadialUtils.forwardRadBetweenAngles(this.radialAnchor.angle, this.validOuterRange[1]));
-                
-                this.strength = 0.01
+
+                this.strength = 0.1
             }
         }
-
-        if (this.node.id.startsWith("left_motor_controller")) {
-            const a = this.radialAnchor.getAnchor()
-            a._data = { stroke: "green" };
-            this.node.debugShapes.push(a);
-        }
-
-
     }
 }
 
 export class RepulsiveForce extends NodePortForce {
 
+    size: number = 5 / (2 * Math.PI);
+
     constructor(port: NodePort, public otherPort: NodePort) {
         super(port);
+        this.strength = 0.3;
+        // this.size = port.node.outerRadius;
     }
+
+
     override applyLazy() {
+
+        // Here we calculate the repulsive force between two ports
+        // The force is quadratic to the distance between the two ports
+
+        const thisAngle = this.port.radialAnchor.angle;
+        const otherAngle = this.otherPort.radialAnchor.angle;
+
+        const angleDiff = RadialUtils.normalizeRad(thisAngle - otherAngle);
+        const angleDiffAbs = Math.abs(angleDiff);
+        let force = Math.min(Math.PI / 2, Math.pow(this.size / angleDiffAbs, 2));
+
+        force = angleDiff > 0 ? force : -force;
+        // console.log("FORCE Repulsive", this.port.node.id, this.otherPort.node.id, force, thisAngle, otherAngle, angleDiff);
+        this.port.currentForce += force * this.strength;
     }
 }
 
@@ -468,11 +420,6 @@ export class NodePortSimulation {
                 })
                 const delta = port.applyForces(alpha);
                 totalDelta += Math.abs(delta);
-
-                if (port.node.id == "obstacle_detector") {
-                    console.log("PORT", port.radialAnchor.angle, delta, alpha);
-                }
-
             })
 
             if (totalDelta < 0.01) break;
@@ -480,10 +427,10 @@ export class NodePortSimulation {
             alpha += (-alpha) * alphaDecay;
         }
 
-        this.ports.forEach(port => {
-            // port.radialAnchor = port.radialAnchor.rotate(Math.PI);
-            port.node.debugShapes.push(port.radialAnchor.getAnchor());
-        })
+        // this.ports.forEach(port => {
+        //     // port.radialAnchor = port.radialAnchor.rotate(Math.PI);
+        //     port.node.debugShapes.push(port.radialAnchor.getAnchor());
+        // })
 
 
 
@@ -492,209 +439,6 @@ export class NodePortSimulation {
 
 }
 
-export class ConnectionBundlePortChain {
-
-    layers: ConnectionBundlePort[][] = [];
-
-    constructor(port: ConnectionBundlePort) {
-
-        // Find the first layer
-        while (port.inPorts.length > 0 && port.inPorts.some(port => port instanceof ConnectionBundlePort)) {
-            port = port.inPorts.find(port => port instanceof ConnectionBundlePort) as ConnectionBundlePort;
-        }
-
-        let currentLayer = [port];
-        this.layers.push(currentLayer);
-
-        while (currentLayer.length > 0) {
-            const nextLayer: ConnectionBundlePort[] = [];
-            currentLayer.forEach(port => {
-                nextLayer.push(...port.outPorts.filter(port => port instanceof ConnectionBundlePort) as ConnectionBundlePort[]);
-            })
-            if (nextLayer.length == 0) break;
-            this.layers.push(nextLayer);
-            currentLayer = nextLayer;
-        }
-    }
-
-
-
-    calculate() {
-        console.log("CALC PORTS", this.layers);
-
-        this.layers.forEach((layer, i) => {
-            layer.forEach(port => {
-
-                const definingPorts = port.type == "outgoing" ? port.outPorts : port.inPorts;
-                const otherPorts = port.type == "outgoing" ? port.inPorts : port.outPorts;
-                const node = port.node;
-                const parentNode = node.parent;
-
-                const definingArray = definingPorts.map(port => port instanceof Anchor ? port : port.portAnchor).filter(port => port) as Anchor[];
-                const otherArray = otherPorts.map(port => port instanceof Anchor ? port : port.portAnchor).filter(port => port) as Anchor[];
-
-                // 1. Case:
-                // Type == outgoing && only outgoing ports
-                // Type == incoming && only incoming ports
-                if (definingPorts.length > 0 && otherPorts.length == 0) {
-                    console.log("CASE 1 (node to port)", port.nodeID, port.type, i);
-
-                    // In this case, there is only one side of the port defined (by an anchor or the mean of multiple anchors).
-                    // The other side of the port is the node and thus open to be defined.
-                    // We construct a new anchor, that allows a smooth transition from the node center to the defined side of the port.
-                    // This is done by finding a fitting circle segment between the node and the defined side of the port.
-
-                    // const anchors = definingArray.filter(port => port instanceof Anchor) as Anchor[];
-                    // const anchors = definingArray.map(port => port instanceof Anchor ? port : port.portAnchor).filter(port => port) as Anchor[];
-                    const anchors = definingArray;
-                    const meanAnchor = Anchor.mean(anchors, parentNode?.circle);
-                    if (!meanAnchor) {
-                        throw new Error("No mean anchor found");
-                    }
-
-                    const tangentCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(node.center, meanAnchor);
-                    const midPoint = Anchor.getMidPointBetweenPointAndAnchor(node.center, meanAnchor);
-
-                    // From the tangent circle, we get the intersections with the node circle
-                    const intersections = node.outerCircle.intersect(tangentCircle);
-                    const anchorPoint = ShapeUtil.getClosestShapeToPoint(intersections, midPoint);
-
-                    if (!anchorPoint) {
-                        throw new Error("No anchor point found");
-                    }
-
-                    const _intersectionVector = new Vector(tangentCircle.center, anchorPoint)
-
-                    const radDiff = RadialUtils.normalizeRad(RadialUtils.radBetweenPoints(node.center, anchorPoint, tangentCircle.center));
-                    const _nodeAnchor = radDiff > 0 ? new Anchor(anchorPoint, _intersectionVector.rotate90CW()) : new Anchor(anchorPoint, _intersectionVector.rotate90CCW());
-
-
-                    // const _nodeAnchor = new Anchor(node.center, midPoint);
-                    const nodeAnchor = port.type == "outgoing" ? _nodeAnchor : _nodeAnchor.cloneReversed();
-
-                    port.portAnchor = nodeAnchor;
-
-                    if (port.nodeID.startsWith("__hypernode_7")) {
-                        port.node.debugShapes.push(port.portAnchor);
-                        port.node.debugShapes.push(meanAnchor);
-                        port.node.debugShapes.push(tangentCircle)
-                        port.node.debugShapes.push(node.center)
-                        port.node.debugShapes.push(Anchor.getMidPointBetweenPointAndAnchor(node.center, meanAnchor))
-                    }
-
-                } else if (definingArray.length == 0 && otherArray.length > 0) {
-                    // console.log("CASE 3 (port to node)", port);
-                    // throw new Error("THIS SHOULD NOT HAPPEN " + port.nodeID);
-
-                    console.log("CASE 3 (port with one undefined side)", port.nodeID, port.type, i);
-
-                    const meanAnchor = Anchor.mean(otherArray);
-                    if (meanAnchor) {
-                        meanAnchor.anchorPoint = node.center;
-                        meanAnchor.anchorPoint = meanAnchor.getPointInDirection(node.outerRadius);
-                    }
-
-
-                    port.portAnchor = meanAnchor;
-
-                } else if (definingArray.length > 0 && otherArray.length == 0) {
-                    // console.log("CASE 3 (port to node)", port);
-                    // throw new Error("THIS SHOULD NOT HAPPEN " + port.nodeID);
-
-                    console.log("CASE 4 (port with one undefined side)", port.nodeID, port.type, i);
-
-                    const meanAnchor = Anchor.mean(definingArray);
-                    if (meanAnchor) {
-                        meanAnchor.anchorPoint = node.center;
-                        meanAnchor.anchorPoint = meanAnchor.getPointInDirection(node.outerRadius);
-                    }
-
-
-                    port.portAnchor = meanAnchor;
-
-                }
-                else if (definingArray.length > 0 && otherArray.length > 0) {
-
-                    // In this case, the port-anchor is defined by the mean of the anchors
-                    // const outAnchors = port.outPorts.map(port => port instanceof Anchor ? port : port.portAnchor).filter(port => port) as Anchor[];
-                    // const inAnchors = port.inPorts.map(port => port instanceof Anchor ? port : port.portAnchor).filter(port => port) as Anchor[];
-
-                    const outAnchors = definingArray;
-                    const inAnchors = otherArray;
-
-                    console.log("CASE 2 (mean of port anchors)", outAnchors.length, inAnchors.length, port.node);
-
-
-                    const meanOutAnchor = Anchor.mean(outAnchors, undefined);
-                    const meanInAnchor = Anchor.mean(inAnchors, undefined);
-
-                    if (!meanOutAnchor || !meanInAnchor) {
-
-                        port.node.debugShapes.push(...outAnchors);
-                        port.node.debugShapes.push(...inAnchors);
-                        console.log(outAnchors, inAnchors);
-                        throw new Error("No mean anchor found");
-                    }
-
-                    // TODO: Atm mean causes the loss of the anchor point, so we reset it here
-                    meanOutAnchor.anchorPoint = outAnchors[0].anchorPoint;
-                    meanInAnchor.anchorPoint = inAnchors[0].anchorPoint;
-
-                    // The mean anchors are now adapted based on their distances to the node center (inverse proportionality)
-                    const distanceIn = meanInAnchor.anchorPoint.distanceTo(node.center)[0];
-                    const distanceOut = meanOutAnchor.anchorPoint.distanceTo(node.center)[0];
-
-                    const stretchedVectorIn = meanInAnchor.direction.multiply(1 / distanceIn);
-                    const stretchedVectorOut = meanOutAnchor.direction.multiply(1 / distanceOut);
-
-
-                    // const stretchedVectorIn = meanInAnchor.direction.normalize().multiply(1 * distanceIn);
-                    // const stretchedVectorOut = meanOutAnchor.direction.normalize().multiply(1 * distanceOut);
-
-                    const meanVector = stretchedVectorIn.add(stretchedVectorOut);
-                    const _meanAnchor = new Anchor(node.center, meanVector);
-
-                    const meanAnchor = _meanAnchor.move(port.type == "outgoing" ? node.outerRadius : -node.outerRadius);
-                    // new Anchor(_meanAnchor.getPointInDirection(node.outerRadius), meanVector);
-
-                    if (!meanAnchor) {
-                        throw new Error("No mean anchor found");
-                    }
-
-                    // meanAnchor.anchorPoint = node.center;
-                    // meanAnchor.anchorPoint = meanAnchor.getPointInDirection(node.outerRadius);
-
-                    // TODO: Check, if the anchors lie in the allowed range of the node
-
-                    // if (port.nodeID.startsWith("drive_manager_in") && port.type == "incoming") {
-                    //     console.log("PORT", distanceIn, distanceOut);
-                    //     outAnchors.forEach(anchor => port.node.debugShapes.push(anchor));
-                    //     inAnchors.forEach(anchor => port.node.debugShapes.push(anchor));
-                    //     port.node.debugShapes.push(meanAnchor);
-                    //     // port.node.debugShapes.push(meanInAnchor);
-                    //     // port.node.debugShapes.push(meanOutAnchor);
-                    // }
-
-                    port.portAnchor = meanAnchor;
-                }
-                else {
-                    console.log("UNKNOWN CASE", port.nodeID, port.type, i);
-                }
-
-
-                // if (port.nodeID.startsWith("drive_manager_in")) {
-                // if (port.nodeID.startsWith("drive_manager_in")) {
-                //     if (port.portAnchor) port.node.debugShapes.push(port.portAnchor);
-                // }
-                if (port.portAnchor) port.node.debugShapes.push(port.portAnchor);
-
-                port.calculated = true;
-            })
-        })
-    }
-
-
-}
 
 export class MultiHyperConnection extends CombinedPathSegment {
 
@@ -791,6 +535,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
 
             const portsNode = isBeforeHyperConnection ? sourceNode : targetNode;
             const port = this.types[i] == "fixed" ? undefined : this.multiConnections.getNodePort(portsNode, hyperConnection, direction)
+            port?.segments.push(segment);
 
             return {
                 type: this.types[i],
@@ -1015,7 +760,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
 
         if (anchorNode.parent == sourceNode) {
             return new Anchor(chosenPoint, reverseVector);
-        } 
+        }
 
 
 
@@ -1036,7 +781,6 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
 
     multiConnections: MultiHyperConnection[] = [];
 
-    mapNodeToBundlePorts: Map<LayoutNode, ConnectionBundlePort[]> = new Map();
     mapNodeToPorts: Map<LayoutNode, NodePort[]> = new Map();
 
 
@@ -1046,19 +790,6 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
         this.radialConnectionsHelper = new RadialConnectionsHelper({
             forwardBackwardThresholdDeg: 360
         });
-    }
-
-
-    getBundlePort(node: LayoutNode, hyperConnection: LayoutConnection, direction: "outgoing" | "incoming") {
-        const portsOfNode = this.mapNodeToBundlePorts.get(node) ?? [];
-        const port = portsOfNode.find(port => port.hyperConnection == hyperConnection && port.type == direction);
-
-        if (port) return port;
-
-        const newPort = new ConnectionBundlePort(node, direction, hyperConnection);
-        portsOfNode.push(newPort);
-        this.mapNodeToBundlePorts.set(node, portsOfNode);
-        return newPort;
     }
 
     getNodePort(node: LayoutNode, hyperConnection?: LayoutConnection, direction: "outgoing" | "incoming" = "outgoing") {
@@ -1113,23 +844,22 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
             return;
         }
 
-        this.calculatePortChains();
-        console.log("[BUNDLE PORTS]");
-        console.log(Array.from(this.mapNodeToBundlePorts.values()));
+        console.log("[NODE PORTS]");
+        console.log(Array.from(this.mapNodeToPorts.values()));
 
         const portSimulation = new NodePortSimulation(Array.from(this.mapNodeToPorts.values()).flat());
         portSimulation.simulate();
 
         multiConnections.forEach(multiConnection => {
 
-            multiConnection.ports.forEach(port => {
+            // multiConnection.ports.forEach(port => {
 
-                port?.anchors.forEach(anchor => {
-                    if (anchor instanceof NodeAnchor) {
-                        port?.node.debugShapes.push(anchor.anchor);
-                    }
-                })
-            })
+            //     port?.anchors.forEach(anchor => {
+            //         if (anchor instanceof NodeAnchor) {
+            //             port?.node.debugShapes.push(anchor.anchor);
+            //         }
+            //     })
+            // })
 
             // return;
 
@@ -1164,13 +894,14 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                         }
 
                     }
-
-
-
                 }
             });
 
-            console.log(multiConnection.ports, multiConnection.segments);
+            // console.log(multiConnection.ports, multiConnection.segments);
+
+
+
+
 
             multiConnection.info.forEach((info, i) => {
                 if (info.type == "circleSegment") {
@@ -1178,11 +909,6 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                 }
             })
         })
-
-        return;
-
-        // console.log(node.id, hyperConnections);
-
 
         // At the end, we want to adapt the circle segment radius, so that they are not all the same size
         // We only do this for circle segments, that have the same parent node and different hyper connections as target
@@ -1218,27 +944,6 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                 circleSegment.calculate(true)
             });
         })
-    }
-
-
-    calculatePortChains() {
-
-        const ports = Array.from(this.mapNodeToBundlePorts.values()).flat();
-
-        ports.forEach(port => {
-
-            // if (port.node.id == "drive_manager_in___hypernode_0") {
-            //     port.node.debugShapes.push(...port.outPorts);
-            //     port.node.debugShapes.push(...port.inPorts);
-            // }
-
-            if (port.calculated) return;
-
-            const chain = new ConnectionBundlePortChain(port);
-            chain.calculate();
-        })
-
-
     }
 
 }

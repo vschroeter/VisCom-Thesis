@@ -106,6 +106,7 @@ export class Connection2d extends SvgRenderable {
     arrow: Arrow2D = new Arrow2D()
 
     opacity: number = 1
+    visibilityOpacity: number = 1
     // stroke?: string
 
     get stroke(): string | undefined {
@@ -292,11 +293,17 @@ export class Connection2d extends SvgRenderable {
     //++++ Opacity ++++//
 
     renderStyleOpacity() {
-        this.elGroup?.attr('opacity', this.opacity);
+        this.elGroup?.attr('opacity', this.opacity * this.visibilityOpacity);
     }
     updateStyleOpacity(opacity: number) {
         this.checkValueAndAddUpdateCallback([
             { currentValuePath: 'opacity', newValue: opacity },
+        ], this.renderStyleOpacity);
+    }
+
+    updateStyleVisibilityOpacity(opacity: number) {
+        this.checkValueAndAddUpdateCallback([
+            { currentValuePath: 'visibilityOpacity', newValue: opacity },
         ], this.renderStyleOpacity);
     }
 
@@ -369,7 +376,54 @@ export class Connection2d extends SvgRenderable {
     }
 
     override updateVisibleArea(visibleArea: BoundingBox): void {
+
+        if (this.layoutConnection.hasParentHyperConnection) {
+
+            if (!this.boundingBox) {
+                this.updateBoundingBox();
+            }
+
+            const bbox = {
+                x: this.boundingBox!.x,
+                y: this.boundingBox!.y,
+                w: this.boundingBox!.w,
+                h: this.boundingBox!.h,
+            }
+
+            // Calculate the visible part of the connection
+            const x0 = Math.max(visibleArea.x, bbox.x);
+            const y0 = Math.max(visibleArea.y, bbox.y);
+
+            const x1 = Math.min(visibleArea.x + visibleArea.w, bbox.x + bbox.w);
+            const y1 = Math.min(visibleArea.y + visibleArea.h, bbox.y + bbox.h);
+
+            const w = x1 - x0;
+            const h = y1 - y0;
+
+            let opacity = 1;
+
+            if (w < 0 || h < 0) {
+                opacity = 0;                
+            } else {
+                const area = w * h;
+                const totalArea = bbox.w * bbox.h;
+                opacity = (area / totalArea) ** 2;
+            }
+
+            if (this.layoutConnection.id == "drive_manager->camera") {
+                console.log({
+                    bbox,
+                    visibleArea,
+                    opacity
+                });
+            }
+
+            this.updateStyleVisibilityOpacity(opacity);
+        }
+
     }
+
+
     override subElementsExist(): boolean {
         return this.elPath !== undefined && this.elArrow !== undefined && this.elGroup !== undefined;
     }
