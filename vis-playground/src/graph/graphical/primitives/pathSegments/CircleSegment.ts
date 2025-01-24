@@ -127,7 +127,7 @@ export class CircleSegmentSegment extends PathSegment {
             return this.getSvgPath();
         }
 
-        this._calculated = true;
+        this._calculated = true;        
 
         // Contains 3 forms:
         // - a start connection quadratic bezier curve from the start anchor to the circle
@@ -239,21 +239,8 @@ export class CircleSegmentSegment extends PathSegment {
 
         if (startEndIntersections.length > 0 || startContainsEnd || endContainsStart) {
             const segment = new SmoothSplineSegment(this.connection, startAnchor, endAnchor, 0.4);
-
             this.directConnectionCurve = segment;
             return segment.getSvgPath();
-
-            // // The control points are the same like in the normal spline connection
-            // const distanceBetweenAnchors = startAnchor.anchorPoint.distanceTo(endAnchor.anchorPoint)[0];
-            // const anchorDistanceFactor = 0.4
-            // const distanceToControlPoint = distanceBetweenAnchors * anchorDistanceFactor;
-
-            // const startControlPoint = startAnchor.getPointTowardsReference(distanceToControlPoint, endPoint);
-            // const endControlPoint = endAnchor.getPointTowardsReference(distanceToControlPoint, startPoint);
-
-            // const curve = new CubicBezierCurve(this.connection, startAnchor.anchorPoint, startControlPoint, endControlPoint, endAnchor.anchorPoint);
-            // this.directConnectionCurve = curve;
-            // return curve.getSvgPath();
         }
 
 

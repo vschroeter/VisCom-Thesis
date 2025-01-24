@@ -101,7 +101,7 @@ export class ConnectionBundlePort {
 
 
 export class NodePort {
-    
+
 
 
     node: LayoutNode;
@@ -185,7 +185,7 @@ export class CenterForce extends NodePortForce {
 
     constructor(port: NodePort) {
         super(port);
-        this.strength = 0.2
+        this.strength = 0.5
         this.node = port.node;
         this.centerAnchor = new RadialAnchor(port.node)
     }
@@ -215,7 +215,8 @@ export class AttractiveAnchorForce extends NodePortForce {
         this.node = port.node;
         this.port = port;
 
-        this.validOuterRange = this.node.getValidOuterRadRange(0.8);
+        // this.validOuterRange = this.node.getValidOuterRadRange(0.8);
+        this.validOuterRange = this.node.getValidOuterRadRange(1);
 
         // this.update();
     }
@@ -226,18 +227,18 @@ export class AttractiveAnchorForce extends NodePortForce {
         const thisAngle = this.radialAnchor.angle;
         const force = NodePortForce.getAttractiveRadialForce(portAngle, thisAngle, this.strength);
 
-        if (this.port.node.id == "obstacle_detector") {
+        // if (this.port.node.id == "obstacle_detector") {
 
-            console.log("FORCE Attractive",
-                {
-                    port: this.port,
-                    anchor: this.anchor,
-                    portAngle,
-                    thisAngle,
-                    force,
-                    currentForce: this.port.currentForce
-                });
-        }
+        //     console.log("FORCE Attractive",
+        //         {
+        //             port: this.port,
+        //             anchor: this.anchor,
+        //             portAngle,
+        //             thisAngle,
+        //             force,
+        //             currentForce: this.port.currentForce
+        //         });
+        // }
 
         this.port.currentForce += NodePortForce.getAttractiveRadialForce(
             this.port.radialAnchor.angle,
@@ -310,70 +311,47 @@ export class AttractiveAnchorForce extends NodePortForce {
         // Case 2
         // Here we draw a circular arc from the anchor to the node's circle
         else {
-            this.strength = 5;
-            try {
-                const circle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(this.node.center, anchor);
+            this.strength = 10;
+            const circle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(this.node.center, anchor);
 
-                if (circle) {
-                    const intersections = this.node.outerCircle.intersect(circle);
-                    let intersection = ShapeUtil.getClosestShapeToPoint(intersections, anchor.anchorPoint);
+            if (circle) {
+                const intersections = this.node.outerCircle.intersect(circle);
+                let intersection = ShapeUtil.getClosestShapeToPoint(intersections, anchor.anchorPoint);
 
-                    // If there is no intersection, the anchor and its circle are inside of a parent node
-                    // In this case, we calculate the intersection from the anchor line with the node's circle
-                    if (!intersection) {
-                        const lineIntersections = anchor.getLine().intersect(this.node.outerCircle);
-                        intersection = ShapeUtil.getClosestShapeToPoint(lineIntersections, anchor.anchorPoint);
-                    }
-
-                    const intersectionVector = new Vector(this.node.center, intersection);
-                    const slope = intersectionVector.slope
-                    // TODO:: A RadialAnchor might not be the best option, because it is alyways a straight anchor at the given angle. Sometimes slanted vectors are better
-                    this.radialAnchor = new RadialAnchor(this.node, slope);
-
-                }
-                // If the anchor is directly perpendicular to the node's center, we just set the nodes anchor to the anchor
-                else {
-                    this.radialAnchor = new RadialAnchor(this.node, RadialUtils.radBetweenPoints(this.node.center, anchor.anchorPoint));
+                // If there is no intersection, the anchor and its circle are inside of a parent node
+                // In this case, we calculate the intersection from the anchor line with the node's circle
+                if (!intersection) {
+                    const lineIntersections = anchor.getLine().intersect(this.node.outerCircle);
+                    intersection = ShapeUtil.getClosestShapeToPoint(lineIntersections, anchor.anchorPoint);
                 }
 
+                const intersectionVector = new Vector(this.node.center, intersection);
+                const slope = intersectionVector.slope
+                // TODO:: A RadialAnchor might not be the best option, because it is alyways a straight anchor at the given angle. Sometimes slanted vectors are better
+                this.radialAnchor = new RadialAnchor(this.node, slope);
 
-                // Check if the slope is in the valid range
-                if (!RadialUtils.radIsBetween(this.radialAnchor.angle, this.validOuterRange[0], this.validOuterRange[1])) {
-                    this.strength = 0.01
-                }
-
-                // const a = this.radialAnchor.getAnchor()
-                // a._data = { stroke: "green" };
-                // this.node.debugShapes.push(a);
-
-            } catch (e) {
-
-                // this.node.debugShapes.push(anchor);
-                // this.node.debugShapes.push(this.node.center);
-                // this.node.debugShapes.push(this.node.outerCircle);
-
-                // anchor._data = { stroke: "red", length: 1000 };
-                // this.node.debugShapes.push(anchor);
-                // this.node.debugShapes.push(this.node.center);
-
-                // const point = this.node.center;
-                // const distance = point.distanceTo(anchor.anchorPoint)[0];
-
-                // const circle1 = new Circle(point, distance);
-                // const circle2 = new Circle(anchor.anchorPoint, distance);
-                // const intersections = circle1.intersect(circle2);
-
-                // // The intersection line is then intersected with the anchor line to get the midpoint
-                // const circleIntersectionLine = new Segment(intersections[0], intersections[1]);
-                // const intersectionsWithAnchor = anchor.getLine().intersect(circleIntersectionLine);
-
-                // this.node.debugShapes.push(circle1);
-                // this.node.debugShapes.push(circle2);
-                // this.node.debugShapes.push(circleIntersectionLine);
-                // this.node.debugShapes.push(...intersections);
-                throw e;
+            }
+            // If the anchor is directly perpendicular to the node's center, we just set the nodes anchor to the anchor
+            else {
+                this.radialAnchor = new RadialAnchor(this.node, RadialUtils.radBetweenPoints(this.node.center, anchor.anchorPoint));
             }
 
+
+            // Check if the slope is in the valid range
+            if (!RadialUtils.radIsBetween(this.radialAnchor.angle, this.validOuterRange[0], this.validOuterRange[1])) {
+                
+                // Get the distance to the closest valid range
+                const dist1 = RadialUtils.normalizeRad(RadialUtils.forwardRadBetweenAngles(this.radialAnchor.angle, this.validOuterRange[0]));
+                const dist2 = RadialUtils.normalizeRad(RadialUtils.forwardRadBetweenAngles(this.radialAnchor.angle, this.validOuterRange[1]));
+                
+                this.strength = 0.01
+            }
+        }
+
+        if (this.node.id.startsWith("left_motor_controller")) {
+            const a = this.radialAnchor.getAnchor()
+            a._data = { stroke: "green" };
+            this.node.debugShapes.push(a);
         }
 
 
@@ -423,7 +401,7 @@ export class NodePortSimulation {
 
         //++++ Add the forces ++++//
         this.ports.forEach(port => {
-            // port.addForce(new CenterForce(port));
+            port.addForce(new CenterForce(port));
 
             port.anchors.forEach(anchor => {
                 port.addForce(new AttractiveAnchorForce(port, anchor));
@@ -497,11 +475,9 @@ export class NodePortSimulation {
 
             })
 
-            console.log("ITERATION", i, totalDelta, alpha);
             if (totalDelta < 0.01) break;
 
             alpha += (-alpha) * alphaDecay;
-            console.log("ALPHA AFTER", alpha);
         }
 
         this.ports.forEach(port => {
@@ -977,79 +953,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
         this.calculateTypesAndSegments();
         this.calculateSegmentInformation();
 
-        // this.prepareBundlePorts();
         this.prepareNodePorts();
-
-        return;
-
-        // function range(start: number, end: number): number[] {
-        //     return Array.from({ length: end - start }, (_, i) => start + i);
-        // }
-
-        // const processIndices = [...range(0, this.indexOfHyperConnection).reverse(), ...range(this.indexOfHyperConnection, this.segments.length)];
-        // // Set fixed anchors to adjacent circle segments
-        // // for (let i = 0; i < this.segments.length; i++) {
-        // for (let pi = 0; pi < processIndices.length; pi++) {
-        //     const i = processIndices[pi];
-        //     const info = this.info[i];
-        //     const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = info;
-
-        //     if (type == "circleSegment") {
-        //         if (!prevSegment) {
-        //             // seg.startAnchor = source.getAnchor(target.center);
-        //         }
-        //         if (!nextSegment) {
-        //             // seg.endAnchor = target.getAnchor(source.center).cloneReversed();
-        //         }
-        //     }
-        //     else if (type == "fixed") {
-        //         if (prevSegment && prevType == "circleSegment") {
-        //             prevSegment.endAnchor = segment.startAnchor;
-        //         }
-        //         if (nextSegment && nextType == "circleSegment") {
-        //             nextSegment.startAnchor = segment.endAnchor;
-        //         }
-        //     }
-        // }
-
-        // console.log(this.connection.id, this.segments.map(seg => seg.constructor.name), this.segments);
-
-        // let changed = true;
-
-        // // Calculate the undefined anchors for the circle segments
-        // // Do this until no more changes are made
-        // while (changed) {
-        //     changed = false;
-        //     for (let i = 0; i < this.segments.length; i++) {
-        //         const info = this.info[i];
-        //         const { segment, prevSegment, nextSegment, sourceNode, targetNode, type, prevType, nextType } = this.info[i];
-
-        //         // We only adapt circle segment's anchors
-        //         // We should always have at least one fixed segment, that defines the adjacent circle segment's anchor
-        //         if (type == "circleSegment") {
-        //             if (!segment.startAnchor && segment.endAnchor) {
-        //                 const node = this.nodePath[i];
-        //                 segment.startAnchor = this.calculateCircleSegmentAnchor(node, info);
-        //                 changed = true;
-
-        //                 // Propagate the anchor to the previous circle segment
-        //                 if (prevType == "circleSegment" && prevSegment && !prevSegment.endAnchor) {
-        //                     prevSegment.endAnchor = segment.startAnchor;
-        //                 }
-        //             }
-        //             if (!segment.endAnchor && segment.startAnchor) {
-        //                 const node = this.nodePath[i + 1];
-        //                 segment.endAnchor = this.calculateCircleSegmentAnchor(node, info)
-        //                 changed = true;
-
-        //                 // Propagate the anchor to the next circle segment
-        //                 if (nextType == "circleSegment" && nextSegment && !nextSegment.startAnchor) {
-        //                     nextSegment.startAnchor = segment.endAnchor;
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
     }
 
     calculateCircleSegmentAnchor(anchorNode: LayoutNode, info: MultiSegmentInformation): Anchor {
@@ -1111,7 +1015,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
 
         if (anchorNode.parent == sourceNode) {
             return new Anchor(chosenPoint, reverseVector);
-        }
+        } 
 
 
 
@@ -1252,11 +1156,11 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
 
 
                         if (info.prevType == "circleSegment") {
-                            if (info.prevSegment) info.prevSegment.endAnchor = port.getAnchor();
+                            if (info.prevSegment) info.prevSegment.endAnchor = segment.startAnchor;
                         }
 
                         if (info.nextType == "circleSegment") {
-                            if (info.nextSegment) info.nextSegment.startAnchor = port.getAnchor();
+                            if (info.nextSegment) info.nextSegment.startAnchor = segment.endAnchor;
                         }
 
                     }
@@ -1270,7 +1174,7 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
 
             multiConnection.info.forEach((info, i) => {
                 if (info.type == "circleSegment") {
-                    (info.segment as CircleSegmentSegment).calculate();
+                    (info.segment as CircleSegmentSegment).calculate(true);
                 }
             })
         })

@@ -332,12 +332,40 @@ export class Connection2d extends SvgRenderable {
 
     override addSubElements(): void {
         this.elGroup = this.elGroup ?? this.addSubElement('g', 'connection')
+            .on("mouseenter", () => {
+
+                const id = this.id;
+                if (id) {
+                    const visGraph = this.layoutConnection.source.visGraph;
+                    const userInteractions = visGraph?.userInteractions;
+                    if (!userInteractions) {
+                        console.error("No user interactions found for ", visGraph);
+                        return
+                    }
+                    userInteractions.addHoveredConnection(this.layoutConnection, true)
+                }
+            })
+            .on("mouseleave", () => {
+
+                const id = this.id;
+                if (id) {
+                    const visGraph = this.layoutConnection.source.visGraph;
+                    const userInteractions = visGraph?.userInteractions;
+                    if (!userInteractions) {
+                        console.error("No user interactions found for ", visGraph);
+                        return
+                    }
+                    userInteractions.removeHoveredConnection(this.layoutConnection, true)
+                }
+
+            })
+
         this.elPath = this.elPath ?? this.addSubElement('path', 'link', this.elGroup)
-        .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
+            .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
         // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
         this.elArrow = this.elArrow ?? this.addSubElement('path', 'arrow', this.elGroup)
-        // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
-        .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
+            // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
+            .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
     }
 
     override updateVisibleArea(visibleArea: BoundingBox): void {

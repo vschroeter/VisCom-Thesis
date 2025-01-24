@@ -46,7 +46,7 @@ export class UserInteractions {
             connection.children.forEach(child => this.hoveredConnection.add(child))
         }
 
-        // console.log("Hovered connections", Array.from(this.hoveredConnection))
+        console.log("Hovered connections", Array.from(this.hoveredConnection))
 
         this.emitter.emit("update")
     }
@@ -93,7 +93,7 @@ export class UserInteractions {
 
         });
 
-        // console.log("Hovered nodes", this.hoveredNodeIds)
+        console.log("Hovered nodes", this.hoveredNodeIds)
         this.emitter.emit("update")
     }
 
