@@ -8,6 +8,7 @@
                     {{ settings?.name }}
                 </div>
                 <div ref="refDivIconButtons" class="col-auto">
+                    <q-btn size="sm" flat round icon="download" @click="download" />
                     <q-btn size="sm" flat round icon="zoom_out_map" @click="toggleZoom" />
                     <q-btn size="sm" icon="refresh" flat round @click="resetSimulation" />
                     <q-btn v-if="!isZoomed" size="sm" icon="delete" flat round @click="deleteItem" />
@@ -55,6 +56,13 @@ import { computed, onMounted, onUpdated, ref, watch } from 'vue'
 import { useGraphStore } from 'src/stores/graph-store';
 
 import * as d3 from 'd3'
+
+import jsPDF from 'jspdf'
+import 'svg2pdf.js'
+
+import { font as NunitoFont } from 'src/css/fonts/Nunito-VariableFont_wght-normal' 
+import { font as NunitoFontNormal } from 'src/css/fonts/Nunito-Regular-normal'
+
 import { CommunicationGraph, CommunicationNode } from 'src/graph/commGraph';
 import { GraphLayouter } from 'src/graph/layouter/layouter';
 import { svgInteractiveRef } from './svgDirectives';
@@ -248,7 +256,6 @@ function layoutUpdated() {
     // TODO: dont do this every time
     renderer.setRoot(d3.select(refGRoot.value));
     renderer.renderAll(visibleArea.value)
-1
     renderer.renderDebuggingShapes(d3.select(refGRoot.value));
 
     // layouter.setParentGroup(d3.select(refGRoot.value));
@@ -300,31 +307,7 @@ function layoutUpdated() {
     //     }
     // });
 
-    // console.log("BBox", bBox.value, refGRoot.value)
-
     updateBbox();
-
-    // const newBBox = refGRoot.value?.getBBox() ?? null
-
-    // if (!bBox.value) {
-    //     if (newBBox) {
-    //         newBBox.x = newBBox.x - newBBox.width * 0.1;
-    //         newBBox.y = newBBox.y - newBBox.height * 0.1;
-    //         newBBox.width = newBBox.width * 1.2;
-    //         newBBox.height = newBBox.height * 1.2;
-    //         bBox.value = newBBox;
-    //     }
-    // }
-    // else {
-    //     // Check if it is larger than the current one
-    //     if (newBBox) {
-    //         if (newBBox.width > bBox.value.width || newBBox.height > bBox.value.height) {
-    //             bBox.value = newBBox;
-    //         }
-    //     }
-    // }
-
-    // bBox.value = refGRoot.value?.getBBox() ?? null
 }
 
 function updateBbox(reset = false) {
@@ -332,7 +315,7 @@ function updateBbox(reset = false) {
     if (reset) {
         bBox.value = null;
     }
-    
+
     const newBBox = refGRoot.value?.getBBox() ?? null
 
     if (!bBox.value) {
@@ -492,6 +475,50 @@ const cardStyle = computed(() => {
         }
         : {};
 });
+
+async function download() {
+    await downloadPDF();
+}
+
+async function downloadPDF() {
+    const svg = refSVG.value;
+    if (!svg || !bBox.value) {
+        console.error("No SVG found");
+        return;
+    }
+
+    const x = 0
+    const y = 0
+    const width = bBox.value?.width ?? 0
+    const height = bBox.value?.height ?? 0
+
+    const doc = new jsPDF({
+        format: [width, height],
+        orientation: width > height ? 'l' : 'p',
+    })
+
+    // add the font to jsPDF
+    doc.addFileToVFS("Nunito.ttf", NunitoFontNormal);
+    doc.addFont("Nunito.ttf", "Nunito", "normal");
+    doc.setFont("Nunito");
+
+    console.log("Download PDF", width, height, NunitoFont);
+
+    const graphName = (settings.value?.name ?? "").length > 0 ? settings.value?.name : "Graph";
+    const settingsType = settings.value?.type ?? "";
+    const fileName = graphName + "_" + settingsType + "_" + layouter?.visGraph.allLeafLayoutNodes.length + "_nodes" + ".pdf";
+
+    // @ts-ignore
+    doc.svg(svg, {
+        x,
+        y,
+        width,
+        height,
+        loadExternalStyleSheets: true,
+    }).then(() => {
+        doc.save(fileName)
+    })
+}
 
 </script>
 

@@ -72,9 +72,14 @@ export class Label2d extends SvgRenderable {
         this.elBgText = this.elBgText ?? this.elGroup.append("text")
             .attr("x", 0).attr("y", 0).attr('pointer-events', 'none')
             .attr('fill', 'white').attr('stroke', 'white').attr('stroke-width', 2).attr('stroke-linejoin', 'round')
-            .attr("opacity", 0.8);
+            .attr("opacity", 0.8)
+            .attr('font-family', 'Nunito')
+            .attr('font-size', '14px')
         this.elText = this.elText ?? this.elGroup.append("text")
-            .attr("x", 0).attr("y", 0).attr('pointer-events', 'none');
+            .attr("x", 0).attr("y", 0).attr('pointer-events', 'none')
+            .attr('font-family', 'Nunito')
+            .attr('font-size', '14px')
+
 
 
         this.setTextAlign('bottom-left');

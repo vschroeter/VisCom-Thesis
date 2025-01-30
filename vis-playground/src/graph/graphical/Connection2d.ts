@@ -271,8 +271,6 @@ export class Connection2d extends SvgRenderable {
 
     //++++ Path ++++//
     renderPath() {
-        this.elPath?.attr('d', this.getSvgPath())
-
         // Check the length of the connection and scale down the arrow if necessary
         const length = this.length
 
@@ -280,7 +278,9 @@ export class Connection2d extends SvgRenderable {
         const size = Math.min(baseSize, length / 2 * 0.6)
         this.arrow.size = size
 
-        this.elArrow?.attr('d', this.getArrowPath())
+        // Combine this for better .pdf export
+        this.elPath?.attr('d', this.getSvgPath() + " " + this.getArrowPath())
+        // this.elArrow?.attr('d', this.getArrowPath())
 
         this.updateBoundingBox();
     }

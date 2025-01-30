@@ -152,8 +152,7 @@ export class VisGraph {
     }
 
     get allLeafLayoutNodes(): LayoutNode[] {
-        const layers = this.getLayeredLayoutNodes(true);
-        return layers[0];
+        return this.allLayoutNodes.filter(node => node.children.length === 0);
     }
 
     addNode(node: LayoutNode, parentNode?: LayoutNode) {

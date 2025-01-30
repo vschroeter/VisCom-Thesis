@@ -1,7 +1,7 @@
 <template>
     <svg ref="refSvg" :viewBox="viewBox" :width="props.width" :height="props.height">
         <g ref="refGRoot">
-            <text ref="refText" :fill="props.color" alignment-baseline="hanging" text-anchor="right">
+            <text ref="refText" :fill="props.color" alignment-baseline="hanging" text-anchor="right" font-family="Nunito">
                 {{ props.text }}
             </text>
         </g>
