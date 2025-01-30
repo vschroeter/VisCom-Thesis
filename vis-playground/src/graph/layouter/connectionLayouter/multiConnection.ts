@@ -159,6 +159,11 @@ export class AttractiveAnchorForce extends NodePortForce {
         this.validOuterRange = this.node.getValidOuterRadRange(1);
 
         // this.update();
+
+        // const _anchor = anchor instanceof NodeAnchor ? anchor.anchor : anchor.radialAnchor!.getAnchor();
+        // const __a = _anchor.clone()
+        // __a._data = { stroke: "blue" };
+        // this.port.node.debugShapes.push(__a);
     }
 
     override applyLazy() {
@@ -202,8 +207,31 @@ export class AttractiveAnchorForce extends NodePortForce {
         const curvingAnchor = (this.anchor instanceof NodeAnchor ? this.anchor.curvingAnchor : undefined) ?? anchor;
         const anchorNode = this.anchor.node;
 
+        let debug = false;
+
+        if (this.node.id.startsWith("waypoint_follower")) {
+            debug = true;
+        }
+
+        if (debug) {
+            console.log("FORCE Attractive", {
+                port: this,
+                portId: this.port.node.id,
+                anchor: anchorNode.id,
+                anchorNode: anchorNode.id,
+            });
+
+            // const __a = anchor.clone()
+            // const __a1 = curvingAnchor.clone()
+            // __a._data = { stroke: "blue" };
+            // __a1._data = { stroke: "cyan" };
+            // this.port.node.debugShapes.push(__a);
+            // this.port.node.debugShapes.push(__a1);
+        }
+
         // Case 1
         if (anchorNode == this.node) {
+            if (debug) console.log("CASE 1");
             // For a smoother transition, we extend the curve from the curving anchor via the anchor to the node's circle
             // We just assume, that the slope of the anchor changes proportionally to the distance
             const curvingSlope = curvingAnchor.direction.slope;
@@ -225,6 +253,8 @@ export class AttractiveAnchorForce extends NodePortForce {
             // If the port is an incoming port, we have to rotate the slope by 180° to get it on the incoming side
             if (this.port.type == "incoming") {
                 slopeAtOtherSideOfNode += Math.PI;
+            } else {
+                // slopeAtOtherSideOfNode += Math.PI;
             }
 
             // console.log("RAD", {
@@ -243,6 +273,13 @@ export class AttractiveAnchorForce extends NodePortForce {
             // console.log("RADs", this.node.id, { t: this, radDiff, curvingSlope, anchorSlope, slopeAtOtherSideOfNode, distanceBetweenCurvingAnchors, r: this.node.outerRadius });
 
             this.radialAnchor = new RadialAnchor(this.node, slopeAtOtherSideOfNode);
+
+            if (debug) {
+                const a = this.radialAnchor.getAnchor()
+                a._data = { stroke: "yellow" };
+                this.node.debugShapes.push(a);
+            }
+
             this.strength = 1;
             // const a = this.radialAnchor.getAnchor()
             // a._data = { stroke: "blue" };
@@ -251,6 +288,9 @@ export class AttractiveAnchorForce extends NodePortForce {
         // Case 2
         // Here we draw a circular arc from the anchor to the node's circle
         else {
+            if (debug) console.log("CASE 2");
+
+            // this.strength = 0.010;
             this.strength = 10;
             const circle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(this.node.center, anchor);
 
@@ -270,11 +310,21 @@ export class AttractiveAnchorForce extends NodePortForce {
                 // TODO:: A RadialAnchor might not be the best option, because it is alyways a straight anchor at the given angle. Sometimes slanted vectors are better
                 this.radialAnchor = new RadialAnchor(this.node, slope);
 
+
+
+
+
             }
             // If the anchor is directly perpendicular to the node's center, we just set the nodes anchor to the anchor
             else {
                 this.radialAnchor = new RadialAnchor(this.node, RadialUtils.radBetweenPoints(this.node.center, anchor.anchorPoint));
             }
+
+            // // Check if the slope is in the valid range
+            // if (!RadialUtils.radIsBetween(this.radialAnchor.angle, this.validOuterRange[0], this.validOuterRange[1])) {
+            //     // Turn the anchor by 180°
+            //     this.radialAnchor = this.radialAnchor.rotate(Math.PI);
+            // }
 
 
             // Check if the slope is in the valid range
@@ -285,6 +335,26 @@ export class AttractiveAnchorForce extends NodePortForce {
                 const dist2 = RadialUtils.normalizeRad(RadialUtils.forwardRadBetweenAngles(this.radialAnchor.angle, this.validOuterRange[1]));
 
                 this.strength = 0.1
+
+                
+                if (debug) {
+                    const a = this.radialAnchor.getAnchor()
+                    a._data = { stroke: "magenta" };
+                    this.node.debugShapes.push(a);
+
+                    console.log({
+                        a: this.radialAnchor.angle,
+                        min: this.validOuterRange[0],
+                        max: this.validOuterRange[1],
+                    })
+                }
+
+            } else {
+                if (debug) {
+                    const a = this.radialAnchor.getAnchor()
+                    a._data = { stroke: "green" };
+                    this.node.debugShapes.push(a);
+                }
             }
         }
     }
@@ -377,22 +447,26 @@ export class NodePortSimulation {
             const validOuterRange = port.node.getValidOuterRadRange();
             const validInnerRange = port.node.getValidInnerRadRange();
 
-            // const segment1 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validOuterRange[0], port.node.outerRadius, port.node.center));
-            // const segment2 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validOuterRange[1], port.node.outerRadius, port.node.center));
-            // const segment3 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validInnerRange[0], port.node.innerRadius, port.node.center));
-            // const segment4 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validInnerRange[1], port.node.innerRadius, port.node.center));
+            if (port.node.id.startsWith("waypoint_follower")) {
+                // console.log("VALID RANGES", validOuterRange, validInnerRange);
+                const segment1 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validOuterRange[0], port.node.outerRadius, port.node.center));
+                const segment2 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validOuterRange[1], port.node.outerRadius, port.node.center));
+                // const segment3 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validInnerRange[0], port.node.innerRadius, port.node.center));
+                // const segment4 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validInnerRange[1], port.node.innerRadius, port.node.center));
+    
+    
+                segment1._data = { stroke: "orange" };
+                segment2._data = { stroke: "red" };
+                // segment3._data = { stroke: "lightgreen" };
+                // segment4._data = { stroke: "green" };
+    
+    
+                port.node.debugShapes.push(segment1);
+                port.node.debugShapes.push(segment2);
+                // port.node.debugShapes.push(segment3);
+                // port.node.debugShapes.push(segment4);
+            }
 
-
-            // segment1._data = { stroke: "orange" };
-            // segment2._data = { stroke: "red" };
-            // segment3._data = { stroke: "lightgreen" };
-            // segment4._data = { stroke: "green" };
-
-
-            // port.node.debugShapes.push(segment1);
-            // port.node.debugShapes.push(segment2);
-            // port.node.debugShapes.push(segment3);
-            // port.node.debugShapes.push(segment4);
         })
 
 
@@ -406,7 +480,7 @@ export class NodePortSimulation {
         let alpha = 1;
         const minAlpha = 0.01;
         const alphaDecay = 1 - Math.pow(minAlpha, 1 / maxIterations);
-        console.log("ALPHA", alphaDecay);
+        // console.log("ALPHA", alphaDecay);
 
         for (let i = 0; i < maxIterations; i++) {
             let totalDelta = 0;
@@ -427,10 +501,10 @@ export class NodePortSimulation {
             alpha += (-alpha) * alphaDecay;
         }
 
-        // this.ports.forEach(port => {
-        //     // port.radialAnchor = port.radialAnchor.rotate(Math.PI);
-        //     port.node.debugShapes.push(port.radialAnchor.getAnchor());
-        // })
+        this.ports.forEach(port => {
+            // port.radialAnchor = port.radialAnchor.rotate(Math.PI);
+            port.node.debugShapes.push(port.radialAnchor.getAnchor());
+        })
 
 
 

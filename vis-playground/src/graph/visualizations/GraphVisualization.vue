@@ -508,7 +508,7 @@ async function downloadPDF() {
     const settingsType = settings.value?.type ?? "";
     const fileName = graphName + "_" + settingsType + "_" + layouter?.visGraph.allLeafLayoutNodes.length + "_nodes" + ".pdf";
 
-    // @ts-ignore
+    // svg2pdf adds the method to PDFDocument, but its not in the types
     doc.svg(svg, {
         x,
         y,

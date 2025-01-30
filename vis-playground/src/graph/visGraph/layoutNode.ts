@@ -681,7 +681,7 @@ export class LayoutNode {
         return [nextRad, prevRad];
     }
 
-    getValidOuterRadRange(factor = 1): [number, number] {
+    getValidOuterRadRange(factor = 1, includeParentCircle = true): [number, number] {
 
         const parent = this.parent;
         const nextNode = this.getNextNodeInSorting();
@@ -692,12 +692,16 @@ export class LayoutNode {
             return range as [number, number];
         }
 
+        // We calculate the tangents to the outer circle of the next and previous node
+        // These tangents define the valid range for the outer radius of the node
         const nextTangents = RadialUtils.getTangentsToCircle(this.center, nextNode.outerCircle);
         const prevTangents = RadialUtils.getTangentsToCircle(this.center, previousNode.outerCircle);
 
+        // Take the outer tangents
         let nextTangent = RadialUtils.getFurthestShapeToPoint(nextTangents, parent.center, (tangent) => tangent.end);
         let prevTangent = RadialUtils.getFurthestShapeToPoint(prevTangents, parent.center, (tangent) => tangent.end);
 
+        // If there is only one other node, we take the both tangents to it
         if (nextNode == previousNode) {
             nextTangent = nextTangents[0];
             prevTangent = nextTangents[1];
@@ -712,10 +716,11 @@ export class LayoutNode {
 
         range = [prevRad, nextRad];
 
+        // If there is only one other node, we have to sort the radians correctly
         if (nextNode == previousNode) {
-
             const nodeRad = RadialUtils.radOfPoint(nextNode.center, this.center);
 
+            // Bring the radians into the correct order
             if (RadialUtils.radIsBetween(nodeRad, prevRad, nextRad)) {
                 range = [nextRad, prevRad];
             } else {
@@ -723,12 +728,42 @@ export class LayoutNode {
             }
         }
 
+        // If the parent circle should be included in the range, we check which of both ranges is smaller --> this one is the valid one
+        if (includeParentCircle) {
+
+            const parentCircle = new Circle(parent.center, parent.innerRadius);
+            const parentCenterRad = RadialUtils.radOfPoint(parent.center, this.center);
+            const circleIntersections = parentCircle.intersect(this.outerCircle);
+
+            // There should be 2 intersections
+            if (circleIntersections.length == 2) {
+
+                // We calculate the angle of the intersection points
+                let radCircleEnd = RadialUtils.radOfPoint(circleIntersections[0], this.center);
+                let radCircleStart = RadialUtils.radOfPoint(circleIntersections[1], this.center);
+
+                // Reorder the angles to have the correct range
+                if (!RadialUtils.radIsBetween(parentCenterRad, radCircleEnd, radCircleStart)) {
+                    [radCircleEnd, radCircleStart] = [radCircleStart, radCircleEnd];
+                }
+
+                // Now choose the range that is smaller
+                const diffCircle = RadialUtils.forwardRadBetweenAngles(radCircleStart, radCircleEnd);
+                const diffTangent = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
+
+                if (diffCircle < diffTangent) {
+                    range = [radCircleStart, radCircleEnd];
+                }
+            }
+        }
+
+        // If there is a stretch or shrink factor, we adjust the range
         if (factor != 1) {
             const diff = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
             const mid = range[0] + diff / 2;
             range = [mid - diff / 2 * factor, mid + diff / 2 * factor];
         }
-        
+
         return range as [number, number];
     }
 

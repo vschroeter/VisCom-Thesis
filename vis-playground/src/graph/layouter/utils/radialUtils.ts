@@ -54,8 +54,11 @@ export class RadialUtils extends ShapeUtil {
     }
 
     static forwardRadBetweenAngles(startRad: number, endRad: number): number {
-        const rad = endRad - startRad;
-        return rad < 0 ? rad + 2 * Math.PI : rad;
+        let rad = endRad - startRad;
+        while (rad < 0) {
+            rad += 2 * Math.PI;
+        }
+        return rad;
     }
 
     /**
@@ -151,6 +154,11 @@ export class RadialUtils extends ShapeUtil {
      * @param endRad The end rad
      */
     static radIsBetween(rad: number, startRad: number, endRad: number): boolean {
+
+        rad = RadialUtils.normalizeRad(rad);
+        startRad = RadialUtils.normalizeRad(startRad);
+        endRad = RadialUtils.normalizeRad(endRad);
+
         const forwardRad = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
         const forwardStartToRad = RadialUtils.forwardRadBetweenAngles(startRad, rad);
         const forwardRadToEnd = RadialUtils.forwardRadBetweenAngles(rad, endRad);
