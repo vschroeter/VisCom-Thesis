@@ -520,10 +520,10 @@ export class NodePortSimulation {
             alpha += (-alpha) * alphaDecay;
         }
 
-        this.ports.forEach(port => {
-            // port.radialAnchor = port.radialAnchor.rotate(Math.PI);
-            port.node.debugShapes.push(port.radialAnchor.getAnchor());
-        })
+        // this.ports.forEach(port => {
+        //     // port.radialAnchor = port.radialAnchor.rotate(Math.PI);
+        //     port.node.debugShapes.push(port.radialAnchor.getAnchor());
+        // })
 
 
 
@@ -911,7 +911,7 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                 connection.pathSegment = multiConnection;
 
                 multiConnection.nodePath = connection.getConnectionPathViaHyperAndVirtualNodes();
-                connection.isThroughVirtualNodes = multiConnection.nodePath.some(node => node.isVirtual);
+                connection.isThroughVirtualNodes = multiConnection.nodePath.slice(1, -1).some(node => node.isVirtual);
                 // console.log(multiConnection.nodePath.map(node => node.id));
 
                 multiConnections.push(multiConnection);
@@ -1024,7 +1024,7 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
             })
         })
 
-        console.log(nodeToCircleSegmentsMap);
+        // console.log(nodeToCircleSegmentsMap);
 
         // // // Adapt the circle segment radius, so that each has a different size
         // nodeToCircleSegmentsMap.forEach((circleSegments, parentNode) => {

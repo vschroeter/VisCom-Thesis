@@ -417,7 +417,7 @@ export class Connection2d extends SvgRenderable {
                     opacity
                 });
             }
-            opacity = 1;
+            // opacity = 1;
             this.updateStyleVisibilityOpacity(opacity);
         }
 
