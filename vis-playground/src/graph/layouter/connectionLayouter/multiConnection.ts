@@ -209,7 +209,9 @@ export class AttractiveAnchorForce extends NodePortForce {
 
         let debug = false;
 
-        if (this.node.id.startsWith("waypoint_follower")) {
+
+        // if (this.node.id.startsWith("waypoint_follower")) {
+        if (this.node.id.startsWith("aaa")) {
             debug = true;
         }
 
@@ -296,24 +298,41 @@ export class AttractiveAnchorForce extends NodePortForce {
 
             if (circle) {
                 const intersections = this.node.outerCircle.intersect(circle);
-                let intersection = ShapeUtil.getClosestShapeToPoint(intersections, anchor.anchorPoint);
-
+                let intersection: Point | undefined = undefined;
                 // If there is no intersection, the anchor and its circle are inside of a parent node
                 // In this case, we calculate the intersection from the anchor line with the node's circle
-                if (!intersection) {
+                if (intersections.length == 0) {
                     const lineIntersections = anchor.getLine().intersect(this.node.outerCircle);
                     intersection = ShapeUtil.getClosestShapeToPoint(lineIntersections, anchor.anchorPoint);
+                } else {
+                    intersection = ShapeUtil.getClosestShapeToPoint(intersections, anchor.anchorPoint);
+                }
+
+                // This block swaps the circle intersection points so that the intersection lying inside the valid outer range is chosen
+                // However, this is not the best solution, because it might disrupt the influence of other anchors
+                // else if (intersections.length == 2) {
+                //     const closestIntersection = ShapeUtil.getClosestShapeToPoint(intersections, anchor.anchorPoint)!;
+                //     const farthestIntersection = ShapeUtil.getFurthestShapeToPoint(intersections, anchor.anchorPoint)!;
+
+                //     const slopeClosest = RadialUtils.radOfPoint(closestIntersection, this.node.center);
+                //     const slopeFarthest = RadialUtils.radOfPoint(farthestIntersection, this.node.center);
+
+                //     if (RadialUtils.radIsBetween(slopeClosest, this.validOuterRange[0], this.validOuterRange[1])) {
+                //         intersection = closestIntersection;
+                //     } else {
+                //         intersection = farthestIntersection;
+                //     }
+                // }
+
+                if (!intersection) {
+                    console.error("NO INTERSECTION", this.node.id, anchor.anchorPoint, anchor.direction, circle, intersections);
+                    throw new Error("No intersection found");
                 }
 
                 const intersectionVector = new Vector(this.node.center, intersection);
                 const slope = intersectionVector.slope
-                // TODO:: A RadialAnchor might not be the best option, because it is alyways a straight anchor at the given angle. Sometimes slanted vectors are better
+                // TODO:: A RadialAnchor might not be the best option, because it is always a straight anchor at the given angle. Sometimes slanted vectors are better
                 this.radialAnchor = new RadialAnchor(this.node, slope);
-
-
-
-
-
             }
             // If the anchor is directly perpendicular to the node's center, we just set the nodes anchor to the anchor
             else {
@@ -336,7 +355,7 @@ export class AttractiveAnchorForce extends NodePortForce {
 
                 this.strength = 0.1
 
-                
+
                 if (debug) {
                     const a = this.radialAnchor.getAnchor()
                     a._data = { stroke: "magenta" };
@@ -453,14 +472,14 @@ export class NodePortSimulation {
                 const segment2 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validOuterRange[1], port.node.outerRadius, port.node.center));
                 // const segment3 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validInnerRange[0], port.node.innerRadius, port.node.center));
                 // const segment4 = new Segment(port.node.center, RadialUtils.positionOnCircleAtRad(validInnerRange[1], port.node.innerRadius, port.node.center));
-    
-    
+
+
                 segment1._data = { stroke: "orange" };
                 segment2._data = { stroke: "red" };
                 // segment3._data = { stroke: "lightgreen" };
                 // segment4._data = { stroke: "green" };
-    
-    
+
+
                 port.node.debugShapes.push(segment1);
                 port.node.debugShapes.push(segment2);
                 // port.node.debugShapes.push(segment3);

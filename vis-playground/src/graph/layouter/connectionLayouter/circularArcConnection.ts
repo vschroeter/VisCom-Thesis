@@ -1,6 +1,8 @@
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialCircularArcConnectionLayouter, RadialConnectionsHelper } from "./radialConnections";
+import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
+import { Circle, Vector } from "2d-geometry";
 
 
 export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter {
@@ -14,7 +16,22 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
             forwardBackwardThresholdDeg: 270
         });
     }
-    
+
+    calculateConnection(connection: LayoutConnection, segmentCircle: Circle, direction: "clockwise" | "counter-clockwise"): void {
+        const start = connection.source;
+        const end = connection.target;
+
+        connection.pathSegment = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+            connection,
+            start.outerCircle,
+            end.outerCircle,
+            segmentCircle,
+            direction
+        );
+        connection.finishedLayouting = true;
+
+    }
+
     override layoutConnectionsOfNode(node: LayoutNode): void {
 
         // const forwardBackwardThresholdDeg = 270;
@@ -46,48 +63,39 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
         const directInForwardConnections = connections.directInForwardConnections;
         const directInBackwardConnections = connections.directInBackwardConnections;
 
-        // Render direct connections
-        [...directOutForwardConnections, ...directInForwardConnections].forEach(connection => {
-            const start = connection.source;
-            const end = connection.target;
-            const parent = start.parent;
-            if (!parent) return;
 
-            // Make the parent circle slightly smaller
-            const outerC = parent.innerCircle.clone()
-            // outerC.r += 10 * parent.sizeFactor;
-            outerC.r += 0.1 * Math.min(start.outerCircle.r, end.outerCircle.r);
-            if (!parent) return;
+        directOutForwardConnections.forEach(connection => {
+            let adaptedCircle = node.parent?.innerCircle.clone();
+            if (!adaptedCircle) return;
+            adaptedCircle.r += 0.1 * Math.min(connection.source.outerCircle.r, connection.target.outerCircle.r);
 
-            connection.pathSegment = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
-                connection,
-                start.outerCircle,
-                end.outerCircle,
-                outerC,
-                "clockwise"
-            );
-            connection.finishedLayouting = true;
+            // If the parent node has only two children, the circle is adapted to be larger, so that the connection is more direct
+            if (node.parent?.children.length === 2) {
+                const centerTranslationVector = new Vector(connection.source.center, connection.target.center).rotate90CW();
+                const newCenter = node.parent.center.translate(centerTranslationVector);
+                const newRadius = newCenter.distanceTo(node.center)[0];
+                adaptedCircle = new Circle(newCenter, newRadius);
+                // node.debugShapes.push(adaptedCircle);
+            }
+
+            this.calculateConnection(connection, adaptedCircle, "clockwise");
         });
 
-        // Render direct backward connections
-        [...directOutBackwardConnections, ...directInBackwardConnections].forEach(connection => {
-            const start = connection.source;
-            const end = connection.target;
-            const parent = start.parent;
-            if (!parent) return;
+        directOutBackwardConnections.forEach(connection => {
+            let adaptedCircle = node.parent?.innerCircle.clone();
+            if (!adaptedCircle) return;
+            adaptedCircle.r -= 0.2 * Math.min(connection.source.outerCircle.r, connection.target.outerCircle.r);
 
-            // Make the parent circle slightly larger
-            const outerC = parent.innerCircle.clone()
-            // outerC.r += 10 * parent.sizeFactor;
-            outerC.r -= 0.2 * Math.min(start.outerCircle.r, end.outerCircle.r);
+            // If the parent node has only two children, the circle is adapted to be larger, so that the connection is more direct
+            if (node.parent?.children.length === 2) {
+                const centerTranslationVector = new Vector(connection.source.center, connection.target.center).rotate90CCW();
+                const newCenter = node.parent.center.translate(centerTranslationVector);
+                const newRadius = newCenter.distanceTo(node.center)[0];
+                adaptedCircle = new Circle(newCenter, newRadius);
+                // node.debugShapes.push(adaptedCircle);
+            }
 
-            connection.pathSegment = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
-                connection,
-                start.outerCircle,
-                end.outerCircle,
-                outerC,
-                "counter-clockwise"
-            );
+            this.calculateConnection(connection, adaptedCircle, "counter-clockwise");
         });
     }
 

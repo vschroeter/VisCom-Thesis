@@ -25,7 +25,11 @@ export class ShapeUtil {
         return closestShape;
     }
 
-    static getFurthestShapeToPoint<T>(shapes: T[], point: Point, pointGetter: (shape: T) => Point): T | undefined {
+    static getFurthestShapeToPoint<T>(
+        shapes: T[],
+        point: Point,
+        pointGetter: (shape: T) => Point = (shape: T) => shape as unknown as Point
+    ): T | undefined {
         if (shapes.length === 0) {
             return undefined;
         }

@@ -64,15 +64,37 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
         const startAngleDeg = 180;
         const startAngleRad = degToRad(startAngleDeg);
 
+        // If there is only one node, place it at the center and set the radius to the node's radius
         if (nodes.length == 1) {
-            // If there is only one node, place it at the center and set the radius to the node's radius
-            const maxRadius = nodes[0].radius;0
+            const maxRadius = nodes[0].radius; 0
             nodes[0].x = this.center.x;
             nodes[0].y = this.center.y;
             this.radius = maxRadius;
             parentNode.radius = (this.radius + maxRadius);
             parentNode.innerRadius = this.radius;
-        } else {
+        }
+        // If there are exactly two nodes, place them on opposite sides of the circle
+        else if (nodes.length == 2) {
+
+            const r0 = nodes[0].radius;
+            const r1 = nodes[1].radius;
+
+            const distanceBetweenNodeCentersWithoutMargin = r0 + r1;
+            const margin = distanceBetweenNodeCentersWithoutMargin * this.nodeMarginFactor;
+            const distanceBetweenNodeCenters = distanceBetweenNodeCentersWithoutMargin + margin;
+
+            const totalRadius = distanceBetweenNodeCentersWithoutMargin + margin / 2;
+
+            nodes[0].x = this.center.x - r1 - margin / 2;
+            nodes[0].y = this.center.y;
+
+            nodes[1].x = this.center.x + r0 + margin / 2;
+            nodes[1].y = this.center.y;
+
+            parentNode.innerRadius = distanceBetweenNodeCenters;
+            parentNode.radius = totalRadius * this.outerMarginFactor;
+        }
+        else {
             // Place nodes on a circle with radius
             const angleRadMap = new Map<LayoutNode, number>();
             // const angleRadStep = 2 * Math.PI / nodes.length;
@@ -93,7 +115,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
                 }
 
             });
-    
+
             const maxNodeRadius = Math.max(...nodes.map(n => n.radius));
             parentNode.radius = (this.radius + maxNodeRadius) * this.outerMarginFactor;
             parentNode.innerRadius = this.radius;
