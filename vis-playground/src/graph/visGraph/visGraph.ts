@@ -455,6 +455,9 @@ export class VisGraph {
             });
         }
 
+        // Update the smallest node size of the graph
+        this.smallestExistingNodeSize = d3.min(this.allLayoutNodes.map(node => node.radius)) ?? 0;
+
         // Ensure, that all graphical elements are created
         this.createGraphicalElements();
         this.updateGraphicalLayout();
@@ -522,6 +525,8 @@ export class VisGraph {
     ////////////////////////////////////////////////////////////////////////////
     // #region Style methods
     ////////////////////////////////////////////////////////////////////////////
+
+    smallestExistingNodeSize: number = 0;
 
     updateGraphicalStyle() {
 
