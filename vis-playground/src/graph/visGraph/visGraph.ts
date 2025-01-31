@@ -804,6 +804,7 @@ export class VisGraph {
             hypernode.applyChildrenColorScheme(colorScheme, [start, end]);
             hypernode.filled = false;
             hypernode.stroke = colorScheme(startPositionInScheme + interval / 2);
+            hypernode.strokeWidth = nodes.length;
             hypernode.showLabel = false;
         });
 
@@ -1100,6 +1101,7 @@ export class VisGraph {
             hypernode.filled = false;
             hypernode.showLabel = false;
             hypernode.stroke = "gray"
+            hypernode.strokeWidth = nodes.length;
         });
 
         // Update the hyper connections

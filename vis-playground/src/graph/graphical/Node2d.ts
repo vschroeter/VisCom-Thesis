@@ -356,7 +356,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
   updateStyleStroke(stroke?: string, strokeWidth?: number, strokeOpacity?: number) {
     this.checkValueAndAddUpdateCallback([
       { currentValuePath: 'strokeStyle.stroke', newValue: stroke },
-      { currentValuePath: 'strokeStyle.strokeWidth', newValue: strokeWidth },
+      { currentValuePath: 'strokeStyle.strokeWidth', newValue: strokeWidth ?? this.layoutNode.strokeWidth },
       { currentValuePath: 'strokeStyle.strokeOpacity', newValue: strokeOpacity }
     ], this.renderStyleStroke);
   }

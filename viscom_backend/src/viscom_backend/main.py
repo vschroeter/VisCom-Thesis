@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 import networkx as nx
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -67,11 +66,13 @@ def generate_graph(generator):
         params[param_name] = param_value
 
     graph = generator_methods_config[generator]["method"](**params)
-    
+
     # Get also the commgraph node rank for each node in the generated graph
     centrality = calculate_commgraph_centrality(graph, mode="significance")
+    # centrality = calculate_commgraph_centrality(graph, mode="closeness")
+    # centrality = calculate_commgraph_centrality(graph, mode="reachability")
     nx.set_node_attributes(graph, centrality, "commgraph_centrality")
-        
+
     data = nx.node_link_data(graph)
     return jsonify(data)
 
