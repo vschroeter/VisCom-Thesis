@@ -21,13 +21,27 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
         const start = connection.source;
         const end = connection.target;
 
-        connection.pathSegment = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
-            connection,
-            start.outerCircle,
-            end.outerCircle,
-            segmentCircle,
-            direction
-        );
+        try {
+
+            connection.pathSegment = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+                connection,
+                start.outerCircle,
+                end.outerCircle,
+                segmentCircle,
+                direction
+            );
+        } catch (e) {
+            // connection.source.debugShapes.push(start.outerCircle);
+            // connection.source.debugShapes.push(end.outerCircle);
+            // connection.source.debugShapes.push(segmentCircle);
+            console.error("Error in circular arc connection layouting", {
+                connection,
+                start,
+                end,
+                segmentCircle
+            })
+            throw e;
+        }
         connection.finishedLayouting = true;
 
     }

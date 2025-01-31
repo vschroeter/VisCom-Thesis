@@ -487,13 +487,30 @@ export class LayoutNode {
 
     // For connections to this node
     _outerRadius?: number;
+
+    /** 
+     * The inner radius of the node. 
+     * For hypernodes, this is the radius of the inner circle on which  the child nodes are placed.
+     * For normal nodes, this is the same as the radius.
+     */
     get innerRadius(): number {
         return this._innerRadius ?? this.radius;
     }
+
     set innerRadius(value: number) {
         this._innerRadius = value;
     }
 
+    /**
+     * If the enclosing circle of the node is adapted, this is the translation of the inner circle.
+     * This is used for reducing the unused space in hypernodes when the child nodes have different sizes.
+     */
+    innerCenterTranslation: Vector = new Vector(0, 0);
+
+    /**
+     * The outer radius of the node.
+     * This can be the radius of the node adapted by a margin factor.
+     */
     get outerRadius(): number {
         return this._outerRadius ?? this.radius;
     }
@@ -510,15 +527,24 @@ export class LayoutNode {
     set x(x: number) { this.center.x = x; }
     set y(y: number) { this.center.y = y; }
 
-    // The circle object representing the node
+    /**
+     * The circle representing the node.
+     */
     get circle() {
         return new Circle(this.center, this.radius);
     }
 
+    /**
+     * The circle where the child nodes are placed on.
+     */
     get innerCircle() {
-        return new Circle(this.center, this.innerRadius);
+        return new Circle(this.center.translate(this.innerCenterTranslation.scale(-1)), this.innerRadius);
     }
 
+    /**
+     * The circle where the connections to the node are placed on.
+     * This is normally a little bit larger than the node circle so that the connections do not overlap with the node.
+     */
     get outerCircle() {
         return new Circle(this.center, this.outerRadius);
     }
@@ -533,7 +559,7 @@ export class LayoutNode {
 
     rotateChildrenLocally(rad: number) {
         const center = new Point(0, 0);
-        // this.center = this.center.rotate(rad, center);
+        this.innerCenterTranslation = this.innerCenterTranslation.rotate(rad);
         this.children.forEach(child => {
             child.center = child.center.rotate(rad, center);
             child.rotateChildrenLocally(rad);

@@ -250,7 +250,8 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
 
         if (intersectionsStart.length == 0 || intersectionsEnd.length == 0) {
             console.error("No intersections found between circles", startCircle, endCircle, parentCircle);
-            return new EllipticArc(connection);
+            throw new Error("No intersections found between circles");
+            // return new EllipticArc(connection);
         }
 
         // Get the intersections, that are closer to the mid point between the two nodes

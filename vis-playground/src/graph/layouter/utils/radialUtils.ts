@@ -369,5 +369,48 @@ export class RadialUtils extends ShapeUtil {
         return new Circle(center, radius);
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    // #region Algorithms
+    ////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Find the minimum enclosing circle of a set of points using the Welzl's algorithm.
+     * @param points The points for which to find the minimum enclosing circle.
+     * @returns The minimum enclosing circle.
+     */
+    static getMinimumEnclosingCircle(points: Point[]): Circle {
+        console.log("Finding minimum enclosing circle for", points);
+        function welzl(points: Point[], r: Point[]): Circle {
+            if (points.length === 0 || r.length === 3) {
+                // if (n === 0 || r.length === 3) {
+                switch (r.length) {
+                    case 0:
+                        return new Circle(new Point(0, 0), 0);
+                    case 1:
+                        return new Circle(r[0], 0);
+                    case 2:
+                        const midPoint = new Point((r[0].x + r[1].x) / 2, (r[0].y + r[1].y) / 2);
+                        return new Circle(midPoint, r[0].distanceTo(r[1])[0] / 2);
+                    case 3:
+                        return RadialUtils.getCircleFromThreePoints(r[0], r[1], r[2]);
+                }
+            }
+
+            const circle = welzl(points.slice(1), Array.from(r));
+
+            if (circle.contains(points[0])) {
+                return circle;
+            }
+
+            const newR = Array.from(r);
+            newR.push(points[0]);
+            return welzl(points.slice(1), newR);
+        }
+
+        // Permute the points randomly
+        const perm = Array.from(points).sort(() => Math.random() - 0.5);
+        return welzl(perm, []);
+    }
+
 
 }

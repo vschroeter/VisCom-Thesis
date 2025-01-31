@@ -1,34 +1,52 @@
 import { GraphLayouter } from "../../layouter";
 
-import { EllipticArc } from "src/graph/graphical";
 import { RadialLayouterSettings } from "./radialSettings";
-import { Circle, Line, Point, PointLike, Segment, Vector } from "2d-geometry";
-import { Anchor } from "src/graph/graphical/primitives/Anchor";
+import { Point, PointLike, Vector } from "2d-geometry";
 import { BasePositioner } from "src/graph/visGraph/layouterComponents/positioner";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { BasicSizeCalculator } from "src/graph/visGraph/layouterComponents/precalculator";
-import { LayoutConnection, LayoutConnectionPoint } from "src/graph/visGraph/layoutConnection";
 import { degToRad, RadialUtils } from "../../utils/radialUtils";
-import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { RadialCircularArcConnectionLayouter } from "../../connectionLayouter/radialConnections";
-
 
 
 export class RadialPositionerDynamicDistribution extends BasePositioner {
 
+    /** 
+     * The margin factor between placed nodes.
+     * 0 means that the nodes are placed directly next to each other.
+     * 1 means that the nodes are placed with a distance of their radius between them.
+     */
     nodeMarginFactor = 1
+
+    /** 
+     * The margin factor for the radius of a parent node.
+     * 1 means that the parent node perimeter touches its children.
+     * A value above 1 adds a margin to the parent this perimeter.
+     */
     outerMarginFactor = 1.1
+
+    /**
+     * If false, the parent node's radius is based on the maximum radius of the children.
+     * If true, the positioner will adapt the parent's radius to the smallest enclosing circle containing all children.
+     */
+    adaptEnclosingCircle = true;
+
     center = new Point(0, 0);
     private radius: number = 0;
 
     constructor({
-        nodeMarginFactor = 1, outerMarginFactor = 1.1
+        nodeMarginFactor = 1, outerMarginFactor = 1.1, adaptEnclosingCircle = true
     }: {
-        nodeMarginFactor?: number; outerMarginFactor?: number;
+        nodeMarginFactor?: number;
+        outerMarginFactor?: number;
+        adaptEnclosingCircle?: boolean;
     } = {}) {
         super();
         this.nodeMarginFactor = nodeMarginFactor;
         this.outerMarginFactor = outerMarginFactor;
+        this.adaptEnclosingCircle = adaptEnclosingCircle;
+
+        console.log("Created RadialPositionerDynamicDistribution", this.adaptEnclosingCircle);
     }
 
 
@@ -119,6 +137,30 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             const maxNodeRadius = Math.max(...nodes.map(n => n.radius));
             parentNode.radius = (this.radius + maxNodeRadius) * this.outerMarginFactor;
             parentNode.innerRadius = this.radius;
+        }
+
+
+        // Find the minimum enclosing circle for the nodes
+
+        const expandedPoints = nodes.map(n => {
+            // Here we expand the points away from the center to find the minimum enclosing circle for the children
+            const center = parentNode.center;
+            const direction = new Vector(center, n.center).normalize();
+            const expandedPoint = n.center.translate(direction.scale(n.radius));
+            return expandedPoint;
+        });
+
+        if (this.adaptEnclosingCircle) {
+            const enclosingCircle = RadialUtils.getMinimumEnclosingCircle(expandedPoints);
+
+            // Adapt all children to the enclosing circle
+            parentNode.radius = enclosingCircle.r * this.outerMarginFactor;
+            const innerTranslation = new Vector(parentNode.center, enclosingCircle.center)//.scale(-1);
+            parentNode.innerCenterTranslation = innerTranslation;
+
+            parentNode.children.forEach(child => {
+                child.center = child.center.translate(innerTranslation.scale(-1));
+            });
         }
     }
 

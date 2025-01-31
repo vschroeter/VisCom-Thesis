@@ -35,6 +35,15 @@ export class RadialSpacingSettings extends Setting {
         defaultValue: 1.1,
         type: "number",
     });
+
+    adaptEnclosingCircle = new Param<boolean>({
+        key: "adaptEnclosingCircle",
+        label: "Adapt Enclosing Circle",
+        description: "Adapt the enclosing circle to the size of the nodes.",
+        optional: false,
+        defaultValue: true,
+        type: "boolean",
+    });
 }
 
 

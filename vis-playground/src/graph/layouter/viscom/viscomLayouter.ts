@@ -83,12 +83,13 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         // const sorter = new IdSorter(this.visGraph, this.commonSettings);
         this.visGraph.setSorter(sorter);
 
-        this.visGraph.setPositioner((node) => {
-            return new RadialPositionerDynamicDistribution({
+        this.visGraph.setPositioner(
+            new RadialPositionerDynamicDistribution({
                 nodeMarginFactor: this.settings.spacing.nodeMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1,
                 outerMarginFactor: this.settings.spacing.outerMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
-            });
-        })
+                adaptEnclosingCircle: this.settings.spacing.adaptEnclosingCircle.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? true,
+            })
+        )
 
         this.visGraph.setConnectionLayouter([
             new DirectCircularConnectionLayouter(),
@@ -99,6 +100,11 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         // console.log("Before layout", this.visGraph);
         this.visGraph.layout();
         console.log("After layout", this.visGraph);
+
+        // this.visGraph.allLayoutNodes.forEach(node => {
+        //     node.debugShapes.push(node.innerCircle);
+        // })
+
         this.emitEvent("end");
         // })
     }
