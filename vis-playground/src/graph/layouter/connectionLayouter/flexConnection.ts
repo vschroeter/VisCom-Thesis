@@ -274,17 +274,20 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
          * - The hyper arc in the middle
          * - An start / end segment, which is either an adapted arc or if this arc is not possible, a smooth spline from the hyper arc to the node
          */
+        let startSegment: PathSegment | undefined = undefined;
+        let endSegment: PathSegment | undefined = undefined;
         if (hyperSource != source || hyperTarget != target) {
-            let startSegment: PathSegment | undefined = undefined;
-            let endSegment: PathSegment | undefined = undefined;
+
+            let debug = false;
+            debug = false;
 
             const startCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(source.center, hyperArc.startAnchor)
             if (startCircle) {
                 const intersections = source.outerCircle.intersect(startCircle);
-                const startEndPoint = RadialUtils.getClosestShapeToPoint(intersections, hyperArc.start);
+                const startStartPoint = RadialUtils.getClosestShapeToPoint(intersections, hyperArc.start);
 
                 startSegment = new EllipticArc(connection.connection,
-                    startEndPoint,
+                    startStartPoint,
                     hyperArc.start,
                     startCircle.r,
                     startCircle.r
@@ -305,110 +308,89 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
                 ).direction(direction);
             }
 
+            // These are the radian values where the arc is placed at the nodes
+            const startRad = RadialUtils.radOfPoint(startSegment!.start, source.center);
+            const endRad = RadialUtils.radOfPoint(endSegment!.end, target.center);
+
+            // Get the outer valid ranges for both nodes, in this range connections from a different hypernode are allowed
+            const sourceOuter = source.getValidOuterRadRange(0.9);
+            const targetOuter = target.getValidOuterRadRange(0.9);
+
+
+            // TODO: Better construction of the spline points. Not just take a straight line from the hyperarc to the node, but instead take a point that respects the curvature
+
+            // If the arc is not valid valid, we construct something better
+            if (!RadialUtils.radIsBetween(startRad, sourceOuter[0], sourceOuter[1])) {
+                // // If the arc is not valid, we construct a spline from the hyperarc to the node
+                // const vectorCenterToHyperArc = new Vector(source.center, hyperArc.start);
+                // const startAnchor = new Anchor(source.center, vectorCenterToHyperArc).move(source.outerRadius);
+                // startSegment = new SmoothSplineSegment(connection.connection, startAnchor, hyperArc.startAnchor);
+
+
+                // If the arc is not valid, we construct a spline from the hyperarc to the node
+                const vectorHyperArcToCenter = new Vector(source.center, hyperArc.start);
+
+                if (RadialUtils.radIsBetween(vectorHyperArcToCenter.slope, sourceOuter[0], sourceOuter[1])) {
+                    const startAnchor = new Anchor(source.center, vectorHyperArcToCenter).move(source.outerRadius);
+                    startSegment = new SmoothSplineSegment(connection.connection, startAnchor, hyperArc.startAnchor);
+                } else {
+                    const anchor1 = new Anchor(source.center, new Vector(sourceOuter[0])).move(source.outerRadius);
+                    const anchor2 = new Anchor(source.center, new Vector(sourceOuter[1])).move(source.outerRadius);
+                    const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], hyperArc.start, a => a.anchorPoint);
+                    if (closerAnchor) {
+                        startSegment = new SmoothSplineSegment(connection.connection, closerAnchor.cloneReversed(), hyperArc.startAnchor);
+                    }
+                }
+            }
+
+            // If the arc is valid, we take the end point
+            if (!RadialUtils.radIsBetween(endRad, targetOuter[0], targetOuter[1])) {
+
+                // If the arc is not valid, we construct a spline from the hyperarc to the node
+                const vectorHyperArcToCenter = new Vector(hyperArc.end, target.center);
+
+                if (RadialUtils.radIsBetween(vectorHyperArcToCenter.rotate(Math.PI).slope, targetOuter[0], targetOuter[1])) {
+                    const endAnchor = new Anchor(target.center, vectorHyperArcToCenter).move(-target.outerRadius);
+                    endSegment = new SmoothSplineSegment(connection.connection, hyperArc.endAnchor, endAnchor);
+                } else {
+                    const anchor1 = new Anchor(target.center, new Vector(targetOuter[0])).move(target.outerRadius);
+                    const anchor2 = new Anchor(target.center, new Vector(targetOuter[1])).move(target.outerRadius);
+                    const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], hyperArc.end, a => a.anchorPoint);
+                    if (closerAnchor) {
+                        endSegment = new SmoothSplineSegment(connection.connection, hyperArc.endAnchor, closerAnchor.cloneReversed());
+                    }
+                }
+
+            }
+
+
+            if (hyperSource == source) startSegment = undefined;
+            if (hyperTarget == target) endSegment = undefined;
+
+            // If existent, we add the splines to the arc
             connection.segments = [startSegment, hyperArc, endSegment].filter(s => s) as PathSegment[];
 
-
-
-            // // This would be the arc, if we extend the hyper arc to the source and target nodes.
-            // // It is possible, that the arc would have no intersection with the nodes, in such case we have to do other stuff
-            // let nodeArc: undefined | EllipticArc;
-            // try {
-            //     nodeArc = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
-            //         connection.connection,
-            //         source.outerCircle,
-            //         target.outerCircle,
-            //         segmentCircle,
-            //         direction
-            //     );
-            // } catch (e) {
-
+            // if (source.id == "dialog_session_manager") {
+            //     debug = true;
             // }
+            if (debug) {
+                const sourceTangentAnchor1 = new Anchor(source.center, new Vector(sourceOuter[0]));
+                const sourceTangentAnchor2 = new Anchor(source.center, new Vector(sourceOuter[1]));
 
-            // // These are the radian values where the arc is placed at the nodes
-            // const startRad = nodeArc ? RadialUtils.radOfPoint(nodeArc.start, source.center) : undefined;
-            // const endRad = nodeArc ? RadialUtils.radOfPoint(nodeArc.end, source.center) : undefined;
+                const targetTangentAnchor1 = new Anchor(target.center, new Vector(targetOuter[0]));
+                const targetTangentAnchor2 = new Anchor(target.center, new Vector(targetOuter[1]));
 
-            // // let arcStartPoint: Point | undefined = undefined;
-            // // let arcEndPoint: Point | undefined = undefined;
+                sourceTangentAnchor1._data = { length: 100, stroke: "red" };
+                sourceTangentAnchor2._data = { length: 100, stroke: "green" };
+                targetTangentAnchor1._data = { length: 100, stroke: "blue" };
+                targetTangentAnchor2._data = { length: 100, stroke: "cyan" };
 
-            // let startSegment: PathSegment | undefined = undefined;
-            // let endSegment: PathSegment | undefined = undefined;
-
-            // let startSpline: SmoothSplineSegment | undefined = undefined;
-            // let endSpline: SmoothSplineSegment | undefined = undefined;
-
-
-            // // Get the outer valid ranges for both nodes, in this range connections from a different hypernode are allowed
-            // const sourceOuter = source.getValidOuterRadRange(0.9);
-            // const targetOuter = target.getValidOuterRadRange(0.9);
-
-
-
-
-            // // TODO: Better construction of the spline points. Not just take a straight line from the hyperarc to the node, but instead take a point that respects the curvature
-
-            // // If the arc is not valid valid, we construct something better
-            // if (!nodeArc || !startRad || RadialUtils.radIsBetween(startRad, sourceOuter[0], sourceOuter[1])) {
-
-
-            //     // arcStartPoint = nodeArc.start;
-            // }
-            // // If the arc is not valid, we construct a spline from the hyperarc to the node
-            // else {
-
-
-            //     const vectorCenterToHyperArc = new Vector(source.center, hyperArc.start);
-            //     const startAnchor = new Anchor(source.center, vectorCenterToHyperArc).move(source.outerRadius);
-            //     startSpline = new SmoothSplineSegment(connection.connection, startAnchor, hyperArc.startAnchor);
-            //     arcStartPoint = hyperArc.start;
-            // }
-
-            // // If the arc is valid, we take the end point
-            // if (nodeArc && endRad && RadialUtils.radIsBetween(endRad, targetOuter[0], targetOuter[1])) {
-            //     arcEndPoint = nodeArc.end;
-            // }
-            // // If the arc is not valid, we construct a spline from the hyperarc to the node
-            // else {
-            //     const vectorHyperArcToCenter = new Vector(hyperArc.end, target.center);
-            //     const endAnchor = new Anchor(target.center, vectorHyperArcToCenter).move(-target.outerRadius);
-            //     endSpline = new SmoothSplineSegment(connection.connection, hyperArc.endAnchor, endAnchor);
-            //     arcEndPoint = hyperArc.end;
-            // }
-
-            // // This is the arc with the selected start and end points between the nodes
-            // const arc = new EllipticArc(connection.connection,
-            //     arcStartPoint,
-            //     arcEndPoint,
-            //     hyperArc._rx,
-            //     hyperArc._ry,
-            //     hyperArc._rotation,
-            //     hyperArc._largeArc,
-            //     hyperArc._sweep
-            // )
-
-            // // If existent, we add the splines to the arc
-            // connection.segments = [startSpline, arc, endSpline].filter(s => s) as PathSegment[];
-
-            // const debug = false;
-
-            // if (debug) {
-            //     const sourceTangentAnchor1 = new Anchor(source.center, new Vector(sourceOuter[0]));
-            //     const sourceTangentAnchor2 = new Anchor(source.center, new Vector(sourceOuter[1]));
-
-            //     const targetTangentAnchor1 = new Anchor(target.center, new Vector(targetOuter[0]));
-            //     const targetTangentAnchor2 = new Anchor(target.center, new Vector(targetOuter[1]));
-
-            //     sourceTangentAnchor1._data = { length: 100, stroke: "red" };
-            //     sourceTangentAnchor2._data = { length: 100, stroke: "green" };
-            //     targetTangentAnchor1._data = { length: 100, stroke: "blue" };
-            //     targetTangentAnchor2._data = { length: 100, stroke: "cyan" };
-
-            //     source.debugShapes.push(sourceTangentAnchor1)
-            //     source.debugShapes.push(sourceTangentAnchor2)
-            //     target.debugShapes.push(targetTangentAnchor1)
-            //     target.debugShapes.push(targetTangentAnchor2)
-            //     // target.debugShapes.push(parent!.innerCircle.clone())
-            // }
+                source.debugShapes.push(sourceTangentAnchor1)
+                source.debugShapes.push(sourceTangentAnchor2)
+                target.debugShapes.push(targetTangentAnchor1)
+                target.debugShapes.push(targetTangentAnchor2)
+                // target.debugShapes.push(parent!.innerCircle.clone())
+            }
 
         } else {
             connection.segments = [hyperArc];
