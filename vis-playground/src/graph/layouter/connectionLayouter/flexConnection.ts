@@ -36,9 +36,7 @@ export class FlexConnection extends CombinedPathSegment {
             } else if (this.source.isDirectSuccessorInSortingTo(this.target)) {
                 this.type = "sameParentDirectBackward";
             } else {
-
                 this.type = "sameParent"
-
             }
         } else {
             const commonParent = source.getCommonParent(target);
@@ -57,30 +55,8 @@ export class FlexConnection extends CombinedPathSegment {
             if (this.type == "unknown") {
                 this.type = "differentParent";
             }
-
-
         }
-
     }
-
-
-    calculate() {
-
-
-        //++++ Source and Target have the same parent ++++//
-
-        // Direct Case:
-        // Source and Target are behind each other in the parent sorting
-
-
-
-    }
-
-
-    calculateConsecutive() {
-
-    }
-
 }
 
 
@@ -220,6 +196,7 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
         const isForward = connection.type == "sameParentDirectForward" || connection.type == "differentParentDirectForwardFromAnchor";
         const direction = isForward ? "clockwise" : "counter-clockwise";
+        const otherDirection = isForward ? "counter-clockwise" : "clockwise";
 
         // If there is a counter connection, adapt the radius of the segment circles so that the counter connection is not too close
         if (hasCounterConnection) {
@@ -293,19 +270,30 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
                     startCircle.r
                 ).direction(direction);
 
+                // Check if the anchor is correct
+                const startEndAnchor = startSegment.endAnchor;
+                if (!hyperArc.startAnchor.isSimilarTo(startEndAnchor)) {
+                    (startSegment as EllipticArc).direction(otherDirection);
+                }
             }
 
-            const endCirlce = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(target.center, hyperArc.endAnchor)
-            if (endCirlce) {
-                const intersections = target.outerCircle.intersect(endCirlce);
+            const endCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(target.center, hyperArc.endAnchor)
+            if (endCircle) {
+                const intersections = target.outerCircle.intersect(endCircle);
                 const endEndPoint = RadialUtils.getClosestShapeToPoint(intersections, hyperArc.end);
 
                 endSegment = new EllipticArc(connection.connection,
                     hyperArc.end,
                     endEndPoint,
-                    endCirlce.r,
-                    endCirlce.r
+                    endCircle.r,
+                    endCircle.r
                 ).direction(direction);
+
+                // Check if the anchor is correct
+                const endStartAnchor = endSegment.startAnchor;
+                if (!hyperArc.endAnchor.isSimilarTo(endStartAnchor)) {
+                    (endSegment as EllipticArc).direction(otherDirection);
+                }
             }
 
             // These are the radian values where the arc is placed at the nodes

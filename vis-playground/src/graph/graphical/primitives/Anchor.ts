@@ -4,6 +4,7 @@ import { RadialUtils } from "src/graph/layouter/utils/radialUtils";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 
 export class Anchor {
+
     tag = "Anchor";
 
     /** The point, where the anchor is located */
@@ -110,6 +111,23 @@ export class Anchor {
             return new Ray(this.anchorPoint, this.direction.multiply(-1).rotate90CW());
         }
         return new Ray(this.anchorPoint, this.direction.rotate90CW());
+    }
+
+    isSimilarTo(endStartAnchor: Anchor | undefined, epsilon = 0.1) {
+        if (endStartAnchor === undefined) return false;
+
+        // Check if the points are similar
+        const point1 = this.anchorPoint;
+        const point2 = endStartAnchor.anchorPoint;
+
+        if (point1.distanceTo(point2)[0] > epsilon) return false;
+
+        // Check if the directions are similar
+        const direction1 = this.direction;
+        const direction2 = endStartAnchor.direction;
+
+        const angleDifference = Math.abs(direction1.slope - direction2.slope);
+        return angleDifference < epsilon;
     }
 
 
