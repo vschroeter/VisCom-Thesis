@@ -2,7 +2,7 @@ import { LayoutConnection } from "../layoutConnection";
 import { LayoutNode } from "../layoutNode";
 
 export class BaseConnectionLayouter {
-    
+
     /**
      * Calculate the layout of a connection.
      * @param connection The connection to layout.
@@ -18,11 +18,11 @@ export type NodeConnectionLayouterHook = (node: LayoutNode) => void;
 
 /**
  * Base class for layouting connections of a node.
- * 
+ *
  * This class provides hooks to add additional layouting steps before and after the actual layouting.
  * The layouting is done in the following order:
  * 1. Pre hooks for the node
- * 2. Layout connections of a node's children 
+ * 2. Layout connections of a node's children
  * 3. Layout connections of a node
  * 4. Post hooks for the node
  */
@@ -49,6 +49,11 @@ export class BaseNodeConnectionLayouter {
         this.preHooks.forEach(hook => hook(node));
         this.layoutConnectionsOfChildren(node);
         this.layoutConnectionsOfNode(node);
+
+        if (node.visGraph.rootNode === node) {
+            this.layoutConnectionsOfRootNode(node);
+        }
+
         this.postHooks.forEach(hook => hook(node));
     }
 
@@ -58,7 +63,7 @@ export class BaseNodeConnectionLayouter {
      * @param node The node to layout the connections for its children.
      */
     layoutConnectionsOfChildren(node: LayoutNode): void {
-            
+
     }
 
     /**
@@ -67,6 +72,16 @@ export class BaseNodeConnectionLayouter {
      * @param node The node to layout the connections for.
      */
     layoutConnectionsOfNode(node: LayoutNode): void {
+
+    }
+
+
+    /**
+     * Layout the connections of the root node.
+     * This method is only called once at the end for the root node.
+     * @param root
+     */
+    layoutConnectionsOfRootNode(root: LayoutNode): void {
 
     }
 

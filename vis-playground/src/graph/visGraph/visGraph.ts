@@ -393,7 +393,7 @@ export class VisGraph {
         // 3. Position the child nodes, using the specified positioner
 
         // Before we start connecting the nodes, we need to propagate the position of parent nodes,
-        // as each positioner positions the child nodes relative to (0,0). 
+        // as each positioner positions the child nodes relative to (0,0).
         // If a parent is placed at a specific position, this position is applied to each child node.
         // After everything is finished, we connect the child nodes, using the specified connector.
 
@@ -433,12 +433,12 @@ export class VisGraph {
         });
 
 
-        // Reset and init the connection layouts 
+        // Reset and init the connection layouts
         botUpLayers.flat().forEach(node => {
             node.initConnectionLayouter();
         })
 
-        // Calculate the connection layouts based on a node's edge groups (node focused) 
+        // Calculate the connection layouts based on a node's edge groups (node focused)
         let connectionChanged = true;
         while (connectionChanged) {
             connectionChanged = false;
@@ -654,9 +654,9 @@ export class VisGraph {
             }
 
 
-            if (connection.layoutConnection.isHyperConnection && connection.layoutConnection.children.length == 1) {
-                opacity = 0;
-            }
+            // if (connection.layoutConnection.isHyperConnection && connection.layoutConnection.children.length == 1) {
+            //     opacity = 0;
+            // }
 
             connection.updateStyleOpacity(opacity);
             connection.updateStyleStroke(strokeWithoutAlpha, width);
@@ -831,7 +831,7 @@ export class VisGraph {
     addVirtualCommunityNodes() {
 
         // Detect nodes, that have connections to other communities
-        // We assume, that in this stage communities are represented by first layer hypernodes 
+        // We assume, that in this stage communities are represented by first layer hypernodes
 
         const connectionsToDelete: LayoutConnection[] = [];
 

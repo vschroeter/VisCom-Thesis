@@ -10,7 +10,7 @@
         <q-list bordered>
 
 
-            <!-- Expabsuib containing the connection settings -->
+            <!-- Expansion containing the connection settings -->
             <q-expansion-item v-model="showConnectionSettings" label="Connection Settings" icon="sym_o_settings"
                 expand-separator>
                 <q-card>

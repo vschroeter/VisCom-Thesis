@@ -198,7 +198,7 @@ export class AttractiveAnchorForce extends NodePortForce {
         // To be an attractive anchor, we first have to calculate the radial anchor on the node's circle from the given node anchor.
         // There are two cases:
         // 1. The node anchor has the same node as the given node. In this case, the anchor is on the other side of the port, so we have to calculate the fitting counter anchor.
-        // 2. The node anchor has a different node than the given node (so the other node is an outer node of this node). 
+        // 2. The node anchor has a different node than the given node (so the other node is an outer node of this node).
         //    In this case we expand the outer nodes anchor to the node.
         // In either case, the anchors must be put between the valid outer range of the node's circle.
 
@@ -247,7 +247,7 @@ export class AttractiveAnchorForce extends NodePortForce {
 
             const distForCalculation = anchorNode == this.node ? this.node.outerRadius : anchor.anchorPoint.distanceTo(this.node.center)[0];
 
-            // The slope difference is added to the anchor slope, proportionally to the node radius            
+            // The slope difference is added to the anchor slope, proportionally to the node radius
             let slopeAtOtherSideOfNode = distanceBetweenCurvingAnchors > 0 ?
                 anchorSlope + radDiff * (distForCalculation / distanceBetweenCurvingAnchors) :
                 anchorSlope;
@@ -765,7 +765,7 @@ export class MultiHyperConnection extends CombinedPathSegment {
                     throw new Error("Node port should be defined");
                 }
 
-                // This node port influences adjacent node ports, if existing 
+                // This node port influences adjacent node ports, if existing
                 // (This only happens if multiple circle segments are adjacent)
                 info.prevPort?.addAnchor(info.nodePort);
                 info.nextPort?.addAnchor(info.nodePort);
@@ -779,11 +779,11 @@ export class MultiHyperConnection extends CombinedPathSegment {
     prepareSegments() {
 
         // There are fixed segments along the path:
-        // - already calculated hyper connections 
+        // - already calculated hyper connections
         // There are fixed parts along the path:
         // - real nodes, where the anchors will start from and end at
         // - virtual nodes, the path will pass through
-        // - hyper nodes, that circular segments will placed on 
+        // - hyper nodes, that circular segments will placed on
 
 
         // TODO: Circle segments having the same hyper connection as target don't need to be adapted in radius

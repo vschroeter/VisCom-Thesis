@@ -22,7 +22,7 @@ export class LayoutNode {
     // The id of the node
     id: string;
 
-    // Rendered shapes for debugging 
+    // Rendered shapes for debugging
     debugShapes: (Shape | Anchor)[] = [];
 
     ////////////////////////////////////////////////////////////////////////////
@@ -246,6 +246,58 @@ export class LayoutNode {
     }
 
     /**
+     * Get the first common parent of this node and the given node.
+     * @param node The other node
+     * @returns The first common parent of the two nodes, if any
+     */
+    getCommonParent(node: LayoutNode): LayoutNode | undefined {
+        return LayoutNode.firstCommonParent(this, node);
+    }
+
+    /**
+     * If node is a descendant of this node, return the direct child node that contains the given node as a descendant.
+     * E.g.: root->1->2->3, root.getChildNodeContainingNodeAsDescendant(3) would return 1
+     * @param node The descendant to search for
+     */
+    getChildNodeContainingNodeAsDescendant(node: LayoutNode): LayoutNode | undefined {
+        if (node.parent == this) {
+            return node;
+        }
+
+        let parent: LayoutNode | undefined = node.parent;
+        while (parent) {
+            if (parent.parent == this) {
+                return parent;
+            }
+            parent = parent.parent;
+        }
+
+        return undefined;
+    }
+
+    // /**
+    //  * Returns the parent node of the node that has the same parent as the given node.
+    //  * So having nodes root->1->2->3 and root->1->4,
+    //  * 3.getParentNodeHavingTheSameParentAs(4) would return 2
+    //  * @param node The other node
+    //  * @returns The parent node that has the same parent as the given node, if any
+    //  */
+    // getParentNodeHavingTheSameDirectParentAs(node: LayoutNode): LayoutNode | undefined {
+    //     if (this.parent == node.parent) {
+    //         return this
+    //     }
+
+    //     let parent: LayoutNode | undefined = this.parent;
+    //     while (parent) {
+    //         if (parent.parent == node.parent) {
+    //             return parent;
+    //         }
+    //         parent = parent.parent;
+    //     }
+    //     return undefined;
+    // }
+
+    /**
      * Returns the first parent of the node that satisfies a given condition
      * @param condition The condition that the parent node should satisfy
      * @returns The first parent node that satisfies the condition, if any
@@ -417,7 +469,10 @@ export class LayoutNode {
         return this.getPredecessors().length;
     }
 
-    isDirectSuccessorInSortingTo(node: LayoutNode): boolean {
+    isDirectSuccessorInSortingTo(node?: LayoutNode): boolean {
+
+        if (!node) return false;
+
         const parent = this.parent;
         const otherParent = node.parent;
 
@@ -435,8 +490,8 @@ export class LayoutNode {
         return isDirectLink;
     }
 
-    isDirectPredecessorInSortingTo(node: LayoutNode): boolean {
-        return node.isDirectSuccessorInSortingTo(this);
+    isDirectPredecessorInSortingTo(node?: LayoutNode): boolean {
+        return node?.isDirectSuccessorInSortingTo(this) ?? false;
     }
 
     getNextNodeInSorting(): LayoutNode | undefined {
@@ -488,8 +543,8 @@ export class LayoutNode {
     // For connections to this node
     _outerRadius?: number;
 
-    /** 
-     * The inner radius of the node. 
+    /**
+     * The inner radius of the node.
      * For hypernodes, this is the radius of the inner circle on which  the child nodes are placed.
      * For normal nodes, this is the same as the radius.
      */
@@ -707,6 +762,12 @@ export class LayoutNode {
         return [nextRad, prevRad];
     }
 
+    /**
+     * Get the valid range of the node in radians.
+     * @param factor Shrink or stretch factor for the range
+     * @param includeParentCircle If true, not only the neighboring nodes are considered for the valid range, but also the parent circle.
+     * @returns
+     */
     getValidOuterRadRange(factor = 1, includeParentCircle = true): [number, number] {
 
         const parent = this.parent;
@@ -757,7 +818,7 @@ export class LayoutNode {
         // If the parent circle should be included in the range, we check which of both ranges is smaller --> this one is the valid one
         if (includeParentCircle) {
 
-            const parentCircle = new Circle(parent.center, parent.innerRadius);
+            const parentCircle = parent.innerCircle;
             const parentCenterRad = RadialUtils.radOfPoint(parent.center, this.center);
             const circleIntersections = parentCircle.intersect(this.outerCircle);
 

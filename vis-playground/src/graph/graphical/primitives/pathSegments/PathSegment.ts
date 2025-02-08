@@ -23,6 +23,24 @@ export abstract class PathSegment {
     /** The end anchor of the path segment */
     abstract endAnchor?: Anchor;
 
+    /** The start node of the path segment */
+    get startNode(): LayoutNode {
+        return this.connection.source;
+    }
+
+    /** The end node of the path segment */
+    get endNode(): LayoutNode {
+        return this.connection.target;
+    }
+
+    get target(): LayoutNode {
+        return this.endNode;
+    }
+
+    get source(): LayoutNode {
+        return this.startNode;
+    }
+
     /** The start point of the segment */
     get start(): Point {
         return this.startAnchor?.anchorPoint ?? new Point(0, 0);
@@ -52,7 +70,7 @@ export abstract class PathSegment {
 }
 
 export class DefaultPathSegment extends PathSegment {
-    
+
     get startAnchor(): Anchor | undefined {
         return this.connection.source.getAnchor(this.connection.target.center);
     }
@@ -78,19 +96,23 @@ export class CombinedPathSegment extends PathSegment {
 
     get startAnchor(): Anchor | undefined {
         if (this.segments.length === 0) {
-            return undefined;
+            return new DefaultPathSegment(this.connection).startAnchor;
         }
         return this.segments[0].startAnchor;
     }
 
     get endAnchor(): Anchor | undefined {
         if (this.segments.length === 0) {
-            return undefined;
+            return new DefaultPathSegment(this.connection).endAnchor;
         }
         return this.segments[this.segments.length - 1].endAnchor;
     }
 
     override getSvgPath(): string {
+        if (this.segments.length === 0) {
+            return new DefaultPathSegment(this.connection).getSvgPath();
+        }
+
         return this.segments.map(s => s.getSvgPath()).join(" ");
     }
 }

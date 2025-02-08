@@ -17,7 +17,7 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
         });
     }
 
-    calculateConnection(connection: LayoutConnection, segmentCircle: Circle, direction: "clockwise" | "counter-clockwise"): void {
+    static calculateConnection(connection: LayoutConnection, segmentCircle: Circle, direction: "clockwise" | "counter-clockwise"): void {
         const start = connection.source;
         const end = connection.target;
 
@@ -92,7 +92,7 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
                 // node.debugShapes.push(adaptedCircle);
             }
 
-            this.calculateConnection(connection, adaptedCircle, "clockwise");
+            DirectCircularConnectionLayouter.calculateConnection(connection, adaptedCircle, "clockwise");
         });
 
         directOutBackwardConnections.forEach(connection => {
@@ -109,7 +109,7 @@ export class DirectCircularConnectionLayouter extends BaseNodeConnectionLayouter
                 // node.debugShapes.push(adaptedCircle);
             }
 
-            this.calculateConnection(connection, adaptedCircle, "counter-clockwise");
+            DirectCircularConnectionLayouter.calculateConnection(connection, adaptedCircle, "counter-clockwise");
         });
     }
 
