@@ -297,7 +297,8 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
       const opacity = minOpacity + factor * (maxOpacity - minOpacity);
 
-      this.updateStyleOpacity(opacity);
+      // this.updateStyleOpacity(opacity);
+      this.updateStyleOpacity(1);
     }
   }
 
@@ -336,7 +337,20 @@ export class Node2d extends SvgRenderable { // <NodeData>
         .attr('stroke-width', this.strokeStyle.strokeWidth)
         .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
 
+        // this.elNode?.attr('stroke', this.strokeStyle.stroke ?? "white")
+        // .attr('stroke-width', 0)
+        // .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
+
     } else {
+
+      // this.elNode?.attr('stroke', this.fill ?? "white")
+      //   .attr('stroke-width', 0)
+      //   .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
+
+      //   this.elVirtualMarker?.attr('stroke', this.fill ?? "white")
+      //   .attr('stroke-width', 0)
+      //   .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
+
 
       this.elNode?.attr('stroke', this.fill ?? "white")
         .attr('stroke-width', this.strokeStyle.strokeWidth)
@@ -345,10 +359,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
         this.elVirtualMarker?.attr('stroke', this.fill ?? "white")
         .attr('stroke-width', this.strokeStyle.strokeWidth / 2)
         .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
-      
-      // this.elVirtualMarker?.attr('stroke', "none")
-      //   .attr('stroke-width', 0)
-      //   .attr('stroke-opacity', 0);
+
     }
 
   }

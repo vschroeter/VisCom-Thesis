@@ -1,10 +1,12 @@
-import { CombinedPathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
+import { CombinedPathSegment, PathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { RadialCircularArcConnectionLayouter } from "./radialConnections";
-import { Circle, Vector } from "2d-geometry";
+import { Circle, Point, Vector } from "2d-geometry";
 import { Anchor, EllipticArc } from "src/graph/graphical";
+import { RadialUtils } from "../utils/radialUtils";
+import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
 
 
 export type FlexConnectionParentType = "sameParent" | "differentParent";
@@ -203,6 +205,9 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
         const hyperSource = parent?.getChildNodeContainingNodeAsDescendant(source);
         const hyperTarget = parent?.getChildNodeContainingNodeAsDescendant(target);
 
+        const sourceCircle = source.outerCircle;
+        const targetCircle = target.outerCircle;
+
         const arcSourceCircle = hyperSource?.outerCircle;
         const arcTargetCircle = hyperTarget?.outerCircle;
 
@@ -220,8 +225,10 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
         if (hasCounterConnection) {
             if (isForward) {
                 segmentCircle.r += 0.1 * Math.min(arcSourceCircle.r, arcTargetCircle.r);
+                // segmentCircle.r += 0.1 * Math.min(sourceCircle.r, targetCircle.r);
             } else {
                 segmentCircle.r -= 0.2 * Math.min(arcSourceCircle.r, arcTargetCircle.r);
+                // segmentCircle.r -= 0.2 * Math.min(sourceCircle.r, targetCircle.r);
             }
         }
 
@@ -258,32 +265,154 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
             throw e;
         }
 
+        /**
+         * Here we handle the case, when an arc is going via hypernode-edges.
+         * In this case, we could just extend the arc to the outer circle of the actual node.
+         * However, this could be in conflict with the valid outer range for edges of the node.
+         * Also, in cases where the valid outer ranges are not violated, the arc could be too close to the edge of the node and look weird.
+         * So we construct a better connection by concatenating the following:
+         * - The hyper arc in the middle
+         * - An start / end segment, which is either an adapted arc or if this arc is not possible, a smooth spline from the hyper arc to the node
+         */
         if (hyperSource != source || hyperTarget != target) {
+            let startSegment: PathSegment | undefined = undefined;
+            let endSegment: PathSegment | undefined = undefined;
 
-            const sourceOuter = source.getValidOuterRadRange(1);
-            const targetOuter = target.getValidOuterRadRange(1);
+            const startCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(source.center, hyperArc.startAnchor)
+            if (startCircle) {
+                const intersections = source.outerCircle.intersect(startCircle);
+                const startEndPoint = RadialUtils.getClosestShapeToPoint(intersections, hyperArc.start);
 
-            const sourceTangentAnchor1 = new Anchor(source.center, new Vector(sourceOuter[0]));
-            const sourceTangentAnchor2 = new Anchor(source.center, new Vector(sourceOuter[1]));
+                startSegment = new EllipticArc(connection.connection,
+                    startEndPoint,
+                    hyperArc.start,
+                    startCircle.r,
+                    startCircle.r
+                ).direction(direction);
 
-            const targetTangentAnchor1 = new Anchor(target.center, new Vector(targetOuter[0]));
-            const targetTangentAnchor2 = new Anchor(target.center, new Vector(targetOuter[1]));
+            }
 
-            sourceTangentAnchor1._data = { length: 100, stroke: "red" };
-            sourceTangentAnchor2._data = { length: 100, stroke: "green" };
-            targetTangentAnchor1._data = { length: 100, stroke: "blue" };
-            targetTangentAnchor2._data = { length: 100, stroke: "cyan" };
+            const endCirlce = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(target.center, hyperArc.endAnchor)
+            if (endCirlce) {
+                const intersections = target.outerCircle.intersect(endCirlce);
+                const endEndPoint = RadialUtils.getClosestShapeToPoint(intersections, hyperArc.end);
 
-            source.debugShapes.push(sourceTangentAnchor1)
-            source.debugShapes.push(sourceTangentAnchor2)
-            target.debugShapes.push(targetTangentAnchor1)
-            target.debugShapes.push(targetTangentAnchor2)
-            // target.debugShapes.push(parent!.innerCircle.clone())
+                endSegment = new EllipticArc(connection.connection,
+                    hyperArc.end,
+                    endEndPoint,
+                    endCirlce.r,
+                    endCirlce.r
+                ).direction(direction);
+            }
 
+            connection.segments = [startSegment, hyperArc, endSegment].filter(s => s) as PathSegment[];
+
+
+
+            // // This would be the arc, if we extend the hyper arc to the source and target nodes.
+            // // It is possible, that the arc would have no intersection with the nodes, in such case we have to do other stuff
+            // let nodeArc: undefined | EllipticArc;
+            // try {
+            //     nodeArc = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
+            //         connection.connection,
+            //         source.outerCircle,
+            //         target.outerCircle,
+            //         segmentCircle,
+            //         direction
+            //     );
+            // } catch (e) {
+
+            // }
+
+            // // These are the radian values where the arc is placed at the nodes
+            // const startRad = nodeArc ? RadialUtils.radOfPoint(nodeArc.start, source.center) : undefined;
+            // const endRad = nodeArc ? RadialUtils.radOfPoint(nodeArc.end, source.center) : undefined;
+
+            // // let arcStartPoint: Point | undefined = undefined;
+            // // let arcEndPoint: Point | undefined = undefined;
+
+            // let startSegment: PathSegment | undefined = undefined;
+            // let endSegment: PathSegment | undefined = undefined;
+
+            // let startSpline: SmoothSplineSegment | undefined = undefined;
+            // let endSpline: SmoothSplineSegment | undefined = undefined;
+
+
+            // // Get the outer valid ranges for both nodes, in this range connections from a different hypernode are allowed
+            // const sourceOuter = source.getValidOuterRadRange(0.9);
+            // const targetOuter = target.getValidOuterRadRange(0.9);
+
+
+
+
+            // // TODO: Better construction of the spline points. Not just take a straight line from the hyperarc to the node, but instead take a point that respects the curvature
+
+            // // If the arc is not valid valid, we construct something better
+            // if (!nodeArc || !startRad || RadialUtils.radIsBetween(startRad, sourceOuter[0], sourceOuter[1])) {
+
+
+            //     // arcStartPoint = nodeArc.start;
+            // }
+            // // If the arc is not valid, we construct a spline from the hyperarc to the node
+            // else {
+
+
+            //     const vectorCenterToHyperArc = new Vector(source.center, hyperArc.start);
+            //     const startAnchor = new Anchor(source.center, vectorCenterToHyperArc).move(source.outerRadius);
+            //     startSpline = new SmoothSplineSegment(connection.connection, startAnchor, hyperArc.startAnchor);
+            //     arcStartPoint = hyperArc.start;
+            // }
+
+            // // If the arc is valid, we take the end point
+            // if (nodeArc && endRad && RadialUtils.radIsBetween(endRad, targetOuter[0], targetOuter[1])) {
+            //     arcEndPoint = nodeArc.end;
+            // }
+            // // If the arc is not valid, we construct a spline from the hyperarc to the node
+            // else {
+            //     const vectorHyperArcToCenter = new Vector(hyperArc.end, target.center);
+            //     const endAnchor = new Anchor(target.center, vectorHyperArcToCenter).move(-target.outerRadius);
+            //     endSpline = new SmoothSplineSegment(connection.connection, hyperArc.endAnchor, endAnchor);
+            //     arcEndPoint = hyperArc.end;
+            // }
+
+            // // This is the arc with the selected start and end points between the nodes
+            // const arc = new EllipticArc(connection.connection,
+            //     arcStartPoint,
+            //     arcEndPoint,
+            //     hyperArc._rx,
+            //     hyperArc._ry,
+            //     hyperArc._rotation,
+            //     hyperArc._largeArc,
+            //     hyperArc._sweep
+            // )
+
+            // // If existent, we add the splines to the arc
+            // connection.segments = [startSpline, arc, endSpline].filter(s => s) as PathSegment[];
+
+            // const debug = false;
+
+            // if (debug) {
+            //     const sourceTangentAnchor1 = new Anchor(source.center, new Vector(sourceOuter[0]));
+            //     const sourceTangentAnchor2 = new Anchor(source.center, new Vector(sourceOuter[1]));
+
+            //     const targetTangentAnchor1 = new Anchor(target.center, new Vector(targetOuter[0]));
+            //     const targetTangentAnchor2 = new Anchor(target.center, new Vector(targetOuter[1]));
+
+            //     sourceTangentAnchor1._data = { length: 100, stroke: "red" };
+            //     sourceTangentAnchor2._data = { length: 100, stroke: "green" };
+            //     targetTangentAnchor1._data = { length: 100, stroke: "blue" };
+            //     targetTangentAnchor2._data = { length: 100, stroke: "cyan" };
+
+            //     source.debugShapes.push(sourceTangentAnchor1)
+            //     source.debugShapes.push(sourceTangentAnchor2)
+            //     target.debugShapes.push(targetTangentAnchor1)
+            //     target.debugShapes.push(targetTangentAnchor2)
+            //     // target.debugShapes.push(parent!.innerCircle.clone())
+            // }
+
+        } else {
+            connection.segments = [hyperArc];
         }
-
-        connection.segments = [hyperArc];
-
 
     }
 }

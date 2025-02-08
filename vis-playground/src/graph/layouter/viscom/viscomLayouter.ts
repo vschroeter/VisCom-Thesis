@@ -9,6 +9,7 @@ import { DirectCircularConnectionLayouter } from "../connectionLayouter/circular
 import { IdSorter } from "src/graph/algorithms/sortings/simple";
 import { RadialSplineConnectionLayouter } from "../connectionLayouter/splineConnection";
 import { RadialMultiConnectionLayouter } from "../connectionLayouter/multiConnection";
+import { FlexConnectionLayouter } from "../connectionLayouter/flexConnection";
 
 
 export interface ViscomHyperLinkData extends Connection2dData {
@@ -92,9 +93,10 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         )
 
         this.visGraph.setConnectionLayouter([
-            new DirectCircularConnectionLayouter(),
-            new RadialSplineConnectionLayouter(),
-            new RadialMultiConnectionLayouter(),
+            // new DirectCircularConnectionLayouter(),
+            // new RadialSplineConnectionLayouter(),
+            // new RadialMultiConnectionLayouter(),
+            new FlexConnectionLayouter(),
         ])
 
         // console.log("Before layout", this.visGraph);

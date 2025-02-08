@@ -92,7 +92,7 @@ export class RadialUtils extends ShapeUtil {
 
         // If the target rad is outside the range, return the closest value
         if (forwardTargetToStart < forwardTargetToEnd) {
-            
+
             if (forwardTargetToStart < Math.abs(forwardTargetToEnd - 2 * Math.PI)) {
                 return startRad;
             }
@@ -338,10 +338,10 @@ export class RadialUtils extends ShapeUtil {
         const center = lineIntersections[0];
         const radius = center.distanceTo(point1)[0];
 
-        return new Circle(center, radius); 
+        return new Circle(center, radius);
     }
 
-    static getCircleFromCoincidentPointAndTangentAnchor(coincidentPoint: Point, anchor: Anchor): Circle | undefined{
+    static getCircleFromCoincidentPointAndTangentAnchor(coincidentPoint: Point, anchor: Anchor): Circle | undefined {
 
         const midPoint = Anchor.getMidPointBetweenPointAndAnchor(coincidentPoint, anchor);
 
@@ -352,7 +352,7 @@ export class RadialUtils extends ShapeUtil {
 
         const segToMidPoint = new Segment(coincidentPoint, midPoint);
 
-        // We dont have to rotate the anchors, because the line construction takes normal vectors
+        // We don't have to rotate the anchors, because the line construction takes normal vectors
         const perpLine1 = new Line(coincidentPoint, segToMidPoint.vector);
         const perpLine2 = new Line(anchor.anchorPoint, anchor.direction);
 
