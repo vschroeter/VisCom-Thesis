@@ -2,6 +2,7 @@ import { CombinedPathSegment } from "src/graph/graphical/primitives/pathSegments
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { FlexNode } from "./flexNode";
 import { FlexConnectionLayouter } from "./flexLayouter";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
 
 
 export type FlexConnectionParentType = "sameParent" | "differentParent";
@@ -18,13 +19,19 @@ export type FlexConnectionType =
     "unknown";
 
 
+export class FlexConnectionPart extends CombinedPathSegment {
+
+}
+
 export class FlexConnection extends CombinedPathSegment {
-    type: FlexConnectionType
+    type: FlexConnectionType = "unknown"
 
     flexSource: FlexNode;
     flexTarget: FlexNode;
 
     layouter: FlexConnectionLayouter;
+
+    parts: FlexConnectionPart[] = [];
 
     constructor(connection: LayoutConnection, layouter: FlexConnectionLayouter) {
         super(connection);
@@ -32,9 +39,64 @@ export class FlexConnection extends CombinedPathSegment {
         this.flexSource = layouter.getFlexNode(connection.source);
         this.flexTarget = layouter.getFlexNode(connection.target);
 
-        this.type = type;
+        // this.type = type;
         this.connection.pathSegment = this;
-        this.init();
+        // this.init();
+        this.initFlexParts();
+    }
+
+    initFlexParts() {
+
+        const path = this.connection.getConnectionPathViaHyperAndVirtualNodes()
+        const nodePath = path.map(node => node.id).join(" -> ")
+
+        console.log("FLEX", {
+            source: this.source.id,
+            target: this.target.id,
+            path: nodePath
+        })
+
+
+        let lastPart: FlexConnectionPart | undefined = undefined;
+        for (let i = 0; i < path.length - 1; i++) {
+            const sNode = path[i];
+            const tNode = path[i + 1];
+
+            // sNode.layerFromBot
+
+            if (sNode.parent == tNode.parent) {
+                // Inside parent connection
+                // lastPart = new SameParentConnection();  // Create new FlexConnectionPart instance
+                const part = new FlexPart({
+                    startNode: sNode,
+                    endNode: tNode
+                });  // Create new FlexConnectionPart instance
+                this.parts.push(part); // Add to parts
+                lastPart = part; // Update lastPart
+
+            } else {
+
+                let realNode: LayoutNode | undefined = tNode;
+                const constrainingNodes: LayoutNode[] = [];
+                let j = i + 1;
+                while (realNode && realNode.isHyperNode) {
+                    constrainingNodes.push(realNode)
+                    realNode = path[++j];
+                }
+
+                const part = new FlexPart({
+                    startNode: sNode,
+                    endNode: tNode,
+                    constraints: constrainingNodes
+                });
+                this.parts.push(part);
+                lastPart = part;
+            }
+
+        }
+
+
+
     }
 
     init(): void {
@@ -46,13 +108,13 @@ export class FlexConnection extends CombinedPathSegment {
     }
 }
 
-export class EmptyFlexConnection extends FlexConnection {
-    init(): void {
-        // this.segments = [];
-    }
-    calculate(): void {
-    }
-}
+// export class EmptyFlexConnection extends FlexConnection {
+//     init(): void {
+//         // this.segments = [];
+//     }
+//     calculate(): void {
+//     }
+// }
 
 
 // export class FlexConnection extends CombinedPathSegment {

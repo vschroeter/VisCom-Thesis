@@ -20,17 +20,13 @@ export class FlexNode {
     constructor(layoutNode: LayoutNode, parentLayouter: FlexConnectionLayouter) {
         this.layoutNode = layoutNode;
         this.parentLayouter = parentLayouter;
-
-        // layoutNode.outConnections.forEach(connection => {
-        //     this.addConnection(connection);
-        // });
-
-        // layoutNode.inConnections.forEach(connection => {
-        //     this.addConnection(connection);
-        // });
     }
 
     initConnections() {
+        this.connections = [];
+        this.outConnections = [];
+        this.inConnections = [];
+
         this.layoutNode.outConnections.forEach(connection => {
             this.addConnection(connection);
         });

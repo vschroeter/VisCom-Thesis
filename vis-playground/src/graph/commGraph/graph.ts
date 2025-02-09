@@ -5,6 +5,10 @@ import { CommunicationNode } from "./node";
 import { CommunicationTopic } from "./topic";
 import { NodeCommunities } from "./community";
 
+////////////////////////////////////////////////////////////////////////////
+// #region Helper classes
+////////////////////////////////////////////////////////////////////////////
+
 /**
  * Helper class representing a mapping of topics to nodes on a specific communication channel.
  * The mapping is separated into incoming, outgoing, bidirectional, and all topics.
@@ -103,6 +107,10 @@ export class CommunicationChannelGraphs {
     this.all.addNode(node.id, node);
   }
 }
+
+////////////////////////////////////////////////////////////////////////////
+// #region CommGraph class
+////////////////////////////////////////////////////////////////////////////
 
 /**
  * Class representing a communication graph.
@@ -680,14 +688,14 @@ export class CommunicationGraph<NodeData = any> {
   //   communities: NodeCommunities;
   // }): CommunicationGraph {
 
-  //   /** 
+  //   /**
   //     The merged graph contains a hypernode for each community
   //     In the merging process, we do the following:
   //     - Create a hypernode for each community
   //     - Add the nodes of the community to the hypernode (sum up the scores)
   //     - Add the links between the hypernodes based on the links between the nodes in the communities
   //   */
-    
+
   //   const hyperNodes: CommunicationNode[] = [];
 
   //   // Create a hypernode for each community

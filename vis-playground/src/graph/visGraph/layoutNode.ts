@@ -72,6 +72,10 @@ export class LayoutNode {
     // Child nodes, if any
     children: LayoutNode[] = [];
 
+    get isHyperNode(): boolean {
+        return this.children.length > 0;
+    }
+
     // If there are children, the anchor node is the defining node for position and alignment
     anchorNode?: LayoutNode;
 
