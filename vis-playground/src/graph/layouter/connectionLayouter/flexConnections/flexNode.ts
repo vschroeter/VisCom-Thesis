@@ -1,9 +1,34 @@
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { DirectCircleArcConnection } from "./circularArcConnection";
-import { FlexConnection, FlexConnectionType, EmptyFlexConnection } from "./flexConnection";
+import { FlexConnection, FlexConnectionType, FlexPart } from "./flexConnection";
 import { InsideParentConnection } from "./insideConnection";
 import { FlexConnectionLayouter } from "./flexLayouter";
+
+
+export class FlexContinuum {
+
+    node: FlexNode;
+    range: [number, number];
+
+    parts: FlexPart[] = [];
+
+    constructor(node: FlexNode, type: "outside" | "inside") {
+        this.node = node;
+
+        if (type === "outside") {
+            this.range = node.layoutNode.getValidOuterRadRange();
+        } else {
+            this.range = node.layoutNode.getValidInnerRadRange();
+        }
+
+    }
+
+    addPart(connection: FlexPart) {
+        this.parts.push(connection);
+    }
+
+}
 
 
 export class FlexNode {
@@ -17,9 +42,19 @@ export class FlexNode {
 
     parentLayouter: FlexConnectionLayouter;
 
+    innerContinuum: FlexContinuum;
+    outerContinuum: FlexContinuum;
+
+    get id() {
+        return this.layoutNode.id;
+    }
+
     constructor(layoutNode: LayoutNode, parentLayouter: FlexConnectionLayouter) {
         this.layoutNode = layoutNode;
         this.parentLayouter = parentLayouter;
+
+        this.innerContinuum = new FlexContinuum(this, "inside");
+        this.outerContinuum = new FlexContinuum(this, "outside");
     }
 
     initConnections() {
@@ -47,66 +82,66 @@ export class FlexNode {
         }
     }
 
-    static createConnection(connection: LayoutConnection, flexNode: FlexNode): FlexConnection {
-        const source = connection.source;
-        const target = connection.target;
-        let type: FlexConnectionType = "unknown";
-        if (source.parent === target.parent) {
-            if (source.isDirectPredecessorInSortingTo(target)) {
-                type = "circleArcForward";
-            } else if (source.isDirectSuccessorInSortingTo(target)) {
-                type = "circleArcBackward";
-            } else {
-                type = "sameParent";
-            }
-        } else {
-            const commonParent = source.getCommonParent(target);
+    // static createConnection(connection: LayoutConnection, flexNode: FlexNode): FlexConnection {
+    //     const source = connection.source;
+    //     const target = connection.target;
+    //     let type: FlexConnectionType = "unknown";
+    //     if (source.parent === target.parent) {
+    //         if (source.isDirectPredecessorInSortingTo(target)) {
+    //             type = "circleArcForward";
+    //         } else if (source.isDirectSuccessorInSortingTo(target)) {
+    //             type = "circleArcBackward";
+    //         } else {
+    //             type = "sameParent";
+    //         }
+    //     } else {
+    //         const commonParent = source.getCommonParent(target);
 
-            // if ((commonParent == source.parent || commonParent == source.parent?.parent) && (commonParent == target.parent || commonParent == target.parent?.parent)) {
-            //     const firstChildContainingSource = commonParent?.getChildNodeContainingNodeAsDescendant(source);
-            //     const firstChildContainingTarget = commonParent?.getChildNodeContainingNodeAsDescendant(target);
+    //         // if ((commonParent == source.parent || commonParent == source.parent?.parent) && (commonParent == target.parent || commonParent == target.parent?.parent)) {
+    //         //     const firstChildContainingSource = commonParent?.getChildNodeContainingNodeAsDescendant(source);
+    //         //     const firstChildContainingTarget = commonParent?.getChildNodeContainingNodeAsDescendant(target);
 
-            //     if (firstChildContainingSource?.isDirectPredecessorInSortingTo(firstChildContainingTarget)) {
-            //         this.type = "sameHyperParentDirectForward";
-            //     } else if (firstChildContainingSource?.isDirectSuccessorInSortingTo(firstChildContainingTarget)) {
-            //         this.type = "sameHyperParentDirectBackward";
-            //     }
-            // }
+    //         //     if (firstChildContainingSource?.isDirectPredecessorInSortingTo(firstChildContainingTarget)) {
+    //         //         this.type = "sameHyperParentDirectForward";
+    //         //     } else if (firstChildContainingSource?.isDirectSuccessorInSortingTo(firstChildContainingTarget)) {
+    //         //         this.type = "sameHyperParentDirectBackward";
+    //         //     }
+    //         // }
 
-            if (source.isAnchor || target.isAnchor) {
+    //         if (source.isAnchor || target.isAnchor) {
 
-                const firstChildContainingSource = commonParent?.getChildNodeContainingNodeAsDescendant(source);
-                const firstChildContainingTarget = commonParent?.getChildNodeContainingNodeAsDescendant(target);
+    //             const firstChildContainingSource = commonParent?.getChildNodeContainingNodeAsDescendant(source);
+    //             const firstChildContainingTarget = commonParent?.getChildNodeContainingNodeAsDescendant(target);
 
-                if (firstChildContainingSource?.isDirectPredecessorInSortingTo(firstChildContainingTarget)) {
-                    type = "circleArcForward";
-                } else if (firstChildContainingSource?.isDirectSuccessorInSortingTo(firstChildContainingTarget)) {
-                    type = "circleArcBackward";
-                }
-            }
+    //             if (firstChildContainingSource?.isDirectPredecessorInSortingTo(firstChildContainingTarget)) {
+    //                 type = "circleArcForward";
+    //             } else if (firstChildContainingSource?.isDirectSuccessorInSortingTo(firstChildContainingTarget)) {
+    //                 type = "circleArcBackward";
+    //             }
+    //         }
 
-            if (type == "unknown") {
-                type = "differentParent";
-            }
-        }
+    //         if (type == "unknown") {
+    //             type = "differentParent";
+    //         }
+    //     }
 
-        switch (type) {
-            case "circleArcForward":
-                return new DirectCircleArcConnection(connection, type, flexNode);
-            case "circleArcBackward":
-                return new DirectCircleArcConnection(connection, type, flexNode);
-            case "sameParent":
-                return new InsideParentConnection(connection, type, flexNode);
+    //     switch (type) {
+    //         case "circleArcForward":
+    //             return new DirectCircleArcConnection(connection, type, flexNode);
+    //         case "circleArcBackward":
+    //             return new DirectCircleArcConnection(connection, type, flexNode);
+    //         case "sameParent":
+    //             return new InsideParentConnection(connection, type, flexNode);
 
-            // case "differentParent":
-            //     return
-            // // return new DifferentParentConnection(connection, flexNode);
-            // default:
-            //     throw new Error(`Unknown FlexConnectionType: ${type}`);
-        }
+    //         // case "differentParent":
+    //         //     return
+    //         // // return new DifferentParentConnection(connection, flexNode);
+    //         // default:
+    //         //     throw new Error(`Unknown FlexConnectionType: ${type}`);
+    //     }
 
-        return new EmptyFlexConnection(connection, type, flexNode);
-    }
+    //     return new EmptyFlexConnection(connection, type, flexNode);
+    // }
 
     ////////////////////////////////////////////////////////////////////////////
     // #regio Flex Connection Types

@@ -1,10 +1,10 @@
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { FlexConnection } from "./flexConnection";
+import { FlexConnection, FlexPart } from "./flexConnection";
 import { FlexNode } from "./flexNode";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
-
+export type FlexOrLayoutNode = FlexNode | LayoutNode;
 
 export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
@@ -12,21 +12,26 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
     mapLayoutNodeToFlexNode: Map<LayoutNode, FlexNode> = new Map();
     mapLayoutConnectionToFlexConnection: Map<LayoutConnection, FlexConnection> = new Map();
+    mapLayerToFlexParts: Map<number, FlexPart[]> = new Map();
 
 
-    getFlexNode(layoutNode: LayoutNode): FlexNode {
-        if (!this.mapLayoutNodeToFlexNode.has(layoutNode)) {
-            this.mapLayoutNodeToFlexNode.set(layoutNode, new FlexNode(layoutNode, this));
+    getFlexNode(layoutNode: FlexOrLayoutNode): FlexNode {
+        const node = layoutNode instanceof FlexNode ? layoutNode.layoutNode : layoutNode;
+        if (!this.mapLayoutNodeToFlexNode.has(node)) {
+            this.mapLayoutNodeToFlexNode.set(node, new FlexNode(node, this));
         }
-        return this.mapLayoutNodeToFlexNode.get(layoutNode)!;
+        return this.mapLayoutNodeToFlexNode.get(node)!;
     }
 
-    getFlexConnection(layoutConnection: LayoutConnection): FlexConnection {
-        if (!this.mapLayoutConnectionToFlexConnection.has(layoutConnection)) {
-            const flexConnection = new FlexConnection(layoutConnection, this);
-            this.mapLayoutConnectionToFlexConnection.set(layoutConnection, flexConnection);
+    getFlexConnection(layoutConnection: LayoutConnection | FlexConnection): FlexConnection {
+
+        const connection = layoutConnection instanceof FlexConnection ? layoutConnection.connection : layoutConnection;
+
+        if (!this.mapLayoutConnectionToFlexConnection.has(connection)) {
+            const flexConnection = new FlexConnection(connection, this);
+            this.mapLayoutConnectionToFlexConnection.set(connection, flexConnection);
         }
-        return this.mapLayoutConnectionToFlexConnection.get(layoutConnection)!;
+        return this.mapLayoutConnectionToFlexConnection.get(connection)!;
     }
 
 
@@ -40,8 +45,21 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
     override layoutConnectionsOfRootNode(root: LayoutNode): void {
 
-        console.log("[FLEX]", this.connections.length, this.connections, this)
+        console.log("[FLEX]", Array.from(this.mapLayoutNodeToFlexNode.values()), this.mapLayerToFlexParts, this.connections, this)
         const visGraph = root.visGraph;
+
+
+        const partLayerValues = Array.from(this.mapLayerToFlexParts.keys()).sort();
+        console.log("[FLEX] partLayerValues", partLayerValues);
+
+        partLayerValues.forEach(layer => {
+            const parts = this.mapLayerToFlexParts.get(layer)!;
+
+            parts.forEach(part => part.layout());
+        })
+
+        console.log("[FLEX] layout done", Array.from(this.mapLayoutConnectionToFlexConnection.values()));
+        return;
 
 
         // Fill in the references for the inConnections

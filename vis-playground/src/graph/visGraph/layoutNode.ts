@@ -114,6 +114,10 @@ export class LayoutNode {
     // Map to store, if for a given node id, a virtual child node exists
     existingVirtualChildren: Map<string, LayoutNode> = new Map();
 
+    get isRealNode(): boolean {
+        return !this.isVirtual && !this.isSplitNode && !this.isHyperNode;
+    }
+
     addSplitChild(child: LayoutNode) {
         this.splitChildren.push(child);
         child.splitParent = this;

@@ -12,9 +12,12 @@ import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 export abstract class PathSegment {
     stroke?: string;
 
+    cId: string
+
     connection: LayoutConnection;
     constructor(connection: LayoutConnection) {
         this.connection = connection;
+        this.cId = connection.id;
     }
 
     /** The start anchor of the path segment */
@@ -113,6 +116,6 @@ export class CombinedPathSegment extends PathSegment {
             return new DefaultPathSegment(this.connection).getSvgPath();
         }
 
-        return this.segments.map(s => s.getSvgPath()).join(" ");
+        return this.segments.filter(s => s !== undefined).map(s => s.getSvgPath()).join(" ");
     }
 }
