@@ -1,6 +1,7 @@
 import { CombinedPathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { FlexNode } from "./flexNode";
+import { FlexConnectionLayouter } from "./flexLayouter";
 
 
 export type FlexConnectionParentType = "sameParent" | "differentParent";
@@ -17,22 +18,32 @@ export type FlexConnectionType =
     "unknown";
 
 
-export abstract class FlexConnection extends CombinedPathSegment {
+export class FlexConnection extends CombinedPathSegment {
     type: FlexConnectionType
 
-    flexNode: FlexNode;
+    flexSource: FlexNode;
+    flexTarget: FlexNode;
 
-    constructor(connection: LayoutConnection, type: FlexConnectionType, flexNode: FlexNode) {
+    layouter: FlexConnectionLayouter;
+
+    constructor(connection: LayoutConnection, layouter: FlexConnectionLayouter) {
         super(connection);
-        this.flexNode = flexNode;
+        this.layouter = layouter;
+        this.flexSource = layouter.getFlexNode(connection.source);
+        this.flexTarget = layouter.getFlexNode(connection.target);
+
         this.type = type;
         this.connection.pathSegment = this;
         this.init();
     }
 
-    abstract init(): void;
+    init(): void {
 
-    abstract calculate(): void;
+    }
+
+    calculate(): void {
+
+    }
 }
 
 export class EmptyFlexConnection extends FlexConnection {

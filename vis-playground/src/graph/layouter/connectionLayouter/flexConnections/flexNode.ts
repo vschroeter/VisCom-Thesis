@@ -3,6 +3,7 @@ import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { DirectCircleArcConnection } from "./circularArcConnection";
 import { FlexConnection, FlexConnectionType, EmptyFlexConnection } from "./flexConnection";
 import { InsideParentConnection } from "./insideConnection";
+import { FlexConnectionLayouter } from "./flexLayouter";
 
 
 export class FlexNode {
@@ -14,21 +15,34 @@ export class FlexNode {
     outConnections: FlexConnection[] = [];
     inConnections: FlexConnection[] = [];
 
-    constructor(layoutNode: LayoutNode) {
-        this.layoutNode = layoutNode;
+    parentLayouter: FlexConnectionLayouter;
 
-        layoutNode.outConnections.forEach(connection => {
-            this.addConnection(connection);
-        });
+    constructor(layoutNode: LayoutNode, parentLayouter: FlexConnectionLayouter) {
+        this.layoutNode = layoutNode;
+        this.parentLayouter = parentLayouter;
+
+        // layoutNode.outConnections.forEach(connection => {
+        //     this.addConnection(connection);
+        // });
 
         // layoutNode.inConnections.forEach(connection => {
         //     this.addConnection(connection);
         // });
     }
 
+    initConnections() {
+        this.layoutNode.outConnections.forEach(connection => {
+            this.addConnection(connection);
+        });
+        this.layoutNode.inConnections.forEach(connection => {
+            this.addConnection(connection);
+        });
+    }
+
     addConnection(layoutConnection: LayoutConnection) {
         // const connection = new FlexConnection(layoutConnection, this);
-        const connection = FlexNode.createConnection(layoutConnection, this);
+        // const connection = FlexNode.createConnection(layoutConnection, this);
+        const connection = this.parentLayouter.getFlexConnection(layoutConnection);
         this.connections.push(connection);
         if (connection.source === this.layoutNode) {
             this.outConnections.push(connection);
