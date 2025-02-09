@@ -1,180 +1,32 @@
 import { CombinedPathSegment, PathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
-import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
-import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
-import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { RadialCircularArcConnectionLayouter } from "./radialConnections";
-import { Circle, Point, Vector } from "2d-geometry";
-import { Anchor, EllipticArc } from "src/graph/graphical";
-import { RadialUtils } from "../utils/radialUtils";
+import { FlexConnection, FlexNode } from "./flexConnection";
+import { Vector, Circle } from "2d-geometry";
+import { EllipticArc, Anchor } from "src/graph/graphical";
 import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
-
-
-export type FlexConnectionParentType = "sameParent" | "differentParent";
-
-export type FlexConnectionType =
-    "sameParentDirectForward" | "sameParentDirectBackward" |
-    "sameParent" |
-    "differentParentDirectForwardFromAnchor" | "differentParentDirectBackwardFromAnchor" |
-    "differentParent" |
-    "unknown";
-
-
-export class FlexConnection extends CombinedPathSegment {
-
-    type: FlexConnectionType = "unknown";
-
-    constructor(connection: LayoutConnection) {
-        super(connection);
-        connection.pathSegment = this;
-
-        const source = connection.source;
-        const target = connection.target;
-
-        if (source.parent === target.parent) {
-            if (this.source.isDirectPredecessorInSortingTo(this.target)) {
-                this.type = "sameParentDirectForward";
-            } else if (this.source.isDirectSuccessorInSortingTo(this.target)) {
-                this.type = "sameParentDirectBackward";
-            } else {
-                this.type = "sameParent"
-            }
-        } else {
-            const commonParent = source.getCommonParent(target);
-            if (source.isAnchor || target.isAnchor) {
-
-                const firstChildContainingSource = commonParent?.getChildNodeContainingNodeAsDescendant(source);
-                const firstChildContainingTarget = commonParent?.getChildNodeContainingNodeAsDescendant(target);
-
-                if (firstChildContainingSource?.isDirectPredecessorInSortingTo(firstChildContainingTarget)) {
-                    this.type = "differentParentDirectForwardFromAnchor";
-                } else if (firstChildContainingSource?.isDirectSuccessorInSortingTo(firstChildContainingTarget)) {
-                    this.type = "differentParentDirectBackwardFromAnchor";
-                }
-            }
-
-            if (this.type == "unknown") {
-                this.type = "differentParent";
-            }
-        }
-    }
-}
+import { RadialUtils } from "../../utils/radialUtils";
+import { RadialCircularArcConnectionLayouter } from "../radialConnections";
 
 
 
+export class DirectCircleArcConnection extends CombinedPathSegment {
 
-export type FlexConnectionsOfNode = {
-    outDirectForward: FlexConnection[],
-    outDirectBackward: FlexConnection[],
-    outDirect: FlexConnection[],
-    out: FlexConnection[],
+    flexConnection: FlexConnection
 
-    inDirectForward: FlexConnection[],
-    inDirectBackward: FlexConnection[],
-    inDirect: FlexConnection[],
-    in: FlexConnection[],
-
-}
-
-export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
-
-    connections: FlexConnection[] = [];
-
-    mapNodeToConnections: Map<LayoutNode, FlexConnection[]> = new Map();
-    mapNodeToIncomingConnections: Map<LayoutNode, FlexConnection[]> = new Map();
-    mapNodeToOutgoingConnections: Map<LayoutNode, FlexConnection[]> = new Map();
-
-
-    override layoutConnectionsOfNode(node: LayoutNode): void {
-        node.outConnections.forEach(connection => {
-            this.addConnection(connection);
-        });
+    get flexNode(): FlexNode {
+        return this.flexConnection.flexNode;
     }
 
-    addConnection(connection: LayoutConnection) {
-        const flex = new FlexConnection(connection)
-        this.connections.push(flex);
+    constructor(connection: FlexConnection) {
+        super(connection.connection);
+        this.flexConnection = connection;
 
-        this.mapNodeToConnections.set(connection.source, (this.mapNodeToConnections.get(connection.source) ?? []).concat(flex));
-        this.mapNodeToConnections.set(connection.target, (this.mapNodeToConnections.get(connection.target) ?? []).concat(flex));
-
-        this.mapNodeToOutgoingConnections.set(connection.source, (this.mapNodeToOutgoingConnections.get(connection.source) ?? []).concat(flex));
-        this.mapNodeToIncomingConnections.set(connection.target, (this.mapNodeToIncomingConnections.get(connection.target) ?? []).concat(flex));
+        this.calculate();
     }
 
 
-    getConnectionsOfNode(node: LayoutNode): FlexConnectionsOfNode {
-
-        const outDirectForward = this.mapNodeToOutgoingConnections.get(node)?.filter(c => c.type === "sameParentDirectForward") ?? [];
-        const outDirectBackward = this.mapNodeToOutgoingConnections.get(node)?.filter(c => c.type === "sameParentDirectBackward") ?? [];
-
-        const outDirectForwardDifferentParent = this.mapNodeToOutgoingConnections.get(node)?.filter(c => c.type === "differentParentDirectForwardFromAnchor") ?? [];
-        const outDirectBackwardDifferentParent = this.mapNodeToOutgoingConnections.get(node)?.filter(c => c.type === "differentParentDirectBackwardFromAnchor") ?? [];
-
-        const outDirectSameParent = outDirectForward.concat(outDirectBackward);
-        const outDirectDifferentParent = outDirectForwardDifferentParent.concat(outDirectBackwardDifferentParent);
-
-        const outDirect = outDirectSameParent.concat(outDirectDifferentParent);
-
-        const allOut = this.mapNodeToOutgoingConnections.get(node) ?? [];
-
-
-        const inDirectForward = this.mapNodeToIncomingConnections.get(node)?.filter(c => c.type === "sameParentDirectForward") ?? [];
-        const inDirectBackward = this.mapNodeToIncomingConnections.get(node)?.filter(c => c.type === "sameParentDirectBackward") ?? [];
-
-        const inDirectForwardDifferentParent = this.mapNodeToIncomingConnections.get(node)?.filter(c => c.type === "differentParentDirectForwardFromAnchor") ?? [];
-        const inDirectBackwardDifferentParent = this.mapNodeToIncomingConnections.get(node)?.filter(c => c.type === "differentParentDirectBackwardFromAnchor") ?? [];
-
-        const inDirectSameParent = inDirectForward.concat(inDirectBackward);
-        const inDirectDifferentParent = inDirectForwardDifferentParent.concat(inDirectBackwardDifferentParent);
-
-        const inDirect = inDirectSameParent.concat(inDirectDifferentParent);
-
-        const allIn = this.mapNodeToIncomingConnections.get(node) ?? [];
-
-
-        return {
-            outDirectForward,
-            outDirectBackward,
-            outDirect,
-            out: allOut,
-
-            inDirectForward,
-            inDirectBackward,
-            inDirect,
-            in: allIn
-        }
-
-    }
-
-
-    override layoutConnectionsOfRootNode(root: LayoutNode): void {
-
-        console.log("[FLEX]", this.connections.length, this.connections, this)
-        const visGraph = root.visGraph;
-
-        visGraph.allLayoutNodes.forEach(node => {
-
-
-            const flexConnections = this.getConnectionsOfNode(node);
-            // console.log("[FLEX]", node.id, flexConnections);
-
-            flexConnections.outDirect.forEach(connection => {
-                this.calculatedDirectConnection(connection, true);
-            })
-
-
-        });
-
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // #region Connection Layouter Methods
-    ////////////////////////////////////////////////////////////////////////////
-
-
-    calculatedDirectConnection(connection: FlexConnection, hasCounterConnection: boolean = true) {
-        const source = connection.source;
-        const target = connection.target;
+    calculate() {
+        const source = this.connection.source;
+        const target = this.connection.target;
         // const parent = source.parent;
         const parent = source.getCommonParent(target);
 
@@ -190,22 +42,25 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
         let segmentCircle = parent?.innerCircle.clone();
 
         if (!segmentCircle || !arcSourceCircle || !arcTargetCircle) {
-            console.error("No segment circle for connection", connection, arcSourceCircle, arcTargetCircle);
+            console.error("No segment circle for connection", this.connection, arcSourceCircle, arcTargetCircle);
             return;
         };
 
-        const isForward = connection.type == "sameParentDirectForward" || connection.type == "differentParentDirectForwardFromAnchor";
-        const direction = isForward ? "clockwise" : "counter-clockwise";
+        const isForward = this.flexConnection.type == "circleArcForward";
+        const arcDirection = isForward ? "clockwise" : "counter-clockwise";
         const otherDirection = isForward ? "counter-clockwise" : "clockwise";
+
+        // Check if there is a counter connection (so a circle connection in the other direction)
+        const hasCounterConnection = (isForward && this.flexNode.circleArcBackwardConnections.some(c => c.target == this.source)) || (!isForward && this.flexNode.circleArcForwardConnections.some(c => c.target == this.source));
 
         // If there is a counter connection, adapt the radius of the segment circles so that the counter connection is not too close
         if (hasCounterConnection) {
             if (isForward) {
                 segmentCircle.r += 0.1 * Math.min(arcSourceCircle.r, arcTargetCircle.r);
-                // segmentCircle.r += 0.1 * Math.min(sourceCircle.r, targetCircle.r);
+                // segmentCircle.r += 2 * this.connection.weight;
             } else {
                 segmentCircle.r -= 0.2 * Math.min(arcSourceCircle.r, arcTargetCircle.r);
-                // segmentCircle.r -= 0.2 * Math.min(sourceCircle.r, targetCircle.r);
+                // segmentCircle.r -= 2 * this.connection.weight;
             }
         }
 
@@ -223,18 +78,18 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
         try {
             hyperArc = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
-                connection.connection,
+                this.flexConnection.connection,
                 arcSourceCircle,
                 arcTargetCircle,
                 segmentCircle,
-                direction
+                arcDirection
             )
         } catch (e) {
             // connection.source.debugShapes.push(start.outerCircle);
             // connection.source.debugShapes.push(end.outerCircle);
             // connection.source.debugShapes.push(segmentCircle);
             console.error("Error in circular arc connection layouting", {
-                connection,
+                connection: this.connection,
                 source,
                 target,
                 segmentCircle
@@ -263,12 +118,12 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
                 const intersections = source.outerCircle.intersect(startCircle);
                 const startStartPoint = RadialUtils.getClosestShapeToPoint(intersections, hyperArc.start);
 
-                startSegment = new EllipticArc(connection.connection,
+                startSegment = new EllipticArc(this.flexConnection.connection,
                     startStartPoint,
                     hyperArc.start,
                     startCircle.r,
                     startCircle.r
-                ).direction(direction);
+                ).direction(arcDirection);
 
                 // Check if the anchor is correct
                 const startEndAnchor = startSegment.endAnchor;
@@ -282,12 +137,12 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
                 const intersections = target.outerCircle.intersect(endCircle);
                 const endEndPoint = RadialUtils.getClosestShapeToPoint(intersections, hyperArc.end);
 
-                endSegment = new EllipticArc(connection.connection,
+                endSegment = new EllipticArc(this.flexConnection.connection,
                     hyperArc.end,
                     endEndPoint,
                     endCircle.r,
                     endCircle.r
-                ).direction(direction);
+                ).direction(arcDirection);
 
                 // Check if the anchor is correct
                 const endStartAnchor = endSegment.startAnchor;
@@ -320,13 +175,13 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
                 if (RadialUtils.radIsBetween(vectorHyperArcToCenter.slope, sourceOuter[0], sourceOuter[1])) {
                     const startAnchor = new Anchor(source.center, vectorHyperArcToCenter).move(source.outerRadius);
-                    startSegment = new SmoothSplineSegment(connection.connection, startAnchor, hyperArc.startAnchor);
+                    startSegment = new SmoothSplineSegment(this.flexConnection.connection, startAnchor, hyperArc.startAnchor);
                 } else {
                     const anchor1 = new Anchor(source.center, new Vector(sourceOuter[0])).move(source.outerRadius);
                     const anchor2 = new Anchor(source.center, new Vector(sourceOuter[1])).move(source.outerRadius);
                     const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], hyperArc.start, a => a.anchorPoint);
                     if (closerAnchor) {
-                        startSegment = new SmoothSplineSegment(connection.connection, closerAnchor.cloneReversed(), hyperArc.startAnchor);
+                        startSegment = new SmoothSplineSegment(this.flexConnection.connection, closerAnchor.cloneReversed(), hyperArc.startAnchor);
                     }
                 }
             }
@@ -339,13 +194,13 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
                 if (RadialUtils.radIsBetween(vectorHyperArcToCenter.rotate(Math.PI).slope, targetOuter[0], targetOuter[1])) {
                     const endAnchor = new Anchor(target.center, vectorHyperArcToCenter).move(-target.outerRadius);
-                    endSegment = new SmoothSplineSegment(connection.connection, hyperArc.endAnchor, endAnchor);
+                    endSegment = new SmoothSplineSegment(this.flexConnection.connection, hyperArc.endAnchor, endAnchor);
                 } else {
                     const anchor1 = new Anchor(target.center, new Vector(targetOuter[0])).move(target.outerRadius);
                     const anchor2 = new Anchor(target.center, new Vector(targetOuter[1])).move(target.outerRadius);
                     const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], hyperArc.end, a => a.anchorPoint);
                     if (closerAnchor) {
-                        endSegment = new SmoothSplineSegment(connection.connection, hyperArc.endAnchor, closerAnchor.cloneReversed());
+                        endSegment = new SmoothSplineSegment(this.flexConnection.connection, hyperArc.endAnchor, closerAnchor.cloneReversed());
                     }
                 }
 
@@ -356,11 +211,11 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
             if (hyperTarget == target) endSegment = undefined;
 
             // If existent, we add the splines to the arc
-            connection.segments = [startSegment, hyperArc, endSegment].filter(s => s) as PathSegment[];
+            this.segments = [startSegment, hyperArc, endSegment].filter(s => s) as PathSegment[];
 
-            // if (source.id == "dialog_session_manager") {
-            //     debug = true;
-            // }
+            if (source.id == "obstacle_detector") {
+                debug = true;
+            }
             if (debug) {
                 const sourceTangentAnchor1 = new Anchor(source.center, new Vector(sourceOuter[0]));
                 const sourceTangentAnchor2 = new Anchor(source.center, new Vector(sourceOuter[1]));
@@ -381,8 +236,12 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
             }
 
         } else {
-            connection.segments = [hyperArc];
+            this.segments = [hyperArc];
         }
 
     }
+
 }
+
+
+
