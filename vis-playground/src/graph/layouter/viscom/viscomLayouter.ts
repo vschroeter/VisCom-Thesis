@@ -9,7 +9,7 @@ import { DirectCircularConnectionLayouter } from "../connectionLayouter/circular
 import { IdSorter } from "src/graph/algorithms/sortings/simple";
 import { RadialSplineConnectionLayouter } from "../connectionLayouter/splineConnection";
 import { RadialMultiConnectionLayouter } from "../connectionLayouter/multiConnection";
-import { FlexConnectionLayouter } from "../connectionLayouter/flexConnections/flexConnection";
+import { FlexConnectionLayouter } from "../connectionLayouter/flexConnections/flexLayouter";
 
 
 export interface ViscomHyperLinkData extends Connection2dData {

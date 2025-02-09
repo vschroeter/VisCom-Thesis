@@ -1,5 +1,5 @@
 import { CombinedPathSegment, PathSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
-import { FlexConnection, FlexNode } from "./flexConnection";
+import { FlexConnection } from "./flexConnection";
 import { Vector, Circle } from "2d-geometry";
 import { EllipticArc, Anchor } from "src/graph/graphical";
 import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
@@ -8,23 +8,14 @@ import { RadialCircularArcConnectionLayouter } from "../radialConnections";
 
 
 
-export class DirectCircleArcConnection extends CombinedPathSegment {
+export class DirectCircleArcConnection extends FlexConnection {
 
-    flexConnection: FlexConnection
+    override init(): void {
 
-    get flexNode(): FlexNode {
-        return this.flexConnection.flexNode;
     }
 
-    constructor(connection: FlexConnection) {
-        super(connection.connection);
-        this.flexConnection = connection;
-
-        this.calculate();
-    }
-
-
-    calculate() {
+    override calculate() {
+        console.log("Calculate direct circle arc connection", this.connection.source.id, this.connection.target.id);
         const source = this.connection.source;
         const target = this.connection.target;
         // const parent = source.parent;
@@ -46,20 +37,20 @@ export class DirectCircleArcConnection extends CombinedPathSegment {
             return;
         };
 
-        const isForward = this.flexConnection.type == "circleArcForward";
+        const isForward = this.type == "circleArcForward";
         const arcDirection = isForward ? "clockwise" : "counter-clockwise";
         const otherDirection = isForward ? "counter-clockwise" : "clockwise";
 
         // Check if there is a counter connection (so a circle connection in the other direction)
-        const hasCounterConnection = (isForward && this.flexNode.circleArcBackwardConnections.some(c => c.target == this.source)) || (!isForward && this.flexNode.circleArcForwardConnections.some(c => c.target == this.source));
+        const hasCounterConnection = (isForward && this.flexNode.circleArcBackwardConnections.some(c => c.target == this.source)) || (!isForward && this.flexNode.circleArcForwardConnections.some(c => c.source == this.target));
 
         // If there is a counter connection, adapt the radius of the segment circles so that the counter connection is not too close
         if (hasCounterConnection) {
             if (isForward) {
-                segmentCircle.r += 0.1 * Math.min(arcSourceCircle.r, arcTargetCircle.r);
+                segmentCircle.r += 0.0 * Math.min(arcSourceCircle.r, arcTargetCircle.r);
                 // segmentCircle.r += 2 * this.connection.weight;
             } else {
-                segmentCircle.r -= 0.2 * Math.min(arcSourceCircle.r, arcTargetCircle.r);
+                segmentCircle.r -= 0.3 * Math.min(arcSourceCircle.r, arcTargetCircle.r);
                 // segmentCircle.r -= 2 * this.connection.weight;
             }
         }
@@ -78,7 +69,7 @@ export class DirectCircleArcConnection extends CombinedPathSegment {
 
         try {
             hyperArc = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
-                this.flexConnection.connection,
+                this.connection,
                 arcSourceCircle,
                 arcTargetCircle,
                 segmentCircle,
@@ -118,7 +109,7 @@ export class DirectCircleArcConnection extends CombinedPathSegment {
                 const intersections = source.outerCircle.intersect(startCircle);
                 const startStartPoint = RadialUtils.getClosestShapeToPoint(intersections, hyperArc.start);
 
-                startSegment = new EllipticArc(this.flexConnection.connection,
+                startSegment = new EllipticArc(this.connection,
                     startStartPoint,
                     hyperArc.start,
                     startCircle.r,
@@ -137,7 +128,7 @@ export class DirectCircleArcConnection extends CombinedPathSegment {
                 const intersections = target.outerCircle.intersect(endCircle);
                 const endEndPoint = RadialUtils.getClosestShapeToPoint(intersections, hyperArc.end);
 
-                endSegment = new EllipticArc(this.flexConnection.connection,
+                endSegment = new EllipticArc(this.connection,
                     hyperArc.end,
                     endEndPoint,
                     endCircle.r,
@@ -175,13 +166,13 @@ export class DirectCircleArcConnection extends CombinedPathSegment {
 
                 if (RadialUtils.radIsBetween(vectorHyperArcToCenter.slope, sourceOuter[0], sourceOuter[1])) {
                     const startAnchor = new Anchor(source.center, vectorHyperArcToCenter).move(source.outerRadius);
-                    startSegment = new SmoothSplineSegment(this.flexConnection.connection, startAnchor, hyperArc.startAnchor);
+                    startSegment = new SmoothSplineSegment(this.connection, startAnchor, hyperArc.startAnchor);
                 } else {
                     const anchor1 = new Anchor(source.center, new Vector(sourceOuter[0])).move(source.outerRadius);
                     const anchor2 = new Anchor(source.center, new Vector(sourceOuter[1])).move(source.outerRadius);
                     const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], hyperArc.start, a => a.anchorPoint);
                     if (closerAnchor) {
-                        startSegment = new SmoothSplineSegment(this.flexConnection.connection, closerAnchor.cloneReversed(), hyperArc.startAnchor);
+                        startSegment = new SmoothSplineSegment(this.connection, closerAnchor.cloneReversed(), hyperArc.startAnchor);
                     }
                 }
             }
@@ -194,13 +185,13 @@ export class DirectCircleArcConnection extends CombinedPathSegment {
 
                 if (RadialUtils.radIsBetween(vectorHyperArcToCenter.rotate(Math.PI).slope, targetOuter[0], targetOuter[1])) {
                     const endAnchor = new Anchor(target.center, vectorHyperArcToCenter).move(-target.outerRadius);
-                    endSegment = new SmoothSplineSegment(this.flexConnection.connection, hyperArc.endAnchor, endAnchor);
+                    endSegment = new SmoothSplineSegment(this.connection, hyperArc.endAnchor, endAnchor);
                 } else {
                     const anchor1 = new Anchor(target.center, new Vector(targetOuter[0])).move(target.outerRadius);
                     const anchor2 = new Anchor(target.center, new Vector(targetOuter[1])).move(target.outerRadius);
                     const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], hyperArc.end, a => a.anchorPoint);
                     if (closerAnchor) {
-                        endSegment = new SmoothSplineSegment(this.flexConnection.connection, hyperArc.endAnchor, closerAnchor.cloneReversed());
+                        endSegment = new SmoothSplineSegment(this.connection, hyperArc.endAnchor, closerAnchor.cloneReversed());
                     }
                 }
 
@@ -211,7 +202,7 @@ export class DirectCircleArcConnection extends CombinedPathSegment {
             if (hyperTarget == target) endSegment = undefined;
 
             // If existent, we add the splines to the arc
-            this.segments = [startSegment, hyperArc, endSegment].filter(s => s) as PathSegment[];
+            this.segments = [startSegment, hyperArc, endSegment].filter(s => s != undefined) as PathSegment[];
 
             if (source.id == "obstacle_detector") {
                 debug = true;
