@@ -29,9 +29,9 @@ export class FlexContinuum {
         this.type = type;
 
         if (type === "outside") {
-            this.range = node.layoutNode.getValidOuterRadRange();
+            this.range = node.layoutNode.getValidOuterRadRange(0.9);
         } else {
-            this.range = node.layoutNode.getValidInnerRadRange();
+            this.range = node.layoutNode.getValidInnerRadRange(0.9);
         }
 
     }

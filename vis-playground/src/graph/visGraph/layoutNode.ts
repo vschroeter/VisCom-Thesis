@@ -729,7 +729,7 @@ export class LayoutNode {
 
     }
 
-    getValidInnerRadRange(): [number, number] {
+    getValidInnerRadRange(factor = 1): [number, number] {
 
         const parent = this.parent;
         const nextNode = this.getNextNodeInSorting();
@@ -737,6 +737,8 @@ export class LayoutNode {
         if (!parent || !nextNode || !previousNode) {
             return [0, 0];
         }
+
+        let range = [0, 0];
 
         const nextTangents = RadialUtils.getTangentsToCircle(this.center, nextNode.outerCircle);
         const prevTangents = RadialUtils.getTangentsToCircle(this.center, previousNode.outerCircle);
@@ -761,13 +763,19 @@ export class LayoutNode {
             const nodeRad = RadialUtils.radOfPoint(nextNode.center, this.center);
 
             if (RadialUtils.radIsBetween(nodeRad, prevRad, nextRad)) {
-                return [prevRad, nextRad];
+                range = [prevRad, nextRad];
             } else {
-                return [nextRad, prevRad];
+                range = [nextRad, prevRad];
             }
         }
 
-        return [nextRad, prevRad];
+        if (factor != 1) {
+            const diff = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
+            const mid = range[0] + diff / 2;
+            range = [mid - diff / 2 * factor, mid + diff / 2 * factor];
+        }
+
+        return range as [number, number];
     }
 
     /**

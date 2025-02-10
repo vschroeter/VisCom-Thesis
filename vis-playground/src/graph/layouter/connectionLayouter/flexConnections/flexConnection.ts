@@ -285,24 +285,18 @@ export class FlexPart extends CombinedPathSegment {
 
     layoutCircleArc() {
         // console.log("Calculate direct circle arc connection", this.connection.source.id, this.connection.target.id);
-        const source = this.connection.source;
-        const target = this.connection.target;
+        const source = this.sourceFlexNode.layoutNode;
+        const target = this.targetFlexNode.layoutNode;
         // const parent = source.parent;
         const parent = source.getCommonParent(target);
-
-        const hyperSource = parent?.getChildNodeContainingNodeAsDescendant(source);
-        const hyperTarget = parent?.getChildNodeContainingNodeAsDescendant(target);
 
         const sourceCircle = source.outerCircle;
         const targetCircle = target.outerCircle;
 
-        const arcSourceCircle = hyperSource?.outerCircle;
-        const arcTargetCircle = hyperTarget?.outerCircle;
-
         let segmentCircle = parent?.innerCircle.clone();
 
-        if (!segmentCircle || !arcSourceCircle || !arcTargetCircle) {
-            console.error("No segment circle for connection", this.connection, arcSourceCircle, arcTargetCircle);
+        if (!segmentCircle || !sourceCircle || !targetCircle) {
+            console.error("No segment circle for connection", this.connection, sourceCircle, targetCircle);
             return;
         };
 
@@ -318,17 +312,17 @@ export class FlexPart extends CombinedPathSegment {
         // If there is a counter connection, adapt the radius of the segment circles so that the counter connection is not too close
         if (hasCounterConnection) {
             if (isForward) {
-                segmentCircle.r += 0.0 * Math.min(arcSourceCircle.r, arcTargetCircle.r);
+                segmentCircle.r += 0.0 * Math.min(sourceCircle.r, targetCircle.r);
                 // segmentCircle.r += 2 * this.connection.weight;
             } else {
-                segmentCircle.r -= 0.3 * Math.min(arcSourceCircle.r, arcTargetCircle.r);
+                segmentCircle.r -= 0.3 * Math.min(sourceCircle.r, targetCircle.r);
                 // segmentCircle.r -= 2 * this.connection.weight;
             }
         }
 
         // If the parent node has only two children, the circle is adapted to be larger, so that the connection is more direct
         if (parent?.children.length === 2) {
-            const _centerVector = new Vector(arcSourceCircle.center, arcTargetCircle.center);
+            const _centerVector = new Vector(sourceCircle.center, targetCircle.center);
             const centerTranslationVector = isForward ? _centerVector.rotate90CW() : _centerVector.rotate90CCW();
             const newCenter = parent.center.translate(centerTranslationVector);
 
@@ -336,6 +330,10 @@ export class FlexPart extends CombinedPathSegment {
             const newRadius = newCenter.distanceTo(smallerNode.center)[0];
             segmentCircle = new Circle(newCenter, newRadius);
             // this.startNode.debugShapes.push(segmentCircle);
+            // this.startNode.debugShapes.push(parent.innerCircle);
+            // this.startNode.debugShapes.push(arcSourceCircle);
+            // this.startNode.debugShapes.push(arcTargetCircle);
+
         }
 
         let hyperArc: EllipticArc | undefined;
@@ -343,8 +341,8 @@ export class FlexPart extends CombinedPathSegment {
         try {
             hyperArc = RadialCircularArcConnectionLayouter.getCircularArcBetweenCircles(
                 this.connection,
-                arcSourceCircle,
-                arcTargetCircle,
+                sourceCircle,
+                targetCircle,
                 segmentCircle,
                 arcDirection
             )
