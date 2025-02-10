@@ -66,10 +66,10 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
         console.log("[FLEX] layout done", Array.from(this.mapLayoutNodeToFlexNode.values()));
 
-        this.flexNodes.forEach(flexNode => {
-            const anchors = flexNode.innerContinuum.getValidRangeAnchors();
-            flexNode.layoutNode.debugShapes.push(...anchors);
-        })
+        // this.flexNodes.forEach(flexNode => {
+        //     const anchors = flexNode.innerContinuum.getValidRangeAnchors();
+        //     flexNode.layoutNode.debugShapes.push(...anchors);
+        // })
 
         return;
 

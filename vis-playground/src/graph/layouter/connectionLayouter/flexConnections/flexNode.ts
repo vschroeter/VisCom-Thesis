@@ -20,7 +20,7 @@ export class FlexContinuum {
 
     mapPartToRad: Map<FlexPart, number> = new Map();
 
-    combinedPartsDistanceFactor = 0.5;
+    combinedPartsDistanceFactor = 0.05;
 
 
     constructor(node: FlexNode, type: "outside" | "inside") {
@@ -61,6 +61,10 @@ export class FlexContinuum {
     calculate() {
         // Sort the parts by their opposite node position
         // For the same position, first take outgoing, then incoming connections
+
+        // This is the center rad on the backside of the range
+        // We sort against this rad, to avoid problems where close to border connections are sorted to the wrong side
+        const backRad = this.range[1] + RadialUtils.forwardRadBetweenAngles(this.range[1], this.range[0]) / 2;
         this.parts.sort((a, b) => {
 
             const aOpposite = a.getOppositeNodeThan(this.node);
@@ -73,8 +77,8 @@ export class FlexContinuum {
             const aRad = RadialUtils.radOfPoint(aOpposite.layoutNode.center, this.node.layoutNode.center);
             const bRad = RadialUtils.radOfPoint(bOpposite.layoutNode.center, this.node.layoutNode.center);
 
-            const startToA = RadialUtils.forwardRadBetweenAngles(this.range[0], aRad);
-            const startToB = RadialUtils.forwardRadBetweenAngles(this.range[0], bRad);
+            const startToA = RadialUtils.forwardRadBetweenAngles(backRad, aRad);
+            const startToB = RadialUtils.forwardRadBetweenAngles(backRad, bRad);
 
             if (Math.abs(startToA - startToB) < 0.001) {
                 return a.sourceFlexNode == this.node ? -1 : 1;
@@ -135,6 +139,9 @@ export class FlexContinuum {
     }
 
 
+    isInside(rad: number): boolean {
+        return RadialUtils.radIsBetween(rad, this.range[0], this.range[1]);
+    }
 
 }
 

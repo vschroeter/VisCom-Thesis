@@ -113,7 +113,7 @@ export class Anchor {
         return new Ray(this.anchorPoint, this.direction.rotate90CW());
     }
 
-    isSimilarTo(endStartAnchor: Anchor | undefined, epsilon = 0.1) {
+    isSimilarTo(endStartAnchor: Anchor | undefined, epsilon = 0.0001) {
         if (endStartAnchor === undefined) return false;
 
         // Check if the points are similar

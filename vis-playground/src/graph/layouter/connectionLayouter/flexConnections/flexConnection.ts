@@ -4,9 +4,10 @@ import { FlexNode } from "./flexNode";
 import { FlexConnectionLayouter, FlexOrLayoutNode } from "./flexLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { Vector, Circle } from "2d-geometry";
-import { EllipticArc } from "src/graph/graphical";
+import { Anchor, EllipticArc } from "src/graph/graphical";
 import { RadialCircularArcConnectionLayouter } from "../radialConnections";
 import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
+import { RadialUtils } from "../../utils/radialUtils";
 
 
 export type FlexConnectionParentType = "sameParent" | "differentParent";
@@ -177,7 +178,9 @@ export class FlexPart extends CombinedPathSegment {
         if (this.linkedPart) {
             this.segments = [this.linkedPart]
         } else {
-            this.sourceFlexNode.mapTargetNodeToPart.set(this.targetFlexNode, this);
+            // Connections between the same parents are saved to be reused
+            // This should not be done between different parents, as parts from nodes to its hypernode can be for different connections
+            if (this.hasSameParent()) this.sourceFlexNode.mapTargetNodeToPart.set(this.targetFlexNode, this);
             this.addToContinuum();
 
             const partMap = this.flexConnection.layouter.mapLayerToFlexParts;
@@ -272,13 +275,16 @@ export class FlexPart extends CombinedPathSegment {
 
             // Handle layout for connections inside the same parent
             this.layoutInsideParent();
-
+        }
+        // For connections between different parents
+        else {
+            this.layoutPartNodeConnection();
         }
     }
 
 
     layoutCircleArc() {
-        console.log("Calculate direct circle arc connection", this.connection.source.id, this.connection.target.id);
+        // console.log("Calculate direct circle arc connection", this.connection.source.id, this.connection.target.id);
         const source = this.connection.source;
         const target = this.connection.target;
         // const parent = source.parent;
@@ -325,9 +331,11 @@ export class FlexPart extends CombinedPathSegment {
             const _centerVector = new Vector(arcSourceCircle.center, arcTargetCircle.center);
             const centerTranslationVector = isForward ? _centerVector.rotate90CW() : _centerVector.rotate90CCW();
             const newCenter = parent.center.translate(centerTranslationVector);
-            const newRadius = newCenter.distanceTo(source.center)[0];
+
+            const smallerNode = target.radius < source.radius ? target : source;
+            const newRadius = newCenter.distanceTo(smallerNode.center)[0];
             segmentCircle = new Circle(newCenter, newRadius);
-            // node.debugShapes.push(adaptedCircle);
+            // this.startNode.debugShapes.push(segmentCircle);
         }
 
         let hyperArc: EllipticArc | undefined;
@@ -362,6 +370,111 @@ export class FlexPart extends CombinedPathSegment {
         const targetAnchor = this.targetFlexNode.innerContinuum.getAnchorForPart(this, "in");
 
         this.segments = [new SmoothSplineSegment(this.connection, sourceAnchor, targetAnchor)];
+    }
+
+
+    layoutPartNodeConnection() {
+
+        // First, determine the direction of the connection:
+        // - node to part OR
+        // - part to node
+
+        // TODO:: is this reliable?
+        // Path to node if the source node is a hyper node
+        const isPartToNode = this.sourceFlexNode.layoutNode.isHyperNode;
+        const adjacentPart = isPartToNode ? this.previousPart : this.nextPart;
+        const flexNode = isPartToNode ? this.targetFlexNode : this.sourceFlexNode;
+        const node = flexNode.layoutNode;
+
+        if (!adjacentPart) {
+            console.error("No adjacent part for connection", this);
+            return;
+        }
+
+        const partAnchor = isPartToNode ? adjacentPart.endAnchor : adjacentPart.startAnchor;
+
+        if (!partAnchor) {
+            console.error("No part anchor for connection", this);
+            return;
+        }
+
+        let segment: PathSegment | undefined = undefined;
+
+        // In the best case, we can connect the part to the node with a single circular arc
+        const connectingCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(node.center, partAnchor);
+        if (connectingCircle) {
+            const intersections = node.outerCircle.intersect(connectingCircle);
+            const nodeIntersectionPoint = RadialUtils.getClosestShapeToPoint(intersections, partAnchor.anchorPoint);
+
+            const startPoint = isPartToNode ? partAnchor.anchorPoint : nodeIntersectionPoint;
+            const endPoint = isPartToNode ? nodeIntersectionPoint : partAnchor.anchorPoint;
+
+            segment = new EllipticArc(this.connection,
+                startPoint,
+                endPoint,
+                connectingCircle.r,
+                connectingCircle.r
+            ).direction("clockwise");
+
+            // Check if the anchor is correctly oriented
+            const segmentAnchor = isPartToNode ? segment.startAnchor : segment.endAnchor;
+            if (!partAnchor.isSimilarTo(segmentAnchor)) {
+                (segment as EllipticArc).direction("counter-clockwise");
+            }
+        }
+
+        // The circle segment could be outside the valid outer range of the node
+        // In this case, we have to adapt it
+        const anchorAtNode = isPartToNode ? segment?.endAnchor : segment?.startAnchor;
+        const arcRad = anchorAtNode ? RadialUtils.radOfPoint(anchorAtNode?.anchorPoint, node.center) : undefined;
+
+        // TODO: Better construction of the spline points. Not just take a straight line from the hyperarc to the node, but instead take a point that respects the curvature
+
+        // If the arc is not valid valid, we construct something better
+        const continuum = flexNode.outerContinuum;
+        if (!arcRad || !continuum.isInside(arcRad)) {
+
+            // If the arc is not valid, we construct a spline from the hyperarc to the node
+            const vectorNodeToPartAnchor = new Vector(node.center, partAnchor.anchorPoint);
+                // isPartToNode ?
+                // new Vector(partAnchor.anchorPoint, node.center).rotate(Math.PI) :
+                // new Vector(node.center, partAnchor.anchorPoint);
+
+            if (continuum.isInside(vectorNodeToPartAnchor.slope)) {
+                const nodeAnchor = new Anchor(node.center, vectorNodeToPartAnchor).move(node.outerRadius);
+                segment = isPartToNode ?
+                    new SmoothSplineSegment(this.connection, partAnchor, nodeAnchor.cloneReversed()) :
+                    new SmoothSplineSegment(this.connection, nodeAnchor, partAnchor);
+            } else {
+                const anchor1 = new Anchor(node.center, new Vector(continuum.range[0])).move(node.outerRadius);
+                const anchor2 = new Anchor(node.center, new Vector(continuum.range[1])).move(node.outerRadius);
+                const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], partAnchor.anchorPoint, a => a.anchorPoint);
+                if (closerAnchor) {
+                    segment = isPartToNode ?
+                        new SmoothSplineSegment(this.connection, partAnchor, closerAnchor.cloneReversed()) :
+                        new SmoothSplineSegment(this.connection, closerAnchor, partAnchor);
+                }
+            }
+        }
+
+
+        console.log("Calculate path to node", {
+            source: this.sourceFlexNode.id,
+            target: this.targetFlexNode.id,
+            part: adjacentPart.id,
+            node: flexNode.id,
+            // previousPart: this.previousPart,
+            // nextPart: this.nextPart,
+            isPathToNode: isPartToNode,
+        });
+
+        if (!segment) {
+            console.error("No segment for connection", this);
+            return;
+        }
+        this.segments = [segment];
+
+
     }
 
 }
