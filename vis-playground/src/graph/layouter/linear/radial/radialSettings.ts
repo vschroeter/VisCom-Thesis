@@ -18,7 +18,7 @@ import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayout
 //     }
 // }
 
-export class RadialSpacingSettings extends Setting {
+export class RadialLayoutingSettings extends Setting {
     nodeMarginFactor = new Param<number>({
         key: "nodeMarginFactor",
         label: "Margin factor between nodes",
@@ -40,6 +40,15 @@ export class RadialSpacingSettings extends Setting {
         key: "adaptEnclosingCircle",
         label: "Adapt Enclosing Circle",
         description: "Adapt the enclosing circle to the size of the nodes.",
+        optional: false,
+        defaultValue: true,
+        type: "boolean",
+    });
+
+    rotateBasedOnConnections = new Param<boolean>({
+        key: "rotateBasedOnConnections",
+        label: "Rotate children based on connections",
+        description: "Rotate the nodes based on their connections.",
         optional: false,
         defaultValue: true,
         type: "boolean",
@@ -71,7 +80,7 @@ export class EdgeSettings extends Setting {
         optional: false,
         defaultValue: 120,
     });
-    
+
     // combineEdges = new Param<boolean>({
     //     key: "combineEdges",
     //     optional: false,
@@ -82,13 +91,13 @@ export class EdgeSettings extends Setting {
 
 
 export class RadialLayouterSettings extends GraphLayouterSettings {
-    spacing = new RadialSpacingSettings({
+    spacing = new RadialLayoutingSettings({
         key: "spacing",
         label: "Spacing",
         description: "Spacing settings for the radial layout.",
         optional: false,
     });
-    
+
     sorting = new LinearSortingSettings();
 
 
@@ -97,7 +106,7 @@ export class RadialLayouterSettings extends GraphLayouterSettings {
         label: "Edges",
         description: "Settings for the edges.",
         optional: false,
-    });    
+    });
 
     constructor(type: string, name?: string) {
         super(type, name);

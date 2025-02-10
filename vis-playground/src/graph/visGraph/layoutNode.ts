@@ -620,12 +620,11 @@ export class LayoutNode {
     // #region Transformation Methods for the Node
     ////////////////////////////////////////////////////////////////////////////
 
-    rotateChildrenLocally(rad: number) {
-        const center = new Point(0, 0);
+    rotateChildrenLocally(rad: number, center: Point = new Point(0, 0)) {
         this.innerCenterTranslation = this.innerCenterTranslation.rotate(rad);
         this.children.forEach(child => {
             child.center = child.center.rotate(rad, center);
-            child.rotateChildrenLocally(rad);
+            child.rotateChildrenLocally(rad, center);
         });
     }
 
@@ -928,6 +927,13 @@ export class LayoutNode {
 
         const _positioner = this.getInstance(positionerOverride ?? this.positioner);
         _positioner?.positionChildren(this);
+    }
+
+    refinePositionOfChildren(positionerOverride?: BasePositioner) {
+        if (this.children.length == 0) return;
+
+        const _positioner = this.getInstance(positionerOverride ?? this.positioner);
+        _positioner?.refinePositions(this);
     }
 
     // calculateConnectionPoints(connectorOverride?: BaseConnectionLayouter) {

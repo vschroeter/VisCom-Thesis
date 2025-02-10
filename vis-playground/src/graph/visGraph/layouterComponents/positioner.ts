@@ -12,4 +12,12 @@ export class BasePositioner {
         // Base positioner does not do anything
     }
 
+    /**
+     * Refine the positions of the nodes, after they have been positioned
+     * @param parentNode The parent node of the child nodes, that should be positioned
+     */
+    refinePositions(parentNode: LayoutNode) {
+        // Base positioner does not do anything
+    }
+
 }

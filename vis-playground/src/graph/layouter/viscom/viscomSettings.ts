@@ -1,4 +1,4 @@
-import { EdgeSettings, RadialLayouterSettings, RadialSpacingSettings } from "../linear/radial/radialSettings";
+import { EdgeSettings, RadialLayouterSettings, RadialLayoutingSettings } from "../linear/radial/radialSettings";
 import { LinearSortingSettings } from "../settings/linearSettings";
 import { GraphLayouterSettings, Param, Setting } from "../settings/settings";
 import { CommunitySettings } from "./communitySettings";
@@ -50,10 +50,10 @@ export class DisplaySettings extends Setting {
 
 
 export class ViscomLayouterSettings extends GraphLayouterSettings {
-    spacing = new RadialSpacingSettings({
-        key: "spacing",
-        label: "Spacing",
-        description: "Spacing settings for the radial layout.",
+    radial = new RadialLayoutingSettings({
+        key: "radial",
+        label: "Radial Placement",
+        description: "Placement settings for the radial layout.",
         optional: false,
     });
 

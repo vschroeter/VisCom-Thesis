@@ -11,14 +11,14 @@ import { RadialCircularArcConnectionLayouter } from "../../connectionLayouter/ra
 
 export class RadialPositionerDynamicDistribution extends BasePositioner {
 
-    /** 
+    /**
      * The margin factor between placed nodes.
      * 0 means that the nodes are placed directly next to each other.
      * 1 means that the nodes are placed with a distance of their radius between them.
      */
     nodeMarginFactor = 1
 
-    /** 
+    /**
      * The margin factor for the radius of a parent node.
      * 1 means that the parent node perimeter touches its children.
      * A value above 1 adds a margin to the parent this perimeter.
@@ -34,17 +34,21 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
     center = new Point(0, 0);
     private radius: number = 0;
 
+    rotateBasedOnConnections = false;
+
     constructor({
-        nodeMarginFactor = 1, outerMarginFactor = 1.1, adaptEnclosingCircle = true
+        nodeMarginFactor = 1, outerMarginFactor = 1.1, adaptEnclosingCircle = true, rotateBasedOnConnections = false
     }: {
         nodeMarginFactor?: number;
         outerMarginFactor?: number;
         adaptEnclosingCircle?: boolean;
+        rotateBasedOnConnections?: boolean;
     } = {}) {
         super();
         this.nodeMarginFactor = nodeMarginFactor;
         this.outerMarginFactor = outerMarginFactor;
         this.adaptEnclosingCircle = adaptEnclosingCircle;
+        this.rotateBasedOnConnections = rotateBasedOnConnections;
 
         console.log("Created RadialPositionerDynamicDistribution", this.adaptEnclosingCircle);
     }
@@ -164,6 +168,62 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
         }
     }
 
+    private computeNetOutsideConnectionRotation(parentNode: LayoutNode): number {
+        let sumVector = new Vector(0, 0);
+
+
+        // Get all descendants of the node
+        const descendants = parentNode.descendants;
+        const descendantsSet = new Set(descendants);
+
+        // Gather all outside connections
+        // For that we check, whether the source/target of the connection is not in the descendants
+        const outsideConnections = descendants.flatMap(d => d.outConnections.concat(d.inConnections)).filter(conn => {
+            return !descendantsSet.has(conn.source) || !descendantsSet.has(conn.target);
+        });
+
+
+        // We build a vector based on the direction of the target node
+        for (const conn of outsideConnections) {
+
+            const nodeInsideParent = descendantsSet.has(conn.source) ? conn.source : conn.target;
+            const nodeOutsideParent = descendantsSet.has(conn.source) ? conn.target : conn.source;
+
+            const connectionVector = new Vector(nodeInsideParent.center, nodeOutsideParent.center);
+            const centerToNodeInside = new Vector(parentNode.center, nodeInsideParent.center);
+            const centerToNodeOutside = new Vector(parentNode.center, nodeOutsideParent.center);
+
+            const radDiff = centerToNodeOutside.slope - centerToNodeInside.slope;
+
+            sumVector = sumVector.add(new Vector(radDiff).normalize().multiply(conn.weight));
+        }
+
+        return sumVector.slope;
+    }
+
+    override refinePositions(parentNode: LayoutNode): void {
+        // Here we rotate the nodes based on their connections
+        // This refinement is done bottom-up, so that the children are rotated first
+        if (!this.rotateBasedOnConnections) {
+            return;
+        }
+
+        // Skip the rotation, if there is an anchor node
+        if (parentNode.children.some(c => c.anchorNode)) {
+            return;
+        }
+
+
+        const center = parentNode.center;
+
+        const netRad = this.computeNetOutsideConnectionRotation(parentNode);
+
+        // Perform rotation for each child with no anchor node
+        parentNode.rotateChildrenLocally(netRad, center);
+        // console.log("[Rotate] children", netRad, parentNode.id, parentNode);
+
+    }
+
 }
 
 export class RadialPositioner extends BasePositioner {
@@ -171,7 +231,7 @@ export class RadialPositioner extends BasePositioner {
     // The radius to place the child nodes
     radius: number;
 
-    // The outer radius that the parent node gets 
+    // The outer radius that the parent node gets
     outerRadius: number;
 
     // The center of the circle

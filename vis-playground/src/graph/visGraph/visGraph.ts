@@ -432,6 +432,12 @@ export class VisGraph {
             });
         });
 
+        // If the layouter has some refinement steps, we do them now
+        botUpLayers.forEach((layer, i) => {
+            layer.forEach(node => {
+                node.refinePositionOfChildren();
+            });
+        });
 
         // Reset and init the connection layouts
         botUpLayers.flat().forEach(node => {

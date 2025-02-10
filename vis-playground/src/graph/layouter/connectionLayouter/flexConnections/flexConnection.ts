@@ -104,12 +104,12 @@ export class FlexConnection extends CombinedPathSegment {
         }
 
 
-        console.log("FLEX", {
-            source: this.source.id,
-            target: this.target.id,
-            path: nodePath,
-            parts: this.parts.map(part => part.sourceFlexNode.id + " -> " + part.targetFlexNode.id + " (" + part.layerFromBot + ")")
-        })
+        // console.log("FLEX", {
+        //     source: this.source.id,
+        //     target: this.target.id,
+        //     path: nodePath,
+        //     parts: this.parts.map(part => part.sourceFlexNode.id + " -> " + part.targetFlexNode.id + " (" + part.layerFromBot + ")")
+        // })
 
         this.segments = this.parts.map(part => part);
 
@@ -458,15 +458,15 @@ export class FlexPart extends CombinedPathSegment {
         }
 
 
-        console.log("Calculate path to node", {
-            source: this.sourceFlexNode.id,
-            target: this.targetFlexNode.id,
-            part: adjacentPart.id,
-            node: flexNode.id,
-            // previousPart: this.previousPart,
-            // nextPart: this.nextPart,
-            isPathToNode: isPartToNode,
-        });
+        // console.log("Calculate path to node", {
+        //     source: this.sourceFlexNode.id,
+        //     target: this.targetFlexNode.id,
+        //     part: adjacentPart.id,
+        //     node: flexNode.id,
+        //     // previousPart: this.previousPart,
+        //     // nextPart: this.nextPart,
+        //     isPathToNode: isPartToNode,
+        // });
 
         if (!segment) {
             console.error("No segment for connection", this);
