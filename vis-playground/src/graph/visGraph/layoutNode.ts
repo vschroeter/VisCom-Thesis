@@ -757,6 +757,7 @@ export class LayoutNode {
 
         const nextRad = RadialUtils.radOfPoint(nextTangent.end, this.center);
         const prevRad = RadialUtils.radOfPoint(prevTangent.end, this.center);
+        range = [nextRad, prevRad];
 
         if (nextNode == previousNode) {
 

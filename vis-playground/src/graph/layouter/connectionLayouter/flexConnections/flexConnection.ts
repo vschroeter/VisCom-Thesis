@@ -295,6 +295,8 @@ export class FlexPart extends CombinedPathSegment {
 
         let segmentCircle = parent?.innerCircle.clone();
 
+        // this.startNode.debugShapes.push(segmentCircle?.clone());
+
         if (!segmentCircle || !sourceCircle || !targetCircle) {
             console.error("No segment circle for connection", this.connection, sourceCircle, targetCircle);
             return;
@@ -434,9 +436,9 @@ export class FlexPart extends CombinedPathSegment {
 
             // If the arc is not valid, we construct a spline from the hyperarc to the node
             const vectorNodeToPartAnchor = new Vector(node.center, partAnchor.anchorPoint);
-                // isPartToNode ?
-                // new Vector(partAnchor.anchorPoint, node.center).rotate(Math.PI) :
-                // new Vector(node.center, partAnchor.anchorPoint);
+            // isPartToNode ?
+            // new Vector(partAnchor.anchorPoint, node.center).rotate(Math.PI) :
+            // new Vector(node.center, partAnchor.anchorPoint);
 
             if (continuum.isInside(vectorNodeToPartAnchor.slope)) {
                 const nodeAnchor = new Anchor(node.center, vectorNodeToPartAnchor).move(node.outerRadius);
