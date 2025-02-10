@@ -15,6 +15,12 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
     mapLayerToFlexParts: Map<number, FlexPart[]> = new Map();
 
 
+
+
+    get flexNodes(): FlexNode[] {
+        return Array.from(this.mapLayoutNodeToFlexNode.values());
+    }
+
     getFlexNode(layoutNode: FlexOrLayoutNode): FlexNode {
         const node = layoutNode instanceof FlexNode ? layoutNode.layoutNode : layoutNode;
         if (!this.mapLayoutNodeToFlexNode.has(node)) {
@@ -58,7 +64,13 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
             parts.forEach(part => part.layout());
         })
 
-        console.log("[FLEX] layout done", Array.from(this.mapLayoutConnectionToFlexConnection.values()));
+        console.log("[FLEX] layout done", Array.from(this.mapLayoutNodeToFlexNode.values()));
+
+        this.flexNodes.forEach(flexNode => {
+            const anchors = flexNode.innerContinuum.getValidRangeAnchors();
+            flexNode.layoutNode.debugShapes.push(...anchors);
+        })
+
         return;
 
 

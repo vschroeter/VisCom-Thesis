@@ -4,17 +4,29 @@ import { DirectCircleArcConnection } from "./circularArcConnection";
 import { FlexConnection, FlexConnectionType, FlexPart } from "./flexConnection";
 import { InsideParentConnection } from "./insideConnection";
 import { FlexConnectionLayouter } from "./flexLayouter";
+import { Anchor } from "src/graph/graphical";
+import { Vector } from "2d-geometry";
+import { RadialUtils } from "../../utils/radialUtils";
 
 
 export class FlexContinuum {
-
+    type: "inside" | "outside";
     node: FlexNode;
     range: [number, number];
 
     parts: FlexPart[] = [];
 
+    calculated = false;
+
+    mapPartToRad: Map<FlexPart, number> = new Map();
+
+    combinedPartsDistanceFactor = 0.5;
+
+
     constructor(node: FlexNode, type: "outside" | "inside") {
         this.node = node;
+
+        this.type = type;
 
         if (type === "outside") {
             this.range = node.layoutNode.getValidOuterRadRange();
@@ -26,7 +38,103 @@ export class FlexContinuum {
 
     addPart(connection: FlexPart) {
         this.parts.push(connection);
+        this.calculated = false;
     }
+
+    getValidRangeAnchors(): Anchor[] {
+
+        const anchor1 = new Anchor(this.node.layoutNode.center, new Vector(this.range[0]));
+        const anchor2 = new Anchor(this.node.layoutNode.center, new Vector(this.range[1]));
+
+        anchor1._data = { length: this.node.layoutNode.outerRadius, stroke: "green" };
+        anchor2._data = { length: this.node.layoutNode.outerRadius, stroke: "red" };
+
+        return [anchor1, anchor2];
+    }
+
+    getAnchorForRad(rad: number, direction: "in" | "out"): Anchor {
+        const anchor = new Anchor(this.node.layoutNode.center, new Vector(rad)).move(this.node.layoutNode.outerRadius);
+        if (direction === "in") return anchor.cloneReversed();
+        return anchor;
+    }
+
+    calculate() {
+        // Sort the parts by their opposite node position
+        // For the same position, first take outgoing, then incoming connections
+        this.parts.sort((a, b) => {
+
+            const aOpposite = a.getOppositeNodeThan(this.node);
+            const bOpposite = b.getOppositeNodeThan(this.node);
+
+            if (!aOpposite || !bOpposite) {
+                return 0;
+            }
+
+            const aRad = RadialUtils.radOfPoint(aOpposite.layoutNode.center, this.node.layoutNode.center);
+            const bRad = RadialUtils.radOfPoint(bOpposite.layoutNode.center, this.node.layoutNode.center);
+
+            const startToA = RadialUtils.forwardRadBetweenAngles(this.range[0], aRad);
+            const startToB = RadialUtils.forwardRadBetweenAngles(this.range[0], bRad);
+
+            if (Math.abs(startToA - startToB) < 0.001) {
+                return a.sourceFlexNode == this.node ? -1 : 1;
+            }
+
+            return startToA - startToB;
+        });
+
+
+        // After sorted, we add the connections to our continuum
+        // For that, we first add each connection with a distance of 1
+        const partContinuum: Map<FlexPart, number> = new Map();
+        let currentPosition = 1;
+
+        this.parts.forEach((part, i) => {
+            const nextPart = this.parts[i + 1];
+            partContinuum.set(part, currentPosition);
+
+            // If the next part is the counter part of the current one (so source and target node are switched), we add a distance of 1 * this.combinedPartsDistanceFactor
+            if (part.isCounterPartOf(nextPart)) {
+                currentPosition += 1 * this.combinedPartsDistanceFactor;
+            } else {
+                currentPosition += 1;
+            }
+        });
+
+        // Now, we normalize the distances based on the available space
+
+        const radDiff = RadialUtils.forwardRadBetweenAngles(this.range[0], this.range[1]);
+
+        const totalDistance = currentPosition;
+        this.parts.forEach((part, index) => {
+            const distance = partContinuum.get(part)!;
+            const normalizedDistance = (distance / totalDistance) * radDiff + this.range[0];
+            this.mapPartToRad.set(part, normalizedDistance);
+        });
+
+        this.calculated = true;
+    }
+
+
+    getRadForPart(part: FlexPart): number {
+
+        if (!this.calculated) {
+            this.calculate();
+        }
+
+        if (!this.mapPartToRad.has(part)) {
+            throw new Error(`Part ${part.id} not in continuum`);
+        }
+
+        return this.mapPartToRad.get(part)!;
+    }
+
+    getAnchorForPart(part: FlexPart, direction: "in" | "out"): Anchor {
+        const rad = this.getRadForPart(part);
+        return this.getAnchorForRad(rad, direction);
+    }
+
+
 
 }
 
@@ -44,6 +152,12 @@ export class FlexNode {
 
     innerContinuum: FlexContinuum;
     outerContinuum: FlexContinuum;
+
+    mapTargetNodeToPart: Map<FlexNode, FlexPart> = new Map();
+
+    getPartTo(targetFlexNode: FlexNode): FlexPart | undefined {
+        return this.mapTargetNodeToPart.get(targetFlexNode);
+    }
 
     get id() {
         return this.layoutNode.id;

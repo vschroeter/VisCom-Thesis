@@ -229,7 +229,7 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                 const spline = (connection.pathSegment ?? new SmoothSplineSegment(connection)) as SmoothSplineSegment;
                 connection.pathSegment = spline;
 
-                // For the inside connections, we first determine the available range to positions connections 
+                // For the inside connections, we first determine the available range to positions connections
                 // without overlapping with the adjacent nodes
                 const sourceNode = connection.source;
                 const targetNode = connection.target;
@@ -289,6 +289,7 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                         spline.endAnchor = anchorReversed;
                     }
                 } else {
+                    // Here we adapt the anchors for the combined connections
                     connections.forEach(connection => {
                         const isOutgoing = connection.source == node;
                         const smallerR = Math.min(connection.source.outerCircle.r, connection.target.outerCircle.r);
@@ -320,11 +321,11 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
 
             // Now we distribute the connections inside the parent circle
             outsideConnections.forEach((connection, index) => {
-                
+
                 const spline = (connection.pathSegment ?? new SmoothSplineSegment(connection)) as SmoothSplineSegment;
                 connection.pathSegment = spline;
 
-                // For the inside connections, we first determine the available range to positions connections 
+                // For the inside connections, we first determine the available range to positions connections
                 // without overlapping with the adjacent nodes
                 const sourceNode = connection.source;
                 const targetNode = connection.target;
@@ -376,6 +377,6 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
     }
 
     override layoutConnectionsOfChildren(parent: LayoutNode): void {
-        
+
     }
 }

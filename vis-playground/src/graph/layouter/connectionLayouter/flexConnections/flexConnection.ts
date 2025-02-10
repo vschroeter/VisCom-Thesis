@@ -6,6 +6,7 @@ import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { Vector, Circle } from "2d-geometry";
 import { EllipticArc } from "src/graph/graphical";
 import { RadialCircularArcConnectionLayouter } from "../radialConnections";
+import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
 
 
 export type FlexConnectionParentType = "sameParent" | "differentParent";
@@ -133,6 +134,7 @@ export class FlexConnection extends CombinedPathSegment {
 
 export class FlexPart extends CombinedPathSegment {
 
+
     flexConnection: FlexConnection;
 
     sourceFlexNode: FlexNode;
@@ -140,6 +142,8 @@ export class FlexPart extends CombinedPathSegment {
 
     nextPart: FlexPart | undefined;
     previousPart: FlexPart | undefined;
+
+    linkedPart: FlexPart | undefined;
 
     constraints: FlexNode[] = [];
 
@@ -169,23 +173,41 @@ export class FlexPart extends CombinedPathSegment {
             this.constraints = options.constraints.map(constraint => this.flexConnection.layouter.getFlexNode(constraint));
         }
 
-        this.addToContinuum();
+        this.linkedPart = this.sourceFlexNode.getPartTo(this.targetFlexNode);
+        if (this.linkedPart) {
+            this.segments = [this.linkedPart]
+        } else {
+            this.sourceFlexNode.mapTargetNodeToPart.set(this.targetFlexNode, this);
+            this.addToContinuum();
 
-        const partMap = this.flexConnection.layouter.mapLayerToFlexParts;
-        if (!partMap.has(this.layerFromTop)) {
-            partMap.set(this.layerFromTop, []);
+            const partMap = this.flexConnection.layouter.mapLayerToFlexParts;
+            if (!partMap.has(this.layerFromTop)) {
+                partMap.set(this.layerFromTop, []);
+            }
+
+            partMap.get(this.layerFromTop)!.push(this);
         }
 
-        partMap.get(this.layerFromTop)!.push(this);
     }
 
-    // override getSvgPath(): string {
-    //     if (this.segments.length === 0) {
-    //         return "";
-    //     }
+    override getSvgPath(): string {
+        if (this.segments.length === 0) {
+            return "";
+        }
 
-    //     return this.segments.filter(s => s !== undefined).map(s => s.getSvgPath()).join(" ");
-    // }
+        return this.segments.filter(s => s !== undefined).map(s => s.getSvgPath()).join(" ");
+    }
+
+    getOppositeNodeThan(node: FlexNode) {
+        if (this.sourceFlexNode == node) return this.targetFlexNode;
+        if (this.targetFlexNode == node) return this.sourceFlexNode;
+        return undefined;
+    }
+
+    isCounterPartOf(nextPart?: FlexPart) {
+        if (!nextPart) return false;
+        return this.sourceFlexNode === nextPart.targetFlexNode && this.targetFlexNode === nextPart.sourceFlexNode;
+    }
 
     //++++ Type Determination ++++//
 
@@ -239,9 +261,18 @@ export class FlexPart extends CombinedPathSegment {
 
     layout() {
 
-        if (this.isCircleArc()) {
-            this.layoutCircleArc();
-            return;
+        // Connections between the same parents can just be calculated
+        if (this.hasSameParent()) {
+
+            // Handle layout for circular arcs
+            if (this.isCircleArc()) {
+                this.layoutCircleArc();
+                return;
+            }
+
+            // Handle layout for connections inside the same parent
+            this.layoutInsideParent();
+
         }
     }
 
@@ -323,6 +354,14 @@ export class FlexPart extends CombinedPathSegment {
             })
             throw e;
         }
+    }
+
+
+    layoutInsideParent() {
+        const sourceAnchor = this.sourceFlexNode.innerContinuum.getAnchorForPart(this, "out");
+        const targetAnchor = this.targetFlexNode.innerContinuum.getAnchorForPart(this, "in");
+
+        this.segments = [new SmoothSplineSegment(this.connection, sourceAnchor, targetAnchor)];
     }
 
 }
