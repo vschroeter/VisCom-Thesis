@@ -1,8 +1,6 @@
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { DirectCircleArcConnection } from "./circularArcConnection";
 import { FlexConnection, FlexConnectionType, FlexPart } from "./flexConnection";
-import { InsideParentConnection } from "./insideConnection";
 import { FlexConnectionLayouter } from "./flexLayouter";
 import { Anchor } from "src/graph/graphical";
 import { Vector } from "2d-geometry";
