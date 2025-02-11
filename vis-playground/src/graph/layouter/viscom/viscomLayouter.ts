@@ -87,7 +87,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         this.visGraph.setPositioner(
             new RadialPositionerDynamicDistribution({
                 nodeMarginFactor: this.settings.radial.nodeMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1,
-                outerMarginFactor: this.settings.radial.outerMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
+                radiusMarginFactor: this.settings.radial.radiusMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
                 adaptEnclosingCircle: this.settings.radial.adaptEnclosingCircle.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? true,
                 rotateBasedOnConnections: this.settings.radial.rotateBasedOnConnections.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? true,
             })
