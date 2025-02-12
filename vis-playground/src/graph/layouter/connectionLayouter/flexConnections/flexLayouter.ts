@@ -1,6 +1,6 @@
 import { BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { FlexConnection, FlexPart } from "./flexConnection";
+import { FlexConnection, FlexPath } from "./flexConnection";
 import { FlexNode } from "./flexNode";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
@@ -12,7 +12,7 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
     mapLayoutNodeToFlexNode: Map<LayoutNode, FlexNode> = new Map();
     mapLayoutConnectionToFlexConnection: Map<LayoutConnection, FlexConnection> = new Map();
-    mapLayerToFlexParts: Map<number, FlexPart[]> = new Map();
+    mapLayerToFlexPaths: Map<number, FlexPath[]> = new Map();
 
 
 
@@ -51,17 +51,17 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
     override layoutConnectionsOfRootNode(root: LayoutNode): void {
 
-        console.log("[FLEX]", Array.from(this.mapLayoutNodeToFlexNode.values()), this.mapLayerToFlexParts, this.connections, this)
+        console.log("[FLEX]", Array.from(this.mapLayoutNodeToFlexNode.values()), this.mapLayerToFlexPaths, this.connections, this)
         const visGraph = root.visGraph;
 
 
-        const partLayerValues = Array.from(this.mapLayerToFlexParts.keys()).sort();
-        console.log("[FLEX] partLayerValues", partLayerValues);
+        const pathLayerValues = Array.from(this.mapLayerToFlexPaths.keys()).sort();
+        console.log("[FLEX] pathLayerValues", pathLayerValues);
 
-        partLayerValues.forEach(layer => {
-            const parts = this.mapLayerToFlexParts.get(layer)!;
+        pathLayerValues.forEach(layer => {
+            const paths = this.mapLayerToFlexPaths.get(layer)!;
 
-            parts.forEach(part => part.layout());
+            paths.forEach(path => path.layout());
         })
 
         console.log("[FLEX] layout done", Array.from(this.mapLayoutNodeToFlexNode.values()));
