@@ -24,15 +24,15 @@ export class RadialLayoutingSettings extends Setting {
         label: "Margin factor between nodes",
         description: "The factor to multiply the node radius with to get the margin between the nodes inside a circle.",
         optional: false,
-        defaultValue: 1,
+        defaultValue: 0.7,
         type: "number",
     });
 
-    outerMarginFactor = new Param<number>({
-        key: "outerRadiusMarginFactor",
-        label: "Margin fac. for outer R of hypernodes",
+    radiusMarginFactor = new Param<number>({
+        key: "radiusMarginFactor",
+        label: "Margin fac. for outer r of hypernodes",
         optional: false,
-        defaultValue: 1.1,
+        defaultValue: 1.2,
         type: "number",
     });
 

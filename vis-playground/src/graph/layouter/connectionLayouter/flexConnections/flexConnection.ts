@@ -37,7 +37,7 @@ export class FlexConnection extends CombinedPathSegment {
 
     layouter: FlexConnectionLayouter;
 
-    parts: FlexPart[] = [];
+    paths: FlexPath[] = [];
 
 
     constructor(connection: LayoutConnection, layouter: FlexConnectionLayouter) {
@@ -49,33 +49,33 @@ export class FlexConnection extends CombinedPathSegment {
         // this.type = type;
         this.connection.pathSegment = this;
         // this.init();
-        this.initFlexParts();
+        this.initFlexPaths();
     }
 
-    initFlexParts() {
+    initFlexPaths() {
 
-        const path = this.connection.getConnectionPathViaHyperAndVirtualNodes()
-        const nodePath = path.map(node => node.id).join(" -> ")
+        const connPath = this.connection.getConnectionPathViaHyperAndVirtualNodes()
+        const nodePath = connPath.map(node => node.id).join(" -> ")
 
 
 
-        let lastPart: FlexPart | undefined = undefined;
-        for (let i = 0; i < path.length - 1; i++) {
-            const sNode = path[i];
-            const tNode = path[i + 1];
+        let lastPath: FlexPath | undefined = undefined;
+        for (let i = 0; i < connPath.length - 1; i++) {
+            const sNode = connPath[i];
+            const tNode = connPath[i + 1];
 
             // sNode.layerFromBot
 
             if (sNode.parent == tNode.parent) {
                 // Inside parent connection
-                // lastPart = new SameParentConnection();  // Create new FlexConnectionPart instance
-                const part = new FlexPart({
+                // lastPath = new SameParentConnection();  // Create new FlexConnectionPath instance
+                const path = new FlexPath({
                     flexConnection: this,
                     startNode: sNode,
                     endNode: tNode
-                });  // Create new FlexConnectionPart instance
-                this.parts.push(part); // Add to parts
-                lastPart = part; // Update lastPart
+                });  // Create new FlexConnectionPath instance
+                this.paths.push(path); // Add to paths
+                lastPath = path; // Update lastPath
 
             } else {
 
@@ -84,23 +84,23 @@ export class FlexConnection extends CombinedPathSegment {
                 let j = i + 1;
                 while (realNode && realNode.isHyperNode) {
                     constrainingNodes.push(realNode)
-                    realNode = path[++j];
+                    realNode = connPath[++j];
                 }
 
-                const part = new FlexPart({
+                const path = new FlexPath({
                     flexConnection: this,
                     startNode: sNode,
                     endNode: tNode,
                     constraints: constrainingNodes
                 });
-                this.parts.push(part);
-                lastPart = part;
+                this.paths.push(path);
+                lastPath = path;
             }
         }
 
-        for (let i = 0; i < this.parts.length - 1; i++) {
-            this.parts[i].nextPart = this.parts[i + 1];
-            this.parts[i + 1].previousPart = this.parts[i];
+        for (let i = 0; i < this.paths.length - 1; i++) {
+            this.paths[i].nextPath = this.paths[i + 1];
+            this.paths[i + 1].previousPath = this.paths[i];
         }
 
 
@@ -108,10 +108,10 @@ export class FlexConnection extends CombinedPathSegment {
         //     source: this.source.id,
         //     target: this.target.id,
         //     path: nodePath,
-        //     parts: this.parts.map(part => part.sourceFlexNode.id + " -> " + part.targetFlexNode.id + " (" + part.layerFromBot + ")")
+        //     paths: this.paths.map(path => path.sourceFlexNode.id + " -> " + path.targetFlexNode.id + " (" + path.layerFromBot + ")")
         // })
 
-        this.segments = this.parts.map(part => part);
+        this.segments = this.paths.map(path => path);
 
     }
 
@@ -124,16 +124,16 @@ export class FlexConnection extends CombinedPathSegment {
     }
 
     // override get segments(): PathSegment[] {
-    //     return this.parts.map(part => part);
+    //     return this.paths.map(path => path);
     // }
 }
 
 
 ////////////////////////////////////////////////////////////////////////////
-// #region Flex Part
+// #region Flex Path
 ////////////////////////////////////////////////////////////////////////////
 
-export class FlexPart extends CombinedPathSegment {
+export class FlexPath extends CombinedPathSegment {
 
 
     flexConnection: FlexConnection;
@@ -141,10 +141,10 @@ export class FlexPart extends CombinedPathSegment {
     sourceFlexNode: FlexNode;
     targetFlexNode: FlexNode;
 
-    nextPart: FlexPart | undefined;
-    previousPart: FlexPart | undefined;
+    nextPath: FlexPath | undefined;
+    previousPath: FlexPath | undefined;
 
-    linkedPart: FlexPart | undefined;
+    linkedPath: FlexPath | undefined;
 
     constraints: FlexNode[] = [];
 
@@ -174,21 +174,21 @@ export class FlexPart extends CombinedPathSegment {
             this.constraints = options.constraints.map(constraint => this.flexConnection.layouter.getFlexNode(constraint));
         }
 
-        this.linkedPart = this.sourceFlexNode.getPartTo(this.targetFlexNode);
-        if (this.linkedPart) {
-            this.segments = [this.linkedPart]
+        this.linkedPath = this.sourceFlexNode.getPathTo(this.targetFlexNode);
+        if (this.linkedPath) {
+            this.segments = [this.linkedPath]
         } else {
             // Connections between the same parents are saved to be reused
-            // This should not be done between different parents, as parts from nodes to its hypernode can be for different connections
-            if (this.hasSameParent()) this.sourceFlexNode.mapTargetNodeToPart.set(this.targetFlexNode, this);
+            // This should not be done between different parents, as paths from nodes to its hypernode can be for different connections
+            if (this.hasSameParent()) this.sourceFlexNode.mapTargetNodeToPath.set(this.targetFlexNode, this);
             this.addToContinuum();
 
-            const partMap = this.flexConnection.layouter.mapLayerToFlexParts;
-            if (!partMap.has(this.layerFromTop)) {
-                partMap.set(this.layerFromTop, []);
+            const pathMap = this.flexConnection.layouter.mapLayerToFlexPaths;
+            if (!pathMap.has(this.layerFromTop)) {
+                pathMap.set(this.layerFromTop, []);
             }
 
-            partMap.get(this.layerFromTop)!.push(this);
+            pathMap.get(this.layerFromTop)!.push(this);
         }
 
     }
@@ -207,9 +207,9 @@ export class FlexPart extends CombinedPathSegment {
         return undefined;
     }
 
-    isCounterPartOf(nextPart?: FlexPart) {
-        if (!nextPart) return false;
-        return this.sourceFlexNode === nextPart.targetFlexNode && this.targetFlexNode === nextPart.sourceFlexNode;
+    isCounterPathOf(nextPath?: FlexPath) {
+        if (!nextPath) return false;
+        return this.sourceFlexNode === nextPath.targetFlexNode && this.targetFlexNode === nextPath.sourceFlexNode;
     }
 
     //++++ Type Determination ++++//
@@ -248,12 +248,12 @@ export class FlexPart extends CombinedPathSegment {
                 // type = "circleArcBackward";
             } else {
                 // type = "sameParent";
-                this.sourceFlexNode.innerContinuum.addPart(this);
-                this.targetFlexNode.innerContinuum.addPart(this);
+                this.sourceFlexNode.innerContinuum.addPath(this);
+                this.targetFlexNode.innerContinuum.addPath(this);
             }
         } else {
-            if (source.isRealNode) this.sourceFlexNode.outerContinuum.addPart(this);
-            if (target.isRealNode) this.targetFlexNode.outerContinuum.addPart(this);
+            if (source.isRealNode) this.sourceFlexNode.outerContinuum.addPath(this);
+            if (target.isRealNode) this.targetFlexNode.outerContinuum.addPath(this);
         }
     }
 
@@ -278,7 +278,7 @@ export class FlexPart extends CombinedPathSegment {
         }
         // For connections between different parents
         else {
-            this.layoutPartNodeConnection();
+            this.layoutPathNodeConnection();
         }
     }
 
@@ -366,48 +366,59 @@ export class FlexPart extends CombinedPathSegment {
 
 
     layoutInsideParent() {
-        const sourceAnchor = this.sourceFlexNode.innerContinuum.getAnchorForPart(this, "out");
-        const targetAnchor = this.targetFlexNode.innerContinuum.getAnchorForPart(this, "in");
+        const sourceAnchor = this.sourceFlexNode.innerContinuum.getAnchorForPath(this, "out");
+        const targetAnchor = this.targetFlexNode.innerContinuum.getAnchorForPath(this, "in");
 
         this.segments = [new SmoothSplineSegment(this.connection, sourceAnchor, targetAnchor)];
     }
 
 
-    layoutPartNodeConnection() {
+    layoutPathNodeConnection() {
 
         // First, determine the direction of the connection:
-        // - node to part OR
-        // - part to node
+        // - node to path OR
+        // - path to node
+
 
         // TODO:: is this reliable?
         // Path to node if the source node is a hyper node
-        const isPartToNode = this.sourceFlexNode.layoutNode.isHyperNode;
-        const adjacentPart = isPartToNode ? this.previousPart : this.nextPart;
-        const flexNode = isPartToNode ? this.targetFlexNode : this.sourceFlexNode;
+        const isPathToNode = this.sourceFlexNode.layoutNode.isHyperNode;
+        const adjacentPath = isPathToNode ? this.previousPath : this.nextPath;
+        const flexNode = isPathToNode ? this.targetFlexNode : this.sourceFlexNode;
         const node = flexNode.layoutNode;
 
-        if (!adjacentPart) {
-            console.error("No adjacent part for connection", this);
+        if (!adjacentPath) {
+            console.error("No adjacent path for connection", this);
             return;
         }
 
-        const partAnchor = isPartToNode ? adjacentPart.endAnchor : adjacentPart.startAnchor;
 
-        if (!partAnchor) {
-            console.error("No part anchor for connection", this);
+        let debug = false;
+        if (this.source.id == "flint_node" && this.target.id == "tts_pico") {
+            debug = true;
+        }
+
+        if (debug) {
+            this.source.debugShapes.push(...this.targetFlexNode.outerContinuum.getValidRangeAnchors());
+        }
+
+        const pathAnchor = isPathToNode ? adjacentPath.endAnchor : adjacentPath.startAnchor;
+
+        if (!pathAnchor) {
+            console.error("No path anchor for connection", this);
             return;
         }
 
         let segment: PathSegment | undefined = undefined;
 
-        // In the best case, we can connect the part to the node with a single circular arc
-        const connectingCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(node.center, partAnchor);
+        // In the best case, we can connect the path to the node with a single circular arc
+        const connectingCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(node.center, pathAnchor);
         if (connectingCircle) {
             const intersections = node.outerCircle.intersect(connectingCircle);
-            const nodeIntersectionPoint = RadialUtils.getClosestShapeToPoint(intersections, partAnchor.anchorPoint);
+            const nodeIntersectionPoint = RadialUtils.getClosestShapeToPoint(intersections, pathAnchor.anchorPoint);
 
-            const startPoint = isPartToNode ? partAnchor.anchorPoint : nodeIntersectionPoint;
-            const endPoint = isPartToNode ? nodeIntersectionPoint : partAnchor.anchorPoint;
+            const startPoint = isPathToNode ? pathAnchor.anchorPoint : nodeIntersectionPoint;
+            const endPoint = isPathToNode ? nodeIntersectionPoint : pathAnchor.anchorPoint;
 
             segment = new EllipticArc(this.connection,
                 startPoint,
@@ -417,56 +428,53 @@ export class FlexPart extends CombinedPathSegment {
             ).direction("clockwise");
 
             // Check if the anchor is correctly oriented
-            const segmentAnchor = isPartToNode ? segment.startAnchor : segment.endAnchor;
-            if (!partAnchor.isSimilarTo(segmentAnchor)) {
+            const segmentAnchor = isPathToNode ? segment.startAnchor : segment.endAnchor;
+            if (!pathAnchor.isSimilarTo(segmentAnchor)) {
                 (segment as EllipticArc).direction("counter-clockwise");
             }
+
+            if (debug) {
+                this.source.debugShapes.push(connectingCircle);
+            }
+
         }
+
+
 
         // The circle segment could be outside the valid outer range of the node
         // In this case, we have to adapt it
-        const anchorAtNode = isPartToNode ? segment?.endAnchor : segment?.startAnchor;
+        const anchorAtNode = isPathToNode ? segment?.endAnchor : segment?.startAnchor;
         const arcRad = anchorAtNode ? RadialUtils.radOfPoint(anchorAtNode?.anchorPoint, node.center) : undefined;
 
         // TODO: Better construction of the spline points. Not just take a straight line from the hyperarc to the node, but instead take a point that respects the curvature
 
-        // If the arc is not valid valid, we construct something better
+        // If the arc is not valid, we construct something better
         const continuum = flexNode.outerContinuum;
         if (!arcRad || !continuum.isInside(arcRad)) {
 
-            // If the arc is not valid, we construct a spline from the hyperarc to the node
-            const vectorNodeToPartAnchor = new Vector(node.center, partAnchor.anchorPoint);
-            // isPartToNode ?
-            // new Vector(partAnchor.anchorPoint, node.center).rotate(Math.PI) :
-            // new Vector(node.center, partAnchor.anchorPoint);
+            // If the arc is not valid, we construct either:
+            // - a smooth spline from the hyperarc to the node, IF the arc is inside the valid range of the node
+            // - a circle segment from the hyperarc to the node, IF the arc is outside the valid range of the node
 
-            if (continuum.isInside(vectorNodeToPartAnchor.slope)) {
-                const nodeAnchor = new Anchor(node.center, vectorNodeToPartAnchor).move(node.outerRadius);
-                segment = isPartToNode ?
-                    new SmoothSplineSegment(this.connection, partAnchor, nodeAnchor.cloneReversed()) :
-                    new SmoothSplineSegment(this.connection, nodeAnchor, partAnchor);
+            const vectorNodeToPathAnchor = new Vector(node.center, pathAnchor.anchorPoint);
+
+            if (continuum.isInside(vectorNodeToPathAnchor.slope)) {
+                const nodeAnchor = new Anchor(node.center, vectorNodeToPathAnchor).move(node.outerRadius);
+                segment = isPathToNode ?
+                    new SmoothSplineSegment(this.connection, pathAnchor, nodeAnchor.cloneReversed()) :
+                    new SmoothSplineSegment(this.connection, nodeAnchor, pathAnchor);
             } else {
                 const anchor1 = new Anchor(node.center, new Vector(continuum.range[0])).move(node.outerRadius);
                 const anchor2 = new Anchor(node.center, new Vector(continuum.range[1])).move(node.outerRadius);
-                const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], partAnchor.anchorPoint, a => a.anchorPoint);
+                const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], pathAnchor.anchorPoint, a => a.anchorPoint);
                 if (closerAnchor) {
-                    segment = isPartToNode ?
-                        new SmoothSplineSegment(this.connection, partAnchor, closerAnchor.cloneReversed()) :
-                        new SmoothSplineSegment(this.connection, closerAnchor, partAnchor);
+                    segment = isPathToNode ?
+                        new SmoothSplineSegment(this.connection, pathAnchor, closerAnchor.cloneReversed()) :
+                        new SmoothSplineSegment(this.connection, closerAnchor, pathAnchor);
                 }
             }
         }
 
-
-        // console.log("Calculate path to node", {
-        //     source: this.sourceFlexNode.id,
-        //     target: this.targetFlexNode.id,
-        //     part: adjacentPart.id,
-        //     node: flexNode.id,
-        //     // previousPart: this.previousPart,
-        //     // nextPart: this.nextPart,
-        //     isPathToNode: isPartToNode,
-        // });
 
         if (!segment) {
             console.error("No segment for connection", this);

@@ -23,7 +23,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
      * 1 means that the parent node perimeter touches its children.
      * A value above 1 adds a margin to the parent this perimeter.
      */
-    outerMarginFactor = 1.1
+    radiusMarginFactor = 1.1
 
     /**
      * If false, the parent node's radius is based on the maximum radius of the children.
@@ -32,21 +32,21 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
     adaptEnclosingCircle = true;
 
     center = new Point(0, 0);
-    private radius: number = 0;
+    // private radius: number = 0;
 
     rotateBasedOnConnections = false;
 
     constructor({
-        nodeMarginFactor = 1, outerMarginFactor = 1.1, adaptEnclosingCircle = true, rotateBasedOnConnections = false
+        nodeMarginFactor = 1, radiusMarginFactor = 1.1, adaptEnclosingCircle = true, rotateBasedOnConnections = false
     }: {
         nodeMarginFactor?: number;
-        outerMarginFactor?: number;
+        radiusMarginFactor?: number;
         adaptEnclosingCircle?: boolean;
         rotateBasedOnConnections?: boolean;
     } = {}) {
         super();
         this.nodeMarginFactor = nodeMarginFactor;
-        this.outerMarginFactor = outerMarginFactor;
+        this.radiusMarginFactor = radiusMarginFactor;
         this.adaptEnclosingCircle = adaptEnclosingCircle;
         this.rotateBasedOnConnections = rotateBasedOnConnections;
 
@@ -54,8 +54,8 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
     }
 
 
-    getPositionOnCircleAtAngleRad(rad: number, radius?: number, centerTranslation?: PointLike): Point {
-        return RadialUtils.positionOnCircleAtRad(rad, radius ?? this.radius, centerTranslation ?? this.center);
+    getPositionOnCircleAtAngleRad(rad: number, radius: number, centerTranslation?: PointLike): Point {
+        return RadialUtils.positionOnCircleAtRad(rad, radius, centerTranslation ?? this.center);
     }
 
     override positionChildren(parentNode: LayoutNode): void {
@@ -68,14 +68,14 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
         let currentPosition = 0;
         nodes.forEach((node, i) => {
             const r = node.outerRadius;
-            currentPosition += r * this.nodeMarginFactor;
+            currentPosition += r * this.nodeMarginFactor
             currentPosition += r;
             continuumMap.set(node, currentPosition);
             currentPosition += r;
             currentPosition += r * this.nodeMarginFactor;
         });
 
-        this.radius = currentPosition / (2 * Math.PI);
+        let radius = currentPosition / (2 * Math.PI);
 
         // Normalize continuum to [0, 1]
         const max = currentPosition;
@@ -91,9 +91,9 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             const maxRadius = nodes[0].radius; 0
             nodes[0].x = this.center.x;
             nodes[0].y = this.center.y;
-            this.radius = maxRadius;
-            parentNode.radius = (this.radius + maxRadius);
-            parentNode.innerRadius = this.radius;
+            radius = maxRadius;
+            parentNode.radius = radius * this.radiusMarginFactor;
+            parentNode.innerRadius = radius;
         }
         // If there are exactly two nodes, place them on opposite sides of the circle
         else if (nodes.length == 2) {
@@ -114,7 +114,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             nodes[1].y = this.center.y;
 
             parentNode.innerRadius = distanceBetweenNodeCenters;
-            parentNode.radius = totalRadius * this.outerMarginFactor;
+            parentNode.radius = totalRadius * this.radiusMarginFactor;
         }
         else {
             // Place nodes on a circle with radius
@@ -124,7 +124,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
                 const placement = continuumMap.get(node)!;
                 const angle = startAngleRad + placement * 2 * Math.PI;
                 angleRadMap.set(node, angle);
-                const pos = this.getPositionOnCircleAtAngleRad(angle);
+                const pos = this.getPositionOnCircleAtAngleRad(angle, radius);
                 node.x = pos.x;
                 node.y = pos.y;
 
@@ -139,8 +139,8 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             });
 
             const maxNodeRadius = Math.max(...nodes.map(n => n.radius));
-            parentNode.radius = (this.radius + maxNodeRadius) * this.outerMarginFactor;
-            parentNode.innerRadius = this.radius;
+            parentNode.radius = (radius + maxNodeRadius) * this.radiusMarginFactor;
+            parentNode.innerRadius = radius;
         }
 
 
@@ -158,7 +158,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             const enclosingCircle = RadialUtils.getMinimumEnclosingCircle(expandedPoints);
 
             // Adapt all children to the enclosing circle
-            parentNode.radius = enclosingCircle.r * this.outerMarginFactor;
+            parentNode.radius = enclosingCircle.r * this.radiusMarginFactor;
             const innerTranslation = new Vector(parentNode.center, enclosingCircle.center)//.scale(-1);
             parentNode.innerCenterTranslation = innerTranslation;
 
@@ -305,7 +305,7 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
         // this.visGraph.setPositioner(new RadialPositioner({ radius: this.getRadius() }));
         this.visGraph.setPositioner(new RadialPositionerDynamicDistribution({
             nodeMarginFactor: this.settings.spacing.nodeMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1,
-            outerMarginFactor: this.settings.spacing.outerMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
+            radiusMarginFactor: this.settings.spacing.radiusMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
         }));
 
         const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);

@@ -1,6 +1,6 @@
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { FlexConnection, FlexConnectionType, FlexPart } from "./flexConnection";
+import { FlexConnection, FlexConnectionType, FlexPath } from "./flexConnection";
 import { FlexConnectionLayouter } from "./flexLayouter";
 import { Anchor } from "src/graph/graphical";
 import { Vector } from "2d-geometry";
@@ -12,13 +12,13 @@ export class FlexContinuum {
     node: FlexNode;
     range: [number, number];
 
-    parts: FlexPart[] = [];
+    paths: FlexPath[] = [];
 
     calculated = false;
 
-    mapPartToRad: Map<FlexPart, number> = new Map();
+    mapPathToRad: Map<FlexPath, number> = new Map();
 
-    combinedPartsDistanceFactor = 0.05;
+    combinedPathsDistanceFactor = 0.05;
 
 
     constructor(node: FlexNode, type: "outside" | "inside") {
@@ -34,8 +34,8 @@ export class FlexContinuum {
 
     }
 
-    addPart(connection: FlexPart) {
-        this.parts.push(connection);
+    addPath(connection: FlexPath) {
+        this.paths.push(connection);
         this.calculated = false;
     }
 
@@ -57,13 +57,13 @@ export class FlexContinuum {
     }
 
     calculate() {
-        // Sort the parts by their opposite node position
+        // Sort the paths by their opposite node position
         // For the same position, first take outgoing, then incoming connections
 
         // This is the center rad on the backside of the range
         // We sort against this rad, to avoid problems where close to border connections are sorted to the wrong side
         const backRad = this.range[1] + RadialUtils.forwardRadBetweenAngles(this.range[1], this.range[0]) / 2;
-        this.parts.sort((a, b) => {
+        this.paths.sort((a, b) => {
 
             const aOpposite = a.getOppositeNodeThan(this.node);
             const bOpposite = b.getOppositeNodeThan(this.node);
@@ -88,16 +88,16 @@ export class FlexContinuum {
 
         // After sorted, we add the connections to our continuum
         // For that, we first add each connection with a distance of 1
-        const partContinuum: Map<FlexPart, number> = new Map();
+        const pathContinuum: Map<FlexPath, number> = new Map();
         let currentPosition = 1;
 
-        this.parts.forEach((part, i) => {
-            const nextPart = this.parts[i + 1];
-            partContinuum.set(part, currentPosition);
+        this.paths.forEach((path, i) => {
+            const nextPath = this.paths[i + 1];
+            pathContinuum.set(path, currentPosition);
 
-            // If the next part is the counter part of the current one (so source and target node are switched), we add a distance of 1 * this.combinedPartsDistanceFactor
-            if (part.isCounterPartOf(nextPart)) {
-                currentPosition += 1 * this.combinedPartsDistanceFactor;
+            // If the next path is the counter path of the current one (so source and target node are switched), we add a distance of 1 * this.combinedPathsDistanceFactor
+            if (path.isCounterPathOf(nextPath)) {
+                currentPosition += 1 * this.combinedPathsDistanceFactor;
             } else {
                 currentPosition += 1;
             }
@@ -108,31 +108,31 @@ export class FlexContinuum {
         const radDiff = RadialUtils.forwardRadBetweenAngles(this.range[0], this.range[1]);
 
         const totalDistance = currentPosition;
-        this.parts.forEach((part, index) => {
-            const distance = partContinuum.get(part)!;
+        this.paths.forEach((path, index) => {
+            const distance = pathContinuum.get(path)!;
             const normalizedDistance = (distance / totalDistance) * radDiff + this.range[0];
-            this.mapPartToRad.set(part, normalizedDistance);
+            this.mapPathToRad.set(path, normalizedDistance);
         });
 
         this.calculated = true;
     }
 
 
-    getRadForPart(part: FlexPart): number {
+    getRadForPath(path: FlexPath): number {
 
         if (!this.calculated) {
             this.calculate();
         }
 
-        if (!this.mapPartToRad.has(part)) {
-            throw new Error(`Part ${part.id} not in continuum`);
+        if (!this.mapPathToRad.has(path)) {
+            throw new Error(`Path ${path.id} not in continuum`);
         }
 
-        return this.mapPartToRad.get(part)!;
+        return this.mapPathToRad.get(path)!;
     }
 
-    getAnchorForPart(part: FlexPart, direction: "in" | "out"): Anchor {
-        const rad = this.getRadForPart(part);
+    getAnchorForPath(path: FlexPath, direction: "in" | "out"): Anchor {
+        const rad = this.getRadForPath(path);
         return this.getAnchorForRad(rad, direction);
     }
 
@@ -158,10 +158,10 @@ export class FlexNode {
     innerContinuum: FlexContinuum;
     outerContinuum: FlexContinuum;
 
-    mapTargetNodeToPart: Map<FlexNode, FlexPart> = new Map();
+    mapTargetNodeToPath: Map<FlexNode, FlexPath> = new Map();
 
-    getPartTo(targetFlexNode: FlexNode): FlexPart | undefined {
-        return this.mapTargetNodeToPart.get(targetFlexNode);
+    getPathTo(targetFlexNode: FlexNode): FlexPath | undefined {
+        return this.mapTargetNodeToPath.get(targetFlexNode);
     }
 
     get id() {
