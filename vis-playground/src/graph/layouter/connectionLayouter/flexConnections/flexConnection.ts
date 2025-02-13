@@ -379,6 +379,7 @@ export class FlexPath extends CombinedPathSegment {
         // - node to path OR
         // - path to node
 
+
         // TODO:: is this reliable?
         // Path to node if the source node is a hyper node
         const isPathToNode = this.sourceFlexNode.layoutNode.isHyperNode;
@@ -389,6 +390,16 @@ export class FlexPath extends CombinedPathSegment {
         if (!adjacentPath) {
             console.error("No adjacent path for connection", this);
             return;
+        }
+
+
+        let debug = false;
+        if (this.source.id == "flint_node" && this.target.id == "tts_pico") {
+            debug = true;
+        }
+
+        if (debug) {
+            this.source.debugShapes.push(...this.targetFlexNode.outerContinuum.getValidRangeAnchors());
         }
 
         const pathAnchor = isPathToNode ? adjacentPath.endAnchor : adjacentPath.startAnchor;
@@ -421,7 +432,14 @@ export class FlexPath extends CombinedPathSegment {
             if (!pathAnchor.isSimilarTo(segmentAnchor)) {
                 (segment as EllipticArc).direction("counter-clockwise");
             }
+
+            if (debug) {
+                this.source.debugShapes.push(connectingCircle);
+            }
+
         }
+
+
 
         // The circle segment could be outside the valid outer range of the node
         // In this case, we have to adapt it
@@ -430,15 +448,15 @@ export class FlexPath extends CombinedPathSegment {
 
         // TODO: Better construction of the spline points. Not just take a straight line from the hyperarc to the node, but instead take a point that respects the curvature
 
-        // If the arc is not valid valid, we construct something better
+        // If the arc is not valid, we construct something better
         const continuum = flexNode.outerContinuum;
         if (!arcRad || !continuum.isInside(arcRad)) {
 
-            // If the arc is not valid, we construct a spline from the hyperarc to the node
+            // If the arc is not valid, we construct either:
+            // - a smooth spline from the hyperarc to the node, IF the arc is inside the valid range of the node
+            // - a circle segment from the hyperarc to the node, IF the arc is outside the valid range of the node
+
             const vectorNodeToPathAnchor = new Vector(node.center, pathAnchor.anchorPoint);
-            // isPathToNode ?
-            // new Vector(pathAnchor.anchorPoint, node.center).rotate(Math.PI) :
-            // new Vector(node.center, pathAnchor.anchorPoint);
 
             if (continuum.isInside(vectorNodeToPathAnchor.slope)) {
                 const nodeAnchor = new Anchor(node.center, vectorNodeToPathAnchor).move(node.outerRadius);
@@ -457,16 +475,6 @@ export class FlexPath extends CombinedPathSegment {
             }
         }
 
-
-        // console.log("Calculate path to node", {
-        //     source: this.sourceFlexNode.id,
-        //     target: this.targetFlexNode.id,
-        //     path: adjacentPath.id,
-        //     node: flexNode.id,
-        //     // previousPath: this.previousPath,
-        //     // nextPath: this.nextPath,
-        //     isPathToNode: isPathToNode,
-        // });
 
         if (!segment) {
             console.error("No segment for connection", this);
