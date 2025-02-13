@@ -369,6 +369,48 @@ export class RadialUtils extends ShapeUtil {
         return new Circle(center, radius);
     }
 
+    static getConnectingCirclesForAnchorAndCircle(anchor: Anchor, circle: Circle): [Circle, Circle] {
+
+        const point = anchor.anchorPoint;
+        const dir = anchor.direction;
+        const r = circle.r;
+
+        const p_perpendicular_line_in_point = new Line(point, dir);
+        const c_in_point = new Circle(point, r);
+
+        const c_intersections_with_perpendicular = c_in_point.intersect(p_perpendicular_line_in_point);
+
+        if (c_intersections_with_perpendicular.length < 2) {
+            throw new Error("Insufficient intersection points found.");
+        }
+
+        const foundCircles: Circle[] = [];
+        for (const intersection of c_intersections_with_perpendicular) {
+
+            const l_line_from_center_to_intersection = new Line(circle.center, intersection);
+            const m_midpoint_of_l = new Point((circle.center.x + intersection.x) / 2, (circle.center.y + intersection.y) / 2);
+
+            const plm_perpendicular_line_in_m = new Line(m_midpoint_of_l, new Vector(circle.center, intersection));
+
+            const intersections_of_plm_with_p = plm_perpendicular_line_in_m.intersect(p_perpendicular_line_in_point);
+
+            if (intersections_of_plm_with_p.length < 1) {
+                throw new Error("No intersection found between lines.");
+            }
+
+            const foundCircleCenter = intersections_of_plm_with_p[0];
+            const foundCircleRadius = foundCircleCenter.distanceTo(circle.center)[0];
+
+            foundCircles.push(new Circle(foundCircleCenter, foundCircleRadius));
+        }
+
+        if (foundCircles.length < 2) {
+            throw new Error("Not enough circles found.");
+        }
+
+        return [foundCircles[0], foundCircles[1]];
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // #region Algorithms
     ////////////////////////////////////////////////////////////////////////////
