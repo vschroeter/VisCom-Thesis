@@ -60,7 +60,7 @@ import * as d3 from 'd3'
 import jsPDF from 'jspdf'
 import 'svg2pdf.js'
 
-import { font as NunitoFont } from 'src/css/fonts/Nunito-VariableFont_wght-normal' 
+import { font as NunitoFont } from 'src/css/fonts/Nunito-VariableFont_wght-normal'
 import { font as NunitoFontNormal } from 'src/css/fonts/Nunito-Regular-normal'
 
 import { CommunicationGraph, CommunicationNode } from 'src/graph/commGraph';

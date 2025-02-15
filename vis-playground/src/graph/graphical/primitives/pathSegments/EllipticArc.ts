@@ -46,7 +46,7 @@ export class EllipticArc extends PathSegment {
     _ry: number = 0;
 
     /** Rotation of the ellipse in degrees
-     *  
+     *
      */
     _rotation: number = 0;
 
@@ -56,7 +56,7 @@ export class EllipticArc extends PathSegment {
     // If true, the arc will be drawn in a "positive-angle" direction, i.e., the arc will be drawn in the direction of increasing angles.
     _sweep: 0 | 1 = 1;
 
-    // The start point of the arc. If not set, the arc will start at the current / last point of the path. 
+    // The start point of the arc. If not set, the arc will start at the current / last point of the path.
     _start?: Point;
 
     // The end point of the arc
@@ -69,7 +69,7 @@ export class EllipticArc extends PathSegment {
         if (this._sweep === EllipticArc.SWEEP_CLOCKWISE) {
             return new Anchor(_start, _startVector.rotate90CW());
         }
-        
+
         return new Anchor(_start, _startVector.rotate90CCW());
     }
 
@@ -84,7 +84,7 @@ export class EllipticArc extends PathSegment {
         if (this._sweep === EllipticArc.SWEEP_CLOCKWISE) {
             return new Anchor(_end, _endVector.rotate90CW());
         }
-        
+
         return new Anchor(_end, _endVector.rotate90CCW());
     }
 
@@ -92,10 +92,14 @@ export class EllipticArc extends PathSegment {
         this._end = anchor?.anchorPoint;
     }
 
+    // get length(): number {
+    //     const params = this.getCenterParameters();
+    //     return Math.abs(params.deltaAngle * params.rx);
+    // }
 
     /**
      * Creates an instance of EllipticArc.
-     * 
+     *
      * @param start Start point of the arc. If not set, the arc will start at the current / last point of the path.
      * @param end End point of the arc
      * @param rx Radius of the ellipse in the x direction
@@ -197,7 +201,7 @@ export class EllipticArc extends PathSegment {
 
     /**
      * Calculate the center of the ellipse for the arc.
-     * 
+     *
      * Based on the official W3C formula: https://www.w3.org/TR/SVG11/implnote.html#ArcConversionEndpointToCenter
      */
     getCenterParameters() {
@@ -233,8 +237,9 @@ export class EllipticArc extends PathSegment {
                 endAngleGlobal: 0,
                 startAngleDeg: 0,
                 deltaAngleDeg: 0,
-                endAngleDeg: 0
-
+                endAngleDeg: 0,
+                rx: 0,
+                ry: 0
             };
         }
 

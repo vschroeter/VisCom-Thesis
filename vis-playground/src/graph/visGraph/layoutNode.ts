@@ -739,8 +739,8 @@ export class LayoutNode {
 
         let range = [0, 0];
 
-        const nextTangents = RadialUtils.getTangentsToCircle(this.center, nextNode.outerCircle);
-        const prevTangents = RadialUtils.getTangentsToCircle(this.center, previousNode.outerCircle);
+        const nextTangents = RadialUtils.getTangentsFromPointToCircle(this.center, nextNode.outerCircle);
+        const prevTangents = RadialUtils.getTangentsFromPointToCircle(this.center, previousNode.outerCircle);
 
         let nextTangent = RadialUtils.getClosestShapeToPoint(nextTangents, parent.center, (tangent) => tangent.end);
         let prevTangent = RadialUtils.getClosestShapeToPoint(prevTangents, parent.center, (tangent) => tangent.end);
@@ -797,8 +797,8 @@ export class LayoutNode {
 
         // We calculate the tangents to the outer circle of the next and previous node
         // These tangents define the valid range for the outer radius of the node
-        const nextTangents = RadialUtils.getTangentsToCircle(this.center, nextNode.outerCircle);
-        const prevTangents = RadialUtils.getTangentsToCircle(this.center, previousNode.outerCircle);
+        const nextTangents = RadialUtils.getTangentsFromPointToCircle(this.center, nextNode.outerCircle);
+        const prevTangents = RadialUtils.getTangentsFromPointToCircle(this.center, previousNode.outerCircle);
 
         // Take the outer tangents
         let nextTangent = RadialUtils.getFurthestShapeToPoint(nextTangents, parent.center, (tangent) => tangent.end);

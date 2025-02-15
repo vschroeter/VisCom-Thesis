@@ -238,8 +238,8 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                 const nextNode = commonParent.getNodeAtIndex(nodeIndexInCommonParent + 1);
                 const prevNode = commonParent.getNodeAtIndex(nodeIndexInCommonParent - 1);
 
-                const nextTangents = RadialUtils.getTangentsToCircle(node.center, nextNode.outerCircle);
-                const prevTangents = RadialUtils.getTangentsToCircle(node.center, prevNode.outerCircle);
+                const nextTangents = RadialUtils.getTangentsFromPointToCircle(node.center, nextNode.outerCircle);
+                const prevTangents = RadialUtils.getTangentsFromPointToCircle(node.center, prevNode.outerCircle);
 
                 const nextTangent = RadialUtils.getClosestShapeToPoint(nextTangents, node.parent!.center, (tangent) => tangent.end);
                 const prevTangent = RadialUtils.getClosestShapeToPoint(prevTangents, node.parent!.center, (tangent) => tangent.end);
@@ -334,8 +334,8 @@ export class RadialSplineConnectionLayouter extends BaseNodeConnectionLayouter {
                 const nextNode = commonParent.getNodeAtIndex(nodeIndexInCommonParent + 1);
                 const prevNode = commonParent.getNodeAtIndex(nodeIndexInCommonParent - 1);
 
-                const nextTangents = RadialUtils.getTangentsToCircle(node.center, nextNode.outerCircle);
-                const prevTangents = RadialUtils.getTangentsToCircle(node.center, prevNode.outerCircle);
+                const nextTangents = RadialUtils.getTangentsFromPointToCircle(node.center, nextNode.outerCircle);
+                const prevTangents = RadialUtils.getTangentsFromPointToCircle(node.center, prevNode.outerCircle);
 
                 const nextTangent = RadialUtils.getFurthestShapeToPoint(nextTangents, node.parent!.center, (tangent) => tangent.end);
                 const prevTangent = RadialUtils.getFurthestShapeToPoint(prevTangents, node.parent!.center, (tangent) => tangent.end);

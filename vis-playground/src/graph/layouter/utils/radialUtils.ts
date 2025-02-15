@@ -1,6 +1,7 @@
 import { Circle, Line, Point, PointLike, Segment, Vector } from "2d-geometry";
 import { ShapeUtil } from "./shapeUtil";
-import { Anchor } from "src/graph/graphical";
+import { Anchor, EllipticArc } from "src/graph/graphical";
+import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
 /**
  * Converts radians to degrees.
@@ -18,6 +19,13 @@ export function radToDeg(rad: number) {
  */
 export function degToRad(deg: number) {
     return deg * Math.PI / 180;
+}
+
+export type ConnectingCircleResult = {
+    circle: Circle,
+    fixedAnchor: Anchor,
+    connectingAnchor: Anchor,
+    direction: "clockwise" | "counter-clockwise"
 }
 
 export class RadialUtils extends ShapeUtil {
@@ -144,7 +152,8 @@ export class RadialUtils extends ShapeUtil {
      */
     static radBetweenPoints(point1: PointLike, point2: PointLike, center?: PointLike): number {
         const _center = center ?? { x: 0, y: 0 };
-        return Math.atan2(point2.y - _center.y, point2.x - _center.x) - Math.atan2(point1.y - _center.y, point1.x - _center.x);
+        const diff = Math.atan2(point2.y - _center.y, point2.x - _center.x) - Math.atan2(point1.y - _center.y, point1.x - _center.x);
+        return RadialUtils.normalizeRad(diff, false);
     }
 
     /**
@@ -277,7 +286,7 @@ export class RadialUtils extends ShapeUtil {
     // #region Tangents
     ////////////////////////////////////////////////////////////////////////////
 
-    static getTangentsToCircle(point: Point, circle: Circle): Segment[] {
+    static getTangentsFromPointToCircle(point: Point, circle: Circle): Segment[] {
 
         // The tangent from a point to a circle is perpendicular to the radius at the point of tangency
         // Thus, there are two possible tangents from a point to a circle
@@ -301,6 +310,56 @@ export class RadialUtils extends ShapeUtil {
             // console.error(error);
             return [];
         }
+    }
+
+    static getInnerTangentsBetweenCircles(circle1: Circle, circle2: Circle): Segment[] {
+
+        // From https://de.wikipedia.org/wiki/Kreistangente#Konstruktion_der_inneren_Tangenten
+
+        const c_P = circle1;
+        const c_Q = circle2;
+
+        const P = c_P.center;
+        const Q = c_Q.center;
+
+        const r_P = c_P.r;
+        const r_Q = c_Q.r;
+
+        const l_PQ = new Line(P, Q);
+        const M = new Point((P.x + Q.x) / 2, (P.y + Q.y) / 2);
+
+        const c_T = new Circle(M, P.distanceTo(Q)[0] / 2);
+
+        const A = ShapeUtil.getClosestShapeToPoint(c_P.intersect(l_PQ), M)!;
+        const c_in_A_with_r_Q = new Circle(A, r_Q);
+        const B = ShapeUtil.getClosestShapeToPoint(c_in_A_with_r_Q.intersect(l_PQ), Q)!;
+        const distance_PB = P.distanceTo(B)[0];
+
+        const c_fromP_with_r_PB = new Circle(P, distance_PB);
+
+        const intersectionPoints = c_fromP_with_r_PB.intersect(c_T);
+        const G1 = intersectionPoints[0];
+        const G2 = intersectionPoints[1];
+
+        const l_PG1 = new Segment(P, G1);
+        const l_PG2 = new Segment(P, G2);
+
+        const L1 = l_PG1.intersect(c_P)[0]!;
+        const L2 = l_PG2.intersect(c_P)[0]!;
+
+        const l_PG1_parallel_in_Q = new Line(Q, l_PG1.vector.rotate90CW());
+        const l_PG2_parallel_in_Q = new Line(Q, l_PG2.vector.rotate90CW());
+
+        const intersectionPoints1 = l_PG1_parallel_in_Q.intersect(c_Q);
+        const R1 = ShapeUtil.getClosestShapeToPoint(intersectionPoints1, P)!;
+
+        const intersectionPoints2 = l_PG2_parallel_in_Q.intersect(c_Q);
+        const R2 = ShapeUtil.getClosestShapeToPoint(intersectionPoints2, P)!;
+
+        return [
+            new Segment(L1, R1),
+            new Segment(L2, R2)
+        ];
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -369,7 +428,7 @@ export class RadialUtils extends ShapeUtil {
         return new Circle(center, radius);
     }
 
-    static getConnectingCirclesForAnchorAndCircle(anchor: Anchor, circle: Circle): [Circle, Circle] {
+    static getConnectingCirclesForAnchorAndCircle(anchor: Anchor, circle: Circle, connection?: LayoutConnection): ConnectingCircleResult[] {
 
         const point = anchor.anchorPoint;
         const dir = anchor.direction;
@@ -384,7 +443,8 @@ export class RadialUtils extends ShapeUtil {
             throw new Error("Insufficient intersection points found.");
         }
 
-        const foundCircles: Circle[] = [];
+        const foundCircles: ConnectingCircleResult[] = [];
+
         for (const intersection of c_intersections_with_perpendicular) {
 
             const l_line_from_center_to_intersection = new Line(circle.center, intersection);
@@ -394,21 +454,74 @@ export class RadialUtils extends ShapeUtil {
 
             const intersections_of_plm_with_p = plm_perpendicular_line_in_m.intersect(p_perpendicular_line_in_point);
 
+
             if (intersections_of_plm_with_p.length < 1) {
                 throw new Error("No intersection found between lines.");
             }
 
             const foundCircleCenter = intersections_of_plm_with_p[0];
-            const foundCircleRadius = foundCircleCenter.distanceTo(circle.center)[0];
+            const foundCircleRadius = Math.abs(foundCircleCenter.distanceTo(circle.center)[0] - r);
 
-            foundCircles.push(new Circle(foundCircleCenter, foundCircleRadius));
+            const connectingCircle = new Circle(foundCircleCenter, foundCircleRadius);
+
+            // Intersection with the origin circle is the connecting point
+            const intersectionsWithCircle = circle.intersect(new Line(circle.center, foundCircleCenter));
+            const connectingPoint = ShapeUtil.getClosestShapeToPoint(intersectionsWithCircle, foundCircleCenter);
+
+
+
+            if (!connectingPoint) {
+                throw new Error("No fitting intersection found.");
+            }
+
+            // To get the correct connecting anchor, we have to check the direction of the given anchor
+            // and construct a fitting anchor in the connection point
+            const anchorDirection = anchor.getDirectionRegardingCircle(connectingCircle);
+            const rad = RadialUtils.radOfPoint(connectingPoint, connectingCircle.center);
+            const connectingAnchor = Anchor.getAnchorOnCircle(connectingCircle, rad, anchorDirection);
+
+            // const c = connectingCircle.clone();
+            // c._data = { stroke: "green" }
+            // connection?.debugShapes.push(anchor);
+            // connection?.debugShapes.push(foundCircleCenter);
+            // connection?.debugShapes.push(c);
+
+
+            foundCircles.push({
+                fixedAnchor: anchor,
+                connectingAnchor,
+                circle: connectingCircle,
+                direction: anchorDirection
+            });
         }
 
         if (foundCircles.length < 2) {
             throw new Error("Not enough circles found.");
         }
 
-        return [foundCircles[0], foundCircles[1]];
+        return foundCircles;
+    }
+
+    static getArcFromConnectingCircle(connectingCircle: ConnectingCircleResult, connection: LayoutConnection, reversed: boolean = false): EllipticArc {
+
+        // const dir = !reversed ?
+        //     connectingCircle.direction :
+        //     (connectingCircle.direction == "clockwise" ? "counter-clockwise" : "clockwise");
+
+        const dir = connectingCircle.direction;
+
+        const arc = new EllipticArc(
+            connection,
+            !reversed ? connectingCircle.fixedAnchor.anchorPoint : connectingCircle.connectingAnchor.anchorPoint,
+            !reversed ? connectingCircle.connectingAnchor.anchorPoint : connectingCircle.fixedAnchor.anchorPoint,
+            connectingCircle.circle.r,
+            connectingCircle.circle.r
+        ).direction(dir);
+        // ).direction("clockwise");
+    // ).direction("counter-clockwise");
+        // ).direction(connectingCircle.direction == "clockwise" ? "counter-clockwise" : "clockwise");
+
+        return arc;
     }
 
     ////////////////////////////////////////////////////////////////////////////

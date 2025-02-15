@@ -8,6 +8,7 @@ import { Anchor, EllipticArc } from "src/graph/graphical";
 import { RadialCircularArcConnectionLayouter } from "../radialConnections";
 import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
 import { RadialUtils } from "../../utils/radialUtils";
+import { SmoothCircleSegment } from "src/graph/graphical/primitives/pathSegments/SmoothCircleSegment";
 
 
 export type FlexConnectionParentType = "sameParent" | "differentParent";
@@ -399,7 +400,7 @@ export class FlexPath extends CombinedPathSegment {
         }
 
         if (debug) {
-            this.source.debugShapes.push(...this.targetFlexNode.outerContinuum.getValidRangeAnchors());
+            // this.source.debugShapes.push(...this.targetFlexNode.outerContinuum.getValidRangeAnchors());
         }
 
         const pathAnchor = isPathToNode ? adjacentPath.endAnchor : adjacentPath.startAnchor;
@@ -434,7 +435,7 @@ export class FlexPath extends CombinedPathSegment {
             }
 
             if (debug) {
-                this.source.debugShapes.push(connectingCircle);
+                // this.source.debugShapes.push(connectingCircle);
             }
 
         }
@@ -468,10 +469,31 @@ export class FlexPath extends CombinedPathSegment {
                 const anchor2 = new Anchor(node.center, new Vector(continuum.range[1])).move(node.outerRadius);
                 const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], pathAnchor.anchorPoint, a => a.anchorPoint);
                 if (closerAnchor) {
-                    segment = isPathToNode ?
-                        new SmoothSplineSegment(this.connection, pathAnchor, closerAnchor.cloneReversed()) :
-                        new SmoothSplineSegment(this.connection, closerAnchor, pathAnchor);
+                    const correctlyOrientedAnchor = isPathToNode ? closerAnchor.cloneReversed() : closerAnchor;
+                    // segment = isPathToNode ?
+                    //     new SmoothSplineSegment(this.connection, pathAnchor, closerAnchor.cloneReversed()) :
+                    //     new SmoothSplineSegment(this.connection, closerAnchor, pathAnchor);
+
+
+                    // Create a smooth connecting circle
+
+                    // const registeredAnchor = flexNode.outerContinuum.registerAnchor(pathAnchor);
+
+                    const circle = node.parent!.circle.clone();
+                    circle.r *= 0.9;
+                    // const circleSegment = new SmoothCircleSegment(this.connection, pathAnchor, correctlyOrientedAnchor, circle);
+
+                    const circleSegment = isPathToNode ?
+                        new SmoothCircleSegment(this.connection, pathAnchor, correctlyOrientedAnchor, circle) :
+                        new SmoothCircleSegment(this.connection, correctlyOrientedAnchor, pathAnchor, circle);
+
+                    segment = circleSegment;
+                    // if (debug) {
+                    //     circleSegment.getSvgPath();
+                    // }
                 }
+
+                // segment = circleSegment;
             }
         }
 

@@ -78,9 +78,9 @@ export class MetricsCollection {
      * @param graph The graph to calculate the metrics. If undefined, the metrics are initialized with pending state
      */
     async calculateMetrics(settingId: number, graph: VisGraph) {
-        // return;
-        
-        // Calculate all absolute metrics for the given graph of the given setting 
+        return;
+
+        // Calculate all absolute metrics for the given graph of the given setting
         const metricCalculators = MetricsCollection.metricsToCalculate.map(metric => new metric(graph));
 
         // Update the metrics of the visualization with the results
@@ -91,8 +91,8 @@ export class MetricsCollection {
     }
 
     /**
-     * Initialize the metrics of the visualization with the given setting id to ensure, 
-     * that it is taken into account for the relative metrics even for the first time 
+     * Initialize the metrics of the visualization with the given setting id to ensure,
+     * that it is taken into account for the relative metrics even for the first time
      */
     initMetrics(settingId: number, ignoreIfExisting: boolean = true) {
         if (ignoreIfExisting && this.getMetricsResults(settingId).results.length > 0) {
@@ -174,8 +174,8 @@ export class MetricsResults {
     }
 
     /**
-     * Returns the metric result object for the given metric definition. 
-     * Either takes the existing one or creates a new one. 
+     * Returns the metric result object for the given metric definition.
+     * Either takes the existing one or creates a new one.
      * Also takes care of linking the update events of the metric result to the metrics results
      * @param metricDefinition The metric definition to get the result for
      * @returns The metric result object
@@ -373,7 +373,7 @@ export class MetricResult {
         return this.colorScale(this.normalizedValue);
     }
 
-    /** 
+    /**
      * Get the text color based on the color as background.
      * If the color is dark, the text color is white, otherwise black.
      */

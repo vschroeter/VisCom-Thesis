@@ -130,6 +130,16 @@ export class Anchor {
         return angleDifference < epsilon;
     }
 
+    getDirectionRegardingCircle(circle: Circle): "clockwise" | "counter-clockwise" {
+        // To test whether the direction is clockwise or counter-clockwise, we can just check another point in the direction of the anchor
+        // If the angle diff between the anchor point and the helper point regarding the circle is positive, the direction is clockwise, otherwise counter-clockwise
+
+        const helperPoint = this.getPointInDirection(circle.r / 2);
+        const angleDiff = RadialUtils.radBetweenPoints(this.anchorPoint, helperPoint, circle.center);
+
+        return angleDiff > 0 ? "clockwise" : "counter-clockwise";
+    }
+
 
     ////////////////////////////////////////////////////////////////////////////
     // #region Static construction methods
@@ -202,8 +212,28 @@ export class Anchor {
         }
 
         return intersectionsWithAnchor[0];
-
     }
+
+
+    /**
+     * Constructs an anchor on a circle at a given angle. The anchor is tangential to the circle, pointing in the given direction.
+     * @param circle The circle on which the anchor is located
+     * @param angleRad The angle in radians, where the anchor is located
+     * @param direction The direction in which the anchor is pointing
+     */
+    static getAnchorOnCircle(circle: Circle, angleRad: number, direction: "clockwise" | "counter-clockwise"): Anchor {
+        const point = RadialUtils.positionOnCircleAtRad(angleRad, circle.r, circle.center);
+        const vector = new Vector(point, circle.center).rotate90CW();
+        const anchor = new Anchor(point, vector);
+
+        if (direction == anchor.getDirectionRegardingCircle(circle)) {
+            return anchor;
+        }
+
+        return anchor.cloneReversed();
+    }
+
+
 
 }
 

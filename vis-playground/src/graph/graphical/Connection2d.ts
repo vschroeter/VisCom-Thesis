@@ -225,13 +225,6 @@ export class Connection2d extends SvgRenderable {
 
     getSvgPath(): string {
         return this.pathSegment.getSvgPath();
-        // let points = this.points
-        // if (points.length == 0) {
-        //     // points = [this.source.center, this.target.center]
-        //     points = [this.startPoint, this.endPoint]
-        // }
-        // const path = this.pathGenerator(points) ?? ""
-        // return path
     }
 
     getArrowPath(): string {
@@ -247,6 +240,7 @@ export class Connection2d extends SvgRenderable {
 
     get length(): number {
         const tempPath = document.createElementNS("http://www.w3.org/2000/svg", "path")
+        // console.log("LENGTH")
         tempPath.setAttribute("d", this.getSvgPath())
         return tempPath.getTotalLength()
     }
@@ -273,6 +267,7 @@ export class Connection2d extends SvgRenderable {
     renderPath() {
         // Check the length of the connection and scale down the arrow if necessary
         const length = this.length
+        // const length = 100
 
         const baseSize = 5 * this.strokeWidth;
         const size = Math.min(baseSize, length / 2 * 0.6)
@@ -403,7 +398,7 @@ export class Connection2d extends SvgRenderable {
             let opacity = 1;
 
             if (w < 0 || h < 0) {
-                opacity = 0;                
+                opacity = 0;
             } else {
                 const area = w * h;
                 const totalArea = bbox.w * bbox.h;
