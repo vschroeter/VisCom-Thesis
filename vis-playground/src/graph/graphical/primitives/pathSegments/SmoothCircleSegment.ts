@@ -66,7 +66,7 @@ export class SmoothCircleSegment extends PathSegment {
 
         // Case 1
         if ((radDiff > 0 && startDirectionRegardingCircleSegment == "clockwise" || radDiff < 0 && startDirectionRegardingCircleSegment == "counter-clockwise")) {
-            console.log("Case 1", this.connection.id, startDirectionRegardingCircleSegment);
+            // console.log("Case 1", this.connection.id, startDirectionRegardingCircleSegment);
 
             const startArc = RadialUtils.getArcFromConnectingCircle(connectingStartCircle, this.connection);
             const endArc = RadialUtils.getArcFromConnectingCircle(connectingEndCircle, this.connection, true);
@@ -103,7 +103,7 @@ export class SmoothCircleSegment extends PathSegment {
 
         // Case 2
         else {
-            console.log("Case 2", this.connection.id);
+            // console.log("Case 2", this.connection.id);
 
             const tangents = RadialUtils.getInnerTangentsBetweenCircles(connectingStartCircle.circle, connectingEndCircle.circle);
 

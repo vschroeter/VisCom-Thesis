@@ -113,7 +113,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             nodes[1].x = this.center.x + r0 + margin / 2;
             nodes[1].y = this.center.y;
 
-            parentNode.innerRadius = distanceBetweenNodeCenters;
+            parentNode.innerRadius = distanceBetweenNodeCenters / 2;
             parentNode.radius = totalRadius * this.radiusMarginFactor;
         }
         else {

@@ -3,7 +3,7 @@ import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { FlexNode } from "./flexNode";
 import { FlexConnectionLayouter, FlexOrLayoutNode } from "./flexLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { Vector, Circle, Point } from "2d-geometry";
+import { Vector, Circle, Point, Segment } from "2d-geometry";
 import { Anchor, EllipticArc } from "src/graph/graphical";
 import { RadialCircularArcConnectionLayouter } from "../radialConnections";
 import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
@@ -615,6 +615,10 @@ export abstract class FlexConnectionMethod {
 
     direction: FlexConnectionDirection;
 
+    get isPathToNode() {
+        return this.direction === "pathToNode";
+    }
+
     constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, nodeAtPathAnchor: FlexNode, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
         this.connection = connection;
         this.node = node;
@@ -681,6 +685,16 @@ export class DirectCircularArcConnectionMethod extends FlexConnectionMethod {
 
             const forwardRadPathToNode = RadialUtils.forwardRadBetweenAngles(radOfPathAnchor, radOfNodeIntersection);
             const forwardRadPathToInnerCircle = RadialUtils.forwardRadBetweenAngles(radOfPathAnchor, radOfInnerCircleIntersection);
+
+
+            // if (this.connection.source.id == "tts_pico" && this.connection.target.id == "equalizer") {
+
+            //     this.connection.debugShapes.push(this.arcCircle.clone());
+            //     this.connection.debugShapes.push(innerCircleIntersection);
+            //     this.connection.debugShapes.push(node.layoutNode.innerCircle);
+
+            // }
+
 
             // If the inner circle intersection is further away than the node intersection, the connection is valid
 
@@ -753,52 +767,88 @@ export class DirectCircularArcConnectionMethod extends FlexConnectionMethod {
 export class SmoothSplineConnectionMethod extends FlexConnectionMethod {
 
     vectorForNode: Vector;
+    anchorForNode: Anchor;
 
     constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, nodeAtPathAnchor: FlexNode, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
         super(connection, node, pathAnchor, nodeAtPathAnchor, constrainingNodes, direction);
 
         // const vectorForNode = new Vector(node.center, pathAnchor.anchorPoint);
 
-        this.vectorForNode = node.outerContinuum.getValidVectorTowardsDirection(pathAnchor.anchorPoint)
+        this.vectorForNode = node.outerContinuum.getValidVectorTowardsDirection(pathAnchor.anchorPoint);
+        this.anchorForNode = this.node.outerContinuum.getValidAnchorTowardsDirection(this.pathAnchor.anchorPoint);
 
     }
 
     override isValidForNode(node: FlexNode): boolean {
 
-        if (node == this.nodeAtPathAnchor) return true;
+        // TODO: this cann still be improved
+        // Maybe by line sampling or something like that
 
-        // TODO: this has to be improved
-        // At the moment, it just checks, whether the control points of the bezier are outside
+        // If the node is not the node related to the path anchor,
+        // we check, whether the vector from the node to the path anchor is inside the valid outer range of the node
+        // --> for every other node this should be the case
+        if (node != this.nodeAtPathAnchor) {
 
-        // this.connection.debugShapes.push(this.pathAnchor.anchorPoint);
-        // this.connection.debugShapes.push(...node.outerContinuum.getValidRangeAnchors());
-        // this.connection.debugShapes.push(new Anchor(node.center, this.vectorForNode).move(node.layoutNode.outerRadius));
+            const isValid = node.outerContinuum.radIsInside(this.vectorForNode.slope);
+            if (!isValid) {
+                return false;
+            }
+        }
 
-        // return node.outerContinuum.pointIsInside(this.pathAnchor.anchorPoint);
-        return node.outerContinuum.radIsInside(this.vectorForNode.slope);
+        // We also check, whether the connection line between start and end point of the path crosses the inner circle of the node
+        // If it does, the connection is not valid
+        const segment = new Segment(this.pathAnchor.anchorPoint, this.anchorForNode.anchorPoint);
+        const intersections = node.layoutNode.innerCircle.intersect(segment);
+        if (intersections.length > 0) {
+            return false;
+        }
+
         return true;
-
-
-
-        // const vectorNodeToPathAnchor = new Vector(node.center, pathAnchor.anchorPoint);
-
-        // if (continuum.radIsInside(vectorNodeToPathAnchor.slope)) {
-        //     const nodeAnchor = new Anchor(node.center, vectorNodeToPathAnchor).move(node.outerRadius);
-        //     segment = isPathToNode ?
-        //         new SmoothSplineSegment(this.connection, pathAnchor, nodeAnchor.cloneReversed()) :
-        //         new SmoothSplineSegment(this.connection, nodeAnchor, pathAnchor);
-        // }
-
     }
 
     override getPath(): PathSegment | undefined {
         const isPathToNode = this.direction === "pathToNode";
-        const anchor = this.node.outerContinuum.getValidAnchorTowardsDirection(this.pathAnchor.anchorPoint);
-
+        const anchor = this.anchorForNode;
         const segment = isPathToNode ?
             new SmoothSplineSegment(this.connection, this.pathAnchor, anchor.cloneReversed()) :
             new SmoothSplineSegment(this.connection, anchor, this.pathAnchor);
         return segment;
+    }
+}
+
+
+export class CircleSegmentConnectionMethod extends FlexConnectionMethod {
+
+    closerAnchor: Anchor;
+
+    constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, nodeAtPathAnchor: FlexNode, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
+        super(connection, node, pathAnchor, nodeAtPathAnchor, constrainingNodes, direction);
+
+        // this.closerAnchor = this.node.outerContinuum.getValidAnchorTowardsDirection(this.pathAnchor.anchorPoint);
+
+        const anchor1 = new Anchor(node.center, new Vector(this.node.outerContinuum.range[0])).move(node.outerCircle.r);
+        const anchor2 = new Anchor(node.center, new Vector(this.node.outerContinuum.range[1])).move(node.outerCircle.r);
+        const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], pathAnchor.anchorPoint, a => a.anchorPoint)!;
+
+        this.closerAnchor = closerAnchor;
+    }
+
+    override isValidForNode(node: FlexNode): boolean {
+        return true;
+    }
+
+    override getPath(): PathSegment | undefined {
+
+        // TODO: Distribute this over a node continuum
+        const circle = this.nodeAtPathAnchor.circle.clone();
+        circle.r *= 0.9;
+        // const circleSegment = new SmoothCircleSegment(this.connection, pathAnchor, correctlyOrientedAnchor, circle);
+
+        const circleSegment = this.isPathToNode ?
+            new SmoothCircleSegment(this.connection, this.pathAnchor, this.closerAnchor.cloneReversed(), circle) :
+            new SmoothCircleSegment(this.connection, this.closerAnchor, this.pathAnchor, circle);
+
+        return circleSegment;
     }
 }
 
@@ -809,7 +859,7 @@ export class FlexNodePath extends CombinedPathSegment {
     static candidates = [
         DirectCircularArcConnectionMethod,
         SmoothSplineConnectionMethod,
-        // CircleSegmentConnectionMethod
+        CircleSegmentConnectionMethod
     ]
 
     nodePath: FlexNode[] = [];
@@ -903,7 +953,8 @@ export class FlexNodePath extends CombinedPathSegment {
 
         let debug = false;
         // if (this.connection.source.id == "equalizer" && this.connection.target.id == "facialexpressionmanager_node") {
-        if (this.connection.source.id == "dialog_session_manager" && this.connection.target.id == "facialexpressionmanager_node") {
+        // if (this.connection.source.id == "dialog_session_manager" && this.connection.target.id == "facialexpressionmanager_node") {
+        if (this.connection.source.id == "tts_pico" && this.connection.target.id == "equalizer") {
             debug = true;
             // console.log("[INVALID]", this);
 
@@ -938,47 +989,49 @@ export class FlexNodePath extends CombinedPathSegment {
                 if (debug) console.log("Valid path found with candidate", candidateCls.name);
                 return true;
             }
-        }
 
-        // if !foundYet, shorten the path and try again recursively
-        const totalPathLength = this.nodePath.length;
-        for (let i = 1; i < totalPathLength - 1; i++) {
-            const currentPathLength = this.nodePath.length - i;
-            const restPathLength = i;
+            // if !foundYet, shorten the path and try again recursively
+            // We shorten the path only for totalPathLength - 1, so that the last checked path is still a path between two nodes
+            const totalPathLength = this.nodePath.length;
+            for (let i = 1; i < totalPathLength - 1; i++) {
+                const currentPathLength = this.nodePath.length - i;
+                const restPathLength = i;
 
-            const { shortenedPath, shortenedRestPath } = this.getShortenedPath(i);
+                const { shortenedPath, shortenedRestPath } = this.getShortenedPath(i);
 
-            if (debug) {
-                console.log("Shortened path", {
-                    i,
-                    nodePath: this.nodePath.map(n => n.id).join(" -> "),
-                    shortenedPath: shortenedPath.map(n => n.id).join(" -> "),
-                    shortenedRestPath: shortenedRestPath.map(n => n.id).join(" -> "),
-                });
-            }
-
-
-            const shortenedFlexPath = this.createFlexPath(shortenedPath);
-            const success = shortenedFlexPath.layoutFlexConnection();
-
-            if (success) {
-
-                const nodeAnchor = shortenedFlexPath.nodeAnchor;
-                if (!nodeAnchor || isNaN(nodeAnchor.direction.x) || isNaN(nodeAnchor.direction.y)) {
-                    console.error("Invalid node anchor", nodeAnchor, shortenedFlexPath);
+                if (debug) {
+                    console.log("Shortened path", {
+                        i,
+                        nodePath: this.nodePath.map(n => n.id).join(" -> "),
+                        shortenedPath: shortenedPath.map(n => n.id).join(" -> "),
+                        shortenedRestPath: shortenedRestPath.map(n => n.id).join(" -> "),
+                    });
                 }
 
-                const shortenedRestFlexPath = this.createFlexPath(shortenedRestPath, shortenedFlexPath.nodeAnchor);
-                const success = shortenedRestFlexPath.layoutFlexConnection();
+
+                const shortenedFlexPath = this.createFlexPath(shortenedPath);
+                const success = shortenedFlexPath.layoutFlexConnection();
 
                 if (success) {
-                    // Save the found path
-                    this.segments = [shortenedFlexPath, shortenedRestFlexPath];
-                    return true;
-                }
 
+                    const nodeAnchor = shortenedFlexPath.nodeAnchor;
+                    if (!nodeAnchor || isNaN(nodeAnchor.direction.x) || isNaN(nodeAnchor.direction.y)) {
+                        console.error("Invalid node anchor", nodeAnchor, shortenedFlexPath);
+                    }
+
+                    const shortenedRestFlexPath = this.createFlexPath(shortenedRestPath, shortenedFlexPath.nodeAnchor);
+                    const success = shortenedRestFlexPath.layoutFlexConnection();
+
+                    if (success) {
+                        // Save the found path
+                        this.segments = [shortenedFlexPath, shortenedRestFlexPath];
+                        return true;
+                    }
+
+                }
             }
         }
+
         // if (debug)
 
         console.warn("No valid path found", this);

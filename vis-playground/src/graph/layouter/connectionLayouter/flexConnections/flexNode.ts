@@ -186,6 +186,10 @@ export class FlexNode {
         return this.layoutNode.outerCircle;
     }
 
+    get circle() {
+        return this.layoutNode.circle;
+    }
+
     getPathTo(targetFlexNode: FlexNode): FlexPath | undefined {
         return this.mapTargetNodeToPath.get(targetFlexNode);
     }
