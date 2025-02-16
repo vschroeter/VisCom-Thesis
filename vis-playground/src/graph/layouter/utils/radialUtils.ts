@@ -172,7 +172,7 @@ export class RadialUtils extends ShapeUtil {
         const forwardStartToRad = RadialUtils.forwardRadBetweenAngles(startRad, rad);
         const forwardRadToEnd = RadialUtils.forwardRadBetweenAngles(rad, endRad);
 
-        return forwardStartToRad < forwardRad && forwardRadToEnd < forwardRad;
+        return forwardStartToRad <= forwardRad && forwardRadToEnd <= forwardRad;
     }
 
     /**

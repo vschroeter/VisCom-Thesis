@@ -59,15 +59,7 @@ export class FlexConnection extends CombinedPathSegment {
         const flexNodePath = connPath.map(node => this.layouter.getFlexNode(node));
         const nodePath = connPath.map(node => node.id).join(" -> ")
 
-
-
-        let lastPath: FlexPath | undefined = undefined;
-
         for (let i = 0; i < connPath.length - 1; i++) {
-            // const sNode = connPath[i];
-            // const tNode = connPath[i + 1];
-
-
             // i is always the start node
             const sNode = connPath[i];
             // the end node is the next node, that either has the same parent as s OR that is a node before a node with the same parent
@@ -87,33 +79,25 @@ export class FlexConnection extends CombinedPathSegment {
 
             if (sNode.parent == tNode.parent) {
                 // Inside parent connection
-                // lastPath = new SameParentConnection();  // Create new FlexConnectionPath instance
                 const path = new FlexPath({
                     flexConnection: this,
                     startNode: sNode,
                     endNode: tNode,
-                    nodePath: flexNodePath.slice(i, i + 2)
+                    nodePath: flexNodePath.slice(i, j + 1)
                 });  // Create new FlexConnectionPath instance
                 this.paths.push(path); // Add to paths
-                lastPath = path; // Update lastPath
+
+                // console.log("ADDED FLEX PATH", {
+                //     path,
+                //     p: path.nodePath.map(n => n.id).join(" -> "),
+                //     flexNodePath,
+                //     nodePath: path.nodePath,
+                //     i,
+                //     j,
+                //     id: this.connection.id,
+                // })
 
             } else {
-
-                // let realNode: LayoutNode | undefined = tNode;
-                // const constrainingNodes: LayoutNode[] = [];
-                // let j = i + 1;
-                // while (realNode && realNode.isHyperNode) {
-                //     constrainingNodes.push(realNode)
-                //     realNode = connPath[++j];
-                // }
-
-                // const path = new FlexPath({
-                //     flexConnection: this,
-                //     startNode: sNode,
-                //     endNode: tNode,
-                //     nodePath: flexNodePath.slice(i, j + 1),
-                //     constraints: constrainingNodes
-                // });
 
                 const path = new FlexPath({
                     flexConnection: this,
@@ -123,26 +107,38 @@ export class FlexConnection extends CombinedPathSegment {
                     // constraints: flexNodePath.slice(i, j + 1)
                 });
 
+                // console.log("ADDED LONG FLEX PATH", {
+                //     path,
+                //     flexNodePath,
+                //     p: path.nodePath.map(n => n.id).join(" -> "),
+                //     nodePath: path.nodePath,
+                //     i,
+                //     j,
+                //     id: this.connection.id,
+                // })
 
-                let debug = false;
-                if (this.connection.source.id == "equalizer" && this.connection.target.id == "facialexpressionmanager_node") {
-                    debug = true;
 
-                    console.log("ADDED FLEX PATH", {
-                        path,
-                        flexNodePath,
-                        nodePath: path.nodePath,
-                        i,
-                        j,
-                        id: this.connection.id,
-                    })
-                }
+                // let debug = false;
+                // if (this.connection.source.id == "equalizer" && this.connection.target.id == "facialexpressionmanager_node") {
+                //     debug = true;
+
+                //     console.log("ADDED FLEX PATH", {
+                //         path,
+                //         flexNodePath,
+                //         nodePath: path.nodePath,
+                //         i,
+                //         j,
+                //         id: this.connection.id,
+                //     })
+                // }
 
                 this.paths.push(path);
-                lastPath = path;
             }
 
+
+
             i = j - 1;
+            // i = j;
         }
 
         for (let i = 0; i < this.paths.length - 1; i++) {
@@ -482,7 +478,18 @@ export class FlexPath extends CombinedPathSegment {
             });
         }
 
-        const flexPath = new FlexPath1(this.connection, this.nodePath, pathAnchor, direction);
+
+        if (!pathAnchor || isNaN(pathAnchor.direction.x) || isNaN(pathAnchor.direction.y)) {
+            console.error("No path anchor or direction for connection", this);
+        }
+        // console.log("NEW FLEX NODE PATH", {
+        //     connection: this.connection.id,
+        //     pathAnchor: pathAnchor,
+        //     pathAnchorDir: pathAnchor.direction.x + " " + pathAnchor.direction.y,
+        //     nodePath: this.nodePath.map(n => n.id).join(" -> "),
+        // });
+
+        const flexPath = new FlexNodePath(this.connection, this.nodePath, pathAnchor, direction);
         flexPath.layoutFlexConnection();
         this.segments = [flexPath];
 
@@ -590,10 +597,6 @@ export class FlexPath extends CombinedPathSegment {
 
 
     }
-
-
-
-
 }
 
 
@@ -606,15 +609,17 @@ export abstract class FlexConnectionMethod {
 
     node: FlexNode;
     pathAnchor: Anchor;
+    nodeAtPathAnchor: FlexNode;
 
     constrainingNodes: FlexNode[] = [];
 
     direction: FlexConnectionDirection;
 
-    constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
+    constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, nodeAtPathAnchor: FlexNode, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
         this.connection = connection;
         this.node = node;
         this.pathAnchor = pathAnchor;
+        this.nodeAtPathAnchor = nodeAtPathAnchor;
         this.constrainingNodes = constrainingNodes;
         this.direction = direction;
     }
@@ -635,12 +640,26 @@ export class DirectCircularArcConnectionMethod extends FlexConnectionMethod {
     arcCircle: Circle | undefined;
     nodeIntersection: Point | undefined;
 
-    constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
-        super(connection, node, pathAnchor, constrainingNodes, direction);
+    constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, nodeAtPathAnchor: FlexNode, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
+        super(connection, node, pathAnchor, nodeAtPathAnchor, constrainingNodes, direction);
+
+        if (isNaN(pathAnchor.direction.x) || isNaN(pathAnchor.direction.y)) {
+            console.error("Invalid path anchor", pathAnchor);
+        }
 
         this.arcCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(this.node.layoutNode.center, this.pathAnchor);
-        const intersections = this.arcCircle ? node.outerCircle.intersect(this.arcCircle) : [];
-        this.nodeIntersection = RadialUtils.getClosestShapeToPoint(intersections, this.pathAnchor.anchorPoint);
+        try {
+            const intersections = this.arcCircle ? node.outerCircle.intersect(this.arcCircle) : [];
+            this.nodeIntersection = RadialUtils.getClosestShapeToPoint(intersections, this.pathAnchor.anchorPoint);
+        } catch (e) {
+            console.error("Error in direct circular arc connection layouting", {
+                connection: this.connection,
+                arcCircle: this.arcCircle,
+                node: this.node,
+                pathAnchor: this.pathAnchor
+            })
+            throw e;
+        }
     }
 
     override isValidForNode(node: FlexNode): boolean {
@@ -735,8 +754,8 @@ export class SmoothSplineConnectionMethod extends FlexConnectionMethod {
 
     vectorForNode: Vector;
 
-    constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
-        super(connection, node, pathAnchor, constrainingNodes, direction);
+    constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, nodeAtPathAnchor: FlexNode, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
+        super(connection, node, pathAnchor, nodeAtPathAnchor, constrainingNodes, direction);
 
         // const vectorForNode = new Vector(node.center, pathAnchor.anchorPoint);
 
@@ -746,10 +765,17 @@ export class SmoothSplineConnectionMethod extends FlexConnectionMethod {
 
     override isValidForNode(node: FlexNode): boolean {
 
+        if (node == this.nodeAtPathAnchor) return true;
+
         // TODO: this has to be improved
         // At the moment, it just checks, whether the control points of the bezier are outside
 
+        // this.connection.debugShapes.push(this.pathAnchor.anchorPoint);
+        // this.connection.debugShapes.push(...node.outerContinuum.getValidRangeAnchors());
+        // this.connection.debugShapes.push(new Anchor(node.center, this.vectorForNode).move(node.layoutNode.outerRadius));
 
+        // return node.outerContinuum.pointIsInside(this.pathAnchor.anchorPoint);
+        return node.outerContinuum.radIsInside(this.vectorForNode.slope);
         return true;
 
 
@@ -777,7 +803,7 @@ export class SmoothSplineConnectionMethod extends FlexConnectionMethod {
 }
 
 
-export class FlexPath1 extends CombinedPathSegment {
+export class FlexNodePath extends CombinedPathSegment {
 
 
     static candidates = [
@@ -797,6 +823,12 @@ export class FlexPath1 extends CombinedPathSegment {
         this.nodePath = nodePath;
         this.pathAnchor = pathAnchor;
         this.direction = direction;
+
+        if (isNaN(pathAnchor.direction.x) || isNaN(pathAnchor.direction.y)) {
+            console.error("Invalid FLEX NODE PATH", pathAnchor);
+        }
+
+
     }
 
     // The other anchor (thus, not the given path anchor), if existing
@@ -870,7 +902,8 @@ export class FlexPath1 extends CombinedPathSegment {
 
 
         let debug = false;
-        if (this.connection.source.id == "equalizer" && this.connection.target.id == "facialexpressionmanager_node") {
+        // if (this.connection.source.id == "equalizer" && this.connection.target.id == "facialexpressionmanager_node") {
+        if (this.connection.source.id == "dialog_session_manager" && this.connection.target.id == "facialexpressionmanager_node") {
             debug = true;
             // console.log("[INVALID]", this);
 
@@ -886,14 +919,16 @@ export class FlexPath1 extends CombinedPathSegment {
 
 
         // Check for each candidate, if it is a valid path
-        for (let ci = 0; ci < FlexPath1.candidates.length; ci++) {
-            const candidateCls = FlexPath1.candidates[ci];
+        for (let ci = 0; ci < FlexNodePath.candidates.length; ci++) {
+            const candidateCls = FlexNodePath.candidates[ci];
 
             if (debug) console.log("Try candidate", candidateCls.name, this.nodePath.map(n => n.id).join(" -> "), this);
 
             const node = this.direction === "nodeToPath" ? this.nodePath[0] : this.nodePath[this.nodePath.length - 1];
+            const nodeAtPathAnchor = this.direction === "nodeToPath" ? this.nodePath[this.nodePath.length - 1] : this.nodePath[0];
 
-            const candidate = new candidateCls(this.connection, node, this.pathAnchor, this.nodePath, this.direction);
+            const candidate = new candidateCls(this.connection, node, this.pathAnchor, nodeAtPathAnchor, this.nodePath, this.direction);
+            // const candidate = new candidateCls(this.connection, node, this.pathAnchor, this.constrainingNodes, this.direction);
             if (candidate.isValidPath()) {
                 // Save the found path
                 this.segments = [candidate.getPath()!];
@@ -907,16 +942,31 @@ export class FlexPath1 extends CombinedPathSegment {
 
         // if !foundYet, shorten the path and try again recursively
         const totalPathLength = this.nodePath.length;
-        for (let i = 1; i < totalPathLength; i++) {
+        for (let i = 1; i < totalPathLength - 1; i++) {
             const currentPathLength = this.nodePath.length - i;
             const restPathLength = i;
 
             const { shortenedPath, shortenedRestPath } = this.getShortenedPath(i);
 
+            if (debug) {
+                console.log("Shortened path", {
+                    i,
+                    nodePath: this.nodePath.map(n => n.id).join(" -> "),
+                    shortenedPath: shortenedPath.map(n => n.id).join(" -> "),
+                    shortenedRestPath: shortenedRestPath.map(n => n.id).join(" -> "),
+                });
+            }
+
+
             const shortenedFlexPath = this.createFlexPath(shortenedPath);
             const success = shortenedFlexPath.layoutFlexConnection();
 
             if (success) {
+
+                const nodeAnchor = shortenedFlexPath.nodeAnchor;
+                if (!nodeAnchor || isNaN(nodeAnchor.direction.x) || isNaN(nodeAnchor.direction.y)) {
+                    console.error("Invalid node anchor", nodeAnchor, shortenedFlexPath);
+                }
 
                 const shortenedRestFlexPath = this.createFlexPath(shortenedRestPath, shortenedFlexPath.nodeAnchor);
                 const success = shortenedRestFlexPath.layoutFlexConnection();
@@ -929,12 +979,14 @@ export class FlexPath1 extends CombinedPathSegment {
 
             }
         }
-        if (debug) console.log("No valid path found");
+        // if (debug)
+
+        console.warn("No valid path found", this);
         return false;
     }
 
     createFlexPath(nodePath: FlexNode[], pathAnchor: Anchor = this.pathAnchor) {
-        const path = new FlexPath1(this.connection, nodePath, pathAnchor, this.direction);
+        const path = new FlexNodePath(this.connection, nodePath, pathAnchor, this.direction);
         return path;
     }
 
@@ -942,19 +994,19 @@ export class FlexPath1 extends CombinedPathSegment {
     getShortenedPath(shortenCount: number) {
 
         // [p] -> [] -> [] shortened by 1 ==>
-        // [p] -> [] || []
+        // [p] -> [] || [] with left == path and right == rest
         if (this.direction === "pathToNode") {
             const shortenedPath = this.nodePath.slice(0, this.nodePath.length - shortenCount);
             const shortenedRestPath = this.nodePath.slice(this.nodePath.length - shortenCount);
             return { shortenedPath, shortenedRestPath };
         }
         // [] -> [] -> [p] shortened by 1 ==>
-        // [] || [] -> [p]
+        // [] || [] -> [p] with left == rest and right == path
         else {
 
             const index = shortenCount;
-            const shortenedPath = this.nodePath.slice(-index);
-            const shortenedRestPath = this.nodePath.slice(0, this.nodePath.length - index);
+            const shortenedPath = this.nodePath.slice(index);
+            const shortenedRestPath = this.nodePath.slice(0, index);
             return { shortenedPath, shortenedRestPath };
         }
 
@@ -962,74 +1014,3 @@ export class FlexPath1 extends CombinedPathSegment {
 
 
 }
-
-
-
-
-
-// export class EmptyFlexConnection extends FlexConnection {
-//     init(): void {
-//         // this.segments = [];
-//     }
-//     calculate(): void {
-//     }
-// }
-
-
-// export class FlexConnection extends CombinedPathSegment {
-
-//     type: FlexConnectionType = "unknown";
-
-//     flexNode: FlexNode;
-
-//     constructor(connection: LayoutConnection, flexNode: FlexNode) {
-//         super(connection);
-//         connection.pathSegment = this;
-
-//         this.flexNode = flexNode;
-
-//         const source = connection.source;
-//         const target = connection.target;
-
-//         if (source.parent === target.parent) {
-//             if (this.source.isDirectPredecessorInSortingTo(this.target)) {
-//                 this.type = "circleArcForward";
-//             } else if (this.source.isDirectSuccessorInSortingTo(this.target)) {
-//                 this.type = "circleArcBackward";
-//             } else {
-//                 this.type = "sameParent"
-//             }
-//         } else {
-//             const commonParent = source.getCommonParent(target);
-
-//             // if ((commonParent == source.parent || commonParent == source.parent?.parent) && (commonParent == target.parent || commonParent == target.parent?.parent)) {
-//             //     const firstChildContainingSource = commonParent?.getChildNodeContainingNodeAsDescendant(source);
-//             //     const firstChildContainingTarget = commonParent?.getChildNodeContainingNodeAsDescendant(target);
-
-//             //     if (firstChildContainingSource?.isDirectPredecessorInSortingTo(firstChildContainingTarget)) {
-//             //         this.type = "sameHyperParentDirectForward";
-//             //     } else if (firstChildContainingSource?.isDirectSuccessorInSortingTo(firstChildContainingTarget)) {
-//             //         this.type = "sameHyperParentDirectBackward";
-//             //     }
-//             // }
-
-//             if (source.isAnchor || target.isAnchor) {
-
-//                 const firstChildContainingSource = commonParent?.getChildNodeContainingNodeAsDescendant(source);
-//                 const firstChildContainingTarget = commonParent?.getChildNodeContainingNodeAsDescendant(target);
-
-//                 if (firstChildContainingSource?.isDirectPredecessorInSortingTo(firstChildContainingTarget)) {
-//                     this.type = "circleArcForward";
-//                 } else if (firstChildContainingSource?.isDirectSuccessorInSortingTo(firstChildContainingTarget)) {
-//                     this.type = "circleArcBackward";
-//                 }
-//             }
-
-//             if (this.type == "unknown") {
-//                 this.type = "differentParent";
-//             }
-//         }
-//     }
-// }
-
-
