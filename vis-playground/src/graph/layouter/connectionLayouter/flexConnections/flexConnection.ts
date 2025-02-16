@@ -3,7 +3,7 @@ import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { FlexNode } from "./flexNode";
 import { FlexConnectionLayouter, FlexOrLayoutNode } from "./flexLayouter";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { Vector, Circle } from "2d-geometry";
+import { Vector, Circle, Point } from "2d-geometry";
 import { Anchor, EllipticArc } from "src/graph/graphical";
 import { RadialCircularArcConnectionLayouter } from "../radialConnections";
 import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
@@ -56,14 +56,32 @@ export class FlexConnection extends CombinedPathSegment {
     initFlexPaths() {
 
         const connPath = this.connection.getConnectionPathViaHyperAndVirtualNodes()
+        const flexNodePath = connPath.map(node => this.layouter.getFlexNode(node));
         const nodePath = connPath.map(node => node.id).join(" -> ")
 
 
 
         let lastPath: FlexPath | undefined = undefined;
+
         for (let i = 0; i < connPath.length - 1; i++) {
+            // const sNode = connPath[i];
+            // const tNode = connPath[i + 1];
+
+
+            // i is always the start node
             const sNode = connPath[i];
-            const tNode = connPath[i + 1];
+            // the end node is the next node, that either has the same parent as s OR that is a node before a node with the same parent
+            let j = i + 1;
+            let tNode = connPath[j];
+
+            while (tNode.parent != sNode.parent) {
+                const nextNode = connPath[j + 1];
+                if (!nextNode || nextNode.parent == tNode.parent) {
+                    break;
+                }
+                tNode = nextNode;
+                j++;
+            }
 
             // sNode.layerFromBot
 
@@ -73,30 +91,58 @@ export class FlexConnection extends CombinedPathSegment {
                 const path = new FlexPath({
                     flexConnection: this,
                     startNode: sNode,
-                    endNode: tNode
+                    endNode: tNode,
+                    nodePath: flexNodePath.slice(i, i + 2)
                 });  // Create new FlexConnectionPath instance
                 this.paths.push(path); // Add to paths
                 lastPath = path; // Update lastPath
 
             } else {
 
-                let realNode: LayoutNode | undefined = tNode;
-                const constrainingNodes: LayoutNode[] = [];
-                let j = i + 1;
-                while (realNode && realNode.isHyperNode) {
-                    constrainingNodes.push(realNode)
-                    realNode = connPath[++j];
-                }
+                // let realNode: LayoutNode | undefined = tNode;
+                // const constrainingNodes: LayoutNode[] = [];
+                // let j = i + 1;
+                // while (realNode && realNode.isHyperNode) {
+                //     constrainingNodes.push(realNode)
+                //     realNode = connPath[++j];
+                // }
+
+                // const path = new FlexPath({
+                //     flexConnection: this,
+                //     startNode: sNode,
+                //     endNode: tNode,
+                //     nodePath: flexNodePath.slice(i, j + 1),
+                //     constraints: constrainingNodes
+                // });
 
                 const path = new FlexPath({
                     flexConnection: this,
                     startNode: sNode,
                     endNode: tNode,
-                    constraints: constrainingNodes
+                    nodePath: flexNodePath.slice(i, j + 1),
+                    // constraints: flexNodePath.slice(i, j + 1)
                 });
+
+
+                let debug = false;
+                if (this.connection.source.id == "equalizer" && this.connection.target.id == "facialexpressionmanager_node") {
+                    debug = true;
+
+                    console.log("ADDED FLEX PATH", {
+                        path,
+                        flexNodePath,
+                        nodePath: path.nodePath,
+                        i,
+                        j,
+                        id: this.connection.id,
+                    })
+                }
+
                 this.paths.push(path);
                 lastPath = path;
             }
+
+            i = j - 1;
         }
 
         for (let i = 0; i < this.paths.length - 1; i++) {
@@ -149,6 +195,8 @@ export class FlexPath extends CombinedPathSegment {
 
     constraints: FlexNode[] = [];
 
+    nodePath: FlexNode[] = [];
+
     get id() {
         return this.sourceFlexNode.id + " -> " + this.targetFlexNode.id;
     }
@@ -166,6 +214,7 @@ export class FlexPath extends CombinedPathSegment {
         startNode: FlexOrLayoutNode;
         endNode: FlexOrLayoutNode;
         constraints?: FlexOrLayoutNode[];
+        nodePath?: FlexNode[];
     }) {
         super(options.flexConnection.connection);
         this.flexConnection = options.flexConnection;
@@ -173,6 +222,9 @@ export class FlexPath extends CombinedPathSegment {
         this.targetFlexNode = this.flexConnection.layouter.getFlexNode(options.endNode);
         if (options.constraints) {
             this.constraints = options.constraints.map(constraint => this.flexConnection.layouter.getFlexNode(constraint));
+        }
+        if (options.nodePath) {
+            this.nodePath = Array.from(options.nodePath);
         }
 
         this.linkedPath = this.sourceFlexNode.getPathTo(this.targetFlexNode);
@@ -380,10 +432,10 @@ export class FlexPath extends CombinedPathSegment {
         // - node to path OR
         // - path to node
 
-
         // TODO:: is this reliable?
         // Path to node if the source node is a hyper node
         const isPathToNode = this.sourceFlexNode.layoutNode.isHyperNode;
+        const direction = isPathToNode ? "pathToNode" : "nodeToPath";
         const adjacentPath = isPathToNode ? this.previousPath : this.nextPath;
         const flexNode = isPathToNode ? this.targetFlexNode : this.sourceFlexNode;
         const node = flexNode.layoutNode;
@@ -410,109 +462,506 @@ export class FlexPath extends CombinedPathSegment {
             return;
         }
 
-        let segment: PathSegment | undefined = undefined;
 
-        // In the best case, we can connect the path to the node with a single circular arc
-        const connectingCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(node.center, pathAnchor);
-        if (connectingCircle) {
-            const intersections = node.outerCircle.intersect(connectingCircle);
-            const nodeIntersectionPoint = RadialUtils.getClosestShapeToPoint(intersections, pathAnchor.anchorPoint);
+        if (this.connection.source.id == "equalizer" && this.connection.target.id == "facialexpressionmanager_node") {
+            debug = true;
+            // console.log("[INVALID]", this);
 
-            const startPoint = isPathToNode ? pathAnchor.anchorPoint : nodeIntersectionPoint;
-            const endPoint = isPathToNode ? nodeIntersectionPoint : pathAnchor.anchorPoint;
+            // const c1 = this.arcCircle!.clone();
+            // const c2 = node.layoutNode.innerCircle.clone();
 
-            segment = new EllipticArc(this.connection,
-                startPoint,
-                endPoint,
-                connectingCircle.r,
-                connectingCircle.r
-            ).direction("clockwise");
+            // c1._data = { stroke: "blue" };
+            // c2._data = { stroke: "green" };
 
-            // Check if the anchor is correctly oriented
-            const segmentAnchor = isPathToNode ? segment.startAnchor : segment.endAnchor;
-            if (!pathAnchor.isSimilarTo(segmentAnchor)) {
-                (segment as EllipticArc).direction("counter-clockwise");
-            }
+            // this.connection.debugShapes.push(c1);
+            // this.connection.debugShapes.push(c2);
 
-            if (debug) {
-                // this.source.debugShapes.push(connectingCircle);
-            }
-
+            console.log("NEW FLEX PATH1", {
+                nodePath: this.nodePath,
+                this: this
+            });
         }
 
+        const flexPath = new FlexPath1(this.connection, this.nodePath, pathAnchor, direction);
+        flexPath.layoutFlexConnection();
+        this.segments = [flexPath];
+
+        return;
 
 
-        // The circle segment could be outside the valid outer range of the node
-        // In this case, we have to adapt it
-        const anchorAtNode = isPathToNode ? segment?.endAnchor : segment?.startAnchor;
-        const arcRad = anchorAtNode ? RadialUtils.radOfPoint(anchorAtNode?.anchorPoint, node.center) : undefined;
+        // if (!pathAnchor) {
+        //     console.error("No path anchor for connection", this);
+        //     return;
+        // }
 
-        // TODO: Better construction of the spline points. Not just take a straight line from the hyperarc to the node, but instead take a point that respects the curvature
+        // let segment: PathSegment | undefined = undefined;
 
-        // If the arc is not valid, we construct something better
-        const continuum = flexNode.outerContinuum;
-        if (!arcRad || !continuum.isInside(arcRad)) {
+        // // In the best case, we can connect the path to the node with a single circular arc
+        // const connectingCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(node.center, pathAnchor);
+        // if (connectingCircle) {
+        //     const intersections = node.outerCircle.intersect(connectingCircle);
+        //     const nodeIntersectionPoint = RadialUtils.getClosestShapeToPoint(intersections, pathAnchor.anchorPoint);
 
-            // If the arc is not valid, we construct either:
-            // - a smooth spline from the hyperarc to the node, IF the arc is inside the valid range of the node
-            // - a circle segment from the hyperarc to the node, IF the arc is outside the valid range of the node
+        //     const startPoint = isPathToNode ? pathAnchor.anchorPoint : nodeIntersectionPoint;
+        //     const endPoint = isPathToNode ? nodeIntersectionPoint : pathAnchor.anchorPoint;
 
-            const vectorNodeToPathAnchor = new Vector(node.center, pathAnchor.anchorPoint);
+        //     segment = new EllipticArc(this.connection,
+        //         startPoint,
+        //         endPoint,
+        //         connectingCircle.r,
+        //         connectingCircle.r
+        //     ).direction("clockwise");
 
-            if (continuum.isInside(vectorNodeToPathAnchor.slope)) {
-                const nodeAnchor = new Anchor(node.center, vectorNodeToPathAnchor).move(node.outerRadius);
-                segment = isPathToNode ?
-                    new SmoothSplineSegment(this.connection, pathAnchor, nodeAnchor.cloneReversed()) :
-                    new SmoothSplineSegment(this.connection, nodeAnchor, pathAnchor);
-            } else {
-                const anchor1 = new Anchor(node.center, new Vector(continuum.range[0])).move(node.outerRadius);
-                const anchor2 = new Anchor(node.center, new Vector(continuum.range[1])).move(node.outerRadius);
-                const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], pathAnchor.anchorPoint, a => a.anchorPoint);
-                if (closerAnchor) {
-                    const correctlyOrientedAnchor = isPathToNode ? closerAnchor.cloneReversed() : closerAnchor;
-                    // segment = isPathToNode ?
-                    //     new SmoothSplineSegment(this.connection, pathAnchor, closerAnchor.cloneReversed()) :
-                    //     new SmoothSplineSegment(this.connection, closerAnchor, pathAnchor);
+        //     // Check if the anchor is correctly oriented
+        //     const segmentAnchor = isPathToNode ? segment.startAnchor : segment.endAnchor;
+        //     if (!pathAnchor.isSimilarTo(segmentAnchor)) {
+        //         (segment as EllipticArc).direction("counter-clockwise");
+        //     }
 
+        //     if (debug) {
+        //         // this.source.debugShapes.push(connectingCircle);
+        //     }
 
-                    // Create a smooth connecting circle
-
-                    // const registeredAnchor = flexNode.outerContinuum.registerAnchor(pathAnchor);
-
-                    const circle = node.parent!.circle.clone();
-                    circle.r *= 0.9;
-                    // const circleSegment = new SmoothCircleSegment(this.connection, pathAnchor, correctlyOrientedAnchor, circle);
-
-                    const circleSegment = isPathToNode ?
-                        new SmoothCircleSegment(this.connection, pathAnchor, correctlyOrientedAnchor, circle) :
-                        new SmoothCircleSegment(this.connection, correctlyOrientedAnchor, pathAnchor, circle);
-
-                    segment = circleSegment;
-                    // if (debug) {
-                    //     circleSegment.getSvgPath();
-                    // }
-                }
-
-                // segment = circleSegment;
-            }
-        }
+        // }
 
 
-        if (!segment) {
-            console.error("No segment for connection", this);
-            return;
-        }
-        this.segments = [segment];
+
+        // // The circle segment could be outside the valid outer range of the node
+        // // In this case, we have to adapt it
+        // const anchorAtNode = isPathToNode ? segment?.endAnchor : segment?.startAnchor;
+        // const arcRad = anchorAtNode ? RadialUtils.radOfPoint(anchorAtNode?.anchorPoint, node.center) : undefined;
+
+        // // TODO: Better construction of the spline points. Not just take a straight line from the hyperarc to the node, but instead take a point that respects the curvature
+
+        // // If the arc is not valid, we construct something better
+        // const continuum = flexNode.outerContinuum;
+        // if (!arcRad || !continuum.radIsInside(arcRad)) {
+
+        //     // If the arc is not valid, we construct either:
+        //     // - a smooth spline from the hyperarc to the node, IF the arc is inside the valid range of the node
+        //     // - a circle segment from the hyperarc to the node, IF the arc is outside the valid range of the node
+
+        //     const vectorNodeToPathAnchor = new Vector(node.center, pathAnchor.anchorPoint);
+
+        //     if (continuum.radIsInside(vectorNodeToPathAnchor.slope)) {
+        //         const nodeAnchor = new Anchor(node.center, vectorNodeToPathAnchor).move(node.outerRadius);
+        //         segment = isPathToNode ?
+        //             new SmoothSplineSegment(this.connection, pathAnchor, nodeAnchor.cloneReversed()) :
+        //             new SmoothSplineSegment(this.connection, nodeAnchor, pathAnchor);
+        //     } else {
+        //         const anchor1 = new Anchor(node.center, new Vector(continuum.range[0])).move(node.outerRadius);
+        //         const anchor2 = new Anchor(node.center, new Vector(continuum.range[1])).move(node.outerRadius);
+        //         const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], pathAnchor.anchorPoint, a => a.anchorPoint);
+        //         if (closerAnchor) {
+        //             const correctlyOrientedAnchor = isPathToNode ? closerAnchor.cloneReversed() : closerAnchor;
+        //             // segment = isPathToNode ?
+        //             //     new SmoothSplineSegment(this.connection, pathAnchor, closerAnchor.cloneReversed()) :
+        //             //     new SmoothSplineSegment(this.connection, closerAnchor, pathAnchor);
+
+
+        //             // Create a smooth connecting circle
+
+        //             // const registeredAnchor = flexNode.outerContinuum.registerAnchor(pathAnchor);
+
+        //             const circle = node.parent!.circle.clone();
+        //             circle.r *= 0.9;
+        //             // const circleSegment = new SmoothCircleSegment(this.connection, pathAnchor, correctlyOrientedAnchor, circle);
+
+        //             const circleSegment = isPathToNode ?
+        //                 new SmoothCircleSegment(this.connection, pathAnchor, correctlyOrientedAnchor, circle) :
+        //                 new SmoothCircleSegment(this.connection, correctlyOrientedAnchor, pathAnchor, circle);
+
+        //             segment = circleSegment;
+        //             // if (debug) {
+        //             //     circleSegment.getSvgPath();
+        //             // }
+        //         }
+
+        //         // segment = circleSegment;
+        //     }
+        // }
+
+
+        // if (!segment) {
+        //     console.error("No segment for connection", this);
+        //     return;
+        // }
+        // this.segments = [segment];
 
 
     }
 
+
+
+
 }
 
 
+export type FlexConnectionDirection = "pathToNode" | "nodeToPath";
+
+export abstract class FlexConnectionMethod {
+    // nodePath: FlexNode[] = [];
+
+    connection: LayoutConnection;
+
+    node: FlexNode;
+    pathAnchor: Anchor;
+
+    constrainingNodes: FlexNode[] = [];
+
+    direction: FlexConnectionDirection;
+
+    constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
+        this.connection = connection;
+        this.node = node;
+        this.pathAnchor = pathAnchor;
+        this.constrainingNodes = constrainingNodes;
+        this.direction = direction;
+    }
+
+
+    isValidPath(): boolean {
+        return this.constrainingNodes.every(node => this.isValidForNode(node));
+    }
+
+    abstract isValidForNode(node: FlexNode): boolean;
+
+    abstract getPath(): PathSegment | undefined;
+}
+
+
+export class DirectCircularArcConnectionMethod extends FlexConnectionMethod {
+
+    arcCircle: Circle | undefined;
+    nodeIntersection: Point | undefined;
+
+    constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
+        super(connection, node, pathAnchor, constrainingNodes, direction);
+
+        this.arcCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(this.node.layoutNode.center, this.pathAnchor);
+        const intersections = this.arcCircle ? node.outerCircle.intersect(this.arcCircle) : [];
+        this.nodeIntersection = RadialUtils.getClosestShapeToPoint(intersections, this.pathAnchor.anchorPoint);
+    }
+
+    override isValidForNode(node: FlexNode): boolean {
+
+        if (!this.arcCircle || !this.nodeIntersection) return false;
+
+        // Here we check, whether the arc crosses the inner circle of the node
+        // If it does, the connection is not valid
+        const intersections = node.layoutNode.innerCircle.intersect(this.arcCircle);
+        if (intersections.length > 0) {
+
+            const pathDirection = this.pathAnchor.getDirectionRegardingCircle(this.arcCircle);
+
+            const innerCircleIntersection = RadialUtils.getClosestShapeToPoint(intersections, this.pathAnchor.anchorPoint)!;
+
+            const radOfPathAnchor = RadialUtils.radOfPoint(this.pathAnchor.anchorPoint, this.arcCircle.center);
+            const radOfNodeIntersection = RadialUtils.radOfPoint(this.nodeIntersection, this.arcCircle.center);
+            const radOfInnerCircleIntersection = RadialUtils.radOfPoint(innerCircleIntersection, this.arcCircle.center);
+
+            const forwardRadPathToNode = RadialUtils.forwardRadBetweenAngles(radOfPathAnchor, radOfNodeIntersection);
+            const forwardRadPathToInnerCircle = RadialUtils.forwardRadBetweenAngles(radOfPathAnchor, radOfInnerCircleIntersection);
+
+            // If the inner circle intersection is further away than the node intersection, the connection is valid
+
+            if (this.direction == "nodeToPath") {
+                if (pathDirection == "counter-clockwise") {
+                    return RadialUtils.forwardRadBetweenAngles(radOfPathAnchor, radOfInnerCircleIntersection) > RadialUtils.forwardRadBetweenAngles(radOfPathAnchor, radOfNodeIntersection);
+                } else {
+                    return RadialUtils.forwardRadBetweenAngles(radOfInnerCircleIntersection, radOfPathAnchor) > RadialUtils.forwardRadBetweenAngles(radOfNodeIntersection, radOfPathAnchor);
+                }
+
+                // if ((pathDirection == "clockwise" && forwardRadPathToInnerCircle > forwardRadPathToNode) ||
+                //     (pathDirection == "counter-clockwise" && forwardRadPathToInnerCircle < forwardRadPathToNode)
+                // ) {
+                //     return true;
+                // }
+            } else {
+                if (pathDirection == "counter-clockwise") {
+                    return RadialUtils.forwardRadBetweenAngles(radOfInnerCircleIntersection, radOfPathAnchor) > RadialUtils.forwardRadBetweenAngles(radOfNodeIntersection, radOfPathAnchor);
+                } else {
+                    return RadialUtils.forwardRadBetweenAngles(radOfPathAnchor, radOfInnerCircleIntersection) > RadialUtils.forwardRadBetweenAngles(radOfPathAnchor, radOfNodeIntersection);
+                }
+            }
 
 
 
+            return false;
+        }
+        return true;
+
+        // This checks, if the arc is at the outer valid range of the node
+        // However, this would be wrong, as direct circular connections already arrive at an invalid range
+        // const intersections = this.arcCircle.intersect(node.outerCircle);
+        // const nodeIntersection = RadialUtils.getClosestShapeToPoint(intersections, this.pathAnchor.anchorPoint);
+
+        // if (!nodeIntersection) return true;
+
+        // return node.outerContinuum.pointIsInside(nodeIntersection);
+    }
+
+
+    override getPath(): PathSegment | undefined {
+        // In the best case, we can connect the path to the node with a single circular arc
+
+        const isPathToNode = this.direction === "pathToNode";
+
+        if (this.arcCircle && this.nodeIntersection) {
+            const startPoint = isPathToNode ? this.pathAnchor.anchorPoint : this.nodeIntersection;
+            const endPoint = isPathToNode ? this.nodeIntersection : this.pathAnchor.anchorPoint;
+
+            const segment = new EllipticArc(this.connection,
+                startPoint,
+                endPoint,
+                this.arcCircle.r,
+                this.arcCircle.r
+            ).direction("clockwise");
+
+            // Check if the anchor is correctly oriented
+            const segmentAnchor = isPathToNode ? segment.startAnchor : segment.endAnchor;
+            if (!this.pathAnchor.isSimilarTo(segmentAnchor)) {
+                (segment as EllipticArc).direction("counter-clockwise");
+            }
+
+            return segment;
+        }
+
+        return undefined;
+    }
+}
+
+export class SmoothSplineConnectionMethod extends FlexConnectionMethod {
+
+    vectorForNode: Vector;
+
+    constructor(connection: LayoutConnection, node: FlexNode, pathAnchor: Anchor, constrainingNodes: FlexNode[], direction: FlexConnectionDirection) {
+        super(connection, node, pathAnchor, constrainingNodes, direction);
+
+        // const vectorForNode = new Vector(node.center, pathAnchor.anchorPoint);
+
+        this.vectorForNode = node.outerContinuum.getValidVectorTowardsDirection(pathAnchor.anchorPoint)
+
+    }
+
+    override isValidForNode(node: FlexNode): boolean {
+
+        // TODO: this has to be improved
+        // At the moment, it just checks, whether the control points of the bezier are outside
+
+
+        return true;
+
+
+
+        // const vectorNodeToPathAnchor = new Vector(node.center, pathAnchor.anchorPoint);
+
+        // if (continuum.radIsInside(vectorNodeToPathAnchor.slope)) {
+        //     const nodeAnchor = new Anchor(node.center, vectorNodeToPathAnchor).move(node.outerRadius);
+        //     segment = isPathToNode ?
+        //         new SmoothSplineSegment(this.connection, pathAnchor, nodeAnchor.cloneReversed()) :
+        //         new SmoothSplineSegment(this.connection, nodeAnchor, pathAnchor);
+        // }
+
+    }
+
+    override getPath(): PathSegment | undefined {
+        const isPathToNode = this.direction === "pathToNode";
+        const anchor = this.node.outerContinuum.getValidAnchorTowardsDirection(this.pathAnchor.anchorPoint);
+
+        const segment = isPathToNode ?
+            new SmoothSplineSegment(this.connection, this.pathAnchor, anchor.cloneReversed()) :
+            new SmoothSplineSegment(this.connection, anchor, this.pathAnchor);
+        return segment;
+    }
+}
+
+
+export class FlexPath1 extends CombinedPathSegment {
+
+
+    static candidates = [
+        DirectCircularArcConnectionMethod,
+        SmoothSplineConnectionMethod,
+        // CircleSegmentConnectionMethod
+    ]
+
+    nodePath: FlexNode[] = [];
+
+    pathAnchor: Anchor;
+
+    direction: FlexConnectionDirection;
+
+    constructor(connection: LayoutConnection, nodePath: FlexNode[], pathAnchor: Anchor, direction: FlexConnectionDirection) {
+        super(connection);
+        this.nodePath = nodePath;
+        this.pathAnchor = pathAnchor;
+        this.direction = direction;
+    }
+
+    // The other anchor (thus, not the given path anchor), if existing
+    get nodeAnchor(): Anchor | undefined {
+        if (this.direction == "pathToNode") {
+
+            if (this.nodePath.length > 0) {
+                const lastSegment = this.segments[this.segments.length - 1];
+                return lastSegment.endAnchor;
+            }
+            return undefined;
+        } else {
+
+            if (this.nodePath.length > 0) {
+                const firstSegment = this.segments[0];
+                return firstSegment.startAnchor;
+            }
+            return undefined;
+        }
+    }
+
+    layoutFlexConnection() {
+
+
+        // Order to try connection segments:
+        // - Direct circle arc
+        // - Smooth spline
+        // - Circle segment
+
+        // Connection order (from path to target node):
+        // - path -> node --> check if from node to path every subnode allows the connection
+        // If not valid, take the highest node that allows the connection. Connect the rest with connection candidates recursively
+        // If no connection is possible, take the next candidate
+
+
+        /**
+        Connect process:
+
+        Path (from node n to path segment p):
+            Note: p is the anchor, so from p we shorten the path in the next steps
+        [n] -> [] -> [] -> [] -> [p]
+
+        First, check for all possible connection candidates
+        [n] -> [] -> [] -> [] -> [p] with DirectCircularArc
+        [n] -> [] -> [] -> [] -> [p] with SmoothSpline
+        [n] -> [] -> [] -> [] -> [p] with CircleSegment
+
+        If there is a valid path, store it and finish
+
+        If not:
+        1. Shorten)
+        [n] -> p_from_other_part || [] -> [] -> [] -> [p] --> recursively apply connect process to both parts
+            First the part containing p is checked, if valid the resulting anchor is passed to the part containing n
+            If valid, store it and finish both flex paths as parts and finish
+
+        2. Shorten)
+        [n] -> [] -> p_from_other_part || [] -> [] -> [p] --> recursively apply connect process to both parts, like above
+            If valid, store it and finish both flex paths as parts and finish
+
+        3. Shorten)
+        [n] -> [] -> [] -> p_from_other_part || [] -> [p] --> recursively apply connect process to both parts, like above
+            If valid, store it and finish both flex paths as parts and finish
+
+        4. Shorten)
+        [n] -> [] -> [] -> [] -> p_from_other_part || [p] --> recursively apply connect process to both parts, like above
+            If valid, store it and finish both flex paths as parts and finish
+
+        If this is not possible, there is an error. The last candidate should always be a valid path
+
+         */
+
+
+        let debug = false;
+        if (this.connection.source.id == "equalizer" && this.connection.target.id == "facialexpressionmanager_node") {
+            debug = true;
+            // console.log("[INVALID]", this);
+
+            // const c1 = this.arcCircle!.clone();
+            // const c2 = node.layoutNode.innerCircle.clone();
+
+            // c1._data = { stroke: "blue" };
+            // c2._data = { stroke: "green" };
+
+            // this.connection.debugShapes.push(c1);
+            // this.connection.debugShapes.push(c2);
+        }
+
+
+        // Check for each candidate, if it is a valid path
+        for (let ci = 0; ci < FlexPath1.candidates.length; ci++) {
+            const candidateCls = FlexPath1.candidates[ci];
+
+            if (debug) console.log("Try candidate", candidateCls.name, this.nodePath.map(n => n.id).join(" -> "), this);
+
+            const node = this.direction === "nodeToPath" ? this.nodePath[0] : this.nodePath[this.nodePath.length - 1];
+
+            const candidate = new candidateCls(this.connection, node, this.pathAnchor, this.nodePath, this.direction);
+            if (candidate.isValidPath()) {
+                // Save the found path
+                this.segments = [candidate.getPath()!];
+
+
+                // Finish
+                if (debug) console.log("Valid path found with candidate", candidateCls.name);
+                return true;
+            }
+        }
+
+        // if !foundYet, shorten the path and try again recursively
+        const totalPathLength = this.nodePath.length;
+        for (let i = 1; i < totalPathLength; i++) {
+            const currentPathLength = this.nodePath.length - i;
+            const restPathLength = i;
+
+            const { shortenedPath, shortenedRestPath } = this.getShortenedPath(i);
+
+            const shortenedFlexPath = this.createFlexPath(shortenedPath);
+            const success = shortenedFlexPath.layoutFlexConnection();
+
+            if (success) {
+
+                const shortenedRestFlexPath = this.createFlexPath(shortenedRestPath, shortenedFlexPath.nodeAnchor);
+                const success = shortenedRestFlexPath.layoutFlexConnection();
+
+                if (success) {
+                    // Save the found path
+                    this.segments = [shortenedFlexPath, shortenedRestFlexPath];
+                    return true;
+                }
+
+            }
+        }
+        if (debug) console.log("No valid path found");
+        return false;
+    }
+
+    createFlexPath(nodePath: FlexNode[], pathAnchor: Anchor = this.pathAnchor) {
+        const path = new FlexPath1(this.connection, nodePath, pathAnchor, this.direction);
+        return path;
+    }
+
+
+    getShortenedPath(shortenCount: number) {
+
+        // [p] -> [] -> [] shortened by 1 ==>
+        // [p] -> [] || []
+        if (this.direction === "pathToNode") {
+            const shortenedPath = this.nodePath.slice(0, this.nodePath.length - shortenCount);
+            const shortenedRestPath = this.nodePath.slice(this.nodePath.length - shortenCount);
+            return { shortenedPath, shortenedRestPath };
+        }
+        // [] -> [] -> [p] shortened by 1 ==>
+        // [] || [] -> [p]
+        else {
+
+            const index = shortenCount;
+            const shortenedPath = this.nodePath.slice(-index);
+            const shortenedRestPath = this.nodePath.slice(0, this.nodePath.length - index);
+            return { shortenedPath, shortenedRestPath };
+        }
+
+    }
+
+
+}
 
 
 

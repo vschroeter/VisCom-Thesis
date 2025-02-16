@@ -316,6 +316,15 @@ export class RadialUtils extends ShapeUtil {
 
         // From https://de.wikipedia.org/wiki/Kreistangente#Konstruktion_der_inneren_Tangenten
 
+        if (circle1.intersect(circle2).length == 2) {
+            return [];
+        } else if (circle1.intersect(circle2).length == 1) {
+            // If the circles are touching, there is only one tangent at the touching point
+            // TODO: Implement this case
+            return [];
+        }
+
+
         const c_P = circle1;
         const c_Q = circle2;
 

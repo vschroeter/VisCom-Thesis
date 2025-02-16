@@ -3,11 +3,12 @@ import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { FlexConnection, FlexConnectionType, FlexPath } from "./flexConnection";
 import { FlexConnectionLayouter } from "./flexLayouter";
 import { Anchor } from "src/graph/graphical";
-import { Vector } from "2d-geometry";
+import { Point, Vector } from "2d-geometry";
 import { RadialUtils } from "../../utils/radialUtils";
 
 
 export class FlexContinuum {
+
     type: "inside" | "outside";
     node: FlexNode;
     range: [number, number];
@@ -137,8 +138,25 @@ export class FlexContinuum {
     }
 
 
-    isInside(rad: number): boolean {
+    radIsInside(rad: number): boolean {
         return RadialUtils.radIsBetween(rad, this.range[0], this.range[1]);
+    }
+
+    pointIsInside(point: Point): boolean {
+        const radOfPoint = RadialUtils.radOfPoint(point, this.node.layoutNode.center);
+        return this.radIsInside(radOfPoint);
+    }
+
+    getValidVectorTowardsDirection(anchorPoint: Point) {
+        const rad = RadialUtils.radOfPoint(anchorPoint, this.node.layoutNode.center);
+        const adaptedRad = RadialUtils.putRadBetween(rad, this.range[0], this.range[1]);
+
+        return new Vector(adaptedRad);
+    }
+
+    getValidAnchorTowardsDirection(anchorPoint: Point): Anchor {
+        const vector = this.getValidVectorTowardsDirection(anchorPoint);
+        return new Anchor(this.node.layoutNode.center, vector).move(this.node.layoutNode.outerRadius);
     }
 
 }
@@ -147,6 +165,10 @@ export class FlexContinuum {
 export class FlexNode {
 
     layoutNode: LayoutNode;
+
+    get center() {
+        return this.layoutNode.center;
+    }
 
     connections: FlexConnection[] = [];
 
@@ -159,6 +181,10 @@ export class FlexNode {
     outerContinuum: FlexContinuum;
 
     mapTargetNodeToPath: Map<FlexNode, FlexPath> = new Map();
+
+    get outerCircle() {
+        return this.layoutNode.outerCircle;
+    }
 
     getPathTo(targetFlexNode: FlexNode): FlexPath | undefined {
         return this.mapTargetNodeToPath.get(targetFlexNode);

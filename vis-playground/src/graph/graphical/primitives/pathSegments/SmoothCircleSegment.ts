@@ -119,10 +119,15 @@ export class SmoothCircleSegment extends PathSegment {
             });
 
             if (!tangent) {
-                console.error("No tangent found");
+                console.error("No tangent found", this.connection.id, this);
+
+                // this.connection.debugShapes.push(connectingStartCircle.circle);
+                // this.connection.debugShapes.push(connectingEndCircle.circle);
+                // this.connection.debugShapes.push(circleSegment);
+
                 return {
                     segments: [],
-                    length: 0
+                    length: Number.MAX_VALUE
                 }
             }
 
