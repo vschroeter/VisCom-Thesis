@@ -16,13 +16,13 @@ export type TopologicalGeneration = {
 export class CommFlowSorter extends Sorter {
 
     clusterer: Clusterer
-    topoligical: WeightedTopologicalSorter
+    topological: WeightedTopologicalSorter
 
     constructor(visGraph: VisGraph, commonSettings: CommonSettings) {
         super(visGraph, commonSettings);
 
         this.clusterer = new Clusterer(visGraph);
-        this.topoligical = new WeightedTopologicalSorter(visGraph, commonSettings);
+        this.topological = new WeightedTopologicalSorter(visGraph, commonSettings);
     }
 
     protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
@@ -32,9 +32,9 @@ export class CommFlowSorter extends Sorter {
         Normal flow sorting was based on topological generations, which are based on parent-child & sibling relationships.
         The following problems arise:
         A) In broadcast graphs (with a lot of low weighted connections between a lot of nodes):
-        - Broadcaster (or gatherer) nodes would have the heighest source score, therefore they would be the first to be sorted and afterwards obscure the actual sorting 
+        - Broadcaster (or gatherer) nodes would have the heighest source score, therefore they would be the first to be sorted and afterwards obscure the actual sorting
         - Broadcast topics between node groups would obscure the actual sorting
-    
+
         B) In graphs with weights:
             - The weight of the connections would not be considered in the sorting at all
 
@@ -48,7 +48,7 @@ export class CommFlowSorter extends Sorter {
         2.0. From S, visit nodes in a Dijkstra-like manner, based on the distances of the backward connections.
         2.1. Store the negativ backward score (the visit index) for each node
 
-        If there are now still unvisited nodes (so nodes, that are neither directly reachable from S nor can reach S directly), 
+        If there are now still unvisited nodes (so nodes, that are neither directly reachable from S nor can reach S directly),
 
 
          */
@@ -61,14 +61,14 @@ export class CommFlowSorter extends Sorter {
 
         const nodeIdsToInclude = new Set(nodes.map(node => node.id))
 
-        this.topoligical.startNodeSelectionSorter = this.startNodeSelectionSorter
-        this.topoligical.secondarySorting = this.secondarySorting
+        this.topological.startNodeSelectionSorter = this.startNodeSelectionSorter
+        this.topological.secondarySorting = this.secondarySorting
 
         // const topoGens = this.topoligicalSorter.getTopologicalGenerations(nodes[0], undefined, nodes);
 
-        const topoGens = this.topoligical.getWeightedTopologicalGenerations(nodes)
-        
-        const mapNodeToParentsCycleFree = this.topoligical.getCycleFreeParentMap(nodes);
+        const topoGens = this.topological.getWeightedTopologicalGenerations(nodes)
+
+        const mapNodeToParentsCycleFree = this.topological.getCycleFreeParentMap(nodes);
 
         // Create the childMap based on the parentMap
         const mapNodeToChildrenCycleFree = new Map<LayoutNode, Map<LayoutNode, number>>()
@@ -82,11 +82,10 @@ export class CommFlowSorter extends Sorter {
             })
         })
 
-        const successorsOfNode = (node: LayoutNode) => {            
+        const successorsOfNode = (node: LayoutNode) => {
             if (!mapNodeToChildrenCycleFree.has(node)) return []
 
             const childrenAndWeights = mapNodeToChildrenCycleFree.get(node)!
-            // return Array.from(childrenAndWeights).sort((a, b) => b[1] - a[1]).filter(item => item[1] > 0.25).map(item => item[0])
             return Array.from(childrenAndWeights).sort((a, b) => b[1] - a[1]).map(item => item[0])
         }
 
@@ -94,7 +93,6 @@ export class CommFlowSorter extends Sorter {
             if (!mapNodeToParentsCycleFree.has(node)) return []
 
             const parentsAndWeights = mapNodeToParentsCycleFree.get(node)!
-            // return Array.from(parentsAndWeights).sort((a, b) => b[1] - a[1]).filter(item => item[1] > 0.25).map(item => item[0])
             return Array.from(parentsAndWeights).sort((a, b) => b[1] - a[1]).map(item => item[0])
         }
 
@@ -152,14 +150,15 @@ export class CommFlowSorter extends Sorter {
             // const sortedChildren = Array.from(children).sort((a, b) => b.score - a.score)
 
             // // Sort the children by the number of successors they have, descending
-            const childrensSuccessorCount = children.map(child => {
+            const childrensSuccessors = children.map(child => {
                 return {
                     node: child,
-                    successorCount: successorsOfNode(child).length
+                    successorCount: successorsOfNode(child).length,
+                    successorScore: successorsOfNode(child).reduce((acc, child) => acc + child.score, 0)
                 }
             })
-            // const sortedChildren = childrensSuccessorCount.sort((a, b) => a.successorCount - b.successorCount).map(item => item.node)
-            const sortedChildren = childrensSuccessorCount.sort((a, b) => b.successorCount - a.successorCount).map(item => item.node)
+            // const sortedChildren = childrensSuccessorCount.sort((a, b) => b.successorCount - a.successorCount).map(item => item.node)
+            const sortedChildren = childrensSuccessors.sort((a, b) => b.successorScore - a.successorScore).map(item => item.node)
 
             // Visit each child
             sortedChildren.forEach(child => {
@@ -172,7 +171,7 @@ export class CommFlowSorter extends Sorter {
             })
         }
 
-        // We don't want to visit nodes from different connected components at the same time, 
+        // We don't want to visit nodes from different connected components at the same time,
         // so we do the visiting for each connected component separately, starting with the smallest one
 
         // Get the connected components
@@ -180,7 +179,7 @@ export class CommFlowSorter extends Sorter {
 
         // Visit each connected component
         connectedComponents.forEach(component => {
-            const topoSorting = this.topoligical.getSorting(component)
+            const topoSorting = this.topological.getSorting(component)
 
             const alreadySortedCount = sorted.length
 

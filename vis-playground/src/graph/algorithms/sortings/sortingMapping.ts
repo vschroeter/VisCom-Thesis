@@ -1,6 +1,6 @@
 import { CommFlowSorter } from "./commFlow";
 import { FlowSorter } from "./flow";
-import { BreadthFirstSorter, ChildrenCountSorter, DegreeSorter, DepthFirstSorter, IdSorter, RandomSorter } from "./simple";
+import { BreadthFirstSorter, ChildrenCountSorter, DegreeSorter, DepthFirstSorter, IdSorter, NodeScoreSorter, RandomSorter } from "./simple";
 import { Sorter } from "./sorting";
 import { DifferenceSourceScoreSorter, WeightedSourceScoreSorter } from "./sourceScore";
 import { TopologicalSorter } from "./topological";
@@ -71,6 +71,13 @@ export const sortingMethods: SortingMapping[] = [
         hasStartNodeSelection: true,
         hasSecondarySorting: false,
         sorter: DepthFirstSorter
+    },
+    {
+        key: "nodeScore",
+        label: "Node Score",
+        canBeUsedAsSecondarySorting: true,
+        hasSecondarySorting: false,
+        sorter: NodeScoreSorter
     },
     {
         key: "sourceScoreWeighted",

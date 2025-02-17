@@ -9,24 +9,30 @@ export class RandomSorter extends Sorter {
 }
 
 export class IdSorter extends Sorter {
-    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {        
-        return nodes.sort((a, b) => a.id.localeCompare(b.id));        
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
+        return nodes.sort((a, b) => a.id.localeCompare(b.id));
     }
 }
 
 
 export class DegreeSorter extends Sorter {
-    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {        
-        return nodes.sort((a, b) => a.degree - b.degree).reverse();      
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
+        return nodes.sort((a, b) => a.degree - b.degree).reverse();
     }
 }
 
 export class ChildrenCountSorter extends Sorter {
-    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {        
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
         return nodes.sort((a, b) => a.getSuccessors().length - b.getSuccessors().length).reverse();
     }
 }
 
+
+export class NodeScoreSorter extends Sorter {
+    protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
+        return nodes.sort((a, b) => a.score - b.score).reverse();
+    }
+}
 
 
 export class BreadthFirstSorter extends Sorter {
@@ -37,6 +43,8 @@ export class BreadthFirstSorter extends Sorter {
         }
         const visited = new Set<LayoutNode>();
         const sorted: LayoutNode[] = [];
+
+        const allowedNodes = new Set(nodes.map(n => n.id));
 
         while (nodes.length > 0) {
             const nextNode = nodes.shift()!;
@@ -49,14 +57,15 @@ export class BreadthFirstSorter extends Sorter {
 
             while (queue.length > 0) {
                 const node = queue.shift()!;
-                if (visited.has(node)) {
+                if (visited.has(node) || !allowedNodes.has(node.id)) {
                     continue;
                 }
                 visited.add(node);
                 sorted.push(node);
                 queue.push(...node.getSuccessors());
             }
-        }        
+        }
+
         return sorted;
     }
 }
@@ -70,8 +79,10 @@ export class DepthFirstSorter extends Sorter {
         const visited = new Set<LayoutNode>();
         const sorted: LayoutNode[] = [];
 
+        const allowedNodes = new Set(nodes.map(n => n.id));
+
         const visit = (node: LayoutNode) => {
-            if (visited.has(node)) {
+            if (visited.has(node) || !allowedNodes.has(node.id)) {
                 return;
             }
             visited.add(node);
