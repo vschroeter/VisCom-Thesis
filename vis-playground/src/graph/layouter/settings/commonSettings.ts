@@ -75,6 +75,14 @@ export class CommonSettings extends Setting {
         defaultValue: 0.25,
     })
 
+    hideNodeNames = new Param({
+        type: "boolean",
+        key: "hideNodeNames",
+        label: "Hide Node Names",
+        description: "Hide the names of the nodes",
+        optional: false,
+        defaultValue: false,
+    })
 
 
 }

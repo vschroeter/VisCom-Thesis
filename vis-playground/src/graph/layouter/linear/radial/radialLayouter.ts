@@ -36,6 +36,8 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
 
     rotateBasedOnConnections = false;
 
+    gapBetweenStartAndEnd = 0;
+
     constructor({
         nodeMarginFactor = 1, radiusMarginFactor = 1.1, adaptEnclosingCircle = true, rotateBasedOnConnections = false
     }: {
@@ -83,7 +85,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             continuumMap.set(key, continuumMap.get(key)! / max);
         })
 
-        const startAngleDeg = 180;
+        const startAngleDeg = -90;
         const startAngleRad = degToRad(startAngleDeg);
 
         // If there is only one node, place it at the center and set the radius to the node's radius

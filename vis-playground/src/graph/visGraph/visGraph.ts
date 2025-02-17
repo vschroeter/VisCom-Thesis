@@ -668,6 +668,15 @@ export class VisGraph {
             connection.updateStyleStroke(strokeWithoutAlpha, width);
         })
 
+        this.allGraphicalNodes.forEach(node => {
+            const hideNodeNames = this.commonSettings?.hideNodeNames.getValue() ?? false;
+            if (!hideNodeNames) {
+                node.updateLabelVisibility(node.layoutNode.showLabel);
+            } else {
+                node.updateLabelVisibility(false);
+            }
+        })
+
     }
 
     setEdgeVisibility({ hyperEdges = true, edgesIncludedInHyperEdges = true }) {

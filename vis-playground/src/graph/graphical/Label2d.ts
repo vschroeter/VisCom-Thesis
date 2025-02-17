@@ -18,12 +18,16 @@ export class Label2d extends SvgRenderable {
         return this._isVisible;
     }
     set isVisible(value: boolean) {
+        this._isVisible = value;
+
         if (!value) {
             this.elText?.text("");
             this.elBgText?.text("");
+        } else {
+            this.elText?.text(this._text);
+            this.elBgText?.text(this._text);
         }
 
-        this._isVisible = value;
 
         this.zOrder = 1500;
     }
@@ -102,11 +106,11 @@ export class Label2d extends SvgRenderable {
     _text: string = '';
 
     text(text: string) {
-        if (!this.isVisible) return this;
 
         if (text === this._text) return this;
-
         this._text = text;
+        if (!this.isVisible) return this;
+
         this.elText?.text(text);
         this.elBgText?.text(text);
 

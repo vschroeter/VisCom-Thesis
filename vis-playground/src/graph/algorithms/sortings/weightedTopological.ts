@@ -17,6 +17,12 @@ export class WeightedTopologicalSorter extends Sorter {
     clusterer: Clusterer
     topoligicalSorter: TopologicalSorter
 
+    /**
+     * If true, generations are optimized by putting nodes in the latest possible generation.
+     * E.g. a single parent node in Gen 0, having its only child in Gen 5, will be put in Gen 4.
+     */
+    optimizedGenerationGaps: boolean = true
+
     constructor(visGraph: VisGraph, commonSettings: CommonSettings) {
         super(visGraph, commonSettings);
 
@@ -32,6 +38,8 @@ export class WeightedTopologicalSorter extends Sorter {
         } else {
             nodes = this.visGraph.allLayoutNodes;
         }
+
+        const nodeIds = new Set(nodes.map(node => node.id))
 
         const mapNodeToItsAncestors = new Map<LayoutNode, Set<LayoutNode>>()
         const mapNodeToItsChildren = new Map<LayoutNode, Set<LayoutNode>>()
@@ -122,6 +130,7 @@ export class WeightedTopologicalSorter extends Sorter {
             if (!mapNodeToItsParents.has(node)) mapNodeToItsParents.set(node, new Map<LayoutNode, number>())
         });
 
+        console.log("ParentMap", mapNodeToItsParents, nodes)
         return mapNodeToItsParents
     }
 
@@ -139,9 +148,9 @@ export class WeightedTopologicalSorter extends Sorter {
 
         if (components.length == 0) return []
 
-        components.forEach(component => {            
+        components.forEach(component => {
             const mapNodeToItsParentsCycleFree = this.getCycleFreeParentMap(component, channels);
-            
+
             // From the parent map we can now create the generations
             const generationMap = new Map<LayoutNode, number>()
             const nonAssignedNodes = new Set<LayoutNode>(component)
@@ -149,7 +158,7 @@ export class WeightedTopologicalSorter extends Sorter {
 
             // Check the generation 0 nodes for each component,
             // otherwise there could be a deadlock between sibling nodes
-            components.forEach(singleComponent => {
+            // components.forEach(singleComponent => {
                 const addedNodes = [];
                 // To start we take every node that has no parents and so siblings and set the generation to 0
                 // singleComponent.forEach(node => {
@@ -162,7 +171,7 @@ export class WeightedTopologicalSorter extends Sorter {
                 // })
                 // If there are no gen0 nodes due to sibling structures, take all nodes, that have no parents
                 if (addedNodes.length == 0) {
-                    singleComponent.forEach(node => {
+                    component.forEach(node => {
                         if (!mapNodeToItsParentsCycleFree.has(node) || mapNodeToItsParentsCycleFree.get(node)!.size == 0) {
                             generationMap.set(node, 0)
                             gen0nodes.add(node)
@@ -170,7 +179,7 @@ export class WeightedTopologicalSorter extends Sorter {
                         }
                     })
                 }
-            });
+            // });
 
             while (nonAssignedNodes.size > 0) {
                 // Every other node gets the maximum generation of its parents increased by one
@@ -217,7 +226,13 @@ export class WeightedTopologicalSorter extends Sorter {
 
             const generationList = Array.from(generations.values()).sort((a, b) => a.generation - b.generation)
 
-            // We can now adapt the generation map by iterating over the assignment in reverse order and 
+            if (!this.optimizedGenerationGaps) {
+                // console.log("[UNADAPTED GENS]", generationList)
+                allGenerations.push(...generationList)
+                return
+            }
+
+            // We can now adapt the generation map by iterating over the assignment in reverse order and
             // increase every generation of parent nodes that don't have intermediately children.
             // Thus we have less distance between the nodes
 
@@ -280,10 +295,23 @@ export class WeightedTopologicalSorter extends Sorter {
 
         const generations = this.getWeightedTopologicalGenerations(nodes);
 
+
         const innerSorter = this.secondarySorting ?? new IdSorter(this.visGraph, this.commonSettings);
         const sortedNodes = generations.map(gen => innerSorter.getSorting(gen.nodes)).flat()
+
+
+        console.log("[GENS]", generations, sortedNodes)
+
         return sortedNodes
     }
+}
 
 
+
+export class WeightedTopologicalSorterUnadapted extends WeightedTopologicalSorter {
+
+    constructor(visGraph: VisGraph, commonSettings: CommonSettings) {
+        super(visGraph, commonSettings);
+        this.optimizedGenerationGaps = false
+    }
 }

@@ -4,7 +4,7 @@ import { BreadthFirstSorter, ChildrenCountSorter, DegreeSorter, DepthFirstSorter
 import { Sorter } from "./sorting";
 import { DifferenceSourceScoreSorter, WeightedSourceScoreSorter } from "./sourceScore";
 import { TopologicalSorter } from "./topological";
-import { WeightedTopologicalSorter } from "./weightedTopological";
+import { WeightedTopologicalSorter, WeightedTopologicalSorterUnadapted } from "./weightedTopological";
 
 type SortingMapping = {
     key: string,
@@ -12,7 +12,8 @@ type SortingMapping = {
     hasStartNodeSelection?: boolean,
     canBeUsedAsSecondarySorting?: boolean,
     hasSecondarySorting?: boolean,
-    sorter: typeof Sorter
+    sorter: (typeof Sorter)
+    // sorter: (typeof Sorter) | (() => Sorter)
 }
 
 export const sortingMethods: SortingMapping[] = [
@@ -43,6 +44,13 @@ export const sortingMethods: SortingMapping[] = [
         hasSecondarySorting: true,
         canBeUsedAsSecondarySorting: false,
         sorter: WeightedTopologicalSorter
+    },
+    {
+        key: "weightedTopologicalUnadapted",
+        label: "Weighted Topological Unadapted",
+        hasSecondarySorting: true,
+        canBeUsedAsSecondarySorting: false,
+        sorter: WeightedTopologicalSorterUnadapted
     },
     {
         key: "flowSorting",

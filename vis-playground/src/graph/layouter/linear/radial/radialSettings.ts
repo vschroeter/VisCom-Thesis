@@ -53,6 +53,15 @@ export class RadialLayoutingSettings extends Setting {
         defaultValue: true,
         type: "boolean",
     });
+
+    // gapBetweenStartAndEnd = new Param<number>({
+    //     key: "gapBetweenStartAndEnd",
+    //     label: "Gap between start and end",
+    //     description: "The gap between the start and end node in the radial layout.",
+    //     optional: false,
+    //     defaultValue: 0.1,
+    //     type: "number",
+    // });
 }
 
 

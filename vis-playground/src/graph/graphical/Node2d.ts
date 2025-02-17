@@ -29,7 +29,7 @@ export interface Node2dData {
 }
 
 // export class Node2d<T extends Node2dData = Node2dData> extends SvgRenderable { // <NodeData>
-export class Node2d extends SvgRenderable { // <NodeData>
+export class Node2d extends SvgRenderable {
 
     // Center of the node
     center: Point;
@@ -47,6 +47,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
     elVirtualMarker?: d3.Selection<SVGPathElement, unknown, null, undefined>;
 
     label?: Label2d;
+    labelVisible: boolean = true;
 
     // The id of the node
     get id() {
@@ -220,8 +221,10 @@ export class Node2d extends SvgRenderable { // <NodeData>
 
         this.elLabel = this.elLabel ?? this.addSubElement('g', 'node-label', undefined, 1500);
 
+        // console.log('Creating label', this.elLabel, this.layoutNode.showLabel);
         this.label = new Label2d(this.elLabel)
-        this.label!.isVisible = this.layoutNode.showLabel;
+        // this.label!.isVisible = this.layoutNode.showLabel;
+        this.label!.isVisible = this.labelVisible;
 
     }
 
@@ -233,6 +236,15 @@ export class Node2d extends SvgRenderable { // <NodeData>
         this.elGroup?.remove();
 
         this.elNode = this.elLabel = this.label = this.elVirtualMarker = this.elGroup = undefined;
+    }
+
+
+    updateLabelVisibility(visible: boolean) {
+        this.labelVisible = visible;
+        if (this.label) {
+            this.label.isVisible = visible;
+        }
+
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -272,6 +284,7 @@ export class Node2d extends SvgRenderable { // <NodeData>
                 }
                 this.label?.setHeight(textHeight)
             }
+
             this.label?.text(this.layoutNode.label ?? this.layoutNode.id);
         }
     }

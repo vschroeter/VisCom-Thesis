@@ -30,7 +30,7 @@ export class ChildrenCountSorter extends Sorter {
 
 export class NodeScoreSorter extends Sorter {
     protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
-        return nodes.sort((a, b) => a.score - b.score).reverse();
+        return nodes.sort((a, b) => a.scoreIncludingChildren - b.scoreIncludingChildren).reverse();
     }
 }
 

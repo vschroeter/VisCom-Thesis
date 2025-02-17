@@ -194,6 +194,7 @@ const isSelected = computed(() => {
 ///++++ Bounding box of the main svg ++++//
 
 const bBox = ref<DOMRect | null>(null)
+const rawBbox = ref<DOMRect | null>(null)
 
 const viewBox = computed(() => {
     if (bBox.value === null) {
@@ -310,6 +311,7 @@ function layoutUpdated() {
     updateBbox();
 }
 
+
 function updateBbox(reset = false) {
 
     if (reset) {
@@ -317,6 +319,7 @@ function updateBbox(reset = false) {
     }
 
     const newBBox = refGRoot.value?.getBBox() ?? null
+    rawBbox.value = newBBox;
 
     if (!bBox.value) {
         if (newBBox) {
@@ -482,20 +485,37 @@ async function download() {
 
 async function downloadPDF() {
     const svg = refSVG.value;
-    if (!svg || !bBox.value) {
+    const svgGroup = refGRoot.value;
+    if (!svgGroup || !rawBbox.value) {
         console.error("No SVG found");
         return;
     }
 
-    const x = 0
-    const y = 0
-    const width = bBox.value?.width ?? 0
-    const height = bBox.value?.height ?? 0
+    const x = -(rawBbox.value?.x ?? 0);
+    const y = -(rawBbox.value?.y ?? 0);
+    const width = rawBbox.value?.width ?? 0;
+    const height = rawBbox.value?.height ?? 0;
+
+    const marginFactor = 1.0;
+
+    const adaptedWidth = width / marginFactor;
+    const adaptedHeight = height / marginFactor;
+
+    const adaptedX = x - (width - adaptedWidth) / 2;
+    const adaptedY = y - (height - adaptedHeight) / 2;
 
     const doc = new jsPDF({
-        format: [width, height],
+        unit: 'px',
+        // format: [width, height],
+        format: [adaptedWidth, adaptedHeight],
         orientation: width > height ? 'l' : 'p',
     })
+
+    // doc.circle(0, 0, 10, 'S');
+    // doc.circle(width, height, 10, 'S');
+    // doc.circle(x + width, y, 10, 'S');
+    // doc.circle(x, y + height, 10, 'S');
+    // doc.circle(x + width, y + height, 10, 'S');
 
     // add the font to jsPDF
     doc.addFileToVFS("Nunito.ttf", NunitoFontNormal);
@@ -509,15 +529,25 @@ async function downloadPDF() {
     const fileName = graphName + "_" + settingsType + "_" + layouter?.visGraph.allLeafLayoutNodes.length + "_nodes" + ".pdf";
 
     // svg2pdf adds the method to PDFDocument, but its not in the types
-    doc.svg(svg, {
-        x,
-        y,
-        width,
-        height,
+    doc.svg(svgGroup, {
+        x: adaptedX,
+        y: adaptedY,
+        width: adaptedWidth,
+        height: adaptedHeight,
         loadExternalStyleSheets: true,
     }).then(() => {
         doc.save(fileName)
     })
+    // svg2pdf adds the method to PDFDocument, but its not in the types
+    // doc.svg(svgGroup, {
+    //     x: adaptedX,
+    //     y: adaptedY,
+    //     width,
+    //     height,
+    //     loadExternalStyleSheets: true,
+    // }).then(() => {
+    //     doc.save(fileName)
+    // })
 }
 
 </script>

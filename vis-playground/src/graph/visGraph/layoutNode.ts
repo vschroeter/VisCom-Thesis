@@ -455,6 +455,10 @@ export class LayoutNode {
     // The score of the node (e.g. for ranking the significance of nodes)
     score: number = 0;
 
+    get scoreIncludingChildren(): number {
+        return this.children.reduce((acc, child) => acc + child.scoreIncludingChildren, this.score);
+    }
+
     get inDegree(): number {
         return this.inConnections.length;
     }
@@ -889,7 +893,7 @@ export class LayoutNode {
         if (this.children.length == 0) return;
 
         const _sorter = this.getInstance(sorterOverride ?? this.sorter);
-        if (!_sorter) {
+        if (_sorter == undefined) {
             return;
         }
 

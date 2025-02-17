@@ -81,6 +81,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         }));
 
         const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
+        // console.log("Sorter", sorter);
         // const sorter = new IdSorter(this.visGraph, this.commonSettings);
         this.visGraph.setSorter(sorter);
 
