@@ -36,6 +36,9 @@
                             <circle cx="0" cy="0" r="10" fill="red" /> -->
                             <g ref="refGRoot">
                             </g>
+
+                            <!-- <rect :x="rawBbox?.x" :y="rawBbox?.y" :width="rawBbox?.width" :height="rawBbox?.height"
+                                fill="none" stroke="red" stroke-width="1" /> -->
                         </g>
 
                     </svg>
@@ -486,10 +489,14 @@ async function download() {
 async function downloadPDF() {
     const svg = refSVG.value;
     const svgGroup = refGRoot.value;
+    rawBbox.value = refGRoot.value?.getBBox() ?? null;
+
     if (!svgGroup || !rawBbox.value) {
         console.error("No SVG found");
         return;
     }
+
+
 
     const x = -(rawBbox.value?.x ?? 0);
     const y = -(rawBbox.value?.y ?? 0);
@@ -511,6 +518,7 @@ async function downloadPDF() {
         orientation: width > height ? 'l' : 'p',
     })
 
+    // doc.rect(1, 1, adaptedWidth - 2, adaptedHeight - 2, 'S');
     // doc.circle(0, 0, 10, 'S');
     // doc.circle(width, height, 10, 'S');
     // doc.circle(x + width, y, 10, 'S');
