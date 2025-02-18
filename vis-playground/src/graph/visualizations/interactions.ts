@@ -93,7 +93,7 @@ export class UserInteractions {
 
         });
 
-        console.log("Hovered nodes", this.hoveredNodeIds)
+        console.log("Hovered nodes", (Array.from(this.hoveredNodeIds)).map(id => this.visGraph.getNode(id)))
         this.emitter.emit("update")
     }
 

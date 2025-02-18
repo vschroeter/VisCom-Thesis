@@ -16,6 +16,8 @@ import { Renderer } from "./renderer/renderer";
 export type LayoutNodeOrId = LayoutNode | string;
 
 export class NodeScoring {
+
+    range: [number, number] = [0, 1];
     extent: [number, number] = [0, 0];
     colorScheme: (t: number) => string = d3.interpolateRdYlGn;
 
@@ -24,8 +26,85 @@ export class NodeScoring {
             return "red";
         }
 
-        const scale = d3.scaleLinear().domain(this.extent).range([0, 1]);
+        const scale = d3.scaleLinear().domain(this.extent).range(this.range);
         return this.colorScheme(scale(value));
+    }
+
+    setColorScheme(scheme: string) {
+        this.range = [0, 1];
+
+        const rangeForSimpleColors: [number, number] = [0.3, 1];
+        const rangeForMultiColors: [number, number] = [0.2, 1];
+
+        switch (scheme.toLowerCase()) {
+            case "blue":
+                this.range = rangeForSimpleColors;
+                this.colorScheme = d3.interpolateBlues;
+                break;
+            case "green":
+                this.range = rangeForSimpleColors;
+                this.colorScheme = d3.interpolateGreens;
+                break;
+            case "orange":
+                this.range = rangeForSimpleColors;
+                this.colorScheme = d3.interpolateOranges;
+                break;
+            case "red":
+                this.range = rangeForSimpleColors;
+                this.colorScheme = d3.interpolateReds;
+                break;
+            case "purple":
+                this.range = rangeForSimpleColors;
+                this.colorScheme = d3.interpolatePurples;
+                break;
+            case "turbo":
+                this.colorScheme = d3.interpolateTurbo;
+                break;
+            case "viridis":
+                this.colorScheme = d3.interpolateViridis;
+                break;
+            case "inferno":
+                this.colorScheme = d3.interpolateInferno;
+                break;
+            case "magma":
+                this.colorScheme = d3.interpolateMagma;
+                break;
+            case "plasma":
+                this.colorScheme = d3.interpolatePlasma;
+                break;
+            case "cividis":
+                this.colorScheme = d3.interpolateCividis;
+                break;
+            case "warm":
+                this.colorScheme = d3.interpolateWarm;
+                break;
+            case "cool":
+                this.colorScheme = d3.interpolateCool;
+                break;
+            case "orange-red":
+                this.range = rangeForMultiColors;
+                this.colorScheme = d3.interpolateOrRd;
+                break;
+            case "yellow-green-blue":
+                this.range = rangeForMultiColors;
+                this.colorScheme = d3.interpolateYlGnBu;
+                break;
+            case "yellow-green":
+                this.range = rangeForMultiColors;
+                this.colorScheme = d3.interpolateYlGn;
+                break;
+            case "yellow-orange-red":
+                this.range = rangeForMultiColors;
+                this.colorScheme = d3.interpolateYlOrRd;
+                break;
+            case "red-yellow-green":
+                this.colorScheme = d3.interpolateRdYlGn;
+                break;
+            default:
+                // Default scheme if unknown
+                this.colorScheme = d3.interpolateRdYlGn;
+                break;
+        }
     }
 
     calculateExtent(nodes: LayoutNode[]) {
@@ -35,6 +114,7 @@ export class NodeScoring {
     isExtentValid() {
         return this.extent[0] !== this.extent[1] && Math.abs(this.extent[0]) !== Infinity && Math.abs(this.extent[1]) !== Infinity;
     }
+
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -539,6 +619,7 @@ export class VisGraph {
         // Get the node score extent
         const scoring = new NodeScoring();
         scoring.calculateExtent(this.allLayoutNodes)
+        scoring.setColorScheme(this.commonSettings?.nodeScoreColorScheme.getValue() ?? "red-yellow-green");
         const validScores = scoring.isExtentValid();
 
         // Set the score colors of the nodes

@@ -20,14 +20,14 @@
         </template>
     </q-input>
 
-    
+
     <!-- If the param is of type 'choice', add a select input -->
-    <q-select v-else-if="param.type == 'choice'" v-model="param.textValue"
+    <q-select v-else-if="param.type == 'choice'" v-model="param.textValue" :label="param.label"
     :options="param.choices" />
-    
+
     <!-- If the param is of type 'number', add a number input -->
     <q-input v-else-if="param.type == 'number'" v-model="param.textValue" type="number" :label="param.label" :hint="param.description"/>
-    
+
     <!-- If the param is of type 'string', add a text input -->
     <q-input v-else v-model="param.textValue" :label="param.label" :hint="param.description"/>
 

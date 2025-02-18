@@ -1,4 +1,4 @@
-import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param } from "./settings";
+import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, ParamChoice } from "./settings";
 
 
 export class CommonSettings extends Setting {
@@ -83,6 +83,36 @@ export class CommonSettings extends Setting {
         optional: false,
         defaultValue: false,
     })
+
+    nodeScoreColorScheme = new ParamChoice({
+        choices: [
+            "warm",
+            "cool",
+            "blue",
+            "green",
+            "orange",
+            "red",
+            "purple",
+            "orange-red",
+            "yellow-green-blue",
+            "yellow-green",
+            "yellow-orange-red",
+            "turbo",
+            "viridis",
+            "inferno",
+            "magma",
+            "plasma",
+            "cividis",
+            "red-yellow-green",
+        ],
+        key: "nodeScoreColorScheme",
+        label: "Node Score Color Scheme",
+        description: "The color scheme for node scores",
+        optional: false,
+        defaultValue: "blue",
+    })
+
+
 
 
 }
