@@ -84,6 +84,15 @@ export class CommonSettings extends Setting {
         defaultValue: false,
     })
 
+    showHyperNodeEdges = new Param<boolean>({
+        type: "boolean",
+        key: "showHyperNodeEdges",
+        label: "Show Hyper Node Edges",
+        description: "Show hyper node edges",
+        optional: false,
+        defaultValue: true,
+    })
+
     nodeScoreColorScheme = new ParamChoice({
         choices: [
             "warm",
@@ -111,6 +120,7 @@ export class CommonSettings extends Setting {
         optional: false,
         defaultValue: "blue",
     })
+
 
 
 

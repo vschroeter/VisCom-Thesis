@@ -395,10 +395,10 @@ onMounted(() => {
 
         const cls = layouterMapping[props.layoutType].layouter;
 
-        layouter?.renderer?.clear();
         bBox.value = null;
         layouter?.on('update', null);
         layouter?.on('end', null);
+        layouter?.renderer?.clear();
         if (layouter?.calculateMetrics) {
             metricsCollection.initMetrics(props.settingId, true);
             metricsCollection.clearMetrics(props.settingId);

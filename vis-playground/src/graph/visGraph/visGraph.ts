@@ -640,8 +640,17 @@ export class VisGraph {
         })
         const userInteractions = this.userInteractions;
 
+
+        const showHyperNodeEdges = this.commonSettings?.showHyperNodeEdges.getValue() ?? true;
+
         // Update the node stroke based on the communities
         this.allGraphicalNodes.forEach(node => {
+
+            if (node.layoutNode.isHyperNode) {
+                if (!showHyperNodeEdges) node.updateStyleStroke(undefined, undefined, 0);
+                else node.updateStyleStroke(undefined, undefined, 1);
+            }
+
 
             if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
                 if (userInteractions.isHovered(node)) {
