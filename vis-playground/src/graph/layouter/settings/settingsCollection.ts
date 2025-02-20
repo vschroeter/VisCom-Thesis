@@ -148,6 +148,14 @@ export class SettingsCollection {
         }
 
         const settings = layouter.settings.createSettings(layouter.settings, layouterType);
+
+        // Copy the last settings of that type
+        if (settingsList.length > 0) {
+            const lastSettings = settingsList[settingsList.length - 1];
+            settings.loadFromJson(lastSettings.getJson());
+        }
+
+
         settingsList.push(settings);
         this.mapIdToSettings.set(settings.id, settings);
 
