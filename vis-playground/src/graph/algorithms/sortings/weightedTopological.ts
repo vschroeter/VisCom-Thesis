@@ -130,7 +130,7 @@ export class WeightedTopologicalSorter extends Sorter {
             if (!mapNodeToItsParents.has(node)) mapNodeToItsParents.set(node, new Map<LayoutNode, number>())
         });
 
-        console.log("ParentMap", mapNodeToItsParents, nodes)
+        // console.log("ParentMap", mapNodeToItsParents, nodes)
         return mapNodeToItsParents
     }
 
@@ -300,7 +300,7 @@ export class WeightedTopologicalSorter extends Sorter {
         const sortedNodes = generations.map(gen => innerSorter.getSorting(gen.nodes)).flat()
 
 
-        console.log("[GENS]", generations, sortedNodes)
+        // console.log("[GENS]", generations, sortedNodes)
 
         return sortedNodes
     }

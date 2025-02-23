@@ -112,7 +112,8 @@ export class NodeScoring {
     }
 
     isExtentValid() {
-        return this.extent[0] !== this.extent[1] && Math.abs(this.extent[0]) !== Infinity && Math.abs(this.extent[1]) !== Infinity;
+        // return this.extent[0] !== this.extent[1] && Math.abs(this.extent[0]) !== Infinity && Math.abs(this.extent[1]) !== Infinity;
+        return Math.abs(this.extent[0]) !== Infinity && Math.abs(this.extent[1]) !== Infinity;
     }
 
 }

@@ -530,7 +530,7 @@ async function downloadPDF() {
     doc.addFont("Nunito.ttf", "Nunito", "normal");
     doc.setFont("Nunito");
 
-    console.log("Download PDF", width, height, NunitoFont);
+    // console.log("Download PDF", width, height, NunitoFont);
 
     const graphName = (settings.value?.name ?? "").length > 0 ? settings.value?.name : "Graph";
     const settingsType = settings.value?.type ?? "";

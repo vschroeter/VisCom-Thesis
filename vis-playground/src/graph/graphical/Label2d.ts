@@ -30,6 +30,8 @@ export class Label2d extends SvgRenderable {
 
 
         this.zOrder = 1500;
+
+        this.updateBBox();
     }
 
     x: number = 0;
