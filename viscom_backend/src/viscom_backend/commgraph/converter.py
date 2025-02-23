@@ -21,12 +21,6 @@ def convert_normal_graph_to_commgraph(graph: nx.MultiDiGraph) -> nx.MultiDiGraph
 
     return new_graph
 
-# def convert_multigraph_to_normal_graph(graph: nx.MultiDiGraph) -> nx.DiGraph:
-#     """This convert method removes the topics from the connections of a commgraph and creates a normal graph."""
-
-#     new_graph = nx.DiGraph()
-
-
 
 def convert_node_connections_graph_to_topic_graph(graph: nx.MultiDiGraph, directed=True, reversed=False) -> nx.DiGraph:
     """
@@ -144,3 +138,24 @@ def convert_to_weighted_graph(node_graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
     #         print("\t", edge, edge)
 
     return weighted_graph
+
+def convert_multigraph_to_normal_graph(graph: nx.MultiDiGraph) -> nx.DiGraph:
+    """This convert method removes the topics from the connections of a commgraph and creates a normal graph."""
+
+    weighted_graph = convert_to_weighted_graph(graph)
+
+    H = nx.DiGraph()
+    H.add_nodes_from(weighted_graph)
+    for u, v, wt in weighted_graph.edges(data='weight', default=1):
+        if H.has_edge(u, v):
+            H[u][v]['weight'] += wt
+        else:
+            H.add_edge(u, v, weight=wt)
+
+    # Also recalculating the distance
+    for edge in H.edges(data=True):
+        H[edge[0]][edge[1]]["distance"] = 1 / (edge[2]["weight"] ** 2)
+
+    return H
+
+

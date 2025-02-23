@@ -12,19 +12,27 @@ node_rank_methods_config = {
         "description": "Compute the degree centrality for nodes.",
         "method": nx.degree_centrality,
     },
-    # "eigenvector_centrality": {
-    #     "params": [{"key": "max_iter", "type": "int", "description": "Maximum number of iterations in power method eigenvalue solver", "range": [1, 1000], "default": 100}],
-    #     "description": "Compute the eigenvector centrality for the graph G.",
-    #     "method": nx.eigenvector_centrality,
-    # },
-    # "katz_centrality": {
-    #     "params": [{"key": "alpha", "type": "float", "description": "Katz centrality parameter", "range": [0.0, 1.0], "default": 0.1}],
-    #     "description": "Compute the Katz centrality for the nodes of the graph G.",
-    #     "method": nx.katz_centrality,
-    # },
+    "eigenvector_centrality": {
+        "params": [{"key": "max_iter", "type": "int", "description": "Maximum number of iterations in power method eigenvalue solver", "range": [1, 1000], "default": 100}],
+        "description": "Compute the eigenvector centrality for the graph G.",
+        "method": nx.eigenvector_centrality,
+        "convert_to_simple_graph": True,
+        "weight": "weight",
+    },
     "closeness_centrality": {
         "params": [{"key": "wf_improved", "type": "bool", "description": "Use Wasserman and Faust's formula for closeness", "default": False}],
         "description": "Compute closeness centrality for nodes.",
+        "distance": "distance",
+        "reverse_graph": True,
+        "convert_to_simple_graph": True,
+        "method": nx.closeness_centrality,
+    },
+    "closeness_centrality_reversed": {
+        "params": [{"key": "wf_improved", "type": "bool", "description": "Use Wasserman and Faust's formula for closeness", "default": False}],
+        "description": "Compute reversed closeness centrality for nodes.",
+        "distance": "distance",
+        "convert_to_simple_graph": True,
+        "reverse_graph": False,
         "method": nx.closeness_centrality,
     },
     "betweenness_centrality": {
@@ -36,7 +44,8 @@ node_rank_methods_config = {
                 "default": True,
             }
         ],
-        "distance": "weight",
+        # "distance": "weight",
+        "weight": "distance",
         "description": "Compute the shortest-path betweenness centrality for nodes.",
         "method": nx.betweenness_centrality,
     },
@@ -58,6 +67,19 @@ node_rank_methods_config = {
     #     "description": "Compute the local reaching centrality for nodes.",
     #     "method": nx.local_reaching_centrality,
     # },
+    "harmonic_centrality": {
+        "params": [],
+        "description": "Compute harmonic centrality for nodes.",
+        "method": nx.harmonic_centrality,
+        "distance": "distance",
+    },
+    "katz_centrality": {
+        "params": [{"key": "alpha", "type": "float", "description": "Katz centrality parameter", "range": [0.0, 1.0], "default": 0.1}],
+        "description": "Compute the Katz centrality for the nodes of the graph G.",
+        "weight": "weight",
+        "convert_to_simple_graph": True,
+        "method": nx.katz_centrality,
+    },
     "global_reaching_centrality": {
         "params": [],
         "description": "Compute the global reaching centrality for nodes.",
@@ -67,5 +89,11 @@ node_rank_methods_config = {
         "params": [],
         "description": "Compute the vote ranking for nodes.",
         "method": nx.voterank,
+    },
+    "percolation_centrality": {
+        "params": [],
+        "description": "Compute the percolation centrality for nodes.",
+        "method": nx.percolation_centrality,
+        "weight": "distance",
     },
 }

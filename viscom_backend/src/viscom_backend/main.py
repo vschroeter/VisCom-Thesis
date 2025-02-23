@@ -4,7 +4,7 @@ import networkx as nx
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from viscom_backend.commgraph.converter import convert_to_weighted_graph
+from viscom_backend.commgraph.converter import convert_multigraph_to_normal_graph, convert_to_weighted_graph
 from viscom_backend.communities.community_detection_methods import community_methods_config
 from viscom_backend.data.reader import RosMetaSysGraphGenerator
 from viscom_backend.generator.generator_methods import generator_methods_config
@@ -190,27 +190,38 @@ def analyze_noderank(method):
 
     data = request.get_json()
     graph = nx.node_link_graph(data, directed=True, multigraph=True)
-    # graph = convert_to_weighted_graph(graph)
+    graph = convert_to_weighted_graph(graph)
+
+    if node_rank_methods_config[method].get("reverse_graph", False):
+        graph = graph.reverse()
+
+    # graph = graph.reverse()
 
     # Print the graph
-    # for node in graph.nodes:
-    #     print(node)
-    #     for edge in graph.edges(node):
-    #         print("\t", edge, [e["weight"] for e in graph.get_edge_data(*edge).values()])
+    for node in graph.nodes:
+        print(node)
+        for edge in graph.edges(node):
+            print("\t", edge, [e["distance"] for e in graph.get_edge_data(*edge).values()])
 
+    if node_rank_methods_config[method].get("convert_to_simple_graph", False):
+        graph = convert_multigraph_to_normal_graph(graph)
 
     # Check if the method has a distance parameter
-    method = node_rank_methods_config[method]["method"]
+    method_cb = node_rank_methods_config[method]["method"]
 
-    if (d := node_rank_methods_config[method].get("distance", None)) is not None and has_param(method, "distance"):
+    if (d := node_rank_methods_config[method].get("distance", None)) is not None and has_param(method_cb, "distance"):
         params["distance"] = d
 
-    if (w := node_rank_methods_config[method].get("weight", None)) is not None and has_param(method, "weight"):
+    if (w := node_rank_methods_config[method].get("weight", None)) is not None and has_param(method_cb, "weight"):
         params["weight"] = w
 
     print(params)
-    result = method(graph, **params)
+    result = method_cb(graph, **params)
     # print(result)
+
+    for node, value in result.items():
+        print(node, value)
+
 
     return jsonify(result)
 
