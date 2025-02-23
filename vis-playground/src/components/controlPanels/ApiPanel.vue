@@ -356,6 +356,8 @@ function fetchNodeRanking(generatorId?: string, graph?: CommunicationGraph) {
 
     const urlWithParams = `${url}?${params.toString()}`
 
+    // console.log("SEND", commGraphToNodeLinkData(graph!))
+
     // Fetch a POST request with the parameters
     return fetch(urlWithParams, {
         method: 'POST',
@@ -366,7 +368,6 @@ function fetchNodeRanking(generatorId?: string, graph?: CommunicationGraph) {
     })
         .then(response => response.json())
         .then((data) => {
-            // console.log("SEND", commGraphToNodeLinkData(graph))
             console.log(data)
 
             const rankList: [string, number][] = Object.entries(data)

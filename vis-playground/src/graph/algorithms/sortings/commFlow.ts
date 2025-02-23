@@ -67,6 +67,7 @@ export class CommFlowSorter extends Sorter {
         // const topoGens = this.topoligicalSorter.getTopologicalGenerations(nodes[0], undefined, nodes);
 
         const topoGens = this.topological.getWeightedTopologicalGenerations(nodes)
+        console.log("[TOPO GENS]", topoGens)
 
         const mapNodeToParentsCycleFree = this.topological.getCycleFreeParentMap(nodes);
 
@@ -122,10 +123,6 @@ export class CommFlowSorter extends Sorter {
             const children = successorsOfNode(node).filter(child => nodeIdsToInclude.has(child.id))
 
             const nodesGen = genMap.get(node)!
-
-            if (node.id == "display_eye_right") {
-                const x = 5;
-            }
 
             // The node is added to the sorted list if one of the following is true:
             // 1. The node has no parents (e.g. for first generation nodes)

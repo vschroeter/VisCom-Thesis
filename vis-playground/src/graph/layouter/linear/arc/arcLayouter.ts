@@ -81,8 +81,9 @@ export class ArcConnector extends BaseNodeConnectionLayouter {
 
             connection.pathSegment = new EllipticArc(connection)
                 .radius(xDelta / 2)
+                .startPoint(startPoint)
                 .endPoint(endPoint)
-            // .direction(direction == "down" ? "clockwise" : "counter-clockwise")                
+            // .direction(direction == "down" ? "clockwise" : "counter-clockwise")
         });
 
     }

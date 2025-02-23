@@ -6,6 +6,7 @@ import { TopologicalSorter } from "./topological";
 import { CommonSettings } from "src/graph/layouter/settings/commonSettings";
 import { VisGraph } from "src/graph/visGraph/visGraph";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
+import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
 export type TopologicalGeneration = {
     nodes: LayoutNode[],
@@ -51,12 +52,14 @@ export class WeightedTopologicalSorter extends Sorter {
         // TODO: ist es schlimm, dass hier Broadcast Connections mit denselben Gewichten komplett rausgefiltert werden? Vllt doch Sibling-Konzept wieder einführen?
         // const combinedLinks = CommunicationLink.filterLinksByWeight(CommunicationLink.combineInAndOutLinks(allLinks), this.commonSettings.hideLinksThreshold.getValue() ?? 0);
 
+        const combinedLinks = LayoutConnection.combineInAndOutLinks(allLinks)
+
         // console.log("All links", allLinks);
         // console.log("Merged links", mergedLinks);
         // console.log("Combined links", combinedLinks);
 
         // Sort links by weight in descending order
-        const sortedLinks = allLinks.sort((a, b) => {
+        const sortedLinks = combinedLinks.sort((a, b) => {
 
             if (Math.abs(a.weight - b.weight) < 0.01) {
                 // If the weights are equal, we sort by the score of the fromNode in descending order.
@@ -194,7 +197,8 @@ export class WeightedTopologicalSorter extends Sorter {
                         const allParentsHaveGeneration = Array.from(parents.keys()).every(parent => generationMap.has(parent))
                         if (!allParentsHaveGeneration) continue
 
-                        generationMap.set(node, Math.max(...Array.from(parents.keys()).map(parent => generationMap.get(parent)!)) + 1)
+                        const maxParentGen = Math.max(...Array.from(parents.keys()).map(parent => generationMap.get(parent)!))
+                        generationMap.set(node, maxParentGen + 1)
                         nonAssignedNodes.delete(node)
                     }
                     // // If there are no parents, we take the maximum generation of the siblings
