@@ -366,6 +366,7 @@ function fetchNodeRanking(generatorId?: string, graph?: CommunicationGraph) {
     })
         .then(response => response.json())
         .then((data) => {
+            // console.log("SEND", commGraphToNodeLinkData(graph))
             console.log(data)
 
             const rankList: [string, number][] = Object.entries(data)

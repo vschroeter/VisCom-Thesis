@@ -16,6 +16,12 @@ CORS(app)
 
 MAX_NODES = 1000
 
+import inspect
+
+def has_param(func, param_name: str):
+    sig = inspect.signature(func)
+    return param_name in sig.parameters
+
 
 def convert_param(param_config, param_value):
     if param_config["type"] == "int":
@@ -68,12 +74,18 @@ def generate_graph(generator):
     graph = generator_methods_config[generator]["method"](**params)
 
     # Get also the commgraph node rank for each node in the generated graph
+    # print("[GEN] Calculating commgraph centrality ####################################")
+    # weighted_graph = convert_to_weighted_graph(graph)
     centrality = calculate_commgraph_centrality(graph, mode="significance")
+    # centrality = calculate_commgraph_centrality(weighted_graph, mode="significance")
     # centrality = calculate_commgraph_centrality(graph, mode="closeness")
     # centrality = calculate_commgraph_centrality(graph, mode="reachability")
     nx.set_node_attributes(graph, centrality, "commgraph_centrality")
 
-    data = nx.node_link_data(graph)
+    data = nx.node_link_data(graph, edges="links")
+
+
+
     return jsonify(data)
 
 
@@ -174,9 +186,30 @@ def analyze_noderank(method):
 
         params[param["key"]] = param_value
 
+
+
     data = request.get_json()
-    graph = nx.node_link_graph(data)
-    result = node_rank_methods_config[method]["method"](graph, **params)
+    graph = nx.node_link_graph(data, directed=True, multigraph=True)
+    # graph = convert_to_weighted_graph(graph)
+
+    # Print the graph
+    # for node in graph.nodes:
+    #     print(node)
+    #     for edge in graph.edges(node):
+    #         print("\t", edge, [e["weight"] for e in graph.get_edge_data(*edge).values()])
+
+
+    # Check if the method has a distance parameter
+    method = node_rank_methods_config[method]["method"]
+
+    if (d := node_rank_methods_config[method].get("distance", None)) is not None and has_param(method, "distance"):
+        params["distance"] = d
+
+    if (w := node_rank_methods_config[method].get("weight", None)) is not None and has_param(method, "weight"):
+        params["weight"] = w
+
+    print(params)
+    result = method(graph, **params)
     # print(result)
 
     return jsonify(result)

@@ -161,7 +161,7 @@ class HyperNode:
             weight = connection_data.get("weight", 1)
             self.weights_to_other_hypernodes[start_node] += weight
 
-        # If there are multiple nodes in the hypernode, that have been splitted from 
+        # If there are multiple nodes in the hypernode, that have been splitted from
         # the same original node, we merge them to one node
         splitted_node_occurrences: dict[str, list[str]] = dict()
         for node in self.nodes:
@@ -513,7 +513,7 @@ class Communities:
         self.origin_graph.remove_node(node)
         self.node_to_community.pop(node, None)
         self.node_to_hypernode.pop(node, None)
-        
+
         self.splitted_nodes_to_original_nodes.pop(node, None)
 
     def add_node(self, node: str, community: Community, hypernode: HyperNode) -> None:
@@ -882,7 +882,7 @@ class CommGraphCommunityDetector:
         H.add_nodes_from(G)
         for u, v, wt in G.edges(data=weight, default=1):
             if H.has_edge(u, v):
-                H[u][v]["weight"] += wt
+                H[u][v][weight] += wt
             else:
                 H.add_edge(u, v, weight=wt)
         return H

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from multiprocessing import Event
 from typing import Literal
 
@@ -21,20 +22,36 @@ def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reacha
     """
 
     topic_graph = convert_node_connections_graph_to_topic_graph(graph)
+    # topic_graph = graph
 
     centrality = dict.fromkeys(graph, 0.0)
+    topic_degrees: dict[str, int] = dict.fromkeys(graph, 0)#
+    graph_degrees: dict[str, int] = dict.fromkeys(graph, 0)
+
+    # Save the degrees for each node
+    for node in graph.nodes():
+        graph_degrees[node] = graph.degree(node)
+        # centrality[node] = topic_graph.degree(node)
+
+        # We don't want to take the raw degree that minds also unused topics
+        # Instead, we only want to add topics, that are used, thus if the degree of an adjacent topic is greater than 1
+
+        for topic in topic_graph.neighbors(node):
+            if topic_graph.degree(topic) > 1:
+                topic_degrees[node] += 1
 
     if mode == "degree":
         # Iterate over each node in the original graph and assign its degree in the topic graph to the centrality value
         for node in graph.nodes():
-            # centrality[node] = topic_graph.degree(node)
+            centrality[node] = topic_degrees[node]
+            # # centrality[node] = topic_graph.degree(node)
 
-            # We don't want to take the raw degree that minds also unused topics
-            # Instead, we only want to add topics, that are used, thus if the degree of an adjacent topic is greater than 1
+            # # We don't want to take the raw degree that minds also unused topics
+            # # Instead, we only want to add topics, that are used, thus if the degree of an adjacent topic is greater than 1
 
-            for topic in topic_graph.neighbors(node):
-                if topic_graph.degree(topic) > 1:
-                    centrality[node] += 1
+            # for topic in topic_graph.neighbors(node):
+            #     if topic_graph.degree(topic) > 1:
+            #         centrality[node] += 1
 
     else:
         for start_node in graph.nodes():
@@ -61,25 +78,53 @@ def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reacha
                 elif mode == "significance":
                     # If we want to also value the nodes on the shortest path between the start and end node,
                     # we add the paths of the shortest path to the respective nodes
-                    centrality[start_node] += 1 / shortest_paths[1][end_node]
+                    # centrality[start_node] += 1 / shortest_paths[1][end_node]
+                    centrality[start_node] += (1 / shortest_paths[1][end_node]) ** 2
+
+                    scored_nodes: set[str] = set()
+                    scored_nodes.add(start_node)
+
+                    # print("\t[SCORE]", start_node, end_node)
+
+                    def score_node(node: str):
+                        if node in scored_nodes:
+                            return
+
+                        scored_nodes.add(node)
+                        if node in centrality and shortest_paths[1][node] > 0:
+                            score = (1 / shortest_paths[1][node]) ** 2
+                            # score = (1 / shortest_paths[1][node]) ** 1
+                            # print("\t\t[SCORE]", node, score, shortest_paths[1][node])
+                            centrality[node] += score
+
+                        # if len(shortest_paths[0][node]) > 1:
+                        #     print("\t[MORE THAN 1 PRED]", node, shortest_paths[0][node])
+
+                        for pred_node in shortest_paths[0][node]:
+                            score_node(pred_node)
 
                     # From the end_node, go the path back to the start_node and add the values to the intermediate nodes
-                    current_node = end_node
-                    while current_node != start_node:
-                        if current_node in centrality:
-                            centrality[current_node] += 1 / shortest_paths[1][current_node]
-                        current_node = shortest_paths[0][current_node][0]
+                    score_node(end_node)
+
 
                 # print("\t", start_node, end_node, shortest_paths[1][end_node])
             x = 5
 
     # Sort the centrality values
     centrality = dict(sorted(centrality.items(), key=lambda item: item[1], reverse=True))
+    centrality = {node: math.sqrt(value) for node, value in centrality.items()}
+
+    # betweenness = nx.betweenness_centrality(graph, weight="distance", normalized=True)
+    # centrality = {node: value / (betweenness[node] if betweenness[node] > 0 else 1) for node, value in centrality.items()}
 
     # Normalize the values
     if normalize:
         max_value = max(centrality.values())
         centrality = {node: value / max_value for node, value in centrality.items()}
+
+    for node in centrality:
+        # print(node, round(centrality[node], 4), round(betweenness[node], 4))
+        print(node, round(centrality[node], 4))
 
     return centrality
 
@@ -174,7 +219,7 @@ class ResolvedCluster:
     def remove_node(self, node: str):
         if node in self.child_node_to_distance_map:
             del self.child_node_to_distance_map[node]
-        
+
         if self.cluster_graph.has_node(node):
             self.cluster_graph.remove_node(node)
 
@@ -312,7 +357,7 @@ def get_commgraph_node_clusters(graph: nx.MultiDiGraph):
                 resolved_clusters.append(cluster)
                 moved_clusters.add(cluster.node)
                 continue
-            
+
             # Handle the case where all left clusters have less than 3 nodes and we can't separate them further
             separated_clusters.append(cluster)
             resolved_clusters.remove(cluster)
@@ -345,7 +390,7 @@ def get_commgraph_node_clusters(graph: nx.MultiDiGraph):
                             nodes_to_keep_in_current_cluster.add(node)
                         else:
                             nodes_to_keep_in_next_cluster.add(node)
-                    
+
                     if len(nodes_to_keep_in_next_cluster) <= min_node_count_per_cluster:
                         nodes_to_keep_in_current_cluster |= nodes_to_keep_in_next_cluster
                         nodes_to_keep_in_next_cluster = set()
@@ -362,7 +407,7 @@ def get_commgraph_node_clusters(graph: nx.MultiDiGraph):
                     next_cluster.update_distances()
 
                     continue
-                
+
             else:
                 separated_clusters.append(cluster)
                 resolved_clusters.remove(cluster)
@@ -379,10 +424,10 @@ def get_commgraph_node_clusters(graph: nx.MultiDiGraph):
             for node in added_nodes:
                 c.remove_node(node)
                 c.update_distances()
-        
-        x = 5
-        
 
-        
+        x = 5
+
+
+
 
     x = 5

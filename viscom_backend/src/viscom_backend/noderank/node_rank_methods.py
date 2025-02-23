@@ -36,6 +36,7 @@ node_rank_methods_config = {
                 "default": True,
             }
         ],
+        "distance": "weight",
         "description": "Compute the shortest-path betweenness centrality for nodes.",
         "method": nx.betweenness_centrality,
     },
