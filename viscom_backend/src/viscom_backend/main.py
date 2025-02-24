@@ -219,9 +219,12 @@ def analyze_noderank(method):
     result = method_cb(graph, **params)
     # print(result)
 
+    # Normalize the result
+    max_value = max(result.values())
+    result = {node: value / max_value for node, value in result.items()}
+
     for node, value in result.items():
         print(node, value)
-
 
     return jsonify(result)
 

@@ -712,7 +712,7 @@ export class VisGraph {
 
         const minW = 0.1;
         const maxW = 8;
-        const wMultiplier = 1;
+        const wMultiplier = this.commonSettings?.linkWidthMultiplier.getValue() ?? 1;
 
         const stroke = this.commonSettings?.linkColor.getValue()?.toString() ?? "black";
         const strokeWithoutAlpha = d3.color(stroke)?.copy({ opacity: 1 })?.toString() ?? "black";
@@ -762,7 +762,14 @@ export class VisGraph {
         this.allGraphicalNodes.forEach(node => {
             const hideNodeNames = this.commonSettings?.hideNodeNames.getValue() ?? false;
             if (!hideNodeNames) {
-                node.updateLabelVisibility(node.layoutNode.showLabel);
+
+
+                if (node.id.startsWith("p")) {
+                    node.updateLabelVisibility(false);
+                } else {
+                    node.updateLabelVisibility(node.layoutNode.showLabel);
+                }
+
             } else {
                 node.updateLabelVisibility(false);
             }

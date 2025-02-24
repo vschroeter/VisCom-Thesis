@@ -39,6 +39,16 @@ export class CommonSettings extends Setting {
         defaultValue: "#000000AA",
     })
 
+    linkWidthMultiplier = new Param<number>({
+        type: "number",
+        key: "linkWidthMultiplier",
+        label: "Link Width Multiplier",
+        description: "The multiplier for the link width",
+        optional: false,
+        defaultValue: 1,
+    })
+
+
     showLinkScore = new Param<boolean>({
         type: "boolean",
         key: "showLinkScore",
