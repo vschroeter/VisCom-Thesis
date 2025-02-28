@@ -625,19 +625,28 @@ export class VisGraph {
 
         // Set the score colors of the nodes
         this.allGraphicalNodes.forEach(node => {
-            // node.updateStyleFill((n) => this.commonSettings.nodeColor.getValue(n), this.nodeScoring.extent);
 
-            // if (!validScores) {
-            //     const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
-            //     node.updateStyleFill(v);
-            //     return;
-            // }
-            const v = scoring.getColor(node.score);
-            // node.updateStyleFill(v);
-            // const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
+            if (!(this.commonSettings?.showNodeScore.getValue() ?? true)) {
+                const v = scoring.getColor(0.5);
+                node.updateStyleFill(v);
+            } else {
 
-            const color = (this.commonSettings?.showCommunityColors.getValue() ? node.layoutNode.color : v) ?? v;
-            node.updateStyleFill(color);
+
+                // node.updateStyleFill((n) => this.commonSettings.nodeColor.getValue(n), this.nodeScoring.extent);
+
+                // if (!validScores) {
+                //     const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
+                //     node.updateStyleFill(v);
+                //     return;
+                // }
+                const v = scoring.getColor(node.score);
+                // node.updateStyleFill(v);
+                // const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
+
+                const color = (this.commonSettings?.showCommunityColors.getValue() ? node.layoutNode.color : v) ?? v;
+                node.updateStyleFill(color);
+            }
+
         })
         const userInteractions = this.userInteractions;
 
@@ -723,7 +732,7 @@ export class VisGraph {
         this.allGraphicalConnections.forEach(connection => {
             if (!showLinkScore) {
                 connection.updateStyleOpacity(alpha);
-                connection.updateStyleStroke(strokeWithoutAlpha, 1);
+                connection.updateStyleStroke(strokeWithoutAlpha, wMultiplier);
                 return;
             }
             const weight = connection.weight;

@@ -199,6 +199,14 @@ export class LayoutNode {
     // Incoming connections from other nodes
     inConnections: LayoutConnection[] = [];
 
+    get outConnectionsWithoutSelfLoops(): LayoutConnection[] {
+        return this.outConnections.filter(c => c.source != c.target);
+    }
+
+    get inConnectionsWithoutSelfLoops(): LayoutConnection[] {
+        return this.inConnections.filter(c => c.source != c.target);
+    }
+
     // The layer of the node (for layered layouting). Leaf nodes have layer 0.
     protected _layer: number = 0;
     protected _layerCount: number = 0;
