@@ -112,7 +112,8 @@ export class NodeScoring {
     }
 
     isExtentValid() {
-        return this.extent[0] !== this.extent[1] && Math.abs(this.extent[0]) !== Infinity && Math.abs(this.extent[1]) !== Infinity;
+        // return this.extent[0] !== this.extent[1] && Math.abs(this.extent[0]) !== Infinity && Math.abs(this.extent[1]) !== Infinity;
+        return Math.abs(this.extent[0]) !== Infinity && Math.abs(this.extent[1]) !== Infinity;
     }
 
 }
@@ -624,19 +625,28 @@ export class VisGraph {
 
         // Set the score colors of the nodes
         this.allGraphicalNodes.forEach(node => {
-            // node.updateStyleFill((n) => this.commonSettings.nodeColor.getValue(n), this.nodeScoring.extent);
 
-            // if (!validScores) {
-            //     const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
-            //     node.updateStyleFill(v);
-            //     return;
-            // }
-            const v = scoring.getColor(node.score);
-            // node.updateStyleFill(v);
-            // const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
+            if (!(this.commonSettings?.showNodeScore.getValue() ?? true)) {
+                const v = scoring.getColor(0.5);
+                node.updateStyleFill(v);
+            } else {
 
-            const color = (this.commonSettings?.showCommunityColors.getValue() ? node.layoutNode.color : v) ?? v;
-            node.updateStyleFill(color);
+
+                // node.updateStyleFill((n) => this.commonSettings.nodeColor.getValue(n), this.nodeScoring.extent);
+
+                // if (!validScores) {
+                //     const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
+                //     node.updateStyleFill(v);
+                //     return;
+                // }
+                const v = scoring.getColor(node.score);
+                // node.updateStyleFill(v);
+                // const v = this.commonSettings?.nodeColor.getValue(node.layoutNode)?.toString() ?? "red";
+
+                const color = (this.commonSettings?.showCommunityColors.getValue() ? node.layoutNode.color : v) ?? v;
+                node.updateStyleFill(color);
+            }
+
         })
         const userInteractions = this.userInteractions;
 
@@ -711,7 +721,7 @@ export class VisGraph {
 
         const minW = 0.1;
         const maxW = 8;
-        const wMultiplier = 1;
+        const wMultiplier = this.commonSettings?.linkWidthMultiplier.getValue() ?? 1;
 
         const stroke = this.commonSettings?.linkColor.getValue()?.toString() ?? "black";
         const strokeWithoutAlpha = d3.color(stroke)?.copy({ opacity: 1 })?.toString() ?? "black";
@@ -722,7 +732,7 @@ export class VisGraph {
         this.allGraphicalConnections.forEach(connection => {
             if (!showLinkScore) {
                 connection.updateStyleOpacity(alpha);
-                connection.updateStyleStroke(strokeWithoutAlpha, 1);
+                connection.updateStyleStroke(strokeWithoutAlpha, wMultiplier);
                 return;
             }
             const weight = connection.weight;
@@ -761,7 +771,14 @@ export class VisGraph {
         this.allGraphicalNodes.forEach(node => {
             const hideNodeNames = this.commonSettings?.hideNodeNames.getValue() ?? false;
             if (!hideNodeNames) {
-                node.updateLabelVisibility(node.layoutNode.showLabel);
+
+
+                if (node.id.startsWith("p")) {
+                    node.updateLabelVisibility(false);
+                } else {
+                    node.updateLabelVisibility(node.layoutNode.showLabel);
+                }
+
             } else {
                 node.updateLabelVisibility(false);
             }

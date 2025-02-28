@@ -47,6 +47,7 @@ export class CommFlowSorter extends Sorter {
 
         this.topological.secondarySorting = this.secondarySorting
         const topoGens = this.topological.getWeightedTopologicalGenerations(nodes)
+        console.log("[TOPO GENS]", topoGens)
 
         const mapNodeToParentsCycleFree = this.topological.getCycleFreeParentMap(nodes);
 

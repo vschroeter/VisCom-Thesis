@@ -5,7 +5,7 @@ import networkx as nx
 
 def graph_to_json(graph):
     """Converts a NetworkX graph to a JSON string."""
-    nl_data = nx.node_link_data(graph)
+    nl_data = nx.node_link_data(graph, edges="links")
     return nl_data
 
 

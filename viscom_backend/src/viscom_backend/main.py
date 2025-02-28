@@ -4,7 +4,7 @@ import networkx as nx
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from viscom_backend.commgraph.converter import convert_to_weighted_graph
+from viscom_backend.commgraph.converter import convert_multigraph_to_normal_graph, convert_to_weighted_graph
 from viscom_backend.communities.community_detection_methods import community_methods_config
 from viscom_backend.data.reader import RosMetaSysGraphGenerator
 from viscom_backend.generator.generator_methods import generator_methods_config
@@ -15,6 +15,12 @@ app = Flask(__name__)
 CORS(app)
 
 MAX_NODES = 1000
+
+import inspect
+
+def has_param(func, param_name: str):
+    sig = inspect.signature(func)
+    return param_name in sig.parameters
 
 
 def convert_param(param_config, param_value):
@@ -68,12 +74,18 @@ def generate_graph(generator):
     graph = generator_methods_config[generator]["method"](**params)
 
     # Get also the commgraph node rank for each node in the generated graph
+    # print("[GEN] Calculating commgraph centrality ####################################")
+    # weighted_graph = convert_to_weighted_graph(graph)
     centrality = calculate_commgraph_centrality(graph, mode="significance")
+    # centrality = calculate_commgraph_centrality(weighted_graph, mode="significance")
     # centrality = calculate_commgraph_centrality(graph, mode="closeness")
     # centrality = calculate_commgraph_centrality(graph, mode="reachability")
     nx.set_node_attributes(graph, centrality, "commgraph_centrality")
 
-    data = nx.node_link_data(graph)
+    data = nx.node_link_data(graph, edges="links")
+
+
+
     return jsonify(data)
 
 
@@ -174,10 +186,45 @@ def analyze_noderank(method):
 
         params[param["key"]] = param_value
 
+
+
     data = request.get_json()
-    graph = nx.node_link_graph(data)
-    result = node_rank_methods_config[method]["method"](graph, **params)
+    graph = nx.node_link_graph(data, directed=True, multigraph=True)
+    graph = convert_to_weighted_graph(graph)
+
+    if node_rank_methods_config[method].get("reverse_graph", False):
+        graph = graph.reverse()
+
+    # graph = graph.reverse()
+
+    # Print the graph
+    for node in graph.nodes:
+        print(node)
+        for edge in graph.edges(node):
+            print("\t", edge, [e["distance"] for e in graph.get_edge_data(*edge).values()])
+
+    if node_rank_methods_config[method].get("convert_to_simple_graph", False):
+        graph = convert_multigraph_to_normal_graph(graph)
+
+    # Check if the method has a distance parameter
+    method_cb = node_rank_methods_config[method]["method"]
+
+    if (d := node_rank_methods_config[method].get("distance", None)) is not None and has_param(method_cb, "distance"):
+        params["distance"] = d
+
+    if (w := node_rank_methods_config[method].get("weight", None)) is not None and has_param(method_cb, "weight"):
+        params["weight"] = w
+
+    print(params)
+    result = method_cb(graph, **params)
     # print(result)
+
+    # Normalize the result
+    max_value = max(result.values())
+    result = {node: value / max_value for node, value in result.items()}
+
+    for node, value in result.items():
+        print(node, value)
 
     return jsonify(result)
 

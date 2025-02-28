@@ -358,6 +358,90 @@ export class LayoutConnection {
         return nodes;
     }
 
+    static combineInAndOutLinks(connections: LayoutConnection[]): LayoutConnection[] {
+
+        const combinedConnections: LayoutConnection[] = [];
+
+        const mapFromIdToToIdToLink = new Map<string, Map<string, LayoutConnection>>();
+        connections.forEach(connection => {
+            if (!mapFromIdToToIdToLink.has(connection.fromId)) {
+                mapFromIdToToIdToLink.set(connection.fromId, new Map());
+            }
+            const mapToIdToLink = mapFromIdToToIdToLink.get(connection.fromId)!;
+            if (!mapToIdToLink.has(connection.toId)) {
+                mapToIdToLink.set(connection.toId, connection.cloneSimple());
+            } else {
+                const existingLink = mapToIdToLink.get(connection.toId)!;
+                existingLink._weight += connection._weight;
+            }
+        })
+
+        const mergedConns: LayoutConnection[] = [];
+        mapFromIdToToIdToLink.forEach(mapToIdToLink => {
+            mapToIdToLink.forEach(link => {
+                mergedConns.push(link);
+            });
+        });
+
+        const combinedLinksMap = new Map<string, Map<string, LayoutConnection>>();
+
+        mergedConns.forEach(conn => {
+            if (!combinedLinksMap.has(conn.fromId)) {
+                combinedLinksMap.set(conn.fromId, new Map());
+            }
+
+            combinedLinksMap.get(conn.fromId)!.set(conn.toId, conn.cloneSimple());
+        })
+
+
+        const epsilon = 0.001;
+        mergedConns.forEach(_conn => {
+            const conn = combinedLinksMap.get(_conn.fromId)?.get(_conn.toId);
+            const oppositeConn = combinedLinksMap.get(_conn.toId)?.get(_conn.fromId);
+
+            if (!conn && !oppositeConn) {
+                return;
+            }
+
+            if (conn && oppositeConn) {
+
+                const weight = conn.weight - oppositeConn.weight;
+
+                if (weight > epsilon) {
+                    conn._weight = weight;
+                    combinedConnections.push(conn);
+                } else if (weight < -epsilon) {
+                    oppositeConn._weight = -weight;
+                    combinedConnections.push(oppositeConn);
+                }
+
+                combinedLinksMap.get(conn.fromId)?.delete(conn.toId);
+                combinedLinksMap.get(conn.toId)?.delete(conn.fromId);
+                return;
+            }
+
+            if (!conn && oppositeConn) {
+                combinedConnections.push(oppositeConn!);
+                combinedLinksMap.get(oppositeConn.fromId)?.delete(oppositeConn.toId);
+                return;
+            }
+
+            if (!oppositeConn && conn) {
+                combinedConnections.push(conn);
+                combinedLinksMap.get(conn.fromId)?.delete(conn.toId);
+                return;
+            }
+        });
+
+        return combinedConnections;
+    }
+
+    cloneSimple(): LayoutConnection {
+        const newConnection = new LayoutConnection(this.source, this.target);
+        newConnection._weight = this._weight;
+        return newConnection;
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // #region Graphical methods
     ////////////////////////////////////////////////////////////////////////////

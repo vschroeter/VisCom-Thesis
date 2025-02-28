@@ -211,10 +211,10 @@ export class FlexNode {
         this.outConnections = [];
         this.inConnections = [];
 
-        this.layoutNode.outConnections.forEach(connection => {
+        this.layoutNode.outConnectionsWithoutSelfLoops.forEach(connection => {
             this.addConnection(connection);
         });
-        this.layoutNode.inConnections.forEach(connection => {
+        this.layoutNode.inConnectionsWithoutSelfLoops.forEach(connection => {
             this.addConnection(connection);
         });
     }

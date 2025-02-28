@@ -265,7 +265,7 @@ export class Node2d extends SvgRenderable {
             let r = smallestR + Math.sqrt((this.layoutNode.radius * 2 - smallestR) * 1);
             r = r;
             // r *= 2;
-            const heightWhenInNode = Math.min(this.label?.getHeightForWidth(r * 2) ?? 0, r * 2);
+            const heightWhenInNode = Math.min(this.label?.getHeightForWidth(r) ?? 0, r  );
             const widthWhenOutsideNode = this.label?.getWidthForHeight(r) ?? -1;
             if (heightWhenInNode / visibleArea.h > 0.02 || widthWhenOutsideNode > visibleArea.w * 0.66) {
 
