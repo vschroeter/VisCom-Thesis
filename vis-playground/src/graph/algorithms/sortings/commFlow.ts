@@ -39,33 +39,13 @@ export class CommFlowSorter extends Sorter {
             - The weight of the connections would not be considered in the sorting at all
 
         After converting a comm graph to a weighted comm graph, we can make use of the weights to sort the nodes.
-        (Maybe first converting the weights to a inverted distance)
-
-        The following is done for each connected component:
-        Beginning with a high ranked node (e.g. based on comm graph centrality) as start node S, we can get our comm flow sorting by:
-        1.0. From S, visit nodes in a Dijkstra-like manner, based on the distances of the forward connections.
-        1.1. Store the forward score (the visit index) for each node
-        2.0. From S, visit nodes in a Dijkstra-like manner, based on the distances of the backward connections.
-        2.1. Store the negativ backward score (the visit index) for each node
-
-        If there are now still unvisited nodes (so nodes, that are neither directly reachable from S nor can reach S directly),
-
-
          */
-
-        if (this.startNodeSelectionSorter) {
-            nodes = this.startNodeSelectionSorter.getSorting(nodes);
-        }
 
         if (nodes.length == 0) return []
 
         const nodeIdsToInclude = new Set(nodes.map(node => node.id))
 
-        this.topological.startNodeSelectionSorter = this.startNodeSelectionSorter
         this.topological.secondarySorting = this.secondarySorting
-
-        // const topoGens = this.topoligicalSorter.getTopologicalGenerations(nodes[0], undefined, nodes);
-
         const topoGens = this.topological.getWeightedTopologicalGenerations(nodes)
 
         const mapNodeToParentsCycleFree = this.topological.getCycleFreeParentMap(nodes);
@@ -109,11 +89,8 @@ export class CommFlowSorter extends Sorter {
         const sorted: LayoutNode[] = []
         const sortedSet = new Set<LayoutNode>()
 
-        // console.log("!!!FLOW SORTING")
-        // return topoSorting
-
         const visitNode = (node: LayoutNode, currentlyVisited = new Set<LayoutNode>()) => {
-            // If the node is already sorted, we dont need to visit it again
+            // If the node is already sorted, we don't need to visit it again
             if (sortedSet.has(node)) return
 
             // Get all parents and all children of the node
@@ -122,10 +99,6 @@ export class CommFlowSorter extends Sorter {
             const children = successorsOfNode(node).filter(child => nodeIdsToInclude.has(child.id))
 
             const nodesGen = genMap.get(node)!
-
-            if (node.id == "display_eye_right") {
-                const x = 5;
-            }
 
             // The node is added to the sorted list if one of the following is true:
             // 1. The node has no parents (e.g. for first generation nodes)
@@ -137,8 +110,14 @@ export class CommFlowSorter extends Sorter {
             const allParentsAreSorted = parents.length == 0 ||
                 Array.from(parents).every(parent => sortedSet.has(parent) ||
                     // currentlyVisited.has(parent) ||
-                    children.includes(parent) ||
-                    genMap.get(parent)! > nodesGen)
+                    children.includes(parent) || // This should actually not happen anymore due to the weighted topological sorting
+                    genMap.get(parent)! > nodesGen // This should actually not happen anymore due to the weighted topological sorting
+                )
+
+            if (Array.from(parents).some(parent => genMap.get(parent)! > nodesGen)) {
+                console.warn("Parent in later generation", node, parents)
+            }
+
             if (!allParentsAreSorted) return
 
             // Add the node to the sorted list
@@ -163,11 +142,6 @@ export class CommFlowSorter extends Sorter {
             // Visit each child
             sortedChildren.forEach(child => {
                 visitNode(child, currentlyVisited);
-
-                // if (!currentlyVisited.has(child)) {
-                //     currentlyVisited.add(child)
-                //     visitNode(child, currentlyVisited)
-                // }
             })
         }
 

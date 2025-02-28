@@ -42,6 +42,7 @@ export const sortingMethods: SortingMapping[] = [
         key: "weightedTopological",
         label: "Weighted Topological",
         hasSecondarySorting: true,
+        hasStartNodeSelection: false,
         canBeUsedAsSecondarySorting: false,
         sorter: WeightedTopologicalSorter
     },
@@ -49,6 +50,7 @@ export const sortingMethods: SortingMapping[] = [
         key: "weightedTopologicalUnadapted",
         label: "Weighted Topological Unadapted",
         hasSecondarySorting: true,
+        hasStartNodeSelection: false,
         canBeUsedAsSecondarySorting: false,
         sorter: WeightedTopologicalSorterUnadapted
     },
@@ -61,10 +63,10 @@ export const sortingMethods: SortingMapping[] = [
     },
     {
         key: "commFlowSorting",
-        label: "Communication Flow Sorting",
+        label: "Weighted Flow Sorting",
         sorter: CommFlowSorter,
-        hasStartNodeSelection: true,
-        hasSecondarySorting: true,
+        hasStartNodeSelection: false,
+        hasSecondarySorting: false,
     },
     {
         key: "breadthFirst",
