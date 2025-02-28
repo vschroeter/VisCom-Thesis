@@ -1,6 +1,17 @@
 from viscom_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
 import networkx as nx
 
+def mirrored_harmonic_centrality(G, distance="distance"):
+    """
+    Compute the harmonic centrality for nodes.
+    """
+    centrality = nx.harmonic_centrality(G, distance=distance)
+    reversed_centrality = nx.harmonic_centrality(G.reverse(), distance=distance)
+    for node in centrality:
+        centrality[node] = (centrality[node] + reversed_centrality[node]) / 2
+
+    return centrality
+
 node_rank_methods_config = {
     "pagerank": {
         "params": [{"key": "alpha", "type": "float", "description": "Damping parameter for PageRank", "range": [0.0, 1.0], "default": 0.85}],
@@ -54,7 +65,7 @@ node_rank_methods_config = {
             {
                 "key": "mode",
                 "type": "choice",
-                "choices": ["reachability", "closeness", "significance", "degree"],
+                "choices": ["reachability", "closeness", "significance", "degree", "harmonic"],
                 "description": "The mode to calculate the commgraph centrality",
                 "default": "significance",
             }
@@ -71,6 +82,12 @@ node_rank_methods_config = {
         "params": [],
         "description": "Compute harmonic centrality for nodes.",
         "method": nx.harmonic_centrality,
+        "distance": "distance",
+    },
+    "mirrored_harmonic_centrality": {
+        "params": [],
+        "description": "Compute harmonic centrality for nodes.",
+        "method": mirrored_harmonic_centrality,
         "distance": "distance",
     },
     "katz_centrality": {
@@ -96,4 +113,10 @@ node_rank_methods_config = {
         "method": nx.percolation_centrality,
         "weight": "distance",
     },
+    "laplacian_centrality": {
+        "params": [],
+        "description": "Compute the Laplacian centrality for nodes.",
+        "convert_to_simple_graph": True,
+        "method": nx.laplacian_centrality,
+    }
 }

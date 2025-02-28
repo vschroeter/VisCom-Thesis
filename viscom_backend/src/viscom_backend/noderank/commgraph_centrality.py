@@ -10,7 +10,7 @@ from viscom_backend.commgraph.converter import convert_node_connections_graph_to
 
 
 
-def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reachability", "closeness", "significance", "degree"], normalize=True) -> dict[str, float]:
+def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reachability", "closeness", "significance", "degree", "harmonic"], normalize=True) -> dict[str, float]:
     """
     Compute the commgraph centrality for nodes.
 
@@ -27,6 +27,8 @@ def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reacha
     centrality = dict.fromkeys(graph, 0.0)
     topic_degrees: dict[str, int] = dict.fromkeys(graph, 0)#
     graph_degrees: dict[str, int] = dict.fromkeys(graph, 0)
+
+    do_sqrt = True
 
     # Save the degrees for each node
     for node in graph.nodes():
@@ -52,6 +54,21 @@ def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reacha
             # for topic in topic_graph.neighbors(node):
             #     if topic_graph.degree(topic) > 1:
             #         centrality[node] += 1
+
+    elif mode == "harmonic":
+        # do_sqrt = False
+        reverse_graph = topic_graph.reverse()
+        for start_node in graph.nodes():
+            shortest_paths = nx.dijkstra_predecessor_and_distance(topic_graph, start_node, weight="distance")
+            shortest_paths_reverse = nx.dijkstra_predecessor_and_distance(reverse_graph, start_node, weight="distance")
+
+            for end_node in graph.nodes():
+                if end_node in shortest_paths[1] and shortest_paths[1][end_node] > 0:
+                    centrality[start_node] += (1 / shortest_paths[1][end_node]) ** 2
+                    # centrality[start_node] += (1 / shortest_paths[1][end_node]) ** 1
+                if end_node in shortest_paths_reverse[1] and shortest_paths_reverse[1][end_node] > 0:
+                    centrality[start_node] += (1 / shortest_paths_reverse[1][end_node]) ** 2
+                    # centrality[start_node] += (1 / shortest_paths_reverse[1][end_node]) ** 1
 
     else:
         for start_node in graph.nodes():
@@ -107,12 +124,15 @@ def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reacha
                     score_node(end_node)
 
 
+
                 # print("\t", start_node, end_node, shortest_paths[1][end_node])
             x = 5
 
+    if do_sqrt:
+        centrality = {node: math.sqrt(value) for node, value in centrality.items()}
+
     # Sort the centrality values
     centrality = dict(sorted(centrality.items(), key=lambda item: item[1], reverse=True))
-    centrality = {node: math.sqrt(value) for node, value in centrality.items()}
 
     # betweenness = nx.betweenness_centrality(graph, weight="distance", normalized=True)
     # centrality = {node: value / (betweenness[node] if betweenness[node] > 0 else 1) for node, value in centrality.items()}
