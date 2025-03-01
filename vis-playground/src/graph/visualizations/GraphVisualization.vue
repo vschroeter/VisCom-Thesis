@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 
-import { computed, onMounted, onUpdated, ref, watch } from 'vue'
+import { computed, onMounted, onUpdated, ref, watch, WatchStopHandle } from 'vue'
 import { useGraphStore } from 'src/stores/graph-store';
 
 import * as d3 from 'd3'
@@ -381,9 +381,19 @@ function deleteItem() {
 // Lifecycle hooks
 ////////////////////////////////////////////////////////////////////////////
 
+let settingWatcher: WatchStopHandle | null = null;
+
 onMounted(() => {
 
     console.log("[VIS] Mounted"); //, props.settings);
+
+    watch(settingsCollection.commonSettings, (newVal) => {
+        console.warn("[COMMON SETTINGS CHANGED]");
+        layouter?.updateGraphByCommonSettings();
+        layoutUpdated()
+    }, { immediate: false, deep: true })
+
+
 
     watch(commGraph, (newVal) => {
         //updateSimulation();
@@ -418,14 +428,15 @@ onMounted(() => {
         //     layouter?.updateLayout(true);
         // }, { debounce: 1000, immediate: false, deep: true })
 
-        watchThrottled(settings, (newVal) => {
+        if (settingWatcher) {
+            settingWatcher();
+        }
+        settingWatcher = watchThrottled(settings, (newVal) => {
+            console.warn("[SETTINGS CHANGED]", newVal);
             layouter?.updateLayout(true);
-        }, { throttle: 500, immediate: false, deep: true, leading: true, trailing: true })
+        }, { throttle: 500, immediate: false, deep: true, leading: false, trailing: true })
 
-        watch(settingsCollection.commonSettings, (newVal) => {
-            layouter?.updateGraphByCommonSettings();
-            layoutUpdated()
-        }, { immediate: false, deep: true })
+
 
 
 
