@@ -156,12 +156,29 @@ export class SubPath extends CombinedPathSegment {
         return this.levelFromTop;
     }
 
+    // get minLevelFromTop() {
+    //     return Math.min(this.connectionSourceNode.layerFromTop, this.connectionTargetNode.layerFromTop);
+    // }
+
+    // get levelFromBot() {
+    //     return Math.min(this.connectionSourceNode.layerFromBot, this.connectionTargetNode.layerFromBot);
+    // }
+
+    // get levelFromTop() {
+    //     return Math.max(this.connectionSourceNode.layerFromTop, this.connectionTargetNode.layerFromTop);
+    // }
+
+
+    get minLevelFromTop() {
+        return Math.min(this.sourceVisNode.layoutNode.layerFromTop, this.targetVisNode.layoutNode.layerFromTop);
+    }
+
     get levelFromBot() {
-        return Math.min(this.connectionSourceNode.layerFromBot, this.connectionTargetNode.layerFromBot);
+        return Math.min(this.sourceVisNode.layoutNode.layerFromBot, this.targetVisNode.layoutNode.layerFromBot);
     }
 
     get levelFromTop() {
-        return Math.max(this.connectionSourceNode.layerFromTop, this.connectionTargetNode.layerFromTop);
+        return Math.max(this.sourceVisNode.layoutNode.layerFromTop, this.targetVisNode.layoutNode.layerFromTop);
     }
 
 
@@ -405,8 +422,18 @@ export class SubPath extends CombinedPathSegment {
                 this.targetVisNode.innerRange.registerSubPath(this);
             }
         } else {
-            if (source.isRealNode) this.sourceVisNode.outerRange.registerSubPath(this);
-            if (target.isRealNode) this.targetVisNode.outerRange.registerSubPath(this);
+            // if (source.isRealNode) this.sourceVisNode.outerRange.registerSubPath(this);
+            // if (target.isRealNode) this.targetVisNode.outerRange.registerSubPath(this);
+            // if (target.id == "facialexpressionmanager_node") {
+            //     console.warn("ADD TO RANGE", {
+            //         id: this.id,
+            //         cId: this.cId,
+            //         sourceId: this.sourceVisNode.id,
+            //         targetId: this.targetVisNode.id
+            //     });
+            // }
+            this.sourceVisNode.outerRange.registerSubPath(this);
+            this.targetVisNode.outerRange.registerSubPath(this);
         }
     }
 

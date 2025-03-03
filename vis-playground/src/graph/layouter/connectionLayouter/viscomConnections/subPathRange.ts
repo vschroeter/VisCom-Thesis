@@ -43,7 +43,7 @@ export class SubPathRange {
         this.node = node;
 
         if (type === "outside") {
-            this.range = node.layoutNode.getValidOuterRadRange(nodeRangeMarginFactor);
+            this.range = node.layoutNode.getValidOuterRadRange(nodeRangeMarginFactor, false);
         } else {
             this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
         }
@@ -130,7 +130,6 @@ export class SubPathRange {
         path = this.getRepresentedSubPath(path);
 
         if (!this.assignedRads.has(path)) {
-            console.warn(this);
             throw new Error(`Path ${path.id} not in continuum`);
         }
 
@@ -150,7 +149,7 @@ export class SubPathRange {
         path = this.getRepresentedSubPath(path);
 
         if (!this.assignedRadRanges.has(path)) {
-            console.error(this, path);
+            console.error(this.node.id, path, this);
             throw new Error(`Path ${path.id} not in continuum`);
         }
 
@@ -243,7 +242,18 @@ export class SubPathRange {
      * @param anchorPoint  The point to get the anchor towards.
      * @returns The created anchor towards the specified point in the valid range of the path.
      */
-    getValidAnchorTowardsDirectionForPath(subPath: SubPath, anchorPoint: Point): Anchor {
+    getValidAnchorTowardsDirectionForPath(subPath: SubPath, anchorPoint: Point, createFloatingAnchorIfNotRegistered = true): Anchor {
+
+        if (!this.hasPath(subPath)) {
+            if (!createFloatingAnchorIfNotRegistered) {
+                throw new Error("Path not registered.");
+            }
+
+            // If the path is not registered, we create a floating anchor
+            // TODO: Take other existing anchors into account
+            const anchor = this.getValidAnchorTowardsDirection(anchorPoint);
+            return anchor;
+        }
         const range = this.getRangeForPath(subPath);
         const vector = this.getValidVectorTowardsDirection(anchorPoint, range);
         return new Anchor(this.node.layoutNode.center, vector).move(this.node.layoutNode.outerRadius);
@@ -337,6 +347,7 @@ export class SubPathRange {
 
             return {
                 subPath,
+                level: subPath.minLevelFromTop,
                 forwardRadToConnectionPoint,
                 forwardRadToTargetNode,
                 sourceVisNode: subPath.sourceVisNode,
@@ -351,6 +362,42 @@ export class SubPathRange {
             // if (a.oppositeVisNode === b.oppositeVisNode) {
             //     return a.sourceVisNode === this.node ? -1 : 1;
             // }
+
+
+            // We first sort by by level, with higher levels being at the outside of the range
+            // To determine the side of the sorting, we check wether the forward rad to the connection point is:
+            // - between 0° and 180° --> we sort it as first elements
+            // - between 180° and 360° --> we sort it as last elements
+
+            if (a.level != b.level) {
+
+                const subPathWithLowerLevel = a.level < b.level ? a : b;
+                const subPathWithLowerLevelIsFirst = subPathWithLowerLevel.forwardRadToConnectionPoint < Math.PI;
+
+                if (subPathWithLowerLevelIsFirst) {
+                    return a.level - b.level;
+                } else {
+                    return b.level - a.level;
+                }
+
+
+                // If the levels are different, we sort by level
+                // return a.level - b.level;
+                return b.level - a.level;
+
+                // const aIsFirst = a.forwardRadToConnectionPoint < Math.PI;
+                // const bIsFirst = b.forwardRadToConnectionPoint < Math.PI;
+
+                // // If both should be sorted first, we take the lower level first
+                // if (aIsFirst && bIsFirst) return a.subPath.level - b.subPath.level;
+
+                // // If both should be sorted last, we take the higher level first
+                // if (!aIsFirst && !bIsFirst) return b.subPath.level - a.subPath.level;
+
+                // // If one is first and the other last, we take the first one first
+                // return aIsFirst ? -1 : 1;
+            }
+
 
             if (Math.abs(a.forwardRadToConnectionPoint - b.forwardRadToConnectionPoint) < EPSILON) {
                 if (Math.abs(a.forwardRadToTargetNode - b.forwardRadToTargetNode) < EPSILON) {
@@ -437,7 +484,7 @@ export class SubPathRange {
 
             if (this.pointIsInside(desiredAnchorPoint, range)) {
 
-                console.warn("POINT INSIDE", desiredAnchorPoint, range, this.getRadOfPoint(desiredAnchorPoint));
+                // console.warn("POINT INSIDE", desiredAnchorPoint, range, this.getRadOfPoint(desiredAnchorPoint));
 
                 assignedRads.set(path, this.getRadOfPoint(desiredAnchorPoint));
                 return;
@@ -452,31 +499,33 @@ export class SubPathRange {
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node") debug = true;
+        if (this.node.id == "equalizer") debug = true;
+        if (this.node.id == "dialog_session_manager") debug = true;
         if (debug) {
 
 
             console.warn("SORTED PATHS", pathInformation);
 
-            pathInformation.forEach((pathInfo, i) => {
-                pathInfo.oppositeConnectionPoint._data = {r: 4, fill: this.type == "inside" ? "red" : "green"};
-                pathInfo.subPath.connection.debugShapes.push(pathInfo.oppositeConnectionPoint);
-            })
+            // pathInformation.forEach((pathInfo, i) => {
+            //     pathInfo.oppositeConnectionPoint._data = {r: 4, fill: this.type == "inside" ? "red" : "green"};
+            //     pathInfo.subPath.connection.debugShapes.push(pathInfo.oppositeConnectionPoint);
+            // })
 
             // const p = new Point(517.7175537019239, -471.7411783240392);
-            const p = new Point(604.7, -369.3);
-            p._data = { r: 7, fill: "blue" };
-            this.node.layoutNode.debugShapes.push(p);
+            // const p = new Point(604.7, -369.3);
+            // p._data = { r: 7, fill: "blue" };
+            // this.node.layoutNode.debugShapes.push(p);
 
-            // pathToRange.forEach((range, path) => {
+            pathToRange.forEach((range, path) => {
 
-            //     const startAnchor = this.getAnchorForRad(range[0], "out");
-            //     const endAnchor = this.getAnchorForRad(range[1], "out");
+                const startAnchor = this.getAnchorForRad(range[0], "out");
+                const endAnchor = this.getAnchorForRad(range[1], "out");
 
-            //     startAnchor._data = { length: 10, stroke: "green" };
-            //     endAnchor._data = { length: 10, stroke: "red" };
+                startAnchor._data = { length: 10, stroke: "green" };
+                endAnchor._data = { length: 10, stroke: "red" };
 
-            //     path.connection.debugShapes.push(startAnchor, endAnchor);
-            // })
+                path.connection.debugShapes.push(startAnchor, endAnchor);
+            })
 
             // assignedRads.forEach((rad, path) => {
             //     const anchor = this.getAnchorForRad(rad, "out");
