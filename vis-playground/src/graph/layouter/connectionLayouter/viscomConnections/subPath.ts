@@ -14,6 +14,32 @@ import { DynamicSubPath } from "./dynamicSubPath";
 export type SubPathLevelType = "sameLevel" | "levelChanging"
 export type SubPathConnectionType = "pathToNode" | "nodeToPath" | "nodeToNode" | "pathToPath";
 
+export class SubPathGroup {
+
+    laidOutSubPath: SubPath | undefined;
+
+    linkedSubPaths: SubPath[] = [];
+
+    source: VisNode;
+    target: VisNode;
+
+    rangeRepresentative: SubPath | undefined;
+
+    constructor(source: VisNode, target: VisNode) {
+        this.source = source;
+        this.target = target;
+    }
+
+    addSubPath(subPath: SubPath) {
+        this.linkedSubPaths.push(subPath);
+
+        if (!this.rangeRepresentative) {
+            this.rangeRepresentative = subPath;
+        }
+    }
+}
+
+
 
 /**
  * Sub-paths are built the following:
@@ -33,6 +59,8 @@ export class SubPath extends CombinedPathSegment {
     levelType: SubPathLevelType;
     connectionType: SubPathConnectionType;
 
+    cachable = false;
+    group?: SubPathGroup;
 
     visConnection: VisConnection;
 
@@ -65,6 +93,7 @@ export class SubPath extends CombinedPathSegment {
 
     isCounterPathOf(path?: SubPath) {
         if (!path) return false;
+        if (this.levelType != "sameLevel") return false;
         return this.sourceVisNode === path.targetVisNode && this.targetVisNode === path.sourceVisNode;
     }
 
@@ -287,35 +316,54 @@ export class SubPath extends CombinedPathSegment {
             }
         }
 
-
-        // For hyper connections, there can be multiple connections (so hyper connection + its child connections)
-        // that share the same path.
-        // In this case, the path is saved to be reused here
-        this.cachedSubPath = this.sourceVisNode.getCachedPathTo(this.targetVisNode);
-        if (this.cachedSubPath) {
-            // If there was a linked path, the segments are just the linked path
-            this.segments = [this.cachedSubPath];
-        }
-        // If there was no linked path, we add this path to be layouted
-        else {
-            // Connections between the same parents are saved to be reused
-            // This should not be done between different parents, as paths from nodes to its hypernode can be for different connections
-            if (this.levelType == "sameLevel" && this.connectionType == "nodeToNode") {
-                this.sourceVisNode.addCachedPathTo(this.targetVisNode, this);
-            }
-            this.addToNodeRange();
-
-            // const pathMap = this.flexConnection.layouter.mapLayerToFlexPaths;
-            // if (!pathMap.has(this.layerFromTop)) {
-            //     pathMap.set(this.layerFromTop, []);
-            // }
-
-            // pathMap.get(this.layerFromTop)!.push(this);
+        // Connections between nodes on the same level are cached
+        if (this.levelType == "sameLevel" && this.connectionType == "nodeToNode") {
+            this.cachable = true;
         }
 
+        // Update cache
+        if (this.cachable) {
+            const group = this.sourceVisNode.getSubPathGroup(this.targetVisNode);
+            group.addSubPath(this);
+            this.group = group;
+        }
+
+
+        // Add to node ranges
+        this.addToNodeRange();
 
         // Add to layouter
         this.layouter.addPathToLayouter(this);
+
+        // // For hyper connections, there can be multiple connections (so hyper connection + its child connections)
+        // // that share the same path.
+        // // In this case, the path is saved to be reused here
+        // this.cachedSubPath = this.sourceVisNode.getCachedPathTo(this.targetVisNode);
+        // if (this.cachedSubPath) {
+        //     // If there was a linked path, the segments are just the linked path
+        //     this.segments = [this.cachedSubPath];
+        // }
+        // // If there was no linked path, we add this path to be layouted
+        // else {
+        //     // Connections between the same parents are saved to be reused
+        //     // This should not be done between different parents, as paths from nodes to its hypernode can be for different connections
+        //     if (this.levelType == "sameLevel" && this.connectionType == "nodeToNode") {
+        //         this.cachable = true;
+        //         this.sourceVisNode.addCachedPathTo(this.targetVisNode, this);
+        //     }
+        //     this.addToNodeRange();
+
+        //     // const pathMap = this.flexConnection.layouter.mapLayerToFlexPaths;
+        //     // if (!pathMap.has(this.layerFromTop)) {
+        //     //     pathMap.set(this.layerFromTop, []);
+        //     // }
+
+        //     // pathMap.get(this.layerFromTop)!.push(this);
+        // }
+
+
+        // // Add to layouter
+        // this.layouter.addPathToLayouter(this);
     }
 
 
@@ -364,11 +412,15 @@ export class SubPath extends CombinedPathSegment {
         if (this.layoutCompleted) return;
         this.layoutCompleted = true;
 
-        if (this.cachedSubPath) {
-
-            this.cachedSubPath.layout();
-            this.segments = [this.cachedSubPath];
-            return;
+        // If this subpath is path of a group, we either take the already laid out path
+        // or layout this and save it to the group
+        if (this.group) {
+            if (this.group.laidOutSubPath) {
+                this.segments = [this.group.laidOutSubPath];
+                return;
+            } else {
+                this.group.laidOutSubPath = this;
+            }
         }
 
         // Connections between the same parents can just be calculated
@@ -387,7 +439,7 @@ export class SubPath extends CombinedPathSegment {
         // For connections between different parents
         else {
             if (this.connectionType == "pathToNode" || this.connectionType == "nodeToPath") {
-                // this.layoutPathNodeConnection();
+                this.layoutPathNodeConnection();
             } else {
                 throw new Error("Not implemented");
             }

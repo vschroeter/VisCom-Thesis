@@ -27,6 +27,7 @@ export class SubPathRange {
 
     // The rad values assigned to the subpaths as soon as the range is calculated
     assignedRads: Map<SubPath, number> = new Map();
+    assignedRadRanges: Map<SubPath, [number, number]> = new Map();
 
     // /**
     //  * During calculation
@@ -52,12 +53,37 @@ export class SubPathRange {
     // #region Sub Path Management
     ////////////////////////////////////////////////////////////////////////////
 
+    registeredSubPaths: Set<SubPath> = new Set();
 
     registerSubPath(subPath: SubPath) {
+
+        // If the subpath has a group, only add the range representative
+        if (subPath.group) {
+            if (!subPath.group.rangeRepresentative) {
+                throw new Error("Group has no range representative");
+            }
+
+            if (this.registeredSubPaths.has(subPath.group.rangeRepresentative)) return;
+
+            this.subPaths.push(subPath.group.rangeRepresentative);
+            this.registeredSubPaths.add(subPath.group.rangeRepresentative);
+            this.calculated = false;
+            return;
+        }
+
         this.subPaths.push(subPath);
+        this.registeredSubPaths.add(subPath);
         this.calculated = false;
     }
 
+    /**
+     * Converts the subpath to the represented subpath if it is part of a group.
+     * Otherwise, the subpath itself is returned.
+     * @param subPath The subpath to get the represented subpath for.
+     */
+    getRepresentedSubPath(subPath: SubPath): SubPath {
+        return subPath.group?.rangeRepresentative ?? subPath;
+    }
 
     /**
      * Trims the range to the given anchor.
@@ -89,10 +115,10 @@ export class SubPathRange {
      * @returns The rad assigned to the path.
      */
     getRadForPath(path: SubPath): number {
-
         if (!this.calculated) {
             this.calculate();
         }
+        path = this.getRepresentedSubPath(path);
 
         if (!this.assignedRads.has(path)) {
             console.warn(this);
@@ -100,6 +126,26 @@ export class SubPathRange {
         }
 
         return this.assignedRads.get(path)!;
+    }
+
+    /**
+     * Returns the valid range for a specific path.
+     * Calculates the range if not done yet.
+     * @param path The path to get the range for.
+     * @returns The valid range for the specified path.
+     */
+    getRangeForPath(path: SubPath): [number, number] {
+        if (!this.calculated) {
+            this.calculate();
+        }
+        path = this.getRepresentedSubPath(path);
+
+        if (!this.assignedRadRanges.has(path)) {
+            console.warn(this);
+            throw new Error(`Path ${path.id} not in continuum`);
+        }
+
+        return this.assignedRadRanges.get(path)!;
     }
 
     /**
@@ -159,6 +205,7 @@ export class SubPathRange {
     /**
      * Returns a valid anchor towards a specific point.
      * @param anchorPoint The point to get the anchor towards.
+     * @param range The range to get the anchor in. If not specified, the global valid range is used.
      * @returns The created anchor towards the specified point.
      */
     getValidVectorTowardsDirection(anchorPoint: Point, range?: [number, number]): Vector {
@@ -172,10 +219,23 @@ export class SubPathRange {
     /**
      * Returns a valid anchor towards a specific point.
      * @param anchorPoint The point to get the anchor towards.
+     * @param range The range to get the anchor in. If not specified, the global valid range is used.
      * @returns The created anchor towards the specified point.
      */
     getValidAnchorTowardsDirection(anchorPoint: Point, range?: [number, number]): Anchor {
         if (!range) range = this.range;
+        const vector = this.getValidVectorTowardsDirection(anchorPoint, range);
+        return new Anchor(this.node.layoutNode.center, vector).move(this.node.layoutNode.outerRadius);
+    }
+
+    /**
+     * Returns a valid anchor towards a specific point for the given path.
+     * @param subPath The path to get the anchor for.
+     * @param anchorPoint  The point to get the anchor towards.
+     * @returns The created anchor towards the specified point in the valid range of the path.
+     */
+    getValidAnchorTowardsDirectionForPath(subPath: SubPath, anchorPoint: Point): Anchor {
+        const range = this.getRangeForPath(subPath);
         const vector = this.getValidVectorTowardsDirection(anchorPoint, range);
         return new Anchor(this.node.layoutNode.center, vector).move(this.node.layoutNode.outerRadius);
     }
@@ -265,9 +325,9 @@ export class SubPathRange {
 
         pathInformation.sort((a, b) => {
 
-            if (a.oppositeVisNode === b.oppositeVisNode) {
-                return a.sourceVisNode === this.node ? -1 : 1;
-            }
+            // if (a.oppositeVisNode === b.oppositeVisNode) {
+            //     return a.sourceVisNode === this.node ? -1 : 1;
+            // }
 
             if (Math.abs(a.forwardRadToConnectionPoint - b.forwardRadToConnectionPoint) < EPSILON) {
                 if (Math.abs(a.forwardRadToTargetNode - b.forwardRadToTargetNode) < EPSILON) {
@@ -364,8 +424,14 @@ export class SubPathRange {
             }
         })
 
-        const debug = true;
+        let debug = false;
+        debug = false;
+        // if (this.node.id == "facialexpressionmanager_node") debug = true;
+        // if (this.node.id == "drive_manager") debug = true;
         if (debug) {
+
+
+            // console.warn("SORTED PATHS", pathInformation);
 
             pathToRange.forEach((range, path) => {
 
@@ -394,6 +460,7 @@ export class SubPathRange {
         // });
 
         this.assignedRads = assignedRads;
+        this.assignedRadRanges = pathToRange;
         this.calculated = true;
     }
 

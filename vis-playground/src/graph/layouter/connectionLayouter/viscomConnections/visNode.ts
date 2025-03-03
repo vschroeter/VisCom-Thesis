@@ -1,5 +1,5 @@
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
-import { SubPath } from "./subPath";
+import { SubPath, SubPathGroup } from "./subPath";
 import { ViscomConnectionLayouter } from "./viscomConnectionLayouter";
 import { VisConnection } from "./visConnection";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
@@ -105,14 +105,22 @@ export class VisNode {
     /**
      * For some target nodes, a sub path might already be cached.
      */
-    cachedSubPaths: Map<VisNode, SubPath> = new Map();
+    // cachedSubPaths: Map<VisNode, SubPath> = new Map();
 
-    getCachedPathTo(targetVisNode: VisNode): SubPath | undefined {
-        return this.cachedSubPaths.get(targetVisNode);
-    }
+    /**
+     * Some subpaths share the same path segment.
+     * Those shared paths are stored as SubPathGroups.
+     * Holds sub-path groups for target VisNodes.
+     */
+    subPathGroups: Map<VisNode, SubPathGroup> = new Map();
 
-    addCachedPathTo(targetVisNode: VisNode, path: SubPath) {
-        this.cachedSubPaths.set(targetVisNode, path);
+    getSubPathGroup(targetVisNode: VisNode): SubPathGroup  {
+
+        if (!this.subPathGroups.has(targetVisNode)) {
+            this.subPathGroups.set(targetVisNode, new SubPathGroup(this, targetVisNode));
+        }
+
+        return this.subPathGroups.get(targetVisNode)!;
     }
 
 

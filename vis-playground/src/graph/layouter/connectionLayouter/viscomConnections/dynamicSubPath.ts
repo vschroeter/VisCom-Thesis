@@ -110,6 +110,13 @@ export class DirectCircularArcConnectionMethod extends DynamicConnectionMethod {
 
         if (!this.arcCircle || !this.nodeIntersection) return false;
 
+        const validRange = this.nodeToConnect?.outerRange.getRangeForPath(this.dynamicSubPath.subPath);
+        const radOfPoint = this.nodeToConnect?.outerRange.getRadOfPoint(this.nodeIntersection);
+
+        if (validRange && radOfPoint && !this.nodeToConnect?.outerRange.radIsInside(radOfPoint, validRange)) {
+            return false;
+        }
+
         // Here we check, whether the arc crosses the inner circle of the node
         // If it does, the connection is not valid
         const intersections = node.layoutNode.innerCircle.intersect(this.arcCircle);
@@ -221,8 +228,11 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
 
         if (!this.nodeToConnect) throw new Error("Node to connect is not defined");
 
-        this.vectorForNode = this.nodeToConnect.outerRange.getValidVectorTowardsDirection(this.pathAnchor.anchorPoint);
-        this.anchorForNode = this.nodeToConnect.outerRange.getValidAnchorTowardsDirection(this.pathAnchor.anchorPoint);
+        // this.vectorForNode = this.nodeToConnect.outerRange.getValidVectorTowardsDirection(this.pathAnchor.anchorPoint);
+        // this.anchorForNode = this.nodeToConnect.outerRange.getValidAnchorTowardsDirection(this.pathAnchor.anchorPoint);
+
+        this.anchorForNode = this.nodeToConnect.outerRange.getValidAnchorTowardsDirectionForPath(this.dynamicSubPath.subPath, this.pathAnchor.anchorPoint);
+        this.vectorForNode = this.anchorForNode.direction;
 
         // const anchorDirection = direction == "nodeToPath" ? "out" : "in";
         // const contAnchorForNode = this.node.outerContinuum.getAnchorForPath(this.flexPath, "out");
@@ -238,20 +248,20 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
     }
 
     override isValidForNode(node: VisNode): boolean {
-
+        return true;
         // TODO: this can still be improved
         // Maybe by line sampling or something like that
 
         // If the node is not the node related to the path anchor,
         // we check, whether the vector from the node to the path anchor is inside the valid outer range of the node
         // --> for every other node this should be the case
-        if (node != this.nodeAtPathAnchor) {
+        // if (node != this.nodeAtPathAnchor) {
 
-            const isValid = node.outerRange.radIsInside(this.vectorForNode.slope);
-            if (!isValid) {
-                return false;
-            }
-        }
+        //     const isValid = node.outerRange.radIsInside(this.vectorForNode.slope);
+        //     if (!isValid) {
+        //         return false;
+        //     }
+        // }
 
         // We also check, whether the connection line between start and end point of the path crosses the inner circle of the node
         // If it does, the connection is not valid
