@@ -8,7 +8,7 @@ import { CombinedPathSegment } from "src/graph/graphical/primitives/pathSegments
 import { VisOrLayoutNode } from "./viscomConnectionLayouter";
 import { RadialCircularArcConnectionLayouter } from "../radialConnections";
 import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
-import { DynamicSubPath } from "./dynamicSubPath";
+import { DirectCircularArcConnectionMethod, DynamicSubPath } from "./dynamicSubPath";
 
 
 export type SubPathLevelType = "sameLevel" | "levelChanging"
@@ -210,24 +210,30 @@ export class SubPath extends CombinedPathSegment {
         return this.fixedPathAnchor?.anchorPoint;
     }
 
-    /**
-     * If the sub path is level changing, this is the anchor at the node that would be optimal based on the fixed path anchor.
-     */
-    get desiredNodeAnchor(): Anchor | undefined {
-
-        // TODO: Implement this for path to node connections by calculating the anchor point for an elliptic arc
-        return undefined;
-    }
-
-
     getDesiredNodeAnchor(sourceNode: VisNode): Anchor | undefined {
 
         if (this.connectionType == "nodeToNode") {
 
             const otherNode = this.getOppositeNodeThan(sourceNode);
-            if (!otherNode) return undefined;
+            const otherLayoutNode = this.getLayoutNodeInDirectionOf(otherNode);
+            if (!otherLayoutNode) return undefined;
 
-            return new Anchor(otherNode.center, new Vector(sourceNode.center, otherNode.center)).move(otherNode.outerCircle.r);
+            return new Anchor(otherLayoutNode.center, new Vector(otherLayoutNode.center, sourceNode.center)).move(otherLayoutNode.outerCircle.r);
+        }
+
+        else if (this.connectionType == "nodeToPath") {
+            return this.nextSubPath?.startAnchor;
+        } else if (this.connectionType == "pathToNode") {
+
+            // const arcMethod = new DirectCircularArcConnectionMethod(new DynamicSubPath(this));
+            // if (arcMethod.isValidForNode(sourceNode)) {
+
+            //     const path = arcMethod.getPath();
+
+            //     if (path) return path.endAnchor;
+            // }
+
+            return this.previousSubPath?.endAnchor;
         }
 
 

@@ -38,12 +38,17 @@ export class SubPathRange {
 
     pathRangeMarginFactor = 0.1;
 
+    outerMargin: number;
+
     constructor(node: VisNode, type: "inside" | "outside", nodeRangeMarginFactor = 0.9) {
         this.type = type;
         this.node = node;
 
+        this.outerMargin = 0;
+
         if (type === "outside") {
             this.range = node.layoutNode.getValidOuterRadRange(nodeRangeMarginFactor, false);
+            this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidOuterRadRange(1, false)[0]);
         } else {
             this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
         }
@@ -104,9 +109,9 @@ export class SubPathRange {
 
             // Decide which side to trim
             if (RadialUtils.forwardRadBetweenAngles(this.getMiddleRad(), anchorRad) < Math.PI) {
-                this.range[1] = anchorRad;
+                this.range[1] = anchorRad - this.outerMargin;
             } else {
-                this.range[0] = anchorRad;
+                this.range[0] = anchorRad + this.outerMargin;
             }
         }
     }
@@ -345,8 +350,11 @@ export class SubPathRange {
             const otherLayoutNode = subPath.getLayoutNodeInDirectionOf(subPath.getOppositeNodeThan(this.node));
             const forwardRadToTargetNode = otherLayoutNode ? this.getRadOfPoint(otherLayoutNode.center) : forwardRadToConnectionPoint;
 
+            const desiredAnchorPoint = subPath.getDesiredNodeAnchor(this.node)?.anchorPoint;
+
             return {
                 subPath,
+                desiredAnchorPoint,
                 level: subPath.minLevelFromTop,
                 forwardRadToConnectionPoint,
                 forwardRadToTargetNode,
@@ -472,13 +480,110 @@ export class SubPathRange {
             range[1] -= margin / 2;
         });
 
+
+        const doRefine = true;
+        if (doRefine) {
+            // Refine the ranges:
+            // Beginning on one side, we look, if a path range can be shrank
+
+            let debug = false;
+            debug = true;
+            debug = false;
+            // if (this.node.id == "dialog_session_manager" && this.type == "outside") debug = true;
+
+            const completeRangeDiff = RadialUtils.forwardRadBetweenAngles(this.range[0], this.range[1]);
+            const minDistanceBetweenRanges = this.pathRangeMarginFactor * completeRangeDiff / pathToRange.size;
+
+            const minSizeFactor = 0.2;
+            const minSizeOfRange = minSizeFactor * completeRangeDiff / pathToRange.size;
+
+
+
+
+            [{ info: pathInformation, type: "forward" }, { info: pathInformation.slice().reverse(), type: "backward" }].forEach(({ info, type }) => {
+
+                // if (type == "forward") return;
+                // if (type == "backward") return;
+
+                let currentStart = type == "forward" ? this.range[0] : this.range[1];
+
+                info.forEach(pathInfo => {
+
+                    const i0 = type == "forward" ? 0 : 1;
+                    const i1 = type == "forward" ? 1 : 0;
+
+                    const path = pathInfo.subPath;
+                    const range = pathToRange.get(path)!;
+                    // if (pathHasCounterPath.get(path)) {
+                    //     currentStart = range[1] + minDistanceBetweenRanges;
+                    //     return;
+                    // }
+
+                    range[i0] = currentStart;
+
+
+                    // Check, where the desired position of the path is
+                    const desiredAnchor = path.getDesiredNodeAnchor(this.node);
+                    if (debug) {
+                        console.warn("[REFINE]:", range[0], range[1], RadialUtils.forwardRadBetweenAngles(range[0], range[1]));
+
+                    }
+
+                    if (desiredAnchor) {
+                        const desiredAnchorPoint = desiredAnchor.anchorPoint;
+                        const adaptedAnchor = this.getValidAnchorTowardsDirection(desiredAnchorPoint, range);
+                        const anchorSlope = adaptedAnchor.direction.slope;
+
+                        range[i0] = RadialUtils.normalizeRad(range[i0]);
+                        range[i1] = RadialUtils.normalizeRad(anchorSlope);
+                        // if (range[1] < range[0]) range[1] = range[0];
+
+                        const currentRangeSize = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
+
+                        if (type == "forward") {
+                            range[1] += Math.max(0, minSizeOfRange - currentRangeSize);
+                        } else {
+                            range[0] -= Math.max(0, minSizeOfRange - currentRangeSize);
+                        }
+
+                        if (debug) {
+                            desiredAnchor._data = { length: 20, stroke: "magenta" };
+                            this.node.layoutNode.debugShapes.push(desiredAnchor);
+                            adaptedAnchor._data = { length: 15, stroke: "cyan" };
+                            this.node.layoutNode.debugShapes.push(adaptedAnchor);
+
+
+                            console.warn("Adapted range", range, currentRangeSize, minSizeOfRange);
+                        }
+                    }
+
+                    if (type == "forward") {
+                        currentStart = range[1] + minDistanceBetweenRanges;
+                    } else {
+                        currentStart = range[0] - minDistanceBetweenRanges;
+                    }
+                });
+
+
+
+            })
+
+
+
+        }
+
+
+
+
+
         pathToRange.forEach((range, path) => {
 
             // Check if the desired range is inside the valid range
             // const desiredAnchorPoint = path.desiredNodeAnchor?.anchorPoint;
             const desiredAnchorPoint = path.getDesiredNodeAnchor(this.node)?.anchorPoint;
             if (!desiredAnchorPoint || pathHasCounterPath.get(path)) {
-                assignedRads.set(path, (range[0] + range[1]) / 2);
+                const radDiff = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
+                assignedRads.set(path, range[0] + radDiff / 2);
                 return;
             }
 
@@ -494,13 +599,16 @@ export class SubPathRange {
             }
         })
 
+
+
         let debug = false;
+        debug = true;
         debug = false;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node") debug = true;
-        if (this.node.id == "equalizer") debug = true;
-        if (this.node.id == "dialog_session_manager") debug = true;
+        // if (this.node.id == "equalizer") debug = true;
+        // if (this.node.id == "dialog_session_manager") debug = true;
         if (debug) {
 
 
