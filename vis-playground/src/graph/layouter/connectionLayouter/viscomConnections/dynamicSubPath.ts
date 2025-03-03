@@ -250,7 +250,7 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
     }
 
     override isValidForNode(node: VisNode): boolean {
-        return true;
+        // return true;
         // TODO: this can still be improved
         // Maybe by line sampling or something like that
 
@@ -293,7 +293,7 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
 
 export class CircleSegmentConnectionMethod extends DynamicConnectionMethod {
 
-    closerAnchor: Anchor;
+    anchorForNode: Anchor;
 
     constructor(subPath: DynamicSubPath) {
         super(subPath);
@@ -302,11 +302,14 @@ export class CircleSegmentConnectionMethod extends DynamicConnectionMethod {
 
         if (!this.nodeToConnect || !this.nodeAtPathAnchor) throw new Error("Node to connect is not defined");
 
-        const anchor1 = new Anchor(this.nodeToConnect.center, new Vector(this.nodeToConnect.outerRange.range[0])).move(this.nodeToConnect.outerCircle.r);
-        const anchor2 = new Anchor(this.nodeToConnect.center, new Vector(this.nodeToConnect.outerRange.range[1])).move(this.nodeToConnect.outerCircle.r);
-        const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], this.pathAnchor.anchorPoint, a => a.anchorPoint)!;
+        // const anchor1 = new Anchor(this.nodeToConnect.center, new Vector(this.nodeToConnect.outerRange.range[0])).move(this.nodeToConnect.outerCircle.r);
+        // const anchor2 = new Anchor(this.nodeToConnect.center, new Vector(this.nodeToConnect.outerRange.range[1])).move(this.nodeToConnect.outerCircle.r);
+        // const closerAnchor = RadialUtils.getClosestShapeToPoint([anchor1, anchor2], this.pathAnchor.anchorPoint, a => a.anchorPoint)!;
 
-        this.closerAnchor = closerAnchor;
+        // this.closerAnchor = closerAnchor;
+
+        this.anchorForNode = this.nodeToConnect.outerRange.getValidAnchorTowardsDirectionForPath(this.dynamicSubPath.subPath, this.pathAnchor.anchorPoint);
+
     }
 
     override isValidForNode(node: VisNode): boolean {
@@ -321,8 +324,8 @@ export class CircleSegmentConnectionMethod extends DynamicConnectionMethod {
         // const circleSegment = new SmoothCircleSegment(this.connection, pathAnchor, correctlyOrientedAnchor, circle);
 
         const circleSegment = this.isPathToNode ?
-            new SmoothCircleSegment(this.connection, this.pathAnchor, this.closerAnchor.cloneReversed(), circle) :
-            new SmoothCircleSegment(this.connection, this.closerAnchor, this.pathAnchor, circle);
+            new SmoothCircleSegment(this.connection, this.pathAnchor, this.anchorForNode.cloneReversed(), circle) :
+            new SmoothCircleSegment(this.connection, this.anchorForNode, this.pathAnchor, circle);
 
         return circleSegment;
     }

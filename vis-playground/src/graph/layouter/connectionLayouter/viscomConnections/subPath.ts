@@ -153,6 +153,7 @@ export class SubPath extends CombinedPathSegment {
     ////////////////////////////////////////////////////////////////////////////
 
     get level() {
+        // return this.minLevelFromTop;
         return this.levelFromTop;
     }
 
@@ -573,6 +574,20 @@ export class SubPath extends CombinedPathSegment {
 
             this.sourceVisNode.adaptRanges(hyperArc.startAnchor);
             this.targetVisNode.adaptRanges(hyperArc.endAnchor);
+
+            // if (this.sourceVisNode.id == "jokes_node" || this.sourceVisNode.id == "flint_node") {
+            //     console.warn("[ADAPT BEFORE]", this.sourceVisNode.outerRange.range.slice(), this.id)
+            //     console.warn("[ADAPT AFTER]", this.sourceVisNode.outerRange.range.slice(), this.id)
+
+            //     const sA = hyperArc.startAnchor;
+            //     const tA = hyperArc.endAnchor;
+
+            //     sA._data = { stroke: "cyan", length: 10 };
+            //     tA._data = { stroke: "cyan", length: 10 };
+
+            //     this.connection.debugShapes.push(sA);
+            //     this.connection.debugShapes.push(tA);
+            // }
 
             this.segments = [hyperArc];
         } catch (e) {

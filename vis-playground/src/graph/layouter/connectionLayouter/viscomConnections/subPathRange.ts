@@ -107,12 +107,29 @@ export class SubPathRange {
         const anchorRad = this.getRadOfPoint(anchor.anchorPoint);
         if (this.pointIsInside(anchor.anchorPoint)) {
 
+            // const midTo0 = RadialUtils.forwardRadBetweenAngles(this.getMiddleRad(), this.range[0]);
+            // const midTo1 = RadialUtils.forwardRadBetweenAngles(this.getMiddleRad(), this.range[1]);
+
+            const midToAnchor = RadialUtils.forwardRadBetweenAngles(this.getMiddleRad(), anchorRad);
+
+            // console.warn("[TRIM]", {
+            //     anchorRad,
+            //     r: this.range,
+            //     id: this.node.id,
+            //     midToAnchor
+            // });
+
             // Decide which side to trim
-            if (RadialUtils.forwardRadBetweenAngles(this.getMiddleRad(), anchorRad) < Math.PI) {
+            if (midToAnchor < Math.PI) {
                 this.range[1] = anchorRad - this.outerMargin;
+                // this.range[1] = anchorRad - 0;
             } else {
                 this.range[0] = anchorRad + this.outerMargin;
+                // this.range[0] = anchorRad + 0;
             }
+
+            this.calculated = false;
+            // console.log(this.range);
         }
     }
 
@@ -408,13 +425,29 @@ export class SubPathRange {
 
 
             if (Math.abs(a.forwardRadToConnectionPoint - b.forwardRadToConnectionPoint) < EPSILON) {
-                if (Math.abs(a.forwardRadToTargetNode - b.forwardRadToTargetNode) < EPSILON) {
+
+                if (a.sourceVisNode === this.node && b.sourceVisNode === this.node) {
+                    return a.forwardRadToTargetNode - b.forwardRadToTargetNode;
+                } else {
                     return a.sourceVisNode === this.node ? -1 : 1;
                 }
-                return a.forwardRadToTargetNode - b.forwardRadToTargetNode;
+
+                // if (Math.abs(a.forwardRadToTargetNode - b.forwardRadToTargetNode) < EPSILON) {
+                //     return a.sourceVisNode === this.node ? -1 : 1;
+                // }
+                // return a.forwardRadToTargetNode - b.forwardRadToTargetNode;
             }
             return a.forwardRadToConnectionPoint - b.forwardRadToConnectionPoint;
         })
+
+        // console.warn("SORTED PATHS" + this.type, this.node.id,
+        //     pathInformation.map(p => ({
+        //         id: p.subPath.id,
+        //         level: p.level,
+        //         t: p
+        //     }))
+        // );
+
 
         // After sorted, we add the connections to our continuum
         // For that, we first add each connection with a distance of 1
@@ -481,7 +514,7 @@ export class SubPathRange {
         });
 
 
-        const doRefine = true;
+        const doRefine = false;
         if (doRefine) {
             // Refine the ranges:
             // Beginning on one side, we look, if a path range can be shrank
@@ -574,8 +607,6 @@ export class SubPathRange {
 
 
 
-
-
         pathToRange.forEach((range, path) => {
 
             // Check if the desired range is inside the valid range
@@ -606,11 +637,13 @@ export class SubPathRange {
         debug = false;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
-        // if (this.node.id == "flint_node") debug = true;
+        // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
         // if (this.node.id == "equalizer") debug = true;
         // if (this.node.id == "dialog_session_manager") debug = true;
         if (debug) {
 
+
+            this.node.layoutNode.debugShapes.push(...this.getValidAnchorsOfRange().all);
 
             console.warn("SORTED PATHS", pathInformation);
 
