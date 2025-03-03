@@ -157,18 +157,6 @@ export class FlexConnection extends CombinedPathSegment {
         this.segments = this.paths.map(path => path);
 
     }
-
-    init(): void {
-
-    }
-
-    calculate(): void {
-
-    }
-
-    // override get segments(): PathSegment[] {
-    //     return this.paths.map(path => path);
-    // }
 }
 
 
@@ -223,10 +211,16 @@ export class FlexPath extends CombinedPathSegment {
             this.nodePath = Array.from(options.nodePath);
         }
 
+        // For hyper connections, there can be multiple connections (so hyper connection + its child connections)
+        // that share the same path.
+        // In this case, the path is saved to be reused here
         this.linkedPath = this.sourceFlexNode.getPathTo(this.targetFlexNode);
         if (this.linkedPath) {
+            // If there was a linked path, the segments are just the linked path
             this.segments = [this.linkedPath]
-        } else {
+        }
+        // If there was no linked path, we add this path to be layouted
+        else {
             // Connections between the same parents are saved to be reused
             // This should not be done between different parents, as paths from nodes to its hypernode can be for different connections
             if (this.hasSameParent()) this.sourceFlexNode.mapTargetNodeToPath.set(this.targetFlexNode, this);
@@ -443,12 +437,18 @@ export class FlexPath extends CombinedPathSegment {
 
 
         let debug = false;
-        if (this.source.id == "flint_node" && this.target.id == "tts_pico") {
+        if (this.target.id == "flint_node") {
+            // if (this.source.id == "drive_manager" && this.target.id == "left_motor_controller") {
             debug = true;
+            console.warn({
+                s: this.sourceFlexNode,
+                t: this.targetFlexNode,
+            })
+
         }
 
         if (debug) {
-            // this.source.debugShapes.push(...this.targetFlexNode.outerContinuum.getValidRangeAnchors());
+            this.source.debugShapes.push(...this.targetFlexNode.outerContinuum.getValidRangeAnchors());
         }
 
         const pathAnchor = isPathToNode ? adjacentPath.endAnchor : adjacentPath.startAnchor;
@@ -774,14 +774,25 @@ export class SmoothSplineConnectionMethod extends FlexConnectionMethod {
 
         // const vectorForNode = new Vector(node.center, pathAnchor.anchorPoint);
 
-        this.vectorForNode = node.outerContinuum.getValidVectorTowardsDirection(pathAnchor.anchorPoint);
+        this.vectorForNode = this.node.outerContinuum.getValidVectorTowardsDirection(pathAnchor.anchorPoint);
         this.anchorForNode = this.node.outerContinuum.getValidAnchorTowardsDirection(this.pathAnchor.anchorPoint);
 
+        // const anchorDirection = direction == "nodeToPath" ? "out" : "in";
+        // const contAnchorForNode = this.node.outerContinuum.getAnchorForPath(this.flexPath, "out");
+
+        // console.warn(this.node.outerContinuum)
+
+        // this.connection.debugShapes.push(this.anchorForNode);
+        // this.connection.debugShapes.push(contAnchorForNode);
+        // this.connection.debugShapes.push(...(this.node.outerContinuum.getValidRangeAnchors()));
+
+
+        // this.vectorForNode = new Vector(this.node.center, this.anchorForNode.anchorPoint);
     }
 
     override isValidForNode(node: FlexNode): boolean {
 
-        // TODO: this cann still be improved
+        // TODO: this can still be improved
         // Maybe by line sampling or something like that
 
         // If the node is not the node related to the path anchor,

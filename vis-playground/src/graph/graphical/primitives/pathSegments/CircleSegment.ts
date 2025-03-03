@@ -27,10 +27,10 @@ export class CircleSegmentSegment extends PathSegment {
 
     /** The node the circle segment belongs to */
     parentNode?: LayoutNode;
-    
+
     /** The circle of the circle segment */
     circle: Circle;
-    
+
     /** If the path should cross a node */
     crossNode?: LayoutNode;
 
@@ -110,7 +110,7 @@ export class CircleSegmentSegment extends PathSegment {
                 this.intermediateEndCurve?.getSvgPath(),
             ].join(" ");
         }
-        
+
         return [
             this.intermediateStartCurve?.getSvgPath(),
             this.startCurve?.getSvgPath(),
@@ -127,7 +127,7 @@ export class CircleSegmentSegment extends PathSegment {
             return this.getSvgPath();
         }
 
-        this._calculated = true;        
+        this._calculated = true;
 
         // Contains 3 forms:
         // - a start connection quadratic bezier curve from the start anchor to the circle
@@ -205,8 +205,8 @@ export class CircleSegmentSegment extends PathSegment {
         //     radiusAtEnd < radius ?
         //         endAnchor.getPointAwayFromReference(absEndDelta, center) :
         //         endAnchor.getPointTowardsReference(absEndDelta, center);
-        
-        // If there is a cross node defined, we want the center of the intersection circles to be closer to the cross node center 
+
+        // If there is a cross node defined, we want the center of the intersection circles to be closer to the cross node center
         // if (this.crossNode) {
         //     startCircleCenterPoint = startAnchor.getPointTowardsReference(absStartDelta, this.crossNode.center);
         //     endCircleCenterPoint = endAnchor.getPointTowardsReference(absEndDelta, this.crossNode.center);
@@ -219,8 +219,8 @@ export class CircleSegmentSegment extends PathSegment {
         // const endCircleForIntersection = new Circle(endCircleCenterPoint, absEndDelta);
 
 
-        
-        
+
+
         // If the the start and end circle are close together and intersect, we just draw a cubic bezier curve
         const startEndIntersections = startCircleForIntersection.intersect(endCircleForIntersection);
         const startContainsEnd = startCircleForIntersection.contains(endCircleForIntersection);
@@ -258,7 +258,7 @@ export class CircleSegmentSegment extends PathSegment {
         let minDistance = Number.MAX_VALUE;
         let minCombination: [Point, Point] | undefined = undefined;
         for (const combination of combinations) {
-            
+
             const rad1 = RadialUtils.radOfPoint(combination[0], this.circle.center);
             const rad2 = RadialUtils.radOfPoint(combination[1], this.circle.center);
 
@@ -278,7 +278,7 @@ export class CircleSegmentSegment extends PathSegment {
         const arcStartPoint = minCombination![0];
         const arcEndPoint = minCombination![1];
 
-        
+
         // let arcStartPoint = ShapeUtil.getClosestShapeToPoint(startIntersections, endAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
         // let arcEndPoint = ShapeUtil.getClosestShapeToPoint(endIntersections, startAnchor.anchorPoint, (p) => p) ?? new Point(0, 0);
 
@@ -295,7 +295,7 @@ export class CircleSegmentSegment extends PathSegment {
         //     ]
 
         //     arcStartPoint = startSlopes[0] > startSlopes[1] ? startIntersections[0] : startIntersections[1];
-        //     arcEndPoint = endSlopes[0] > endSlopes[1] ? endIntersections[0] : endIntersections[1];            
+        //     arcEndPoint = endSlopes[0] > endSlopes[1] ? endIntersections[0] : endIntersections[1];
         // }
 
         const arc = new EllipticArc(this.connection, arcStartPoint, arcEndPoint);

@@ -73,43 +73,6 @@ export class FlexConnectionLayouter extends BaseNodeConnectionLayouter {
 
         return;
 
-
-        // Fill in the references for the inConnections
-        this.mapLayoutNodeToFlexNode.forEach(flexNode => {
-            flexNode.outConnections.forEach(connection => {
-                const targetFlexNode = this.mapLayoutNodeToFlexNode.get(connection.target);
-                if (targetFlexNode) {
-                    targetFlexNode.inConnections.push(connection);
-                }
-            })
-        })
-
-
-        visGraph.allLayoutNodes.forEach(node => {
-            const flexNode = this.mapLayoutNodeToFlexNode.get(node);
-
-            if (!flexNode) {
-                console.error("No flex node for node", node);
-                return;
-            }
-
-            flexNode.outConnections.forEach(connection => {
-                connection.calculate();
-            });
-
-            // // Do circle connections where possible
-            // // This is mostly for the direct connections between consecutive nodes on a circle
-            // flexNode.circleArcConnections.forEach(connection => {
-            //     connection.segments = [new DirectCircleArcConnection(connection)];
-            // })
-
-            // // Do smooth spline connections for connections inside the same parent
-            // flexNode.sameParentConnections.forEach(connection => {
-            //     connection.segments = [new InsideParentConnection(connection)];
-            // });
-
-        });
-
     }
 
 }

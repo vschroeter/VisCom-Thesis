@@ -19,7 +19,7 @@ export class FlexContinuum {
 
     mapPathToRad: Map<FlexPath, number> = new Map();
 
-    combinedPathsDistanceFactor = 0.05;
+    combinedPathsDistanceFactor = 0.125;
 
 
     constructor(node: FlexNode, type: "outside" | "inside") {
@@ -44,11 +44,17 @@ export class FlexContinuum {
 
         const anchor1 = new Anchor(this.node.layoutNode.center, new Vector(this.range[0]));
         const anchor2 = new Anchor(this.node.layoutNode.center, new Vector(this.range[1]));
+        const anchor3 = new Anchor(this.node.layoutNode.center, new Vector(this.getBacksideRad()));
 
         anchor1._data = { length: this.node.layoutNode.outerRadius, stroke: "green" };
         anchor2._data = { length: this.node.layoutNode.outerRadius, stroke: "red" };
+        anchor3._data = { length: this.node.layoutNode.outerRadius, stroke: "blue" };
 
-        return [anchor1, anchor2];
+        return [anchor1, anchor2, anchor3];
+    }
+
+    getBacksideRad(): number {
+        return this.range[1] + RadialUtils.forwardRadBetweenAngles(this.range[1], this.range[0]) / 2;
     }
 
     getAnchorForRad(rad: number, direction: "in" | "out"): Anchor {
@@ -64,7 +70,28 @@ export class FlexContinuum {
         // This is the center rad on the backside of the range
         // We sort against this rad, to avoid problems where close to border connections are sorted to the wrong side
         const backRad = this.range[1] + RadialUtils.forwardRadBetweenAngles(this.range[1], this.range[0]) / 2;
+
+        // const pathInformation = this.paths.map(path => {
+
+        //     const oppositeNode = path.getOppositeNodeThan(this.node);
+        //     if (!oppositeNode) {
+        //         return { path, oppositeNode: undefined, forwardRad: -1 };
+        //     }
+
+        //     const rad = RadialUtils.radOfPoint(oppositeNode.layoutNode.center, this.node.layoutNode.center);
+        //     const forwardRad = RadialUtils.forwardRadBetweenAngles(backRad, rad);
+
+        //     console.log("[FLEX] RAD", path.id, rad, forwardRad);
+
+        //     return { path, oppositeNode, oppId: oppositeNode.id, nId: this.node.id, forwardRad };
+        // });
+
+        // console.log("[FLEX] pathInformation", pathInformation, this.node, backRad);
+
         this.paths.sort((a, b) => {
+
+
+            // TODO: Sort not only by opposite node, but also by the next path anchor if exists
 
             const aOpposite = a.getOppositeNodeThan(this.node);
             const bOpposite = b.getOppositeNodeThan(this.node);
@@ -98,7 +125,9 @@ export class FlexContinuum {
 
             // If the next path is the counter path of the current one (so source and target node are switched), we add a distance of 1 * this.combinedPathsDistanceFactor
             if (path.isCounterPathOf(nextPath)) {
+                const maxWidth = Math.max(path.connection.weight, nextPath.connection.weight);
                 currentPosition += 1 * this.combinedPathsDistanceFactor;
+                // currentPosition += maxWidth * this.combinedPathsDistanceFactor;
             } else {
                 currentPosition += 1;
             }
