@@ -55,6 +55,7 @@ export class SubPathRange {
 
     registeredSubPaths: Set<SubPath> = new Set();
 
+
     registerSubPath(subPath: SubPath) {
 
         // If the subpath has a group, only add the range representative
@@ -84,6 +85,14 @@ export class SubPathRange {
     getRepresentedSubPath(subPath: SubPath): SubPath {
         return subPath.group?.rangeRepresentative ?? subPath;
     }
+
+    /**
+     * Check if a specific subpath is registered in this range.
+     */
+    hasPath(subPath: SubPath): boolean {
+        return this.registeredSubPaths.has(this.getRepresentedSubPath(subPath));
+    }
+
 
     /**
      * Trims the range to the given anchor.
@@ -141,7 +150,7 @@ export class SubPathRange {
         path = this.getRepresentedSubPath(path);
 
         if (!this.assignedRadRanges.has(path)) {
-            console.warn(this);
+            console.error(this, path);
             throw new Error(`Path ${path.id} not in continuum`);
         }
 
@@ -299,13 +308,26 @@ export class SubPathRange {
         const pathInformation = this.subPaths.map(subPath => {
 
             // const oppositeConnectionAnchor= subPath.getOppositeConnectionAnchor(this.node);
-            const oppositeConnectionPoint = subPath.getOppositeConnectionPoint(this.node);
+            const oppositeConnectionPoint = subPath.getOppositeConnectionPoint(this.node)?.clone();
 
             // const oppositeNode = subPath.getOppositeNodeThan(this.node);
             if (!oppositeConnectionPoint) {
                 // return { path: subPath, oppositeNode: undefined, forwardRad: -1 };
                 throw new Error("Opposite connection point not found");
             }
+
+            // if (this.node.id == "flint_node") {
+            //     console.warn("Get opposite connection point", {
+            //         t: this,
+            //         cId: subPath.cId,
+            //         id: subPath.id,
+            //         type: subPath.connectionType,
+            //         oppositeNode: subPath.getOppositeNodeThan(this.node)?.id,
+            //         node: this.node.id,
+            //         point: oppositeConnectionPoint,
+            //         fw: RadialUtils.forwardRadBetweenAngles(backRad, this.getRadOfPoint(oppositeConnectionPoint!)),
+            //     });
+            // }
 
             const radOfOppositePoint = this.getRadOfPoint(oppositeConnectionPoint);
             const forwardRadToConnectionPoint = RadialUtils.forwardRadBetweenAngles(backRad, radOfOppositePoint);
@@ -320,6 +342,7 @@ export class SubPathRange {
                 sourceVisNode: subPath.sourceVisNode,
                 targetVisNode: subPath.targetVisNode,
                 oppositeVisNode: subPath.getOppositeNodeThan(this.node),
+                oppositeConnectionPoint,
             };
         });
 
@@ -428,27 +451,38 @@ export class SubPathRange {
         debug = false;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
+        // if (this.node.id == "flint_node") debug = true;
         if (debug) {
 
 
-            // console.warn("SORTED PATHS", pathInformation);
+            console.warn("SORTED PATHS", pathInformation);
 
-            pathToRange.forEach((range, path) => {
-
-                const startAnchor = this.getAnchorForRad(range[0], "out");
-                const endAnchor = this.getAnchorForRad(range[1], "out");
-
-                startAnchor._data = { length: 10, stroke: "green" };
-                endAnchor._data = { length: 10, stroke: "red" };
-
-                path.connection.debugShapes.push(startAnchor, endAnchor);
+            pathInformation.forEach((pathInfo, i) => {
+                pathInfo.oppositeConnectionPoint._data = {r: 4, fill: this.type == "inside" ? "red" : "green"};
+                pathInfo.subPath.connection.debugShapes.push(pathInfo.oppositeConnectionPoint);
             })
 
-            assignedRads.forEach((rad, path) => {
-                const anchor = this.getAnchorForRad(rad, "out");
-                anchor._data = { length: 15, stroke: "blue" };
-                path.connection.debugShapes.push(anchor);
-            });
+            // const p = new Point(517.7175537019239, -471.7411783240392);
+            const p = new Point(604.7, -369.3);
+            p._data = { r: 7, fill: "blue" };
+            this.node.layoutNode.debugShapes.push(p);
+
+            // pathToRange.forEach((range, path) => {
+
+            //     const startAnchor = this.getAnchorForRad(range[0], "out");
+            //     const endAnchor = this.getAnchorForRad(range[1], "out");
+
+            //     startAnchor._data = { length: 10, stroke: "green" };
+            //     endAnchor._data = { length: 10, stroke: "red" };
+
+            //     path.connection.debugShapes.push(startAnchor, endAnchor);
+            // })
+
+            // assignedRads.forEach((rad, path) => {
+            //     const anchor = this.getAnchorForRad(rad, "out");
+            //     anchor._data = { length: 15, stroke: "blue" };
+            //     path.connection.debugShapes.push(anchor);
+            // });
 
 
         }

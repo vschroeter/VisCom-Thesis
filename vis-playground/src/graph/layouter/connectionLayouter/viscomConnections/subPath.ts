@@ -16,7 +16,19 @@ export type SubPathConnectionType = "pathToNode" | "nodeToPath" | "nodeToNode" |
 
 export class SubPathGroup {
 
-    laidOutSubPath: SubPath | undefined;
+    _laidOutSubPath: SubPath | undefined;
+
+    get laidOutSubPath(): SubPath | undefined {
+        return this._laidOutSubPath;
+    }
+
+    set laidOutSubPath(subPath: SubPath) {
+        this._laidOutSubPath = subPath;
+
+        this.linkedSubPaths.forEach(sp => {
+            sp.segments = [subPath];
+        });
+    }
 
     linkedSubPaths: SubPath[] = [];
 
@@ -215,17 +227,24 @@ export class SubPath extends CombinedPathSegment {
             return otherNode?.center;
         } else if (this.connectionType == "nodeToPath") {
             if (node == this.sourceVisNode) {
+                // console.log("n2p next path", this.nextSubPath?.id, this.nextSubPath)
                 return this.nextSubPath?.startAnchor?.anchorPoint;
             } else {
-                throw new Error("Not implemented");
+                // console.log("n2p source node")
+                return this.sourceVisNode.center;
+                // console.error(this, node);
+                // throw new Error("Not implemented");
             }
 
         } else if (this.connectionType == "pathToNode") {
 
             if (node == this.targetVisNode) {
+                // console.log("p2n prev path", this.previousSubPath?.id, this.previousSubPath, this.previousSubPath?.segments.length)
                 return this.previousSubPath?.endAnchor?.anchorPoint;
             } else {
-                throw new Error("Not implemented");
+                // console.log("p2n target node")
+                return this.targetVisNode.center;
+                // throw new Error("Not implemented");
             }
 
         } else {
@@ -399,7 +418,7 @@ export class SubPath extends CombinedPathSegment {
     layoutCompleted = false;
 
     override getSvgPath(): string {
-        console.log("[SVG]", this.cId, this.segments)
+        // console.log("[SVG]", this.cId, this.segments)
         if (this.segments.length === 0) {
             return "";
         }
@@ -447,7 +466,7 @@ export class SubPath extends CombinedPathSegment {
     }
 
     layoutCircleArc() {
-        console.warn("Layout DIRECT ARC", this.sourceVisNode.id, this.targetVisNode.id, this);
+        // console.warn("Layout DIRECT ARC", this.sourceVisNode.id, this.targetVisNode.id, this);
 
         // console.log("Calculate direct circle arc connection", this.connection.source.id, this.connection.target.id);
         const source = this.sourceVisNode.layoutNode;
@@ -539,7 +558,7 @@ export class SubPath extends CombinedPathSegment {
 
 
     layoutInsideParent() {
-        console.warn("Layout INSIDE", this.sourceVisNode.id, this.targetVisNode.id, this);
+        // console.warn("Layout INSIDE", this.sourceVisNode.id, this.targetVisNode.id, this);
         const sourceAnchor = this.sourceVisNode.innerRange.getAnchorForPath(this, "out");
         const targetAnchor = this.targetVisNode.innerRange.getAnchorForPath(this, "in");
 
@@ -547,7 +566,7 @@ export class SubPath extends CombinedPathSegment {
     }
 
     layoutPathNodeConnection() {
-        console.warn("Layout DYNAMIC", this.sourceVisNode.id, this.targetVisNode.id, this);
+        // console.warn("Layout DYNAMIC", this.sourceVisNode.id, this.targetVisNode.id, this);
 
         const dynamicSubPath = new DynamicSubPath(this);
         dynamicSubPath.layout();

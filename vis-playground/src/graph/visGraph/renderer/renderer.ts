@@ -164,7 +164,7 @@ export class Renderer {
                         d.append('circle')
                             .attr('cx', p.x)
                             .attr('cy', p.y)
-                            .attr('r', 1)
+                            .attr('r', p._data?.r ?? 1)
                             .attr('fill', p._data?.fill ?? 'green')
                             .attr('stroke', 'none')
                             .attr('opacity', 0.5)

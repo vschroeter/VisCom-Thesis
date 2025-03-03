@@ -110,11 +110,13 @@ export class DirectCircularArcConnectionMethod extends DynamicConnectionMethod {
 
         if (!this.arcCircle || !this.nodeIntersection) return false;
 
-        const validRange = this.nodeToConnect?.outerRange.getRangeForPath(this.dynamicSubPath.subPath);
-        const radOfPoint = this.nodeToConnect?.outerRange.getRadOfPoint(this.nodeIntersection);
+        if (this.nodeToConnect?.outerRange.hasPath(this.dynamicSubPath.subPath)) {
+            const validRange = this.nodeToConnect?.outerRange.getRangeForPath(this.dynamicSubPath.subPath);
+            const radOfPoint = this.nodeToConnect?.outerRange.getRadOfPoint(this.nodeIntersection);
 
-        if (validRange && radOfPoint && !this.nodeToConnect?.outerRange.radIsInside(radOfPoint, validRange)) {
-            return false;
+            if (validRange && radOfPoint && !this.nodeToConnect?.outerRange.radIsInside(radOfPoint, validRange)) {
+                return false;
+            }
         }
 
         // Here we check, whether the arc crosses the inner circle of the node

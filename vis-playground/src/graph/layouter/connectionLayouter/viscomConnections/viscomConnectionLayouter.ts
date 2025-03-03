@@ -83,7 +83,7 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
 
         this.getAllSubPaths("asc").forEach(subPaths => {
             subPaths.forEach(subPath => {
-                console.log("[LAYOUT] Layouting subPath", subPath.cId, subPath.id, subPath.level, subPath.levelType, subPath);
+                // console.log("[LAYOUT] Layouting subPath", subPath.cId, subPath.id, subPath.level, subPath.levelType, subPath);
                 subPath.layout();
             });
         });
