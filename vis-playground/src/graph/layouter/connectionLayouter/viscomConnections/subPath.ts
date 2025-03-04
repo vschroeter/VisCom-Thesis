@@ -9,6 +9,7 @@ import { VisOrLayoutNode } from "./viscomConnectionLayouter";
 import { RadialCircularArcConnectionLayouter } from "../radialConnections";
 import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
 import { DirectCircularArcConnectionMethod, DynamicSubPath } from "./dynamicSubPath";
+import { RadialUtils } from "../../utils/radialUtils";
 
 
 export type SubPathLevelType = "sameLevel" | "levelChanging"
@@ -213,30 +214,56 @@ export class SubPath extends CombinedPathSegment {
 
     getDesiredNodeAnchor(sourceNode: VisNode): Anchor | undefined {
 
+        const otherNode = this.getOppositeNodeThan(sourceNode);
         if (this.connectionType == "nodeToNode") {
 
-            const otherNode = this.getOppositeNodeThan(sourceNode);
             const otherLayoutNode = this.getLayoutNodeInDirectionOf(otherNode);
             if (!otherLayoutNode) return undefined;
 
-            return new Anchor(otherLayoutNode.center, new Vector(otherLayoutNode.center, sourceNode.center)).move(otherLayoutNode.outerCircle.r);
+            // return new Anchor(otherLayoutNode.center, new Vector(otherLayoutNode.center, sourceNode.center)).move(otherLayoutNode.outerCircle.r);
+            return new Anchor(sourceNode.center, new Vector(sourceNode.center, otherLayoutNode.center)).move(sourceNode.outerCircle.r);
         }
 
         else if (this.connectionType == "nodeToPath") {
-            return this.nextSubPath?.startAnchor;
+            const pathAnchor = this.nextSubPath?.startAnchor;
+
+            if (sourceNode && pathAnchor) {
+
+                const arcCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(sourceNode.layoutNode.center, pathAnchor);
+                try {
+                    const intersections = arcCircle ? sourceNode.outerCircle.intersect(arcCircle) : [];
+                    const nodeIntersection = RadialUtils.getClosestShapeToPoint(intersections, pathAnchor.anchorPoint);
+                    if (nodeIntersection) {
+                        return new Anchor(nodeIntersection, new Vector(sourceNode.center, nodeIntersection));
+                    }
+                } catch (e) {
+                    console.error("Error in direct circular arc connection layouting", {})
+                    throw e;
+                }
+            }
+
+            return pathAnchor;
         } else if (this.connectionType == "pathToNode") {
 
-            // const arcMethod = new DirectCircularArcConnectionMethod(new DynamicSubPath(this));
-            // if (arcMethod.isValidForNode(sourceNode)) {
+            const pathAnchor = this.previousSubPath?.endAnchor;
 
-            //     const path = arcMethod.getPath();
+            if (sourceNode && pathAnchor) {
 
-            //     if (path) return path.endAnchor;
-            // }
+                const arcCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(sourceNode.layoutNode.center, pathAnchor);
+                try {
+                    const intersections = arcCircle ? sourceNode.outerCircle.intersect(arcCircle) : [];
+                    const nodeIntersection = RadialUtils.getClosestShapeToPoint(intersections, pathAnchor.anchorPoint);
+                    if (nodeIntersection) {
+                        return new Anchor(nodeIntersection, new Vector(sourceNode.center, nodeIntersection));
+                    }
+                } catch (e) {
+                    console.error("Error in direct circular arc connection layouting", {})
+                    throw e;
+                }
+            }
 
-            return this.previousSubPath?.endAnchor;
+            return pathAnchor;
         }
-
 
     }
 
