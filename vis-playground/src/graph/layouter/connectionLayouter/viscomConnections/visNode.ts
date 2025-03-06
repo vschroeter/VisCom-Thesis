@@ -48,6 +48,8 @@ export class VisNode {
     innerRange: SubPathRange;
     outerRange: SubPathRange;
 
+    circularSubPaths: SubPath[] = [];
+
     adaptRanges(anchor: Anchor) {
         [this.innerRange, this.outerRange].forEach(range => {
             range.trimToAnchor(anchor);
@@ -121,6 +123,16 @@ export class VisNode {
         }
 
         return this.subPathGroups.get(targetVisNode)!;
+    }
+
+    getSortedSubPaths(): SubPath[] {
+
+        return [
+            ...this.circularSubPaths,
+            ...this.innerRange.getSortedSubPathInfo().map(info => info.subPath),
+            ...this.outerRange.getSortedSubPathInfo().map(info => info.subPath),
+        ]
+
     }
 
 

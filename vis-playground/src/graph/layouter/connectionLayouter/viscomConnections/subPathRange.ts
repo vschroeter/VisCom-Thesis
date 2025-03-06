@@ -5,6 +5,21 @@ import { Point, Segment, Vector } from "2d-geometry";
 import { RadialUtils } from "../../utils/radialUtils";
 
 
+export type SubPathInformation = {
+    subPath: SubPath;
+    desiredAnchor?: Anchor;
+    desiredAnchorPoint?: Point;
+    level: number;
+    forwardRadToConnectionPoint: number;
+    forwardRadToTargetNode: number;
+    sourceVisNode: VisNode;
+    targetVisNode: VisNode;
+    oppositeVisNode: VisNode | undefined;
+    oppositeConnectionPoint: Point;
+    isInsideRange: boolean;
+    hasCounterPath: boolean;
+};
+
 
 export class SubPathRange {
 
@@ -25,7 +40,15 @@ export class SubPathRange {
     // We only calculate the range once
     calculated = false;
 
+    // We only need to sort the paths once
+    sorted = false;
+
+    // The sorted information about the subpaths
+    subPathInformation: SubPathInformation[] = [];
+    mappedSubPathInformation: Map<SubPath, SubPathInformation> = new Map();
+
     // The rad values assigned to the subpaths as soon as the range is calculated
+    lastAssignedRad = 0;
     assignedRads: Map<SubPath, number> = new Map();
     assignedRadRanges: Map<SubPath, [number, number]> = new Map();
 
@@ -33,6 +56,8 @@ export class SubPathRange {
     //  * During calculation
     //  */
     // assignedRadRanges: Map<SubPath, [number, number]> = new Map();
+
+    minimumDistanceBetweenPathsFactor = 0.5;
 
     combinedPathsDistanceFactor = 0.125;
     // combinedPathsDistanceFactor = 1;
@@ -75,12 +100,14 @@ export class SubPathRange {
             this.subPaths.push(subPath.group.rangeRepresentative);
             this.registeredSubPaths.add(subPath.group.rangeRepresentative);
             this.calculated = false;
+            this.sorted = false;
             return;
         }
 
         this.subPaths.push(subPath);
         this.registeredSubPaths.add(subPath);
         this.calculated = false;
+        this.sorted = false;
     }
 
     /**
@@ -130,6 +157,7 @@ export class SubPathRange {
             }
 
             this.calculated = false;
+            this.sorted = false;
             // console.log(this.range);
         }
     }
@@ -147,16 +175,39 @@ export class SubPathRange {
      * @returns The rad assigned to the path.
      */
     getRadForPath(path: SubPath): number {
+        if (!this.registeredSubPaths.has(path)) {
+            throw new Error(`Path ${path.id} not in continuum`);
+        }
+
         if (!this.calculated) {
             this.calculate();
         }
         path = this.getRepresentedSubPath(path);
 
-        if (!this.assignedRads.has(path)) {
-            throw new Error(`Path ${path.id} not in continuum`);
+        // If we already have the rad, we return it
+        if (this.assignedRads.has(path)) {
+            return this.assignedRads.get(path)!;
         }
 
-        return this.assignedRads.get(path)!;
+        // Otherwise, we assign a new rad by taking the assigned range and
+        // put the rad in this range in the desired anchor direction
+        // of if there is no desired anchor, we just take the middle of the range
+        const pathInformation = this.mappedSubPathInformation.get(path);
+        if (!pathInformation) {
+            throw new Error(`Path ${path.id} not in continuum. This should not happen`);
+        }
+
+        const range = this.getRangeForPath(path);
+        // If the path has no desired anchor, we just take the middle of the range
+        if (!pathInformation!.desiredAnchor) {
+            return range[0] + RadialUtils.forwardRadBetweenAngles(range[0], range[1]) / 2;
+        }
+
+        // If the path has a desired anchor, we put the rad in direction of the anchor
+        const desiredRad = this.getRadOfPoint(pathInformation!.desiredAnchorPoint!);
+        return RadialUtils.putRadBetween(desiredRad, range[0], range[1]);
+
+        // return this.assignedRads.get(path)!;
     }
 
     /**
@@ -166,17 +217,72 @@ export class SubPathRange {
      * @returns The valid range for the specified path.
      */
     getRangeForPath(path: SubPath): [number, number] {
-        if (!this.calculated) {
-            this.calculate();
-        }
-        path = this.getRepresentedSubPath(path);
-
-        if (!this.assignedRadRanges.has(path)) {
-            console.error(this.node.id, path, this);
+        if (!this.registeredSubPaths.has(path)) {
             throw new Error(`Path ${path.id} not in continuum`);
         }
 
-        return this.assignedRadRanges.get(path)!;
+        if (!this.calculated) {
+            this.calculate();
+        }
+
+        // This would return the full range and thus allow full access to the subpath
+        return this.range;
+
+        path = this.getRepresentedSubPath(path);
+
+        // If we already have the range, we return it
+        if (this.assignedRadRanges.has(path)) {
+            return this.assignedRadRanges.get(path)!;
+        }
+
+        // Otherwise, we assign a new valid range
+        const pathInformation = this.mappedSubPathInformation.get(path);
+        if (!pathInformation) {
+            throw new Error(`Path ${path.id} not in continuum. This should not happen`);
+        }
+
+        // This was the rad that we assigned to the last new subpath
+        const lastAssignedRad = this.lastAssignedRad;
+
+        // This is the minimum distance between the paths
+        const minDistance = this.minimumDistanceBetweenPathsFactor * RadialUtils.forwardRadBetweenAngles(this.range[0], this.range[1]) / this.subPaths.length;
+        // const minSize = minDistance;
+
+        // If the subpath does not have a desired anchor, we just increase the last rad by the minimum distance to have some difference
+        if (!pathInformation!.desiredAnchor) {
+            this.lastAssignedRad += minDistance;
+            const assignedRange: [number, number] = [this.lastAssignedRad - minDistance / 2, this.lastAssignedRad + minDistance / 2];
+            this.assignedRadRanges.set(path, assignedRange);
+            return assignedRange;
+        }
+
+        // If the subpath has a desired anchor, we either:
+        // 1.) Take the desired anchor if the space left would be enough to distribute the other paths
+        // 2.) If not, we take the last assigned rad and increase it by the minimum distance
+        let desiredRad = this.getRadOfPoint(pathInformation!.desiredAnchorPoint!);
+
+        // If the path has no counter part, it must maintain the minimum distance to the last path
+        // if (!pathInformation?.hasCounterPath) {
+            if (RadialUtils.forwardRadBetweenAngles(lastAssignedRad, desiredRad) < minDistance) {
+                desiredRad = lastAssignedRad + minDistance;
+            }
+        // }
+
+        const rangeLeft = RadialUtils.forwardRadBetweenAngles(lastAssignedRad, this.range[1]);
+        const rangePerOtherPath = rangeLeft / (this.subPaths.length - this.assignedRadRanges.size);
+
+        if (rangePerOtherPath >= minDistance) {
+            this.lastAssignedRad = desiredRad;
+            const assignedRange: [number, number] = [desiredRad - minDistance / 2, desiredRad + minDistance / 2];
+            this.assignedRadRanges.set(path, assignedRange);
+            return assignedRange;
+        } else {
+
+            this.lastAssignedRad += minDistance;
+            const assignedRange: [number, number] = [this.lastAssignedRad - minDistance / 2, this.lastAssignedRad + minDistance / 2];
+            this.assignedRadRanges.set(path, assignedRange);
+            return assignedRange;
+        }
     }
 
     /**
@@ -329,7 +435,10 @@ export class SubPathRange {
     // #region Calculate
     ////////////////////////////////////////////////////////////////////////////
 
-    calculate() {
+    getSortedSubPathInfo() {
+
+        if (this.sorted) return this.subPathInformation;
+
         const EPSILON = 0.01;
         // Sort the paths by their opposite node position
         // For the same position, first take outgoing, then incoming connections
@@ -338,7 +447,45 @@ export class SubPathRange {
         // We sort against this rad, to avoid problems where close to border connections are sorted to the wrong side
         const backRad = this.getMiddleRadOnBackside();
 
-        const pathInformation = this.subPaths.map(subPath => {
+
+        // pathInformation.forEach((pathInfo, i) => {
+        //     const subPath = pathInfo.subPath;
+        //     const nextSubPath = pathInformation[i + 1]?.subPath;
+        //     const previousSubPath = i > 0 ? pathInformation[i - 1].subPath : undefined;
+
+        //     const range: [number, number] = [currentPosition, currentPosition];
+        //     let padding = 0;
+        //     pathHasCounterPath.set(subPath, false);
+
+
+        //     // If the next path is the counter path of the current one (so source and target node are switched), we add a distance of 1 * this.combinedPathsDistanceFactor
+        //     if (subPath.isCounterPathOf(nextSubPath)) {
+        //         range[0] += (1 - this.combinedPathsDistanceFactor) * increaseStep;
+        //         range[1] = range[0];
+        //         range[1] += increaseStep * this.combinedPathsDistanceFactor;
+        //         // const maxWidth = Math.max(subPath.connection.weight, nextSubPath.connection.weight);
+        //         // currentPosition += 1 * this.combinedPathsDistanceFactor;
+        //         // currentPosition += maxWidth * this.combinedPathsDistanceFactor;
+        //         pathHasCounterPath.set(subPath, true);
+        //     } else if (previousSubPath && subPath.isCounterPathOf(previousSubPath)) {
+        //         range[1] += increaseStep * this.combinedPathsDistanceFactor;
+        //         padding = (1 - this.combinedPathsDistanceFactor) * increaseStep;
+        //         pathHasCounterPath.set(subPath, true);
+        //     }
+
+        //     else {
+        //         // currentPosition += 1;
+        //         range[1] += increaseStep;
+        //     }
+
+        //     pathToRange.set(subPath, range);
+        //     currentPosition = range[1] + padding;
+        // });
+
+        const pathInformation = this.subPaths.map((subPath, i) => {
+
+            const nextSubPath = i + 1 < this.subPaths.length ? this.subPaths[i + 1] : undefined;
+            const previousSubPath = i > 0 ? this.subPaths[i - 1] : undefined;
 
             // const oppositeConnectionAnchor= subPath.getOppositeConnectionAnchor(this.node);
             const oppositeConnectionPoint = subPath.getOppositeConnectionPoint(this.node)?.clone();
@@ -349,19 +496,6 @@ export class SubPathRange {
                 throw new Error("Opposite connection point not found");
             }
 
-            // if (this.node.id == "flint_node") {
-            //     console.warn("Get opposite connection point", {
-            //         t: this,
-            //         cId: subPath.cId,
-            //         id: subPath.id,
-            //         type: subPath.connectionType,
-            //         oppositeNode: subPath.getOppositeNodeThan(this.node)?.id,
-            //         node: this.node.id,
-            //         point: oppositeConnectionPoint,
-            //         fw: RadialUtils.forwardRadBetweenAngles(backRad, this.getRadOfPoint(oppositeConnectionPoint!)),
-            //     });
-            // }
-
             const radOfOppositePoint = this.getRadOfPoint(oppositeConnectionPoint);
             const forwardRadToConnectionPoint = RadialUtils.forwardRadBetweenAngles(backRad, radOfOppositePoint);
 
@@ -370,6 +504,16 @@ export class SubPathRange {
 
             const desiredAnchor = subPath.getDesiredNodeAnchor(this.node);
             const desiredAnchorPoint = desiredAnchor?.anchorPoint;
+
+            let hasCounterPath = false;
+            if (nextSubPath && subPath.isCounterPathOf(nextSubPath)) {
+                hasCounterPath = true;
+            } else if (previousSubPath && subPath.isCounterPathOf(previousSubPath)) {
+                hasCounterPath = true;
+            } else {
+                hasCounterPath = false;
+            }
+
 
             return {
                 subPath,
@@ -382,7 +526,8 @@ export class SubPathRange {
                 targetVisNode: subPath.targetVisNode,
                 oppositeVisNode: subPath.getOppositeNodeThan(this.node),
                 oppositeConnectionPoint,
-                isInsideRange: false
+                isInsideRange: false,
+                hasCounterPath
             };
         });
 
@@ -442,7 +587,30 @@ export class SubPathRange {
                 // return a.forwardRadToTargetNode - b.forwardRadToTargetNode;
             }
             return a.forwardRadToConnectionPoint - b.forwardRadToConnectionPoint;
-        })
+        });
+
+        // this.sorted = true;
+        this.subPathInformation = pathInformation;
+
+        pathInformation.forEach(info => {
+            this.mappedSubPathInformation.set(info.subPath, info);
+        });
+
+        return pathInformation;
+    }
+
+    calculate() {
+
+        if (!this.sorted) {
+            this.getSortedSubPathInfo();
+        }
+
+        this.lastAssignedRad = this.range[0];
+        this.assignedRads = new Map();
+        this.assignedRadRanges = new Map();
+
+        // return;
+
 
         // console.warn("SORTED PATHS" + this.type, this.node.id,
         //     pathInformation.map(p => ({
@@ -466,6 +634,7 @@ export class SubPathRange {
 
         const pathHasCounterPath: Map<SubPath, boolean> = new Map();
 
+        const pathInformation = this.subPathInformation;
         pathInformation.forEach((pathInfo, i) => {
             const subPath = pathInfo.subPath;
             const nextSubPath = pathInformation[i + 1]?.subPath;
@@ -695,7 +864,7 @@ export class SubPathRange {
             // const desiredAnchorPoint = path.desiredNodeAnchor?.anchorPoint;
             const desiredAnchorPoint = path.getDesiredNodeAnchor(this.node)?.anchorPoint;
             if (!desiredAnchorPoint || pathHasCounterPath.get(path)) {
-            // if (!desiredAnchorPoint) {
+                // if (!desiredAnchorPoint) {
                 const radDiff = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
                 assignedRads.set(path, range[0] + radDiff / 2);
                 return;
@@ -722,7 +891,7 @@ export class SubPathRange {
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
         // if (this.node.id == "equalizer") debug = true;
-        // if (this.node.id == "dialog_session_manager") debug = true;
+        if (this.node.id == "dialog_session_manager") debug = true;
         // if (this.node.id == "/dialog/tts_guard") debug = true;
         if (debug) {
 
@@ -754,15 +923,16 @@ export class SubPathRange {
 
                 const desiredAnchor = path.getDesiredNodeAnchor(this.node);
                 if (desiredAnchor) {
-                    desiredAnchor._data = { length: 150, stroke: "blue" };
+                    desiredAnchor._data = { length: 3, stroke: "blue" };
                     path.connection.debugShapes.push(desiredAnchor);
                 }
-                // const desiredAnchorPoint = path.getDesiredNodeAnchor(this.node)?.anchorPoint;
+                const desiredAnchorPoint = path.getDesiredNodeAnchor(this.node)?.anchorPoint;
 
-                // if (desiredAnchorPoint && path.fixedPathAnchorPoint) {
-                //     const segment = new Segment(path.fixedPathAnchorPoint, desiredAnchorPoint);
-                //     path.connection.debugShapes.push(segment);
-                // }
+                if (desiredAnchorPoint && path.fixedPathAnchorPoint) {
+                    const segment = new Segment(path.fixedPathAnchorPoint, desiredAnchorPoint);
+                    segment._data = { stroke: "orange" }
+                    path.connection.debugShapes.push(segment);
+                }
 
             })
 

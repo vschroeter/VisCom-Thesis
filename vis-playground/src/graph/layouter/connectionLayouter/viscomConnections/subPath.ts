@@ -212,9 +212,19 @@ export class SubPath extends CombinedPathSegment {
         return this.fixedPathAnchor?.anchorPoint;
     }
 
-    getDesiredNodeAnchor(sourceNode: VisNode): Anchor | undefined {
+    getDesiredNodeAnchor(sourceNode: VisNode, ignoreLevelDifference = false): Anchor | undefined {
 
         const otherNode = this.getOppositeNodeThan(sourceNode);
+
+        // console.log("[DESIRED]", `${sourceNode.id}->${otherNode?.id}`, sourceNode.layoutNode.layerFromTop, otherNode?.layoutNode.layerFromTop, this.level);
+
+        // If level difference is more than 1, the connection should not have a desired circle arc an anchor
+        if (!ignoreLevelDifference) {
+            if (Math.abs(sourceNode.layoutNode.layerFromTop - (otherNode?.layoutNode.layerFromTop ?? sourceNode.layoutNode.layerFromTop)) > 1) {
+                return undefined;
+            }
+        }
+
         if (this.connectionType == "nodeToNode") {
 
             const otherLayoutNode = this.getLayoutNodeInDirectionOf(otherNode);
@@ -447,9 +457,13 @@ export class SubPath extends CombinedPathSegment {
             if (this.isCircleArcForward()) {
                 // Do not add to continuum
                 // type = "circleArcForward";
+                this.sourceVisNode.circularSubPaths.push(this);
+                this.targetVisNode.circularSubPaths.push(this);
             } else if (this.isCircleArcBackward()) {
                 // Do not add to continuum
                 // type = "circleArcBackward";
+                this.sourceVisNode.circularSubPaths.push(this);
+                this.targetVisNode.circularSubPaths.push(this);
             } else {
                 // type = "sameParent";
                 this.sourceVisNode.innerRange.registerSubPath(this);

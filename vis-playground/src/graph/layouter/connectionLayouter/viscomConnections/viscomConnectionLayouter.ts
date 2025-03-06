@@ -68,6 +68,10 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
         return order === "asc" ? allPaths : allPaths.reverse();
     }
 
+    getAllVisNodes(order: "desc" | "asc" = "asc"): VisNode[] {
+        const nodes = this.visNodes.slice().sort((a, b) => a.layoutNode.layerFromTop - b.layoutNode.layerFromTop);
+        return order === "asc" ? nodes : nodes.reverse();
+    }
 
 
 
@@ -81,12 +85,82 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
 
     override layoutConnectionsOfRootNode(root: LayoutNode): void {
 
-        this.getAllSubPaths("asc").forEach(subPaths => {
-            subPaths.forEach(subPath => {
-                // console.log("[SUBPATH]", subPath.cId, subPath.id, subPath.level, subPath.levelType, subPath);
+        const sortedNodes = this.getAllVisNodes("asc");
+        console.log("[VISCOM] sortedNodes", sortedNodes.map(node => node.layoutNode.id + " " + node.layoutNode.layerFromTop));
+
+        sortedNodes.forEach(visNode => {
+            visNode.circularSubPaths.forEach(subPath => {
+                console.log("[VISCOM] subPath", subPath.cId, subPath.level);
                 subPath.layout();
             });
         });
+
+        sortedNodes.forEach(visNode => {
+            const innerSubPathInfos = visNode.innerRange.getSortedSubPathInfo();
+            innerSubPathInfos.forEach(subPathInfo => {
+                const subPath = subPathInfo.subPath;
+                console.log("[VISCOM] subPath", subPath.cId, subPath.level);
+                subPath.layout();
+            });
+
+        })
+
+        sortedNodes.forEach(visNode => {
+            const outerSubPathInfos = visNode.outerRange.getSortedSubPathInfo();
+            outerSubPathInfos.forEach(subPathInfo => {
+                const subPath = subPathInfo.subPath;
+                console.log("[VISCOM] subPath", subPath.cId, subPath.level);
+                subPath.layout();
+            });
+
+        })
+
+
+        // sortedNodes.forEach(visNode => {
+        //     visNode.getSortedSubPaths().forEach(subPath => {
+        //         console.log("[VISCOM] subPath", subPath.id, subPath.level);
+        //         subPath.layout();
+        //     });
+        // })
+
+        // sortedNodes.forEach(visNode => {
+
+        //     const innerSubPathInfos = visNode.innerRange.getSortedSubPathInfo();
+
+        //     innerSubPathInfos.forEach(subPathInfo => {
+        //         const subPath = subPathInfo.subPath;
+        //         console.log("[VISCOM] subPath", subPath.id, subPath.level);
+        //         subPath.layout();
+        //     });
+
+        // })
+
+        // sortedNodes.forEach(visNode => {
+
+        //     const outerSubPathInfos = visNode.outerRange.getSortedSubPathInfo();
+
+        //     outerSubPathInfos.forEach(subPathInfo => {
+        //         const subPath = subPathInfo.subPath;
+        //         console.log("[VISCOM] subPath", subPath.id);
+        //         subPath.layout();
+        //     });
+
+        // })
+
+        // this.getAllSubPaths("asc").forEach(subPaths => {
+        //     subPaths.forEach(subPath => {
+        //         // console.log("[SUBPATH]", subPath.cId, subPath.id, subPath.level, subPath.levelType, subPath);
+        //         // console.log("[SUBPATH]", subPath.cId, subPath.id);
+        //         console.log("[SUBPATH]", subPath.id);
+        //         subPath.layout();
+        //     });
+        // });
+
+        // this.getAllVisNodes("asc").forEach(visNode => {
+
+        //     visNode.innerRa
+
+        // })
 
 
 
