@@ -224,11 +224,15 @@ export class SubPathRange {
         if (!this.calculated) {
             this.calculate();
         }
+        path = this.getRepresentedSubPath(path);
+
+        if (this.assignedRadRanges.has(path)) {
+            return this.assignedRadRanges.get(path)!;
+        }
 
         // This would return the full range and thus allow full access to the subpath
         return this.range;
 
-        path = this.getRepresentedSubPath(path);
 
         // If we already have the range, we return it
         if (this.assignedRadRanges.has(path)) {
@@ -263,9 +267,9 @@ export class SubPathRange {
 
         // If the path has no counter part, it must maintain the minimum distance to the last path
         // if (!pathInformation?.hasCounterPath) {
-            if (RadialUtils.forwardRadBetweenAngles(lastAssignedRad, desiredRad) < minDistance) {
-                desiredRad = lastAssignedRad + minDistance;
-            }
+        if (RadialUtils.forwardRadBetweenAngles(lastAssignedRad, desiredRad) < minDistance) {
+            desiredRad = lastAssignedRad + minDistance;
+        }
         // }
 
         const rangeLeft = RadialUtils.forwardRadBetweenAngles(lastAssignedRad, this.range[1]);
@@ -688,171 +692,86 @@ export class SubPathRange {
         });
 
 
+
+
         // const doRefine = false;
         const doRefine = true;
-        if (doRefine) {
-            // Refine the ranges:
-            // Beginning on one side, we look, if a path range can be shrank
 
-            let debug = false;
-            debug = true;
-            debug = false;
-            // if (this.node.id == "dialog_session_manager" && this.type == "outside") debug = true;
+        // New refine method
+        // For the paths, that have no desired anchor and are sorted at the sides (so at the very start or end),
+        // we reserve a minimum space for them.
+        // All other paths are then sorted in the remaining space so that they keep the sorted order
+        // We do this in both directions
+
+        if (doRefine) {
+
+            // pathToRange.clear();
+            // const pathStarts: Map<SubPath, number> = new Map();
+            // const pathEnds: Map<SubPath, number> = new Map();
+            const pathMids: Map<SubPath, number> = new Map();
 
             const completeRangeDiff = RadialUtils.forwardRadBetweenAngles(this.range[0], this.range[1]);
             const minDistanceBetweenRanges = this.pathRangeMarginFactor * completeRangeDiff / pathToRange.size;
 
-            const minSizeFactor = 0.2;
+            const minSizeFactor = 0.4;
             const minSizeOfRange = minSizeFactor * completeRangeDiff / pathToRange.size;
 
-
-            // New refine method
-
-            // Check for each path, if the desired anchor is inside the range
-            // If so, we shrink the range to that desired anchor and increase the adjacent ranges
-            // If no path changes, we stop the iteration
-
-            let changed = true;
-            while (changed) {
-                changed = false;
-
-                pathInformation.forEach((pathInfo, i) => {
-
-                    if (pathInfo.isInsideRange) return;
-
-                    // if (pathHasCounterPath.get(pathInfo.subPath)) return;
-
-                    const path = pathInfo.subPath;
-                    const range = pathToRange.get(path)!;
-
-                    const desiredAnchor = pathInfo.desiredAnchor;
-                    if (!desiredAnchor) return;
-
-                    const desiredAnchorPoint = desiredAnchor.anchorPoint;
-                    if (this.pointIsInside(desiredAnchorPoint, range)) {
-                        const adaptedAnchor = this.getValidAnchorTowardsDirection(desiredAnchorPoint, range);
-                        const anchorSlope = adaptedAnchor.direction.slope;
-
-                        range[0] = RadialUtils.normalizeRad(anchorSlope - minSizeOfRange / 2);
-                        range[1] = RadialUtils.normalizeRad(anchorSlope + minSizeOfRange / 2);
-
-                        // Adjust the adjacent ranges
-                        if (i > 0) {
-                            const previousRange = pathToRange.get(pathInformation[i - 1].subPath)!;
-                            // previousRange[1] = range[0] - minDistanceBetweenRanges;
-                            previousRange[1] = range[0] - 0;
-
-                            if (RadialUtils.forwardRadBetweenAngles(previousRange[0], previousRange[1]) < minSizeOfRange) {
-                                previousRange[0] = range[0] - minSizeOfRange;
-                            }
-                        }
-                        if (i < pathInformation.length - 1) {
-
-
-                            const nextRange = pathToRange.get(pathInformation[i + 1].subPath)!;
-
-                            const diffBefore = RadialUtils.forwardRadBetweenAngles(nextRange[0], nextRange[1]);
-                            const old0 = nextRange[0];
-
-                            nextRange[0] = range[1] + minDistanceBetweenRanges;
-                            // nextRange[0] = range[1] + 0;
-
-                            const changIn0 = RadialUtils.forwardRadBetweenAngles(old0, nextRange[0]);
-
-                            const diffAfter = RadialUtils.forwardRadBetweenAngles(nextRange[0], nextRange[1]);
-
-                            // In this case, we overtook the range end
-                            if (diffBefore > diffAfter) {
-                                nextRange[1] = nextRange[0] + minSizeOfRange;
-                            }
-
-
-                            // if
-
-                            // if (RadialUtils.forwardRadBetweenAngles(nextRange[0], nextRange[1]) < minSizeOfRange) {
-                            //     nextRange[1] = range[1] + minSizeOfRange;
-                            // }
-
-                        }
-
-                        pathInfo.isInsideRange = true;
-                        changed = true;
+            // Begin with forward
+            let currentRad = this.range[0];
+            let isUndesiredAtBeginning = true;
+            pathInformation.forEach((pathInfo, i) => {
+                if (!pathInfo.desiredAnchor) {
+                    pathMids.set(pathInfo.subPath, currentRad);
+                    if (isUndesiredAtBeginning) {
+                        currentRad += minSizeOfRange;
                     }
-                });
-            }
+                } else {
+                    isUndesiredAtBeginning = false;
+                    let desiredRad = this.getRadOfPoint(pathInfo.desiredAnchorPoint!);
+                    desiredRad = RadialUtils.putRadBetween(desiredRad, this.range[0], this.range[1]);
 
 
+                    pathMids.set(pathInfo.subPath, desiredRad);
+                    // currentRad = desiredRad + minSizeOfRange;
+                    currentRad = desiredRad;
+                }
 
-            // Old refine method
-            [{ info: pathInformation, type: "forward" }, { info: pathInformation.slice().reverse(), type: "backward" }].forEach(({ info, type }) => {
+            });
 
-                if (type == "forward") return;
-                if (type == "backward") return;
+            // Then backward
+            // In this step the ranges are checked for minimum distances and if necessary are adapted
+            currentRad = this.range[1] - minSizeOfRange / 2;
+            pathInformation.slice().reverse().forEach(pathInfo => {
+                const assignedPathRad = pathMids.get(pathInfo.subPath)!;
 
-                let currentStart = type == "forward" ? this.range[0] : this.range[1];
+                if (RadialUtils.rad1ComesAfterRad2(assignedPathRad, currentRad, this.range[0])) {
+                    pathMids.set(pathInfo.subPath, currentRad);
+                }
 
-                info.forEach(pathInfo => {
+                currentRad = pathMids.get(pathInfo.subPath)! - minSizeOfRange / 2;
+            });
 
-                    const i0 = type == "forward" ? 0 : 1;
-                    const i1 = type == "forward" ? 1 : 0;
+            // Now we have the start and end rads for each path
+            // We can now assign the ranges
+            pathInformation.forEach((pathInfo, i) => {
 
-                    const path = pathInfo.subPath;
-                    const range = pathToRange.get(path)!;
-                    // if (pathHasCounterPath.get(path)) {
-                    //     currentStart = range[1] + minDistanceBetweenRanges;
-                    //     return;
-                    // }
+                const subPathBefore = i > 0 ? pathInformation[i - 1].subPath : undefined;
+                const subPathAfter = i < pathInformation.length - 1 ? pathInformation[i + 1].subPath : undefined;
+                const subPath = pathInfo.subPath;
 
-                    range[i0] = currentStart;
+                const radBefore = subPathBefore ? pathMids.get(subPathBefore)! : this.range[0];
+                const radAfter = subPathAfter ? pathMids.get(subPathAfter)! : this.range[1];
+                const rad = pathMids.get(subPath)!;
 
+                let startRad = radBefore + RadialUtils.forwardRadBetweenAngles(radBefore, rad) / 2;
+                let endRad = radAfter - RadialUtils.forwardRadBetweenAngles(rad, radAfter) / 2;
 
-                    // Check, where the desired position of the path is
-                    const desiredAnchor = path.getDesiredNodeAnchor(this.node);
-                    if (debug) {
-                        console.warn("[REFINE]:", range[0], range[1], RadialUtils.forwardRadBetweenAngles(range[0], range[1]));
-
-                    }
-
-                    if (desiredAnchor) {
-                        const desiredAnchorPoint = desiredAnchor.anchorPoint;
-                        const adaptedAnchor = this.getValidAnchorTowardsDirection(desiredAnchorPoint, range);
-                        const anchorSlope = adaptedAnchor.direction.slope;
-
-                        range[i0] = RadialUtils.normalizeRad(range[i0]);
-                        range[i1] = RadialUtils.normalizeRad(anchorSlope);
-                        // if (range[1] < range[0]) range[1] = range[0];
-
-                        const currentRangeSize = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
-
-                        if (type == "forward") {
-                            range[1] += Math.max(0, minSizeOfRange - currentRangeSize);
-                        } else {
-                            range[0] -= Math.max(0, minSizeOfRange - currentRangeSize);
-                        }
-
-                        if (debug) {
-                            desiredAnchor._data = { length: 20, stroke: "magenta" };
-                            this.node.layoutNode.debugShapes.push(desiredAnchor);
-                            adaptedAnchor._data = { length: 15, stroke: "cyan" };
-                            this.node.layoutNode.debugShapes.push(adaptedAnchor);
-
-
-                            console.warn("Adapted range", range, currentRangeSize, minSizeOfRange);
-                        }
-                    }
-
-                    if (type == "forward") {
-                        currentStart = range[1] + minDistanceBetweenRanges;
-                    } else {
-                        currentStart = range[0] - minDistanceBetweenRanges;
-                    }
-                });
-
-
-
-            })
-
-
+                const rangeDelta = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
+                const padding = 0.1 * rangeDelta;
+                startRad += padding / 2;
+                endRad -= padding / 2;
+                pathToRange.set(subPath, [startRad, endRad]);
+            });
 
         }
 
@@ -863,8 +782,8 @@ export class SubPathRange {
             // Check if the desired range is inside the valid range
             // const desiredAnchorPoint = path.desiredNodeAnchor?.anchorPoint;
             const desiredAnchorPoint = path.getDesiredNodeAnchor(this.node)?.anchorPoint;
-            if (!desiredAnchorPoint || pathHasCounterPath.get(path)) {
-                // if (!desiredAnchorPoint) {
+            // if (!desiredAnchorPoint || pathHasCounterPath.get(path)) {
+            if (!desiredAnchorPoint) {
                 const radDiff = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
                 assignedRads.set(path, range[0] + radDiff / 2);
                 return;
@@ -885,13 +804,13 @@ export class SubPathRange {
 
 
         let debug = false;
-        debug = true;
         debug = false;
+        // debug = true;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
         // if (this.node.id == "equalizer") debug = true;
-        if (this.node.id == "dialog_session_manager") debug = true;
+        // if (this.node.id == "dialog_session_manager") debug = true;
         // if (this.node.id == "/dialog/tts_guard") debug = true;
         if (debug) {
 

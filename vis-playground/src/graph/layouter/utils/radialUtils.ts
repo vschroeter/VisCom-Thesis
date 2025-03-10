@@ -215,6 +215,31 @@ export class RadialUtils extends ShapeUtil {
         return angle;
     }
 
+    /**
+     * Check if rad1 comes after rad2, with respect to the reference rad.
+     * @param rad1 Rad1
+     * @param rad2 Rad2
+     * @param referenceRad Reference rad for comparison
+     * @returns True if rad1 comes after rad2, otherwise false
+     */
+    static rad1ComesAfterRad2(rad1: number, rad2: number, referenceRad: number) {
+        if (RadialUtils.forwardRadBetweenAngles(referenceRad, rad1) < RadialUtils.forwardRadBetweenAngles(referenceRad, rad2)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if rad1 comes before rad2, with respect to the reference rad.
+     * @param rad1 Rad1
+     * @param rad2 Rad2
+     * @param referenceRad Reference rad for comparison
+     * @returns True if rad1 comes before rad2, otherwise false
+     */
+    static rad1ComesBeforeRad2(rad1: number, rad2: number, referenceRad: number) {
+        return !RadialUtils.rad1ComesAfterRad2(rad1, rad2, referenceRad);
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // #region Positions on a circle
     ////////////////////////////////////////////////////////////////////////////
