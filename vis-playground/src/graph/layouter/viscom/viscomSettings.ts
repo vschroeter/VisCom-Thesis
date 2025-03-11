@@ -29,6 +29,15 @@ export class AlgorithmSettings extends Setting {
         defaultValue: 1,
         type: "number",
     });
+
+    optimizeConnectionAnchors = new Param<boolean>({
+        key: "optimizeConnectionAnchors",
+        label: "Optimize Connection Anchors",
+        description: "Optimize connection anchors.",
+        optional: false,
+        defaultValue: true,
+        type: "boolean",
+    });
 }
 
 export class DisplaySettings extends Setting {

@@ -17,6 +17,14 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
 
     mapLayerToSubPaths: Map<number, SubPath[]> = new Map();
 
+    optimizeConnectionAnchors: boolean = true;
+
+    constructor(options?: {
+        optimizeConnectionAnchors?: boolean
+    }) {
+        super();
+        this.optimizeConnectionAnchors = options?.optimizeConnectionAnchors ?? true;
+    }
 
     get visNodes(): VisNode[] {
         return Array.from(this.mapLayoutNodeToVisNode.values());

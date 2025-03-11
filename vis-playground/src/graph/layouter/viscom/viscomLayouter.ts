@@ -100,7 +100,9 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             // new RadialSplineConnectionLayouter(),
             // new RadialMultiConnectionLayouter(),
             // new FlexConnectionLayouter(),
-            new ViscomConnectionLayouter(),
+            new ViscomConnectionLayouter({
+                optimizeConnectionAnchors: this.settings.algorithm.optimizeConnectionAnchors.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? true,
+            }),
         ])
 
         // console.log("Before layout", this.visGraph);

@@ -18,6 +18,8 @@ export type SubPathInformation = {
     oppositeConnectionPoint: Point;
     isInsideRange: boolean;
     hasCounterPath: boolean;
+    hasCounterPathBefore: boolean;
+    hasCounterPathAfter: boolean;
 };
 
 
@@ -510,12 +512,14 @@ export class SubPathRange {
             const desiredAnchorPoint = desiredAnchor?.anchorPoint;
 
             let hasCounterPath = false;
+            let hasCounterPathBefore = false;
+            let hasCounterPathAfter = false;
             if (nextSubPath && subPath.isCounterPathOf(nextSubPath)) {
                 hasCounterPath = true;
+                hasCounterPathAfter = true;
             } else if (previousSubPath && subPath.isCounterPathOf(previousSubPath)) {
                 hasCounterPath = true;
-            } else {
-                hasCounterPath = false;
+                hasCounterPathBefore = true;
             }
 
 
@@ -531,7 +535,9 @@ export class SubPathRange {
                 oppositeVisNode: subPath.getOppositeNodeThan(this.node),
                 oppositeConnectionPoint,
                 isInsideRange: false,
-                hasCounterPath
+                hasCounterPath,
+                hasCounterPathBefore,
+                hasCounterPathAfter
             };
         });
 
@@ -695,7 +701,7 @@ export class SubPathRange {
 
 
         // const doRefine = false;
-        const doRefine = true;
+        const doRefine = this.node.parentLayouter.optimizeConnectionAnchors;
 
         // New refine method
         // For the paths, that have no desired anchor and are sorted at the sides (so at the very start or end),
@@ -717,7 +723,7 @@ export class SubPathRange {
             const minSizeOfRange = minSizeFactor * completeRangeDiff / pathToRange.size;
 
             // Begin with forward
-            let currentRad = this.range[0];
+            let currentRad = this.range[0] + minDistanceBetweenRanges;
             let isUndesiredAtBeginning = true;
             pathInformation.forEach((pathInfo, i) => {
                 if (!pathInfo.desiredAnchor) {
@@ -728,19 +734,26 @@ export class SubPathRange {
                 } else {
                     isUndesiredAtBeginning = false;
                     let desiredRad = this.getRadOfPoint(pathInfo.desiredAnchorPoint!);
-                    desiredRad = RadialUtils.putRadBetween(desiredRad, this.range[0], this.range[1]);
+                    // desiredRad = RadialUtils.putRadBetween(desiredRad, this.range[0], this.range[1]);
+                    desiredRad = RadialUtils.putRadBetween(desiredRad, currentRad, this.range[1]);
 
 
                     pathMids.set(pathInfo.subPath, desiredRad);
                     // currentRad = desiredRad + minSizeOfRange;
+                    // currentRad = desiredRad + (pathInfo.hasCounterPathAfter ? 0 : minDistanceBetweenRanges);
                     currentRad = desiredRad;
                 }
 
             });
 
+            // if (this.node.id == "p6") {
+            //     console.warn("PATH MIDS", pathMids, this.range);
+            // }
+
             // Then backward
             // In this step the ranges are checked for minimum distances and if necessary are adapted
             currentRad = this.range[1] - minSizeOfRange / 2;
+            currentRad = this.range[1];
             pathInformation.slice().reverse().forEach(pathInfo => {
                 const assignedPathRad = pathMids.get(pathInfo.subPath)!;
 
@@ -805,7 +818,7 @@ export class SubPathRange {
 
         let debug = false;
         debug = false;
-        // debug = true;
+        debug = true;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
