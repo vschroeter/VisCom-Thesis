@@ -38,6 +38,24 @@ export class AlgorithmSettings extends Setting {
         defaultValue: true,
         type: "boolean",
     });
+
+    minimumRangeSizeFactor = new Param<number>({
+        key: "minimumRangeSizeFactor",
+        label: "Minimum Range Size Factor",
+        description: "The minimum range size factor.",
+        optional: false,
+        defaultValue: 0.4,
+        type: "number",
+    });
+
+    rangePaddingFactor = new Param<number>({
+        key: "rangePaddingFactor",
+        label: "Range Padding Factor",
+        description: "The range padding factor.",
+        optional: false,
+        defaultValue: 0.1,
+        type: "number",
+    });
 }
 
 export class DisplaySettings extends Setting {

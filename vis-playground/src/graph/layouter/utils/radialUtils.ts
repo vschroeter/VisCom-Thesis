@@ -77,7 +77,11 @@ export class RadialUtils extends ShapeUtil {
      * @param endRad The maximum radian value.
      * @param targetRad The target radian value.
      */
-    static putRadBetween(targetRad: number, startRad: number, endRad: number): number {
+    static putRadBetween(targetRad: number, startRad: number, endRad: number, tolerance = 0.001): number {
+
+        if (Math.abs(startRad - endRad) < tolerance) {
+            return startRad;
+        }
 
         startRad = RadialUtils.normalizeRad(startRad);
         endRad = RadialUtils.normalizeRad(endRad);

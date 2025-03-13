@@ -540,9 +540,12 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
     ): PathSegment {
         const connection = startNode.getConnectionTo(endNode)!;
 
+        const radius = parent.innerRadius;
+        const center = parent.innerCircle.center;
+
         // Given Constants
-        const startAngleRad = RadialUtils.radOfPoint(startNode, parent);
-        const endAngleRad = RadialUtils.radOfPoint(endNode, parent);
+        const startAngleRad = RadialUtils.radOfPoint(startNode, center);
+        const endAngleRad = RadialUtils.radOfPoint(endNode, center);
         const startAngleDeg = radToDeg(startAngleRad);
         const endAngleDeg = radToDeg(endAngleRad);
 
@@ -555,8 +558,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         const angleDiffBackwardRad = degToRad(angleDiffBackwardDeg);
 
         // const radius = parent.radius;
-        const radius = parent.innerRadius;
-        const center = parent.center;
+
         const startPoint = startNode.center;
         const endPoint = endNode.center;
         const midPoint = new Segment(startPoint, endPoint).middle();
@@ -679,6 +681,18 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         //     intersectionsStart,
         //     intersectionsEnd
         // });
+
+        // if (intersectionsStart.length == 0 || intersectionsEnd.length == 0) {
+        //     connection.debugShapes.push(arcCircle);
+        //     connection.debugShapes.push(startNode.outerCircle);
+        //     connection.debugShapes.push(endNode.outerCircle);
+        //     connection.debugShapes.push(startNode.center);
+        //     connection.debugShapes.push(endNode.center);
+
+        //     connection.debugShapes.push(midPoint);
+        //     connection.debugShapes.push(radialMidPoint);
+        //     connection.debugShapes.push(radialMidPoint);
+        // }
 
         // Get the intersections, that are closer to the mid point between the two nodes
         const sDist0 = intersectionsStart[0].distanceTo(radialMidPoint)[0];

@@ -786,7 +786,9 @@ export class LayoutNode {
             const mid = range[0] + diff / 2;
             range = [mid - diff / 2 * factor, mid + diff / 2 * factor];
         }
-
+        range.forEach((rad, i, arr) => {
+            arr[i] = RadialUtils.normalizeRad(rad);
+        });
         return range as [number, number];
     }
 
@@ -879,6 +881,9 @@ export class LayoutNode {
             range = [mid - diff / 2 * factor, mid + diff / 2 * factor];
         }
 
+        range.forEach((rad, i, arr) => {
+            arr[i] = RadialUtils.normalizeRad(rad);
+        });
         return range as [number, number];
     }
 

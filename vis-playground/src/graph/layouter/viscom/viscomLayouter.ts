@@ -102,6 +102,8 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             // new FlexConnectionLayouter(),
             new ViscomConnectionLayouter({
                 optimizeConnectionAnchors: this.settings.algorithm.optimizeConnectionAnchors.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? true,
+                minimumRangeSizeFactor: this.settings.algorithm.minimumRangeSizeFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 0.4,
+                rangePaddingFactor: this.settings.algorithm.rangePaddingFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 0.1,
             }),
         ])
 

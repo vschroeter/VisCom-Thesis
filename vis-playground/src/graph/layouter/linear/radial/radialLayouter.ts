@@ -302,11 +302,16 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
     }
 
     override layout(isUpdate = false) {
-        this.visGraph.setPrecalculator(new BasicSizeCalculator({ sizeMultiplier: 50 }));
+        this.visGraph.setPrecalculator(new BasicSizeCalculator({
+            sizeMultiplier: 50,
+            adaptRadiusBasedOnScore: this.commonSettings.showNodeScore.getValue() ?? true,
+
+        }));
         // this.visGraph.setPositioner(new RadialPositioner({ radius: this.getRadius() }));
         this.visGraph.setPositioner(new RadialPositionerDynamicDistribution({
             nodeMarginFactor: this.settings.spacing.nodeMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1,
             radiusMarginFactor: this.settings.spacing.radiusMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
+
         }));
 
         const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);

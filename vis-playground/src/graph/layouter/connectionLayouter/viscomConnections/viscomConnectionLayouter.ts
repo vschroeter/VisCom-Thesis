@@ -18,12 +18,18 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
     mapLayerToSubPaths: Map<number, SubPath[]> = new Map();
 
     optimizeConnectionAnchors: boolean = true;
+    minimumRangeSizeFactor: number = 0.4;
+    rangePaddingFactor: number = 0.1;
 
     constructor(options?: {
-        optimizeConnectionAnchors?: boolean
+        optimizeConnectionAnchors?: boolean,
+        minimumRangeSizeFactor?: number,
+        rangePaddingFactor?: number,
     }) {
         super();
         this.optimizeConnectionAnchors = options?.optimizeConnectionAnchors ?? true;
+        this.minimumRangeSizeFactor = options?.minimumRangeSizeFactor ?? 0.4;
+        this.rangePaddingFactor = options?.rangePaddingFactor ?? 0.1;
     }
 
     get visNodes(): VisNode[] {
