@@ -147,16 +147,15 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
 
 
         // Find the minimum enclosing circle for the nodes
-
-        const expandedPoints = nodes.map(n => {
-            // Here we expand the points away from the center to find the minimum enclosing circle for the children
-            const center = parentNode.center;
-            const direction = new Vector(center, n.center).normalize();
-            const expandedPoint = n.center.translate(direction.scale(n.radius));
-            return expandedPoint;
-        });
-
         if (this.adaptEnclosingCircle) {
+            const expandedPoints = nodes.map(n => {
+                // Here we expand the points away from the center to find the minimum enclosing circle for the children
+                const center = parentNode.center;
+                const direction = new Vector(center, n.center).normalize();
+                const expandedPoint = n.center.translate(direction.scale(n.radius));
+                return expandedPoint;
+            });
+
             const enclosingCircle = RadialUtils.getMinimumEnclosingCircle(expandedPoints);
 
             // Adapt all children to the enclosing circle

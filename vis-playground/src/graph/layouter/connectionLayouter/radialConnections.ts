@@ -285,7 +285,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
             .direction(direction);
 
         return arc;
-        
+
     }
 
     protected getDirectCircularLink(
@@ -307,51 +307,51 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         endNode: LayoutNode,
         parent: LayoutNode,
     ): PathSegment {
-        /** 
+        /**
         For a forward link, we want a circular arc that is inside the circle.
         This circle arc is defined by the following:
         - arcStartAnchor: The point on the circle where the link starts
         - arcEndAnchor: The point on the circle where the link ends
         - arcRadius: The radius of the circle
- 
+
         We want outgoing and incoming arcs to be different, so we have to distinguish between the two cases.
         To do so, we define an asymmetric angle delta (so != 180°) for which the connection line should be (nearly) straight.
         For connection lines below this angle delta, the circular arc will be curved concave (so contrary to the circle).
         For connection lines above this angle delta, the circular arc will be curved convex (so in the direction of the circle).
- 
+
         E.g.:
         - straightLineAtAngleDelta = 70°
         With this, we can get the point and the vector to this delta point on the circle
         - straightLinePoint = getPositionOnCircle(startAngle + straightLineAtAngleDelta)
-        - vectorToStraightLinePoint = new Vector(startPoint, straightLinePoint) 
+        - vectorToStraightLinePoint = new Vector(startPoint, straightLinePoint)
         - lineToStraightLinePoint = new Line(startPoint, vectorToStraightLinePoint)
- 
+
         We also need the orthogonal line to the lineToStraightLinePoint. On this line will be all center points of the circular arcs.
         - orthogonalVector = vectorToStraightLinePoint.rotate90CW()
         - lineToStraightLinePointOrthogonal = new Line(startPoint, orthogonalVector)
- 
+
         The center point of the circular arc is the intersection of this orthogonal line and the line from the midPoint to the radialMidPoint (which is the orthogonal line of the connection line between both nodes).
         - radialMidPointLine = new Line(midPoint, new Vector(midPoint, radialMidPoint))
         - arcCenter = lineToStraightLinePointOrthogonal.intersection(radialMidPointLine)
- 
+
         With that, we can calculate the radius of the circular arc:
         - arcRadius = new Vector(arcCenter, startPoint).length()
         - arcCircle = new Circle(arcCenter, arcRadius)
- 
+
         Now we want to get the anchor points
         - startCircle = startNode.circle
         - endCircle = endNode.circle
         - intersectionsStart = arcCircle.intersection(startCircle)
         - intersectionsEnd = arcCircle.intersection(endCircle)
- 
+
         Because there are two intersections, we have to decide which one to take.
         - intersectionStart = intersectionsStart[0] if radialLayoutCircle.contains(intersectionsStart[0]) else intersectionsStart[1]
         - intersectionEnd = intersectionsEnd[0] if radialLayoutCircle.contains(intersectionsEnd[0]) else intersectionsEnd[1]
- 
+
         We get the anchors:
         - startAnchor = startNode.getAnchor(intersectionStart)
         - endAnchor = endNode.getAnchor(intersectionEnd)
- 
+
         Then we can construct the arc
         - arc = new EllipticArc()
             .radius(arcRadius)
@@ -361,13 +361,16 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         */
 
         // Given Constants
+        const radius = parent.innerCircle.r;
+        const center = parent.innerCircle.center;
+
         const startIndex = startNode.index;
         const endIndex = endNode.index;
 
         const connection = startNode.getConnectionTo(endNode)!;
 
-        const startAngleRad = RadialUtils.radOfPoint(startNode, parent);
-        const endAngleRad = RadialUtils.radOfPoint(endNode, parent);
+        const startAngleRad = RadialUtils.radOfPoint(startNode.center, center);
+        const endAngleRad = RadialUtils.radOfPoint(endNode.center, center);
         const startAngleDeg = radToDeg(startAngleRad);
         const endAngleDeg = radToDeg(endAngleRad);
 
@@ -379,8 +382,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         const angleDiffBackwardDeg = 360 - angleDiffForwardDeg;
         const angleDiffBackwardRad = degToRad(angleDiffBackwardDeg);
 
-        const radius = parent.innerRadius;
-        const center = parent.center;
+
         const radialLayoutCircle = parent.innerCircle;
         const startPoint = startNode.center;
         const endPoint = endNode.center;
@@ -437,6 +439,28 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         const arcCircle = new Circle(arcCenter, arcRadius);
         const intersectionsStart = arcCircle.intersect(startNode.outerCircle);
         const intersectionsEnd = arcCircle.intersect(endNode.outerCircle);
+
+        if (false && connection.source.id == "drive_manager") {
+            connection.debugShapes.push(arcCircle);
+            connection.debugShapes.push(parent.center);
+            connection.debugShapes.push(center);
+            connection.debugShapes.push(parent.innerCircle);
+            connection.debugShapes.push(new Segment(startPoint, straightLinePoint));
+
+            const ep = endNode.center.clone();
+            ep._data = {r: 2, fill: "red"};
+            connection.debugShapes.push(ep);
+
+            const sP = startNode.center.clone();
+            sP._data = { r: 2, fill: "green" };
+            connection.debugShapes.push(sP);
+
+            connection.debugShapes.push(straightLinePoint);
+            console.error(straightLinePoint.distanceTo(center)[0], radius);
+            console.error(startNode.center.distanceTo(center)[0], radius);
+            console.error(parent.innerCenterTranslation);
+            // connection.debugShapes.push(new Segment(startPoint, straightLinePoint));
+        }
 
         // Get the intersections, that are closer to the mid point between the two nodes
         // const sDist0 = intersectionsStart[0].distanceTo(midPoint)[0];
@@ -505,7 +529,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
             // .endPoint(straightEndPartForArrow)
             .largeArc(0)
             .direction(direction);
-        
+
         return arc;
     }
 
@@ -538,12 +562,12 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         const midPoint = new Segment(startPoint, endPoint).middle();
         const radialMidPoint = RadialUtils.positionOnCircleAtRad(startAngleRad - angleDiffBackwardRad / 2, radius, center);
 
-        /** 
+        /**
         For a backward link, we want a circular arc that is outside the circle.
         The outside arc is calculated in a similar way as the inside arc.
         The main differences are:
-        - There is no breaking point (straight line threshold) where we have a switch in the curvature, outside circular arcs are always convex. 
-            However, there again is a configurable threshold parameter for the angle delta, where the circular arc should be drawn. 
+        - There is no breaking point (straight line threshold) where we have a switch in the curvature, outside circular arcs are always convex.
+            However, there again is a configurable threshold parameter for the angle delta, where the circular arc should be drawn.
         - The centers of the circular arcs are directly on this threshold line, so there is no orthogonal line.
 
         A outside circle arc is defined by the following:
@@ -551,18 +575,18 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         - arcEndAnchor: The point on the circle where the link ends
         - arcRadius: The radius of the circle
 
-        We set the backwardLineAngleDelta as parameter. 
+        We set the backwardLineAngleDelta as parameter.
         This is the angle delta for a reference line from our node to the point on the radial layout circle.
         All center points of the circular arcs are on this line.
 
         E.g.:
         - backwardLineAngleDelta = 70°
         This backwardLineAngleDelta should be below 180°.
-        
+
         - referenceLinePoint = getPositionOnCircle(startAngle + backwardLineAngleDelta)
         - referenceLine = new Line(startPoint, referenceLinePoint)
 
-        We can now calculate the center point of the circular arc. 
+        We can now calculate the center point of the circular arc.
         They are the intersection of the reference line with the line from the radialMidPoint to the center of the radial layout circle.
         The same intersection point is created, if we intersect the reference line with the targetBackReferenceLine.
         - targetBackReferenceLinePoint = getPositionOnCircle(endAngle - backwardLineAngleDelta)
@@ -574,7 +598,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         - arcRadius = new Vector(arcCenter, startPoint).length()
         - arcCircle = new Circle(arcCenter, arcRadius)
 
-        Now we want to get the anchor points. 
+        Now we want to get the anchor points.
         Because we want convex circle arcs outside the radial layout circle, the anchor points should be orthogonal to both reference lines.
         For the start node, the anchor is rotated 90° counter-clockwise, for the end node, the anchor is rotated 90° clockwise.
         However, we again can retrieve them by intersecting the node circles with the arc circle and get the intersections points that are outside the radial layout circle.
@@ -598,7 +622,7 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
         */
 
         /**
-         * We set the backwardLineAngleDelta as parameter. 
+         * We set the backwardLineAngleDelta as parameter.
          * This is the angle delta for a reference line from our target node to the point on the radial layout circle.
          * All center points of the circular arcs to this target node will be on this line.
          */
@@ -610,8 +634,8 @@ export class RadialCircularArcConnectionLayouter extends BaseNodeConnectionLayou
             new Line(endPoint, new Vector(endPoint, center).rotate90CW()) :
             new Line(endPoint, referenceLinePoint);
 
-        /** 
-        * We can now calculate the center point of the circular arc. 
+        /**
+        * We can now calculate the center point of the circular arc.
         * They are the intersection of the reference line with the line from the radialMidPoint to the center of the radial layout circle.
         * The same intersection point is created, if we intersect the reference line with the targetBackReferenceLine.
         */
