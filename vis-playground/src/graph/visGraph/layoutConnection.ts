@@ -37,6 +37,15 @@ export type CurveStyle = "linear" | "basis" | "natural" | d3.CurveFactory
 export class LayoutConnection {
     // layouted: boolean = false;
 
+    get visGraph() {
+        return this.source.visGraph;
+    }
+
+    get commonSettings(): CommonSettings | undefined {
+        return this.visGraph.commonSettings;
+    }
+
+
     /** The source node of the connection */
     source: LayoutNode;
     /** The target node of the connection */
@@ -120,6 +129,27 @@ export class LayoutConnection {
         return this.pathOrDefault.endAnchor;
     }
 
+    get width(): number {
+        const minWeight = 0.05;
+        const maxWeight = 3;
+
+        const scale = d3.scaleLinear()
+        // const scale = d3.scaleLog()
+            .domain([minWeight, maxWeight])
+            .range([minWeight, maxWeight])
+            .clamp(true);
+
+        const width = scale(this.weight);
+        const multiplier = this.commonSettings?.linkWidthMultiplier.getValue() ?? 1;
+        return width * multiplier;
+    }
+
+
+    get arrowLength(): number {
+        const width = this.width;
+        const calculatedLength = (this.commonSettings?.arrowSize.getValue() ?? 5) * width;
+        return calculatedLength * 0.8;
+    }
 
 
     // /** All points combined */

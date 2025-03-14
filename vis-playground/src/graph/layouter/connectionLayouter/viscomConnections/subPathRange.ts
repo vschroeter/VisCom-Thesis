@@ -631,7 +631,14 @@ export class SubPathRange {
 
         const pathMids: Map<SubPath, number> = new Map();
 
+        const pathCount = Math.max(6, this.subPaths.length);
+
         const rangePadding = Math.min(Math.max(0, this.node.parentLayouter.rangePaddingFactor), 1);
+        const completeRangeDiff = RadialUtils.forwardRadBetweenAngles(this.range[0], this.range[1]);
+        const minDistanceBetweenRanges = this.pathRangeMarginFactor * completeRangeDiff / pathCount;
+
+        const minSizeFactor = Math.min(Math.max(0, this.node.parentLayouter.minimumRangeSizeFactor), 1);
+        const minSizeOfRange = minSizeFactor * completeRangeDiff / pathCount;
 
         if (doRefine) {
 
@@ -639,13 +646,8 @@ export class SubPathRange {
             // const pathStarts: Map<SubPath, number> = new Map();
             // const pathEnds: Map<SubPath, number> = new Map();
 
-            const completeRangeDiff = RadialUtils.forwardRadBetweenAngles(this.range[0], this.range[1]);
-            const minDistanceBetweenRanges = this.pathRangeMarginFactor * completeRangeDiff / pathToRange.size;
-
-            const minSizeFactor = Math.min(Math.max(0, this.node.parentLayouter.minimumRangeSizeFactor), 1);
 
 
-            const minSizeOfRange = minSizeFactor * completeRangeDiff / pathToRange.size;
 
             // Begin with forward
             const minRad = this.range[0];
@@ -730,7 +732,8 @@ export class SubPathRange {
 
             const rangeDelta = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
             // const padding = 0.1 * rangeDelta;
-            const padding = rangePadding * rangeDelta;
+            // const padding = rangePadding * rangeDelta;
+            const padding = Math.min(rangePadding * minSizeOfRange, rangePadding * rangeDelta);
 
             // If there is no counter path we apply normal padding
             if (!pathInfo.hasCounterPath) {
@@ -787,13 +790,14 @@ export class SubPathRange {
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
         // if (this.node.id == "equalizer") debug = true;
         // if (this.node.id == "dialog_session_manager") debug = true;
-        // if (this.node.id == "/dialog/tts_guard") debug = true;
+        // if (this.node.id == "/dialog/tts_guard") debug = true;pathCount
+        if (this.node.id.includes("__hypernode_")) debug = true;
         if (debug) {
 
 
             this.node.layoutNode.debugShapes.push(...this.getValidAnchorsOfRange().all);
 
-            console.warn("SORTED PATHS", pathInformation);
+            // console.warn("SORTED PATHS", pathInformation);
 
             // pathInformation.forEach((pathInfo, i) => {
             //     pathInfo.oppositeConnectionPoint._data = {r: 4, fill: this.type == "inside" ? "red" : "green"};

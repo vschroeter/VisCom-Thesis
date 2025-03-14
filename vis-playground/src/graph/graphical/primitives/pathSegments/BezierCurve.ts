@@ -4,10 +4,10 @@ import { Anchor } from "../Anchor";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 
 export class QuadraticBezierCurve extends PathSegment {
-    
+
     startAnchor: Anchor;
     endAnchor: Anchor;
-    
+
     _control: Point;
 
     /** The control point of the curve */
@@ -81,7 +81,6 @@ export class CubicBezierCurve extends PathSegment {
     }
 
     getSvgPath(): string {
-        // return `C ${this.control1.x} ${this.control1.y}, ${this.control2.x} ${this.control2.y}, ${this.end.x} ${this.end.y}`;
         return `M ${this.start.x} ${this.start.y} C ${this.control1.x} ${this.control1.y}, ${this.control2.x} ${this.control2.y}, ${this.end.x} ${this.end.y}`;
     }
 

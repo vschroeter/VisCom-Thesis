@@ -269,7 +269,7 @@ export class Connection2d extends SvgRenderable {
         const length = this.length
         // const length = 100
 
-        const baseSize = 5 * this.strokeWidth;
+        const baseSize = (this.layoutConnection.commonSettings?.arrowSize.getValue() ?? 5) * this.strokeWidth;
         const size = Math.min(baseSize, length / 2 * 0.6)
         this.arrow.size = size
 

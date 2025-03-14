@@ -48,6 +48,15 @@ export class CommonSettings extends Setting {
         defaultValue: 1,
     })
 
+    arrowSize = new Param<number>({
+        type: "number",
+        key: "arrowSize",
+        label: "Arrow Size",
+        description: "The size of the arrows",
+        optional: false,
+        defaultValue: 5,
+    })
+
 
     showLinkScore = new Param<boolean>({
         type: "boolean",

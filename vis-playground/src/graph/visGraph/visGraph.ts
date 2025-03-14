@@ -719,8 +719,6 @@ export class VisGraph {
         // Update the links opacity based on the user interactions and
         // the width based on the weight
 
-        const minW = 0.1;
-        const maxW = 8;
         const wMultiplier = this.commonSettings?.linkWidthMultiplier.getValue() ?? 1;
 
         const stroke = this.commonSettings?.linkColor.getValue()?.toString() ?? "black";
@@ -736,13 +734,14 @@ export class VisGraph {
                 return;
             }
             const weight = connection.weight;
+            const connWidth = connection.layoutConnection.width;
             let opacity = Math.min(Math.max(0.01, weight), 1) * alpha;
 
             const startNode = connection.source;
             const endNode = connection.target;
             // const sizeMultiplier = Math.max(startNode.parent?.sizeFactor ?? 1, endNode.parent?.sizeFactor ?? 1);
-            const sizeMultiplier = 1;
-            const width = Math.min(maxW, Math.max(minW, weight * wMultiplier * sizeMultiplier));
+            // const sizeMultiplier = 1;
+            // const width = Math.min(maxW, Math.max(minW, weight * wMultiplier * sizeMultiplier));
 
 
             if (userInteractions.somethingIsSelectedOrFocusedOrHovered) {
@@ -765,7 +764,7 @@ export class VisGraph {
             // }
 
             connection.updateStyleOpacity(opacity);
-            connection.updateStyleStroke(strokeWithoutAlpha, width);
+            connection.updateStyleStroke(strokeWithoutAlpha, connWidth);
         })
 
         this.allGraphicalNodes.forEach(node => {
