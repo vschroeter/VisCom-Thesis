@@ -233,7 +233,8 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
         // this.vectorForNode = this.nodeToConnect.outerRange.getValidVectorTowardsDirection(this.pathAnchor.anchorPoint);
         // this.anchorForNode = this.nodeToConnect.outerRange.getValidAnchorTowardsDirection(this.pathAnchor.anchorPoint);
 
-        this.anchorForNode = this.nodeToConnect.outerRange.getValidAnchorTowardsDirectionForPath(this.dynamicSubPath.subPath, this.pathAnchor.anchorPoint);
+        const desiredAnchor = this.dynamicSubPath.subPath.getDesiredNodeAnchor(this.nodeToConnect);
+        this.anchorForNode = this.nodeToConnect.outerRange.getValidAnchorTowardsDirectionForPath(this.dynamicSubPath.subPath, desiredAnchor?.anchorPoint ?? this.pathAnchor.anchorPoint);
         this.vectorForNode = this.anchorForNode.direction;
 
         // const anchorDirection = direction == "nodeToPath" ? "out" : "in";

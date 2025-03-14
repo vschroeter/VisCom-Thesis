@@ -212,6 +212,12 @@ export class SubPath extends CombinedPathSegment {
         return this.fixedPathAnchor?.anchorPoint;
     }
 
+    /**
+     * Get the desired anchor for the connection for the given node.
+     * @param sourceNode The node to calculate the anchor for
+     * @param ignoreLevelDifference If true, level difference is ignored. Otherwise, there is no anchor if the level difference is more than 1
+     * @returns The desired anchor or undefined if not possible
+     */
     getDesiredNodeAnchor(sourceNode: VisNode, ignoreLevelDifference = false): Anchor | undefined {
 
         const otherNode = this.getOppositeNodeThan(sourceNode);

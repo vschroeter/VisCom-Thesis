@@ -68,7 +68,7 @@ export class SubPathRange {
 
     outerMargin: number;
 
-    constructor(node: VisNode, type: "inside" | "outside", nodeRangeMarginFactor = 0.9) {
+    constructor(node: VisNode, type: "inside" | "outside", nodeRangeMarginFactor = 0.90) {
         this.type = type;
         this.node = node;
 
@@ -135,7 +135,7 @@ export class SubPathRange {
      */
     trimToAnchor(anchor: Anchor) {
         const anchorRad = this.getRadOfPoint(anchor.anchorPoint);
-        if (this.pointIsInside(anchor.anchorPoint)) {
+        if (this.pointIsInside(anchor.anchorPoint, [this.range[0] - this.outerMargin, this.range[1] + this.outerMargin])) {
 
             // const midTo0 = RadialUtils.forwardRadBetweenAngles(this.getMiddleRad(), this.range[0]);
             // const midTo1 = RadialUtils.forwardRadBetweenAngles(this.getMiddleRad(), this.range[1]);
@@ -784,7 +784,7 @@ export class SubPathRange {
 
         let debug = false;
         debug = false;
-        // debug = true;
+        debug = true;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
