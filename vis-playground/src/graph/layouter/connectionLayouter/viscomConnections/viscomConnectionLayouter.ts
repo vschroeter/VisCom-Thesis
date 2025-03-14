@@ -20,16 +20,19 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
     optimizeConnectionAnchors: boolean = true;
     minimumRangeSizeFactor: number = 0.4;
     rangePaddingFactor: number = 0.1;
+    combinedPathsDistanceFactor: number = 0.2;
 
     constructor(options?: {
         optimizeConnectionAnchors?: boolean,
         minimumRangeSizeFactor?: number,
         rangePaddingFactor?: number,
+        combinedPathsDistanceFactor?: number,
     }) {
         super();
         this.optimizeConnectionAnchors = options?.optimizeConnectionAnchors ?? true;
         this.minimumRangeSizeFactor = options?.minimumRangeSizeFactor ?? 0.4;
         this.rangePaddingFactor = options?.rangePaddingFactor ?? 0.1;
+        this.combinedPathsDistanceFactor = options?.combinedPathsDistanceFactor ?? 0.2;
     }
 
     get visNodes(): VisNode[] {
@@ -128,78 +131,6 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
             });
 
         })
-
-
-        // sortedNodes.forEach(visNode => {
-        //     visNode.getSortedSubPaths().forEach(subPath => {
-        //         console.log("[VISCOM] subPath", subPath.id, subPath.level);
-        //         subPath.layout();
-        //     });
-        // })
-
-        // sortedNodes.forEach(visNode => {
-
-        //     const innerSubPathInfos = visNode.innerRange.getSortedSubPathInfo();
-
-        //     innerSubPathInfos.forEach(subPathInfo => {
-        //         const subPath = subPathInfo.subPath;
-        //         console.log("[VISCOM] subPath", subPath.id, subPath.level);
-        //         subPath.layout();
-        //     });
-
-        // })
-
-        // sortedNodes.forEach(visNode => {
-
-        //     const outerSubPathInfos = visNode.outerRange.getSortedSubPathInfo();
-
-        //     outerSubPathInfos.forEach(subPathInfo => {
-        //         const subPath = subPathInfo.subPath;
-        //         console.log("[VISCOM] subPath", subPath.id);
-        //         subPath.layout();
-        //     });
-
-        // })
-
-        // this.getAllSubPaths("asc").forEach(subPaths => {
-        //     subPaths.forEach(subPath => {
-        //         // console.log("[SUBPATH]", subPath.cId, subPath.id, subPath.level, subPath.levelType, subPath);
-        //         // console.log("[SUBPATH]", subPath.cId, subPath.id);
-        //         console.log("[SUBPATH]", subPath.id);
-        //         subPath.layout();
-        //     });
-        // });
-
-        // this.getAllVisNodes("asc").forEach(visNode => {
-
-        //     visNode.innerRa
-
-        // })
-
-
-
-        // console.log("[FLEX]", Array.from(this.mapLayoutNodeToVisNode.values()), this.mapLayerToFlexPaths, this.connections, this)
-        // const visGraph = root.visGraph;
-
-
-        // const pathLayerValues = Array.from(this.mapLayerToFlexPaths.keys()).sort();
-        // console.log("[FLEX] pathLayerValues", pathLayerValues);
-
-        // pathLayerValues.forEach(layer => {
-        //     const paths = this.mapLayerToFlexPaths.get(layer)!;
-
-        //     paths.forEach(path => path.layout());
-        // })
-
-        // console.log("[FLEX] layout done", Array.from(this.mapLayoutNodeToVisNode.values()));
-
-        // // this.visNodes.forEach(visNode => {
-        // //     const anchors = visNode.innerContinuum.getValidRangeAnchors();
-        // //     visNode.layoutNode.debugShapes.push(...anchors);
-        // // })
-
-        // return;
-
     }
 
 }

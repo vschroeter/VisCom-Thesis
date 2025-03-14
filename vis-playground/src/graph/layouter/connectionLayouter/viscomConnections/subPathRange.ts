@@ -61,7 +61,7 @@ export class SubPathRange {
 
     minimumDistanceBetweenPathsFactor = 0.5;
 
-    combinedPathsDistanceFactor = 0.125;
+    // combinedPathsDistanceFactor = 0.125;
     // combinedPathsDistanceFactor = 1;
 
     pathRangeMarginFactor = 0.1;
@@ -591,32 +591,12 @@ export class SubPathRange {
             const previousSubPath = i > 0 ? pathInformation[i - 1].subPath : undefined;
 
             const range: [number, number] = [currentPosition, currentPosition];
-            let padding = 0;
             pathHasCounterPath.set(subPath, false);
 
-
-            // If the next path is the counter path of the current one (so source and target node are switched), we add a distance of 1 * this.combinedPathsDistanceFactor
-            if (subPath.isCounterPathOf(nextSubPath)) {
-                range[0] += (1 - this.combinedPathsDistanceFactor) * increaseStep;
-                range[1] = range[0];
-                range[1] += increaseStep * this.combinedPathsDistanceFactor;
-                // const maxWidth = Math.max(subPath.connection.weight, nextSubPath.connection.weight);
-                // currentPosition += 1 * this.combinedPathsDistanceFactor;
-                // currentPosition += maxWidth * this.combinedPathsDistanceFactor;
-                pathHasCounterPath.set(subPath, true);
-            } else if (previousSubPath && subPath.isCounterPathOf(previousSubPath)) {
-                range[1] += increaseStep * this.combinedPathsDistanceFactor;
-                padding = (1 - this.combinedPathsDistanceFactor) * increaseStep;
-                pathHasCounterPath.set(subPath, true);
-            }
-
-            else {
-                // currentPosition += 1;
-                range[1] += increaseStep;
-            }
+            range[1] += increaseStep;
 
             pathToRange.set(subPath, range);
-            currentPosition = range[1] + padding;
+            currentPosition = range[1];
         });
         // currentPosition += increaseStep;
 
@@ -651,6 +631,7 @@ export class SubPathRange {
 
         const pathMids: Map<SubPath, number> = new Map();
 
+        const rangePadding = Math.min(Math.max(0, this.node.parentLayouter.rangePaddingFactor), 1);
 
         if (doRefine) {
 
@@ -661,7 +642,6 @@ export class SubPathRange {
             const completeRangeDiff = RadialUtils.forwardRadBetweenAngles(this.range[0], this.range[1]);
             const minDistanceBetweenRanges = this.pathRangeMarginFactor * completeRangeDiff / pathToRange.size;
 
-            const rangePadding = Math.min(Math.max(0, this.node.parentLayouter.rangePaddingFactor), 1);
             const minSizeFactor = Math.min(Math.max(0, this.node.parentLayouter.minimumRangeSizeFactor), 1);
 
 
@@ -719,26 +699,6 @@ export class SubPathRange {
 
             });
 
-            // This is not necessary anymore
-            // // Then backward
-            // // In this step the ranges are checked for minimum distances and if necessary are adapted
-            // currentRad = maxRadForMidPoints;
-            // pathInformation.slice().reverse().forEach(pathInfo => {
-            //     const assignedPathRad = pathMids.get(pathInfo.subPath)!;
-
-            //     if (RadialUtils.rad1ComesAfterRad2(assignedPathRad, currentRad, this.range[0])) {
-            //         pathMids.set(pathInfo.subPath, currentRad);
-            //         console.error("ADJUSTED", pathInfo.subPath.id, assignedPathRad, currentRad);
-            //     }
-            //     currentRad = pathMids.get(pathInfo.subPath)! - minSizeOfRange / 2;
-            //     // if (pathInfo.hasCounterPathBefore) {
-            //     //     currentRad = pathMids.get(pathInfo.subPath)! - minSizeOfRange / 2 * this.combinedPathsDistanceFactor;
-            //     // } else {
-            //     //     currentRad = pathMids.get(pathInfo.subPath)! - minSizeOfRange / 2;
-            //     // }
-            // });
-
-
             // Now we have the start and end rads for each path
             // We can now assign the ranges
             pathInformation.forEach((pathInfo, i) => {
@@ -751,33 +711,45 @@ export class SubPathRange {
                 const radAfter = subPathAfter ? pathMids.get(subPathAfter)! : this.range[1] + minSizeOfRange / 2;
                 const rad = pathMids.get(subPath)!;
 
-                let startRad = radBefore + RadialUtils.forwardRadBetweenAngles(radBefore, rad) / 2;
-                let endRad = radAfter - RadialUtils.forwardRadBetweenAngles(rad, radAfter) / 2;
+                const startRad = radBefore + RadialUtils.forwardRadBetweenAngles(radBefore, rad) / 2;
+                const endRad = radAfter - RadialUtils.forwardRadBetweenAngles(rad, radAfter) / 2;
 
-                const rangeDelta = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
-                // const padding = 0.1 * rangeDelta;
-                const padding = rangePadding * rangeDelta;
-
-                // If there is no counter path we apply normal padding
-                if (!pathInfo.hasCounterPath) {
-                    startRad += padding / 2;
-                    endRad -= padding / 2;
-                } else {
-
-                    // If there is a counter path, we apply on the fitting side a smaller padding and shrink the range on the other side
-                    if (pathInfo.hasCounterPathAfter) {
-                        startRad += rangeDelta * (1 - this.combinedPathsDistanceFactor);
-                        endRad -= padding * this.combinedPathsDistanceFactor;
-                    } else {
-                        startRad += padding * this.combinedPathsDistanceFactor;
-                        endRad -= rangeDelta * (1 - this.combinedPathsDistanceFactor);
-                    }
-
-                }
                 pathToRange.set(subPath, [startRad, endRad]);
             });
 
         }
+
+        const combinedPathsDistanceFactor = this.node.parentLayouter.combinedPathsDistanceFactor;
+
+        // Here we apply the padding
+        pathInformation.forEach((pathInfo, i) => {
+            const subPath = pathInfo.subPath;
+            const range = pathToRange.get(subPath)!;
+            let startRad = range[0];
+            let endRad = range[1];
+
+            const rangeDelta = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
+            // const padding = 0.1 * rangeDelta;
+            const padding = rangePadding * rangeDelta;
+
+            // If there is no counter path we apply normal padding
+            if (!pathInfo.hasCounterPath) {
+                startRad += padding / 2;
+                endRad -= padding / 2;
+            } else {
+
+                // If there is a counter path, we apply on the fitting side a smaller padding and shrink the range on the other side
+                if (pathInfo.hasCounterPathAfter) {
+                    startRad += rangeDelta * (1 - combinedPathsDistanceFactor);
+                    endRad -= padding * combinedPathsDistanceFactor;
+                } else {
+                    startRad += padding * combinedPathsDistanceFactor;
+                    endRad -= rangeDelta * (1 - combinedPathsDistanceFactor);
+                }
+
+            }
+            pathToRange.set(subPath, [startRad, endRad]);
+        });
 
 
 

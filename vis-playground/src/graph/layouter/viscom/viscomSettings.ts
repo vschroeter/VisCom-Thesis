@@ -56,6 +56,15 @@ export class AlgorithmSettings extends Setting {
         defaultValue: 0.1,
         type: "number",
     });
+
+    combinedPathsDistanceFactor = new Param<number>({
+        key: "combinedPathsDistanceFactor",
+        label: "Combined Paths Distance Factor",
+        description: "The combined paths distance factor.",
+        optional: false,
+        defaultValue: 0.2,
+        type: "number",
+    });
 }
 
 export class DisplaySettings extends Setting {
