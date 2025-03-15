@@ -582,8 +582,6 @@ export class SubPathRange {
         const increaseStep = 1;
         let currentPosition = 0;
 
-        const pathHasCounterPath: Map<SubPath, boolean> = new Map();
-
         const pathInformation = this.subPathInformation;
         pathInformation.forEach((pathInfo, i) => {
             const subPath = pathInfo.subPath;
@@ -591,7 +589,6 @@ export class SubPathRange {
             const previousSubPath = i > 0 ? pathInformation[i - 1].subPath : undefined;
 
             const range: [number, number] = [currentPosition, currentPosition];
-            pathHasCounterPath.set(subPath, false);
 
             range[1] += increaseStep;
 
@@ -633,7 +630,6 @@ export class SubPathRange {
 
         const pathCount = Math.max(6, this.subPaths.length);
 
-        const rangePadding = Math.min(Math.max(0, this.node.parentLayouter.rangePaddingFactor), 1);
         const completeRangeDiff = RadialUtils.forwardRadBetweenAngles(this.range[0], this.range[1]);
         const minDistanceBetweenRanges = this.pathRangeMarginFactor * completeRangeDiff / pathCount;
 
@@ -721,10 +717,14 @@ export class SubPathRange {
 
         }
 
-        const combinedPathsDistanceFactor = this.node.parentLayouter.combinedPathsDistanceFactor;
+        const rangePadding = Math.min(Math.max(0, this.node.parentLayouter.rangePaddingFactor), 1);
+
+        const doCombinePaths = this.node.parentLayouter.combinePaths;
+        const combinedPathsDistanceFactor = Math.max(0, Math.min(1, this.node.parentLayouter.combinedPathsDistanceFactor));
 
         // Here we apply the padding
         pathInformation.forEach((pathInfo, i) => {
+            // return;
             const subPath = pathInfo.subPath;
             const range = pathToRange.get(subPath)!;
             let startRad = range[0];
@@ -733,22 +733,53 @@ export class SubPathRange {
             const rangeDelta = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
             // const padding = 0.1 * rangeDelta;
             // const padding = rangePadding * rangeDelta;
-            const padding = Math.min(rangePadding * minSizeOfRange, rangePadding * rangeDelta);
+            const padding = doRefine ?
+                Math.min(rangePadding * minSizeOfRange, rangePadding * rangeDelta) :
+                rangePadding * rangeDelta;
+
 
             // If there is no counter path we apply normal padding
-            if (!pathInfo.hasCounterPath) {
+            if (!doCombinePaths || !pathInfo.hasCounterPath) {
                 startRad += padding / 2;
                 endRad -= padding / 2;
             } else {
 
+                const rangeSize = rangeDelta * combinedPathsDistanceFactor;
+                const counterPadding = rangeDelta - rangeSize / 2 - rangeSize;
+
+
+                // if (this.node.id == "p1") {
+                //     console.warn("RANGE", {
+                //         range,
+                //         rangeSize,
+                //         rangeDelta,
+                //         padding,
+                //         minSizeOfRange,
+                //         startRad,
+                //         endRad,
+                //         counterPadding
+                //     });
+                // }
+
                 // If there is a counter path, we apply on the fitting side a smaller padding and shrink the range on the other side
                 if (pathInfo.hasCounterPathAfter) {
-                    startRad += rangeDelta * (1 - combinedPathsDistanceFactor);
-                    endRad -= padding * combinedPathsDistanceFactor;
+                    // startRad += rangeDelta * (1 - combinedPathsDistanceFactor);
+                    // endRad -= padding * combinedPathsDistanceFactor;
+                    endRad -= rangeSize / 2;
+                    startRad += counterPadding;
                 } else {
-                    startRad += padding * combinedPathsDistanceFactor;
-                    endRad -= rangeDelta * (1 - combinedPathsDistanceFactor);
+                    // startRad += padding * combinedPathsDistanceFactor;
+                    // endRad -= rangeDelta * (1 - combinedPathsDistanceFactor);
+                    startRad += rangeSize / 2;
+                    endRad -= counterPadding;
                 }
+
+                // if (this.node.id == "p1") {
+                //     console.warn("RANGE After", {
+                //         startRad,
+                //         endRad,
+                //     });
+                // }
 
             }
             pathToRange.set(subPath, [startRad, endRad]);
@@ -761,7 +792,7 @@ export class SubPathRange {
             // Check if the desired range is inside the valid range
             // const desiredAnchorPoint = path.desiredNodeAnchor?.anchorPoint;
             const desiredAnchorPoint = path.getDesiredNodeAnchor(this.node)?.anchorPoint;
-            // if (!desiredAnchorPoint || pathHasCounterPath.get(path)) {
+
             if (!desiredAnchorPoint) {
                 const radDiff = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
                 assignedRads.set(path, range[0] + radDiff / 2);
@@ -791,7 +822,7 @@ export class SubPathRange {
         // if (this.node.id == "equalizer") debug = true;
         // if (this.node.id == "dialog_session_manager") debug = true;
         // if (this.node.id == "/dialog/tts_guard") debug = true;pathCount
-        if (this.node.id.includes("__hypernode_")) debug = true;
+        // if (this.node.id.includes("__hypernode_")) debug = true;
         if (debug) {
 
 

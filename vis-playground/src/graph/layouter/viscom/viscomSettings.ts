@@ -57,6 +57,15 @@ export class AlgorithmSettings extends Setting {
         type: "number",
     });
 
+    combinePaths = new Param<boolean>({
+        key: "combinePaths",
+        label: "Combine Paths",
+        description: "Combine paths.",
+        optional: false,
+        defaultValue: true,
+        type: "boolean",
+    });
+
     combinedPathsDistanceFactor = new Param<number>({
         key: "combinedPathsDistanceFactor",
         label: "Combined Paths Distance Factor",

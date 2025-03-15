@@ -21,18 +21,21 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
     minimumRangeSizeFactor: number = 0.4;
     rangePaddingFactor: number = 0.1;
     combinedPathsDistanceFactor: number = 0.2;
+    combinePaths: boolean = true;
 
     constructor(options?: {
         optimizeConnectionAnchors?: boolean,
         minimumRangeSizeFactor?: number,
         rangePaddingFactor?: number,
         combinedPathsDistanceFactor?: number,
+        combinePaths?: boolean
     }) {
         super();
         this.optimizeConnectionAnchors = options?.optimizeConnectionAnchors ?? true;
         this.minimumRangeSizeFactor = options?.minimumRangeSizeFactor ?? 0.4;
         this.rangePaddingFactor = options?.rangePaddingFactor ?? 0.1;
         this.combinedPathsDistanceFactor = options?.combinedPathsDistanceFactor ?? 0.2;
+        this.combinePaths = options?.combinePaths ?? true;
     }
 
     get visNodes(): VisNode[] {

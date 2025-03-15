@@ -60,7 +60,7 @@ export class SmoothSplineSegment extends PathSegment {
         const distanceToControlPoint = distanceBetweenAnchors * this.controlPointDistanceFactor;
 
         const startControlPoint = adaptedStartAnchor.getPointInDirection(distanceToControlPoint);
-        const endControlPoint = adaptedEndAnchor.getPointInDirection(-distanceToControlPoint);
+        const endControlPoint = endAnchor.getPointInDirection(-Math.max(this.extendArrow ? this.arrowLength : 0, distanceToControlPoint));
 
         // this.connection.debugShapes.push(new Point(startAnchor.anchorPoint.x, startAnchor.anchorPoint.y));
         // this.connection.debugShapes.push(new Point(endAnchor.anchorPoint.x, endAnchor.anchorPoint.y));
