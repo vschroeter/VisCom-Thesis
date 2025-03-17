@@ -402,15 +402,17 @@ export class SubPathRange {
      * Returns the edge anchors of the range for calculation and debugging purposes.
      * @returns An object containing the start, end, and backside anchors as well as all anchors in an array.
      */
-    getValidAnchorsOfRange() {
+    getValidAnchorsOfRange(range?: [number, number])  {
 
-        const startAnchor = new Anchor(this.node.layoutNode.center, new Vector(this.range[0]));
-        const endAnchor = new Anchor(this.node.layoutNode.center, new Vector(this.range[1]));
+        range = range ?? this.range;
+
+        const startAnchor = new Anchor(this.node.layoutNode.center, new Vector(range[0]));
+        const endAnchor = new Anchor(this.node.layoutNode.center, new Vector(range[1]));
         const backsideAnchor = new Anchor(this.node.layoutNode.center, new Vector(this.getMiddleRadOnBackside()));
 
-        startAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "green" };
-        endAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "red" };
-        backsideAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "blue" };
+        startAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "green", strokeWidth: 4 };
+        endAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "red", strokeWidth: 4 };
+        backsideAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "blue", strokeWidth: 4 };
 
         return {
             startAnchor, endAnchor, backsideAnchor, all: [startAnchor, endAnchor, backsideAnchor]
@@ -815,7 +817,7 @@ export class SubPathRange {
 
         let debug = false;
         debug = false;
-        debug = true;
+        // debug = true;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
@@ -823,10 +825,11 @@ export class SubPathRange {
         // if (this.node.id == "dialog_session_manager") debug = true;
         // if (this.node.id == "/dialog/tts_guard") debug = true;pathCount
         // if (this.node.id.includes("__hypernode_")) debug = true;
+        // if (this.node.id.includes("M")) debug = true;
         if (debug) {
 
 
-            this.node.layoutNode.debugShapes.push(...this.getValidAnchorsOfRange().all);
+            this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor]);
 
             // console.warn("SORTED PATHS", pathInformation);
 
@@ -854,21 +857,21 @@ export class SubPathRange {
                 const desiredAnchor = path.getDesiredNodeAnchor(this.node);
                 if (desiredAnchor) {
                     desiredAnchor._data = { length: 3, stroke: "blue" };
-                    path.connection.debugShapes.push(desiredAnchor);
+                    // path.connection.debugShapes.push(desiredAnchor);
                 }
                 const desiredAnchorPoint = path.getDesiredNodeAnchor(this.node)?.anchorPoint;
 
                 if (desiredAnchorPoint && path.fixedPathAnchorPoint) {
                     const segment = new Segment(path.fixedPathAnchorPoint, desiredAnchorPoint);
                     segment._data = { stroke: "orange" }
-                    path.connection.debugShapes.push(segment);
+                    // path.connection.debugShapes.push(segment);
                 }
 
                 if (pathMids.has(path)) {
                     const midRad = pathMids.get(path)!;
                     const midAnchor = this.getAnchorForRad(midRad, "out");
                     midAnchor._data = { length: 5, stroke: "blue" };
-                    path.connection.debugShapes.push(midAnchor);
+                    // path.connection.debugShapes.push(midAnchor);
                 }
 
             })

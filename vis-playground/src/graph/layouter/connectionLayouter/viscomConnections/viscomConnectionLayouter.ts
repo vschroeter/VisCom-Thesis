@@ -4,6 +4,7 @@ import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { SubPath } from "./subPath";
 import { VisConnection } from "./visConnection";
 import { VisNode } from "./visNode";
+import { RadialUtils } from "../../utils/radialUtils";
 
 export type VisOrLayoutNode = VisNode | LayoutNode;
 
@@ -132,8 +133,47 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
                 console.log("[VISCOM] subPath", subPath.cId, subPath.level);
                 subPath.layout();
             });
-
         })
+
+        return;
+        sortedNodes.forEach(visNode => {
+
+            if (visNode.id != "M") return;
+
+            const node = visNode.layoutNode;
+            const nextNode = node.getNextNodeInSorting();
+            const previousNode = node.getPreviousNodeInSorting();
+
+            if (nextNode && previousNode) {
+                const nextTangents = RadialUtils.getTangentsFromPointToCircle(node.center, nextNode!.circle);
+                const prevTangents = RadialUtils.getTangentsFromPointToCircle(node.center, previousNode!.circle);
+                // node.debugShapes.push(...nextTangents, ...prevTangents, nextNode!.circle, previousNode!.circle, node.center);
+                node.debugShapes.push(...nextTangents, ...prevTangents);
+            }
+
+            const f = 0.9;
+            const anchorOutStart = visNode.outerRange.getValidAnchorsOfRange(visNode.layoutNode.getValidOuterRadRange(f)).startAnchor;
+            const anchorOutEnd = visNode.outerRange.getValidAnchorsOfRange(visNode.layoutNode.getValidOuterRadRange(f)).endAnchor;
+            const anchorInStart = visNode.innerRange.getValidAnchorsOfRange(visNode.layoutNode.getValidInnerRadRange(f)).startAnchor;
+            const anchorInEnd = visNode.innerRange.getValidAnchorsOfRange(visNode.layoutNode.getValidInnerRadRange(f)).endAnchor;
+
+            anchorOutStart._data!.stroke = "cyan";
+            anchorOutEnd._data!.stroke = "magenta";
+            anchorInStart._data!.stroke = "green";
+            anchorInEnd._data!.stroke = "red";
+
+            const o = 0.7;
+            anchorOutStart._data!.opacity = o;
+            anchorOutEnd._data!.opacity = o;
+            anchorInStart._data!.opacity = o;
+            anchorInEnd._data!.opacity = o;
+
+
+
+            visNode.layoutNode.debugShapes.push(anchorOutStart, anchorOutEnd, anchorInStart, anchorInEnd);
+        })
+
+
     }
 
 }

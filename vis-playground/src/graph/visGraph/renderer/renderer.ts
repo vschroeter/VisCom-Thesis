@@ -153,8 +153,8 @@ export class Renderer {
                             .attr('y1', (shape as Segment).start.y)
                             .attr('x2', (shape as Segment).end.x)
                             .attr('y2', (shape as Segment).end.y)
-                            .attr('stroke', shape._data?.stroke ?? 'green')
-                            .attr('stroke-width', 0.5)
+                            .attr('stroke', shape._data?.stroke ?? 'gray')
+                            .attr('stroke-width', shape._data?.strokeWidth ?? 0.5)
                             .attr('opacity', 0.5)
 
                         break;
@@ -196,7 +196,7 @@ export class Renderer {
                             .attr('r', 1)
                             .attr('fill', anchor.anchorPoint._data?.fill ?? 'green')
                             .attr('stroke', 'none')
-                            .attr('opacity', 0.5)
+                            .attr('opacity', anchor._data?.opacity ?? 0.5)
 
                         d.append('line')
                             .attr('x1', anchor.anchorPoint.x)
@@ -204,8 +204,8 @@ export class Renderer {
                             .attr('x2', anchor.anchorPoint.x + anchor.direction.x * (anchor._data?.length ?? 10))
                             .attr('y2', anchor.anchorPoint.y + anchor.direction.y * (anchor._data?.length ?? 10))
                             .attr('stroke', anchor._data?.stroke ?? 'red')
-                            .attr('stroke-width', 0.5)
-                            .attr('opacity', 0.5)
+                            .attr('stroke-width', anchor._data?.strokeWidth ?? 0.5)
+                            .attr('opacity', anchor._data?.opacity ?? 0.5)
 
 
 

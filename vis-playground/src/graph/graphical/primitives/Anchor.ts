@@ -12,7 +12,7 @@ export class Anchor {
 
     /** The direction, in which the anchor is pointing. This is orthogonal to the edge at the anchor point */
     direction: Vector;
-    _data?: { stroke?: string; length?: number };
+    _data?: { stroke?: string; length?: number, strokeWidth?: number, opacity?: number };
 
 
     constructor(anchorPoint: Point, directionalPoint: Point);

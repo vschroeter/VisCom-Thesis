@@ -317,16 +317,24 @@ export class RadialUtils extends ShapeUtil {
 
     static getTangentsFromPointToCircle(point: Point, circle: Circle): Segment[] {
 
-        // The tangent from a point to a circle is perpendicular to the radius at the point of tangency
-        // Thus, there are two possible tangents from a point to a circle
+        // There are two possible tangents from a point to a circle
+        // We construct the tangents using the thales theorem
 
         try {
 
-            const connectionLine = new Segment(point, circle.center);
-            const perpendicular = new Line(circle.center, connectionLine.vector);
+            const distanceToCenter = point.distanceTo(circle.center)[0];
 
-            const intersectionPoints = circle.intersect(perpendicular);
+            if (distanceToCenter < circle.r) {
+                return [];
+            }
 
+            const thalesRadius = distanceToCenter / 2;
+            const thalesCenter = new Segment(point, circle.center).middle();
+
+            const thalesCircle = new Circle(thalesCenter, thalesRadius);
+
+            const intersectionPoints = thalesCircle.intersect(circle);
+            
             if (intersectionPoints.length < 2) {
                 throw new Error("No intersection points found.");
             }
