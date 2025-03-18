@@ -269,8 +269,15 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
         // We also check, whether the connection line between start and end point of the path crosses the inner circle of the node
         // If it does, the connection is not valid
         const segment = new Segment(this.pathAnchor.anchorPoint, this.anchorForNode.anchorPoint);
+
         const intersections = node.layoutNode.innerCircle.intersect(segment);
         if (intersections.length > 0) {
+
+            // If these intersections are inside the valid range of the node to connect, the connection is still valid
+            const validRange = this.nodeToConnect?.outerRange;
+            if (validRange && intersections.every(p => validRange.pointIsInside(p))) {
+                return true;
+            }
             return false;
         }
 
@@ -340,23 +347,45 @@ export class CircleSegmentConnectionMethod extends DynamicConnectionMethod {
 
 export class DynamicSubPath extends CombinedPathSegment {
 
-
+    /**
+     * These are the candidates for connection methods.
+     * The order represents the order in which the connection methods are tried.
+     */
     static candidates = [
         DirectCircularArcConnectionMethod,
         SmoothSplineConnectionMethod,
         CircleSegmentConnectionMethod
     ]
 
+    /**
+     * The node path for this dynamic sub path.
+     * In the default case, this contains for nodeToPath type the source node (as real node) up to to hyper node having the path anchor, with potential hypernodes in between.
+     * Vice versa for pathToNode type.
+     */
     nodePath: VisNode[] = [];
 
+    /**
+     * The fixed path anchor for this dynamic sub path.
+     * This is one fixed end for the path.
+     * The other end is dynamic at the nodeToConnect
+     */
     pathAnchor: Anchor;
 
+    // Parent sub path
     subPath: SubPath;
 
+    /**
+     * Determines the type and thus the direction of the connection.
+     */
     get connectionType(): SubPathConnectionType {
         return this.subPath.connectionType;
     }
 
+    /**
+     * The node to connect to.
+     * This is the node that the path anchor is NOT attached to.
+     * At this node, the path is not fixed yet but determined by ranges.
+     */
     get nodeToConnect() {
         if (this.nodePath.length === 0) return undefined;
 
@@ -364,34 +393,6 @@ export class DynamicSubPath extends CombinedPathSegment {
         if (this.connectionType === "pathToNode") return this.nodePath[this.nodePath.length - 1];
 
         return undefined;
-    }
-
-    get nodeAtPathAnchor() {
-        if (this.nodePath.length === 0) return undefined;
-
-        if (this.connectionType === "nodeToPath") return this.nodePath[this.nodePath.length - 1];
-        if (this.connectionType === "pathToNode") return this.nodePath[0];
-
-        return undefined;
-    }
-
-
-    // constructor(connection: LayoutConnection, nodePath: VisNode[], pathAnchor: Anchor, direction: FlexConnectionDirection) {
-    constructor(subPath: SubPath, nodePath?: VisNode[], pathAnchor?: Anchor) {
-        super(subPath.connection);
-        this.subPath = subPath;
-
-        nodePath = nodePath ?? subPath.nodePath;
-        this.nodePath = Array.from(nodePath);
-
-        pathAnchor = pathAnchor ?? subPath.fixedPathAnchor;
-
-        if (!pathAnchor) throw new Error("Path anchor is not defined");
-        this.pathAnchor = pathAnchor;
-
-        if (isNaN(this.pathAnchor.direction.x) || isNaN(this.pathAnchor.direction.y)) {
-            console.error("Invalid FLEX NODE PATH", this.pathAnchor);
-        }
     }
 
     // The other anchor (thus, not the given path anchor), if existing
@@ -412,6 +413,40 @@ export class DynamicSubPath extends CombinedPathSegment {
             return undefined;
         }
     }
+
+    /**
+     * The node at the path anchor.
+     * This is the node that the path anchor is attached to.
+     * At this node, the path is fixed.
+     */
+    get nodeAtPathAnchor() {
+        if (this.nodePath.length === 0) return undefined;
+
+        if (this.connectionType === "nodeToPath") return this.nodePath[this.nodePath.length - 1];
+        if (this.connectionType === "pathToNode") return this.nodePath[0];
+
+        return undefined;
+    }
+
+
+    constructor(subPath: SubPath, nodePath?: VisNode[], pathAnchor?: Anchor) {
+        super(subPath.connection);
+        this.subPath = subPath;
+
+        nodePath = nodePath ?? subPath.nodePath;
+        this.nodePath = Array.from(nodePath);
+
+        pathAnchor = pathAnchor ?? subPath.fixedPathAnchor;
+
+        if (!pathAnchor) throw new Error("Path anchor is not defined");
+        this.pathAnchor = pathAnchor;
+
+        if (isNaN(this.pathAnchor.direction.x) || isNaN(this.pathAnchor.direction.y)) {
+            console.error("Invalid FLEX NODE PATH", this.pathAnchor);
+        }
+    }
+
+
 
     layout() {
 
@@ -467,7 +502,8 @@ export class DynamicSubPath extends CombinedPathSegment {
         let debug = false;
         // if (this.connection.source.id == "equalizer" && this.connection.target.id == "facialexpressionmanager_node") {
         // if (this.connection.source.id == "dialog_session_manager" && this.connection.target.id == "facialexpressionmanager_node") {
-        if (this.connection.source.id == "tts_pico" && this.connection.target.id == "equalizer") {
+        // if (this.connection.source.id == "tts_pico" && this.connection.target.id == "equalizer") {
+        if (this.connection.source.id == "drive_manager" && this.connection.target.id == "camera") {
             debug = true;
             // console.log("[INVALID]", this);
 
@@ -522,7 +558,7 @@ export class DynamicSubPath extends CombinedPathSegment {
                 }
 
 
-                const shortenedFlexPath = this.createFlexPath(shortenedPath);
+                const shortenedFlexPath = this.createDynamicSubPath(shortenedPath);
                 const success = shortenedFlexPath.layout();
 
                 if (success) {
@@ -532,7 +568,7 @@ export class DynamicSubPath extends CombinedPathSegment {
                         console.error("Invalid node anchor", nodeAnchor, shortenedFlexPath);
                     }
 
-                    const shortenedRestFlexPath = this.createFlexPath(shortenedRestPath, shortenedFlexPath.nodeAnchor);
+                    const shortenedRestFlexPath = this.createDynamicSubPath(shortenedRestPath, shortenedFlexPath.nodeAnchor);
                     const success = shortenedRestFlexPath.layout();
 
                     if (success) {
@@ -551,7 +587,7 @@ export class DynamicSubPath extends CombinedPathSegment {
         return false;
     }
 
-    createFlexPath(nodePath: VisNode[], pathAnchor: Anchor = this.pathAnchor) {
+    createDynamicSubPath(nodePath: VisNode[], pathAnchor: Anchor = this.pathAnchor) {
         const path = new DynamicSubPath(this.subPath, nodePath, pathAnchor);
         return path;
     }

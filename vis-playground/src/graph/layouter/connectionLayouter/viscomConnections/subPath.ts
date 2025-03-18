@@ -78,6 +78,14 @@ export class SubPath extends CombinedPathSegment {
     visConnection: VisConnection;
 
     constraints: VisNode[] = [];
+
+    /**
+     * The node path laid out by the sub path object.
+     * In the simplest case (e.g. for connections between nodes on the same level), this is just the source and target node.
+     * For level-changing connections, this is either:
+     * - For node to path connections the path from the source node to the target hyper node having the next path to be connected
+     * - For path to node connections the path from the path at the source hyper node to the target node.
+     */
     nodePath: VisNode[] = [];
 
     get layouter() {
@@ -101,6 +109,52 @@ export class SubPath extends CombinedPathSegment {
         if (!node) return undefined;
         if (this.sourceVisNode == node) return this.connectionSourceNode;
         if (this.targetVisNode == node) return this.connectionTargetNode;
+        return undefined;
+    }
+
+    getNextNonHyperNodeBetween(startNode: VisNode, endNode: VisNode): VisNode | undefined {
+
+        const completeNodePath = this.visConnection.nodePath;
+        let started = false;
+        for (let i = 0; i < completeNodePath.length - 1; i++) {
+            const node = completeNodePath[i];
+            const layoutNode = node.layoutNode;
+
+            if (node == startNode) {
+                started = true;
+                continue;
+            }
+
+            if (node == endNode) {
+                if (started) return endNode;
+                else break;
+            }
+
+            if (started && !layoutNode.isHyperNode) {
+                return node;
+            }
+        }
+
+        started = false;
+        for (let i = completeNodePath.length - 1; i > 0; i--) {
+            const node = completeNodePath[i];
+            const layoutNode = node.layoutNode;
+
+            if (node == startNode) {
+                started = true;
+                continue;
+            }
+
+            if (node == endNode) {
+                if (started) return endNode;
+                else break;
+            }
+
+            if (started && !layoutNode.isHyperNode) {
+                return node;
+            }
+        }
+
         return undefined;
     }
 
@@ -130,7 +184,9 @@ export class SubPath extends CombinedPathSegment {
     }
 
 
-
+    get isHyperEdge() {
+        return this.source.isHyperNode || this.target.isHyperNode;
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // #region Nodes Information
@@ -214,71 +270,160 @@ export class SubPath extends CombinedPathSegment {
 
     /**
      * Get the desired anchor for the connection for the given node.
-     * @param sourceNode The node to calculate the anchor for
+     * @param visNode The node to calculate the anchor for
      * @param ignoreLevelDifference If true, level difference is ignored. Otherwise, there is no anchor if the level difference is more than 1
      * @returns The desired anchor or undefined if not possible
      */
-    getDesiredNodeAnchor(sourceNode: VisNode, ignoreLevelDifference = false): Anchor | undefined {
+    getDesiredNodeAnchor(visNode: VisNode, ignoreLevelDifference = false): Anchor | undefined {
 
-        const otherNode = this.getOppositeNodeThan(sourceNode);
+        const otherVisNode = this.getOppositeNodeThan(visNode);
 
         // console.log("[DESIRED]", `${sourceNode.id}->${otherNode?.id}`, sourceNode.layoutNode.layerFromTop, otherNode?.layoutNode.layerFromTop, this.level);
 
         // If level difference is more than 1, the connection should not have a desired circle arc an anchor
         if (!ignoreLevelDifference) {
-            if (Math.abs(sourceNode.layoutNode.layerFromTop - (otherNode?.layoutNode.layerFromTop ?? sourceNode.layoutNode.layerFromTop)) > 1) {
+            if (Math.abs(visNode.layoutNode.layerFromTop - (otherVisNode?.layoutNode.layerFromTop ?? visNode.layoutNode.layerFromTop)) > 1) {
                 return undefined;
             }
         }
 
         if (this.connectionType == "nodeToNode") {
 
-            const otherLayoutNode = this.getLayoutNodeInDirectionOf(otherNode);
-            if (!otherLayoutNode) return undefined;
+            // There are different cases for node to node connections and their desired anchors
 
-            // return new Anchor(otherLayoutNode.center, new Vector(otherLayoutNode.center, sourceNode.center)).move(otherLayoutNode.outerCircle.r);
-            return new Anchor(sourceNode.center, new Vector(sourceNode.center, otherLayoutNode.center)).move(sourceNode.outerCircle.r);
+            const sourceLayoutNode = this.getLayoutNodeInDirectionOf(visNode);
+            const otherLayoutNode = this.getLayoutNodeInDirectionOf(otherVisNode);
+
+            if (!sourceLayoutNode || !otherLayoutNode) {
+                return undefined;
+            }
+
+            // 1. case: this visNode is also the end of the connection
+            // 1. case: this visNode is no hypernode
+            // if (visNode.layoutNode == sourceLayoutNode) {
+            // In this case, we define the anchor based on the node to be connected
+            if (!visNode.layoutNode.isHyperNode) {
+                // if (otherVisNode?.id == "left_motor_controller") {
+                //     const x = 5;
+                // }
+
+
+                // if (this.visConnection.nodePath.length > 4) {
+                //     const x = 5;
+                // }
+
+
+                // We do not just take the next node, but the next non-hyper node (either real or virtual)
+                // in order to orient the node not to the center of the connected hypernode, but better
+                if (otherLayoutNode) {
+                    const nextNonHyperNode = this.getNextNonHyperNodeBetween(visNode, this.layouter.getVisNode(otherLayoutNode));
+                    if (nextNonHyperNode) {
+                        return new Anchor(visNode.center, new Vector(visNode.center, nextNonHyperNode.center)).move(visNode.outerCircle.r);
+                    }
+
+                    // If there is no next non-hyper node, we take the center of the connected vis node
+                    return new Anchor(visNode.center, new Vector(visNode.center, otherLayoutNode.center)).move(visNode.outerCircle.r);
+                }
+
+                return undefined;
+                // return new Anchor(otherLayoutNode.center, new Vector(otherLayoutNode.center, sourceNode.center)).move(otherLayoutNode.outerCircle.r);
+            }
+            else {
+                // 2. case: this visNode is a hypernode b
+                // In this case we do the following:
+                // The hyper node has inside a next non-hyper node which is the next in the nodePath.
+                // We take this node as basis for the desired anchor.
+                // To determine the anchor, we extend a line from the center of the hyper node to the center of the next non-hyper node
+                // and move it to the outer circle of the hyper node.
+                const nextNonHyperNode = this.getNextNonHyperNodeBetween(visNode, this.layouter.getVisNode(sourceLayoutNode));
+
+                return new Anchor(visNode.center, new Vector(visNode.center, nextNonHyperNode?.center ?? sourceLayoutNode.center)).move(visNode.outerCircle.r);
+            }
+
         }
 
         else if (this.connectionType == "nodeToPath") {
-            const pathAnchor = this.nextSubPath?.startAnchor;
 
-            if (sourceNode && pathAnchor) {
+            // For node to path we have two cases:
+            // 1.: The node is the end of the node path. In this case, we try to find the best (thus, a circular arc) connection for the anchor
+            // 2.: The node is an intermediate node on the node path (e.g. a virtual node). In this case, there is a path before which we take as basis for our anchor
 
-                const arcCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(sourceNode.layoutNode.center, pathAnchor);
-                try {
-                    const intersections = arcCircle ? sourceNode.outerCircle.intersect(arcCircle) : [];
-                    const nodeIntersection = RadialUtils.getClosestShapeToPoint(intersections, pathAnchor.anchorPoint);
-                    if (nodeIntersection) {
-                        return new Anchor(nodeIntersection, new Vector(sourceNode.center, nodeIntersection));
+            const endLayoutNode = this.getLayoutNodeInDirectionOf(visNode);
+
+            if (endLayoutNode == visNode.layoutNode) {
+
+                const pathAnchor = this.nextSubPath?.startAnchor;
+
+                if (visNode && pathAnchor) {
+
+                    const arcCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(visNode.layoutNode.center, pathAnchor);
+                    try {
+                        const intersections = arcCircle ? visNode.outerCircle.intersect(arcCircle) : [];
+                        const nodeIntersection = RadialUtils.getClosestShapeToPoint(intersections, pathAnchor.anchorPoint);
+                        if (nodeIntersection) {
+                            return new Anchor(nodeIntersection, new Vector(visNode.center, nodeIntersection));
+                        }
+                    } catch (e) {
+                        console.error("Error in direct circular arc connection layouting", {})
+                        throw e;
                     }
-                } catch (e) {
-                    console.error("Error in direct circular arc connection layouting", {})
-                    throw e;
                 }
+
+                return pathAnchor;
+
+            } else {
+
+                const pathBefore = this.previousSubPath;
+                const pathAnchor = pathBefore?.endAnchor;
+                // console.warn("Node to path connection with path before", pathBefore?.id, pathBefore?.level);
+
+                if (pathAnchor) {
+                    // Simplest case: Just extend the anchor to the other side of the node
+                    return new Anchor(visNode.center, new Vector(pathAnchor.anchorPoint, visNode.center)).move(visNode.outerCircle.r);
+                }
+
             }
 
-            return pathAnchor;
         } else if (this.connectionType == "pathToNode") {
 
-            const pathAnchor = this.previousSubPath?.endAnchor;
+            const endLayoutNode = this.getLayoutNodeInDirectionOf(visNode);
 
-            if (sourceNode && pathAnchor) {
+            // For node to path we have two cases:
+            // 1.: The node is the end of the node path. In this case, we try to find the best (thus, a circular arc) connection for the anchor
+            // 2.: The node is an intermediate node on the node path (e.g. a virtual node). In this case, there is a path after which we take as basis for our anchor
 
-                const arcCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(sourceNode.layoutNode.center, pathAnchor);
-                try {
-                    const intersections = arcCircle ? sourceNode.outerCircle.intersect(arcCircle) : [];
-                    const nodeIntersection = RadialUtils.getClosestShapeToPoint(intersections, pathAnchor.anchorPoint);
-                    if (nodeIntersection) {
-                        return new Anchor(nodeIntersection, new Vector(sourceNode.center, nodeIntersection));
+            if (endLayoutNode == visNode.layoutNode) {
+                const pathAnchor = this.previousSubPath?.endAnchor;
+
+                if (visNode && pathAnchor) {
+
+                    const arcCircle = RadialUtils.getCircleFromCoincidentPointAndTangentAnchor(visNode.layoutNode.center, pathAnchor);
+                    try {
+                        const intersections = arcCircle ? visNode.outerCircle.intersect(arcCircle) : [];
+                        const nodeIntersection = RadialUtils.getClosestShapeToPoint(intersections, pathAnchor.anchorPoint);
+                        if (nodeIntersection) {
+                            return new Anchor(nodeIntersection, new Vector(visNode.center, nodeIntersection));
+                        }
+                    } catch (e) {
+                        console.error("Error in direct circular arc connection layouting", {})
+                        throw e;
                     }
-                } catch (e) {
-                    console.error("Error in direct circular arc connection layouting", {})
-                    throw e;
                 }
+
+                return pathAnchor;
+
+            } else {
+
+                const pathAfter = this.nextSubPath;
+                const pathAnchor = pathAfter?.endAnchor;
+
+                if (pathAnchor) {
+                    // Simplest case: Just extend the anchor to the other side of the node
+                    return new Anchor(visNode.center, new Vector(pathAnchor.anchorPoint, visNode.center)).move(visNode.outerCircle.r);
+                }
+
             }
 
-            return pathAnchor;
         }
 
     }
@@ -402,9 +547,11 @@ export class SubPath extends CombinedPathSegment {
             }
         }
 
+        const useHyperEdges = false;
+
         // Connections between nodes on the same level are cached
         if (this.levelType == "sameLevel" && this.connectionType == "nodeToNode") {
-            this.cachable = true;
+            this.cachable = useHyperEdges;
         }
 
         // Update cache
@@ -414,42 +561,13 @@ export class SubPath extends CombinedPathSegment {
             this.group = group;
         }
 
+        if (!useHyperEdges && this.isHyperEdge) return;
 
         // Add to node ranges
         this.addToNodeRange();
 
         // Add to layouter
         this.layouter.addPathToLayouter(this);
-
-        // // For hyper connections, there can be multiple connections (so hyper connection + its child connections)
-        // // that share the same path.
-        // // In this case, the path is saved to be reused here
-        // this.cachedSubPath = this.sourceVisNode.getCachedPathTo(this.targetVisNode);
-        // if (this.cachedSubPath) {
-        //     // If there was a linked path, the segments are just the linked path
-        //     this.segments = [this.cachedSubPath];
-        // }
-        // // If there was no linked path, we add this path to be layouted
-        // else {
-        //     // Connections between the same parents are saved to be reused
-        //     // This should not be done between different parents, as paths from nodes to its hypernode can be for different connections
-        //     if (this.levelType == "sameLevel" && this.connectionType == "nodeToNode") {
-        //         this.cachable = true;
-        //         this.sourceVisNode.addCachedPathTo(this.targetVisNode, this);
-        //     }
-        //     this.addToNodeRange();
-
-        //     // const pathMap = this.flexConnection.layouter.mapLayerToFlexPaths;
-        //     // if (!pathMap.has(this.layerFromTop)) {
-        //     //     pathMap.set(this.layerFromTop, []);
-        //     // }
-
-        //     // pathMap.get(this.layerFromTop)!.push(this);
-        // }
-
-
-        // // Add to layouter
-        // this.layouter.addPathToLayouter(this);
     }
 
 

@@ -190,22 +190,27 @@ export class Renderer {
                     case "Anchor": {
                         const anchor = shape as Anchor;
 
+                        const r = 1.5;  //1;
+                        const l = 20; //10;
+                        const o = 0.8; // 0.5;
+                        const sw = 1; // 0.5;
+
                         d.append('circle')
                             .attr('cx', anchor.anchorPoint.x)
                             .attr('cy', anchor.anchorPoint.y)
-                            .attr('r', 1)
-                            .attr('fill', anchor.anchorPoint._data?.fill ?? 'green')
+                            .attr('r', r)
+                            .attr('fill', anchor.anchorPoint._data?.fill ?? 'blue')
                             .attr('stroke', 'none')
-                            .attr('opacity', anchor._data?.opacity ?? 0.5)
+                            .attr('opacity', anchor._data?.opacity ?? o)
 
                         d.append('line')
                             .attr('x1', anchor.anchorPoint.x)
                             .attr('y1', anchor.anchorPoint.y)
-                            .attr('x2', anchor.anchorPoint.x + anchor.direction.x * (anchor._data?.length ?? 10))
-                            .attr('y2', anchor.anchorPoint.y + anchor.direction.y * (anchor._data?.length ?? 10))
+                            .attr('x2', anchor.anchorPoint.x + anchor.direction.x * (anchor._data?.length ?? l))
+                            .attr('y2', anchor.anchorPoint.y + anchor.direction.y * (anchor._data?.length ?? l))
                             .attr('stroke', anchor._data?.stroke ?? 'red')
-                            .attr('stroke-width', anchor._data?.strokeWidth ?? 0.5)
-                            .attr('opacity', anchor._data?.opacity ?? 0.5)
+                            .attr('stroke-width', anchor._data?.strokeWidth ?? sw)
+                            .attr('opacity', anchor._data?.opacity ?? o)
 
 
 

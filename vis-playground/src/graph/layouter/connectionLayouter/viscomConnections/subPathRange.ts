@@ -9,6 +9,7 @@ export type SubPathInformation = {
     subPath: SubPath;
     desiredAnchor?: Anchor;
     desiredAnchorPoint?: Point;
+    desiredForwardRad?: number;
     level: number;
     forwardRadToConnectionPoint: number;
     forwardRadToTargetNode: number;
@@ -440,7 +441,7 @@ export class SubPathRange {
 
 
     ////////////////////////////////////////////////////////////////////////////
-    // #region Calculate
+    // #region Sub Path Info
     ////////////////////////////////////////////////////////////////////////////
 
     getSortedSubPathInfo() {
@@ -474,6 +475,7 @@ export class SubPathRange {
 
             const desiredAnchor = subPath.getDesiredNodeAnchor(this.node);
             const desiredAnchorPoint = desiredAnchor?.anchorPoint;
+            const desiredForwardRad = desiredAnchorPoint ? RadialUtils.forwardRadBetweenAngles(backRad, this.getRadOfPoint(desiredAnchorPoint)) : undefined;
 
             return {
                 subPath,
@@ -489,9 +491,15 @@ export class SubPathRange {
                 isInsideRange: false,
                 hasCounterPath: false,
                 hasCounterPathBefore: false,
-                hasCounterPathAfter: false
+                hasCounterPathAfter: false,
+                desiredForwardRad
             };
         });
+
+
+        if (this.node.id.startsWith("drive_manager_in") && this.type == "outside" && this.node.layoutNode.parent!.children.length == 5) {
+            const x = 5;
+        }
 
         pathInformation.sort((a, b) => {
             // We first sort by by level, with higher levels being at the outside of the range
@@ -516,6 +524,26 @@ export class SubPathRange {
                 return b.level - a.level;
             }
 
+
+            // First sort by desired anchor
+            // if (a.desiredAnchor && b.desiredAnchor) {
+            //     const aRad = this.getValidVectorTowardsDirection(a.desiredAnchorPoint!).slope;
+            //     const bRad = this.getValidVectorTowardsDirection(b.desiredAnchorPoint!).slope;
+
+            //     const aForwardRad = RadialUtils.forwardRadBetweenAngles(backRad, aRad);
+            //     const bForwardRad = RadialUtils.forwardRadBetweenAngles(backRad, bRad);
+
+            //     if (Math.abs(aForwardRad - bForwardRad) > EPSILON) {
+            //         return aForwardRad - bForwardRad;
+            //         return bForwardRad - aForwardRad;
+            //     }
+            // }
+
+            if (a.desiredForwardRad && b.desiredForwardRad) {
+                if (Math.abs(a.desiredForwardRad - b.desiredForwardRad) > EPSILON) {
+                    return a.desiredForwardRad - b.desiredForwardRad;
+                }
+            }
 
             if (Math.abs(a.forwardRadToConnectionPoint - b.forwardRadToConnectionPoint) < EPSILON) {
 
@@ -566,10 +594,19 @@ export class SubPathRange {
         return pathInformation;
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////
+    // #region Calculate
+    ////////////////////////////////////////////////////////////////////////////
+
     calculate() {
 
         if (!this.sorted) {
             this.getSortedSubPathInfo();
+        }
+
+        if (this.node.id.startsWith("right_motor_controller_") && this.type == "outside") {
+            const x = 5;
         }
 
         this.lastAssignedRad = this.range[0];
@@ -707,12 +744,24 @@ export class SubPathRange {
                 const subPathAfter = i < pathInformation.length - 1 ? pathInformation[i + 1].subPath : undefined;
                 const subPath = pathInfo.subPath;
 
-                const radBefore = subPathBefore ? pathMids.get(subPathBefore)! : this.range[0] - minSizeOfRange / 2;
-                const radAfter = subPathAfter ? pathMids.get(subPathAfter)! : this.range[1] + minSizeOfRange / 2;
                 const rad = pathMids.get(subPath)!;
 
-                const startRad = radBefore + RadialUtils.forwardRadBetweenAngles(radBefore, rad) / 2;
-                const endRad = radAfter - RadialUtils.forwardRadBetweenAngles(rad, radAfter) / 2;
+
+                let startRad = this.range[0];
+                let endRad = this.range[1];
+
+                if (subPathBefore) {
+                    const radBefore = pathMids.get(subPathBefore)!
+                    startRad = radBefore + RadialUtils.forwardRadBetweenAngles(radBefore, rad) / 2;
+                }
+
+                if (subPathAfter) {
+                    const radAfter = pathMids.get(subPathAfter)!
+                    endRad = radAfter - RadialUtils.forwardRadBetweenAngles(rad, radAfter) / 2;
+                }
+
+                // const startRad = subPathBefore ? (radBefore + RadialUtils.forwardRadBetweenAngles(radBefore, rad) / 2) : this.range[0];
+                // const endRad = subPathAfter ? (radAfter - RadialUtils.forwardRadBetweenAngles(rad, radAfter) / 2) : this.range[1];
 
                 pathToRange.set(subPath, [startRad, endRad]);
             });
@@ -817,7 +866,7 @@ export class SubPathRange {
 
         let debug = false;
         debug = false;
-        // debug = true;
+        debug = true;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
@@ -825,7 +874,7 @@ export class SubPathRange {
         // if (this.node.id == "dialog_session_manager") debug = true;
         // if (this.node.id == "/dialog/tts_guard") debug = true;pathCount
         // if (this.node.id.includes("__hypernode_")) debug = true;
-        // if (this.node.id.includes("M")) debug = true;
+        // if (this.node.id.includes("p2")) debug = true;
         if (debug) {
 
 
@@ -857,7 +906,7 @@ export class SubPathRange {
                 const desiredAnchor = path.getDesiredNodeAnchor(this.node);
                 if (desiredAnchor) {
                     desiredAnchor._data = { length: 3, stroke: "blue" };
-                    // path.connection.debugShapes.push(desiredAnchor);
+                    path.connection.debugShapes.push(desiredAnchor);
                 }
                 const desiredAnchorPoint = path.getDesiredNodeAnchor(this.node)?.anchorPoint;
 
