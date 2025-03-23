@@ -1,6 +1,6 @@
 import { Anchor, EllipticArc } from "src/graph/graphical";
 import { VisNode } from "./visNode";
-import { Circle, Point, Vector } from "2d-geometry";
+import { Circle, Point, Segment, Vector } from "2d-geometry";
 import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
 import { VisConnection } from "./visConnection";
@@ -581,17 +581,17 @@ export class SubPath extends CombinedPathSegment {
             if (this.isCircleArcForward()) {
                 // Do not add to continuum
                 // type = "circleArcForward";
-                this.sourceVisNode.circularSubPaths.push(this);
-                this.targetVisNode.circularSubPaths.push(this);
+                this.sourceVisNode.circularRangeForward.registerSubPath(this, this.targetVisNode.circularRangeBackward);
+                this.targetVisNode.circularRangeBackward.registerSubPath(this, this.sourceVisNode.circularRangeForward);
             } else if (this.isCircleArcBackward()) {
                 // Do not add to continuum
                 // type = "circleArcBackward";
-                this.sourceVisNode.circularSubPaths.push(this);
-                this.targetVisNode.circularSubPaths.push(this);
+                this.sourceVisNode.circularRangeBackward.registerSubPath(this, this.targetVisNode.circularRangeForward);
+                this.targetVisNode.circularRangeForward.registerSubPath(this, this.sourceVisNode.circularRangeBackward);
             } else {
                 // type = "sameParent";
-                this.sourceVisNode.innerRange.registerSubPath(this);
-                this.targetVisNode.innerRange.registerSubPath(this);
+                this.sourceVisNode.innerRange.registerSubPath(this, this.targetVisNode.innerRange);
+                this.targetVisNode.innerRange.registerSubPath(this, this.sourceVisNode.innerRange);
             }
         } else {
             // if (source.isRealNode) this.sourceVisNode.outerRange.registerSubPath(this);
@@ -604,8 +604,8 @@ export class SubPath extends CombinedPathSegment {
             //         targetId: this.targetVisNode.id
             //     });
             // }
-            this.sourceVisNode.outerRange.registerSubPath(this);
-            this.targetVisNode.outerRange.registerSubPath(this);
+            this.sourceVisNode.outerRange.registerSubPath(this, this.targetVisNode.outerRange);
+            this.targetVisNode.outerRange.registerSubPath(this, this.sourceVisNode.outerRange);
         }
     }
 
@@ -665,9 +665,8 @@ export class SubPath extends CombinedPathSegment {
     }
 
     layoutCircleArc() {
-        // console.warn("Layout DIRECT ARC", this.sourceVisNode.id, this.targetVisNode.id, this);
+        const isForward = this.isCircleArcForward();
 
-        // console.log("Calculate direct circle arc connection", this.connection.source.id, this.connection.target.id);
         const source = this.sourceVisNode.layoutNode;
         const target = this.targetVisNode.layoutNode;
         const parent = source.getCommonParent(target);
@@ -677,6 +676,24 @@ export class SubPath extends CombinedPathSegment {
 
         let segmentCircle = parent?.innerCircle.clone();
 
+        const sourceRange = isForward ? this.sourceVisNode.circularRangeForward : this.sourceVisNode.circularRangeBackward;
+        const targetRange = isForward ? this.targetVisNode.circularRangeBackward : this.targetVisNode.circularRangeForward;
+
+        const rangeRad = sourceRange.getRadForPath(this);
+        const rangePoint = RadialUtils.positionOnCircleAtRad(rangeRad, sourceCircle.r, sourceCircle.center);
+        const radius = parent!.innerCircle.center.distanceTo(rangePoint)[0];
+
+
+        console.warn("Layout DIRECT ARC", this.sourceVisNode.id, this.targetVisNode.id, this, {
+            sRad: sourceRange.getRadForPath(this),
+            tRad: targetRange.getRadForPath(this),
+            sRange: sourceRange,
+            tRange: targetRange
+        });
+
+        // console.log("Calculate direct circle arc connection", this.connection.source.id, this.connection.target.id);
+
+
         // this.startNode.debugShapes.push(segmentCircle?.clone());
 
         if (!segmentCircle || !sourceCircle || !targetCircle) {
@@ -684,7 +701,6 @@ export class SubPath extends CombinedPathSegment {
             return;
         };
 
-        const isForward = this.isCircleArcForward();
         const arcDirection = isForward ? "clockwise" : "counter-clockwise";
         const otherDirection = isForward ? "counter-clockwise" : "clockwise";
 
@@ -694,15 +710,20 @@ export class SubPath extends CombinedPathSegment {
         const hasCounterConnection = true;
 
         // If there is a counter connection, adapt the radius of the segment circles so that the counter connection is not too close
-        if (hasCounterConnection) {
-            if (isForward) {
-                segmentCircle.r += 0.0 * Math.min(sourceCircle.r, targetCircle.r);
-                // segmentCircle.r += 2 * this.connection.weight;
-            } else {
-                segmentCircle.r -= 0.3 * Math.min(sourceCircle.r, targetCircle.r);
-                // segmentCircle.r -= 2 * this.connection.weight;
-            }
-        }
+        // if (hasCounterConnection) {
+        //     if (isForward) {
+        //         segmentCircle.r += 0.0 * Math.min(sourceCircle.r, targetCircle.r);
+        //         // segmentCircle.r += 2 * this.connection.weight;
+        //     } else {
+        //         segmentCircle.r -= 0.3 * Math.min(sourceCircle.r, targetCircle.r);
+        //         // segmentCircle.r -= 2 * this.connection.weight;
+        //     }
+        // }
+        segmentCircle.r = radius;
+
+        // this.source.debugShapes.push(new Segment(rangePoint, parent!.innerCircle.center));
+        // this.source.debugShapes.push(segmentCircle);
+
 
         // If the parent node has only two children, the circle is adapted to be larger, so that the connection is more direct
         if (parent?.children.length === 2) {

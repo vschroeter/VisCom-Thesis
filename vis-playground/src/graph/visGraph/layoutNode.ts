@@ -887,6 +887,67 @@ export class LayoutNode {
         return range as [number, number];
     }
 
+
+    getValidCircularRadRange(startRadiusFactor = 0.0, endRadiusFactor = -0.3, direction: "clockwise" | "counterclockwise"): [number, number] {
+
+        if (!this.parent) return [0, 0];
+
+        const center = this.center;
+        const parentCenter = this.parent.innerCircle.center;
+
+        const circle1 = this.parent.innerCircle.clone();
+        const circle2 = this.parent.innerCircle.clone();
+
+        const otherNode = direction == "clockwise" ? this.getNextNodeInSorting() : this.getPreviousNodeInSorting();
+        const minRadius = Math.min(this.outerRadius, otherNode?.outerRadius ?? 0);
+        circle1.r = circle1.r + minRadius * startRadiusFactor;
+        circle2.r = circle2.r + minRadius * endRadiusFactor;
+
+        const intersections1 = this.outerCircle.intersect(circle1);
+        const intersections2 = this.outerCircle.intersect(circle2);
+
+        // if (this.id.includes("hypernode") && this.children.length == 4 || this.children.length > 8) {
+        //     circle2._data = { stroke: "green" };
+        //     circle1._data = { stroke: "red" };
+        //     this.debugShapes.push(circle1, circle2);
+        //     this.debugShapes.push(...intersections1);
+        //     this.debugShapes.push(...intersections2);
+
+
+        //     console.warn("VALID", {
+        //         id: this.id,
+        //         c: this.children.length,
+        //         other: otherNode?.id,
+        //         dir: direction,
+        //         minRadius,
+        //         circle1: circle1.r,
+        //         circle2: circle2.r,
+        //     })
+
+        // }
+
+        if (intersections1.length != 2 || intersections2.length != 2) {
+            this.debugShapes.push(circle1, circle2, this.outerCircle);
+
+
+            console.error("Invalid intersection points for circular range calculation", intersections1, intersections2);
+            throw new Error("Invalid intersection points for circular range calculation");
+            // return [0, 0];
+        }
+
+        const forwardIntersection1 = RadialUtils.forwardRadBetweenAngles(RadialUtils.radOfPoint(intersections1[0], parentCenter), RadialUtils.radOfPoint(intersections1[1], parentCenter)) < Math.PI ? intersections1[1] : intersections1[0];
+        const backwardIntersection1 = forwardIntersection1 == intersections1[0] ? intersections1[1] : intersections1[0];
+
+        const forwardIntersection2 = RadialUtils.forwardRadBetweenAngles(RadialUtils.radOfPoint(intersections2[0], parentCenter), RadialUtils.radOfPoint(intersections2[1], parentCenter)) < Math.PI ? intersections2[1] : intersections2[0];
+        const backwardIntersection2 = forwardIntersection2 == intersections2[0] ? intersections2[1] : intersections2[0];
+
+        if (direction == "clockwise") {
+            return [RadialUtils.radOfPoint(forwardIntersection1, center), RadialUtils.radOfPoint(forwardIntersection2, center)];
+        } else {
+            return [RadialUtils.radOfPoint(backwardIntersection2, center), RadialUtils.radOfPoint(backwardIntersection1, center)];
+        }
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // #region Layouting methods
     ////////////////////////////////////////////////////////////////////////////

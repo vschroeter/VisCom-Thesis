@@ -47,6 +47,9 @@ export class VisNode {
 
     innerRange: SubPathRange;
     outerRange: SubPathRange;
+    circularRangeForward: SubPathRange;
+    circularRangeBackward: SubPathRange;
+
 
     circularSubPaths: SubPath[] = [];
 
@@ -148,5 +151,7 @@ export class VisNode {
 
         this.innerRange = new SubPathRange(this, "inside");
         this.outerRange = new SubPathRange(this, "outside");
+        this.circularRangeForward = new SubPathRange(this, "circleArcForward");
+        this.circularRangeBackward = new SubPathRange(this, "circleArcBackward");
     }
 }

@@ -606,6 +606,9 @@ export class VisGraph {
                 shapes.push(...l.layoutConnection.debugShapes);
             }
         });
+
+        shapes.push(...this.rootNode.debugShapes);
+
         return shapes;
     }
 

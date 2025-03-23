@@ -10,6 +10,8 @@ export type SubPathInformation = {
     desiredAnchor?: Anchor;
     desiredAnchorPoint?: Point;
     desiredForwardRad?: number;
+    desiredCounterAnchor?: Anchor;
+    desiredCounterForwardRad?: number;
     level: number;
     forwardRadToConnectionPoint: number;
     forwardRadToTargetNode: number;
@@ -27,7 +29,7 @@ export type SubPathInformation = {
 export class SubPathRange {
 
     // Type of the range, either inside or outside
-    type: "inside" | "outside";
+    type: "inside" | "outside" | "circleArcForward" | "circleArcBackward";
 
     // The node this range belongs to
     node: VisNode;
@@ -45,6 +47,9 @@ export class SubPathRange {
 
     // We only need to sort the paths once
     sorted = false;
+
+    // Store the opposite ranges for the subpaths
+    oppositeRanges: Map<SubPath, SubPathRange> = new Map();
 
     // The sorted information about the subpaths
     subPathInformation: SubPathInformation[] = [];
@@ -69,17 +74,31 @@ export class SubPathRange {
 
     outerMargin: number;
 
-    constructor(node: VisNode, type: "inside" | "outside", nodeRangeMarginFactor = 0.90) {
+    constructor(node: VisNode, type: "inside" | "outside" | "circleArcForward" | "circleArcBackward", nodeRangeMarginFactor = 0.90) {
         this.type = type;
         this.node = node;
 
         this.outerMargin = 0;
 
+        // const arcF = 0.1;
+        const arcF = -0.3;
+
         if (type === "outside") {
             this.range = node.layoutNode.getValidOuterRadRange(nodeRangeMarginFactor, false);
             this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidOuterRadRange(1, false)[0]);
-        } else {
-            this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
+        } else if (type === "inside") {
+            // this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
+            this.range = node.layoutNode.getValidInnerRadRange(1);
+            this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidInnerRadRange(1)[0]);
+        } else if (type === "circleArcForward") {
+            // this.range = [-0.3, 0];
+            this.range = node.layoutNode.getValidCircularRadRange(0, arcF, "clockwise");
+        } else if (type === "circleArcBackward") {
+            // this.range = [0, 0.3];
+            this.range = node.layoutNode.getValidCircularRadRange(0, arcF, "counterclockwise");
+        }
+        else {
+            this.range = [0, 0];
         }
     }
 
@@ -90,7 +109,7 @@ export class SubPathRange {
     registeredSubPaths: Set<SubPath> = new Set();
 
 
-    registerSubPath(subPath: SubPath) {
+    registerSubPath(subPath: SubPath, oppositeRange: SubPathRange) {
 
         // If the subpath has a group, only add the range representative
         if (subPath.group) {
@@ -109,6 +128,9 @@ export class SubPathRange {
 
         this.subPaths.push(subPath);
         this.registeredSubPaths.add(subPath);
+
+        this.oppositeRanges.set(subPath, oppositeRange);
+
         this.calculated = false;
         this.sorted = false;
     }
@@ -403,7 +425,7 @@ export class SubPathRange {
      * Returns the edge anchors of the range for calculation and debugging purposes.
      * @returns An object containing the start, end, and backside anchors as well as all anchors in an array.
      */
-    getValidAnchorsOfRange(range?: [number, number])  {
+    getValidAnchorsOfRange(range?: [number, number]) {
 
         range = range ?? this.range;
 
@@ -461,11 +483,20 @@ export class SubPathRange {
             // const oppositeConnectionAnchor= subPath.getOppositeConnectionAnchor(this.node);
             const oppositeConnectionPoint = subPath.getOppositeConnectionPoint(this.node)?.clone();
 
-            // const oppositeNode = subPath.getOppositeNodeThan(this.node);
-            if (!oppositeConnectionPoint) {
+            const oppositeVisNode = subPath.getOppositeNodeThan(this.node);
+            if (!oppositeConnectionPoint || !oppositeVisNode) {
                 // return { path: subPath, oppositeNode: undefined, forwardRad: -1 };
                 throw new Error("Opposite connection point not found");
             }
+
+            const oppositeRange = this.oppositeRanges.get(subPath);
+
+            if (!oppositeRange) {
+                throw new Error("Opposite range not found");
+            }
+
+            const otherBackRad = oppositeRange.getMiddleRadOnBackside();
+
 
             const radOfOppositePoint = this.getRadOfPoint(oppositeConnectionPoint);
             const forwardRadToConnectionPoint = RadialUtils.forwardRadBetweenAngles(backRad, radOfOppositePoint);
@@ -477,6 +508,13 @@ export class SubPathRange {
             const desiredAnchorPoint = desiredAnchor?.anchorPoint;
             const desiredForwardRad = desiredAnchorPoint ? RadialUtils.forwardRadBetweenAngles(backRad, this.getRadOfPoint(desiredAnchorPoint)) : undefined;
 
+            // const counterNode =  otherLayoutNode ? subPath.getNextNonHyperNodeBetween(this.node, this.node.parentLayouter.getVisNode(otherLayoutNode)) : undefined;
+            const desiredCounterAnchor = oppositeVisNode ? subPath.getDesiredNodeAnchor(oppositeVisNode) : undefined;
+            const desiredCounterAnchorPoint = desiredCounterAnchor?.anchorPoint;
+            const desiredCounterForwardRad = desiredCounterAnchorPoint ? RadialUtils.forwardRadBetweenAngles(otherBackRad, oppositeRange.getRadOfPoint(desiredCounterAnchorPoint)) : undefined;
+
+
+
             return {
                 subPath,
                 desiredAnchor,
@@ -486,13 +524,18 @@ export class SubPathRange {
                 forwardRadToTargetNode,
                 sourceVisNode: subPath.sourceVisNode,
                 targetVisNode: subPath.targetVisNode,
-                oppositeVisNode: subPath.getOppositeNodeThan(this.node),
+                // oppositeVisNode: subPath.getOppositeNodeThan(this.node),
                 oppositeConnectionPoint,
                 isInsideRange: false,
                 hasCounterPath: false,
                 hasCounterPathBefore: false,
                 hasCounterPathAfter: false,
-                desiredForwardRad
+                desiredForwardRad,
+                node: this.node,
+                otherLayoutNode: otherLayoutNode,
+                oppositeVisNode: oppositeVisNode,
+                desiredCounterAnchor,
+                desiredCounterForwardRad
             };
         });
 
@@ -545,6 +588,12 @@ export class SubPathRange {
                 }
             }
 
+            if (a.desiredCounterForwardRad && b.desiredCounterForwardRad) {
+                if (Math.abs(a.desiredCounterForwardRad - b.desiredCounterForwardRad) > EPSILON) {
+                    return b.desiredCounterForwardRad - a.desiredCounterForwardRad;
+                }
+            }
+
             if (Math.abs(a.forwardRadToConnectionPoint - b.forwardRadToConnectionPoint) < EPSILON) {
 
                 if (a.sourceVisNode === this.node && b.sourceVisNode === this.node) {
@@ -557,9 +606,7 @@ export class SubPathRange {
         });
 
 
-        if (this.node.id == "display_right" && this.type == "inside") {
-            const x = 5;
-        }
+
 
         // After sorting, we can apply the counter path information
         pathInformation.forEach((info, i, arr) => {
@@ -590,6 +637,15 @@ export class SubPathRange {
         pathInformation.forEach(info => {
             this.mappedSubPathInformation.set(info.subPath, info);
         });
+
+        // if (this.node.layoutNode.children.length > 8 || this.node.layoutNode.children.length == 4) {
+        //     console.warn("[SORT]", {
+        //         id: this.node.id,
+        //         dir: this.type,
+        //         pathInformation,
+        //         pathIds: pathInformation.map(p => p.subPath.cId),
+        //     })
+        // }
 
         return pathInformation;
     }
@@ -657,7 +713,10 @@ export class SubPathRange {
 
 
         // const doRefine = false;
-        const doRefine = this.node.parentLayouter.optimizeConnectionAnchors;
+        let doRefine = this.node.parentLayouter.optimizeConnectionAnchors;
+
+        const isArc = this.type == "circleArcBackward" || this.type == "circleArcForward";
+        doRefine = !isArc;
 
         // New refine method
         // For the paths, that have no desired anchor and are sorted at the sides (so at the very start or end),
@@ -768,10 +827,15 @@ export class SubPathRange {
 
         }
 
-        const rangePadding = Math.min(Math.max(0, this.node.parentLayouter.rangePaddingFactor), 1);
+        let rangePadding = Math.min(Math.max(0, this.node.parentLayouter.rangePaddingFactor), 1);
 
-        const doCombinePaths = this.node.parentLayouter.combinePaths;
+        let doCombinePaths = this.node.parentLayouter.combinePaths;
         const combinedPathsDistanceFactor = Math.max(0, Math.min(1, this.node.parentLayouter.combinedPathsDistanceFactor));
+
+        if (isArc) {
+            doCombinePaths = false;
+            rangePadding = 0.9;
+        }
 
         // Here we apply the padding
         pathInformation.forEach((pathInfo, i) => {
@@ -866,7 +930,7 @@ export class SubPathRange {
 
         let debug = false;
         debug = false;
-        debug = true;
+        // debug = true;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;

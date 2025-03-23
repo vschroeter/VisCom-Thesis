@@ -142,8 +142,8 @@ export class Renderer {
                             .attr('r', c.r)
                             .attr('fill', 'none')
                             .attr('stroke', c._data?.stroke ?? 'blue')
-                            .attr('stroke-width', 0.5)
-                            .attr('opacity', 0.5)
+                            .attr('stroke-width', 0.3)
+                            .attr('opacity', 0.3)
 
                         break;
                     }
@@ -192,7 +192,7 @@ export class Renderer {
 
                         const r = 1.5;  //1;
                         const l = 20; //10;
-                        const o = 0.8; // 0.5;
+                        const o = 0.3; // 0.5;
                         const sw = 1; // 0.5;
 
                         d.append('circle')
