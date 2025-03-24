@@ -88,7 +88,7 @@ export class SubPathRange {
             this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidOuterRadRange(1, false)[0]);
         } else if (type === "inside") {
             // this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
-            this.range = node.layoutNode.getValidInnerRadRange(1);
+            this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
             this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidInnerRadRange(1)[0]);
         } else if (type === "circleArcForward") {
             // this.range = [-0.3, 0];
@@ -716,7 +716,10 @@ export class SubPathRange {
         let doRefine = this.node.parentLayouter.optimizeConnectionAnchors;
 
         const isArc = this.type == "circleArcBackward" || this.type == "circleArcForward";
-        doRefine = !isArc;
+
+        if (doRefine && isArc) {
+            doRefine = false;
+        }
 
         // New refine method
         // For the paths, that have no desired anchor and are sorted at the sides (so at the very start or end),

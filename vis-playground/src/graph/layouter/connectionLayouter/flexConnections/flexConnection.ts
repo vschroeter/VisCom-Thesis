@@ -439,7 +439,7 @@ export class FlexPath extends CombinedPathSegment {
         let debug = false;
         if (this.target.id == "flint_node") {
             // if (this.source.id == "drive_manager" && this.target.id == "left_motor_controller") {
-            debug = true;
+            debug = false;
             console.warn({
                 s: this.sourceFlexNode,
                 t: this.targetFlexNode,

@@ -176,13 +176,13 @@ export class CircleSegmentSegment extends PathSegment {
         if (_startCircleCenterPointIntersections.length === 0 || _endCircleCenterPointIntersections.length === 0) {
             // throw new Error("No intersection found");
 
-            if (this.connection?.source.id == "11car_simulator" && this.connection.target.id == "11traffic_light_detection") {
-                this.connection.debugShapes.push(startAnchor.getRay());
-                this.connection.debugShapes.push(endAnchor.getRay(true));
-                this.connection.debugShapes.push(endAnchor);
-                this.connection.debugShapes.push(startAnchor);
-                this.connection.debugShapes.push(this.circle);
-            }
+            // if (this.connection?.source.id == "11car_simulator" && this.connection.target.id == "11traffic_light_detection") {
+            //     this.connection.debugShapes.push(startAnchor.getRay());
+            //     this.connection.debugShapes.push(endAnchor.getRay(true));
+            //     this.connection.debugShapes.push(endAnchor);
+            //     this.connection.debugShapes.push(startAnchor);
+            //     this.connection.debugShapes.push(this.circle);
+            // }
 
             console.error("No intersection found", this.connection.id, _startCircleCenterPointIntersections, _endCircleCenterPointIntersections);
             return "";

@@ -7,6 +7,7 @@ import { Circle, Point, Segment, Vector } from "2d-geometry";
 import { SmoothCircleSegment } from "src/graph/graphical/primitives/pathSegments/SmoothCircleSegment";
 import { RadialUtils } from "../../utils/radialUtils";
 import { SmoothSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothSpline";
+import { SmoothPathNodeSplineSegment } from "src/graph/graphical/primitives/pathSegments/SmoothPathNodeSpline";
 
 
 ////////////////////////////////////////////////////////////////////////////
@@ -286,10 +287,17 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
 
     override getPath(): PathSegment | undefined {
         const isPathToNode = this.connectionType === "pathToNode";
+
+        const isFinalPath = this.nodeToConnect == this.dynamicSubPath.subPath.targetVisNode;
+        const isStartPath = this.nodeToConnect == this.dynamicSubPath.subPath.sourceVisNode;
+
         const anchor = this.anchorForNode;
         const segment = isPathToNode ?
-            new SmoothSplineSegment(this.connection, this.pathAnchor, anchor.cloneReversed()) :
-            new SmoothSplineSegment(this.connection, anchor, this.pathAnchor);
+            // new SmoothSplineSegment(this.connection, this.pathAnchor, anchor.cloneReversed(), undefined, isFinalPath) :
+        // new SmoothSplineSegment(this.connection, anchor, this.pathAnchor, undefined, false);
+
+            new SmoothPathNodeSplineSegment(this.connection, this.pathAnchor, anchor.cloneReversed(), this.nodeToConnect!.circle, undefined, isFinalPath) :
+            new SmoothPathNodeSplineSegment(this.connection, anchor, this.pathAnchor, this.nodeToConnect!.circle, undefined, false, isStartPath);
         return segment;
     }
 }

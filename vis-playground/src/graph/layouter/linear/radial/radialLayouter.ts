@@ -109,10 +109,12 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
 
             const totalRadius = distanceBetweenNodeCentersWithoutMargin + margin / 2;
 
-            nodes[0].x = this.center.x - r1 - margin / 2;
+            nodes[0].x = this.center.x - distanceBetweenNodeCentersWithoutMargin / 2 - margin / 2;
+            // nodes[0].x = this.center.x - r1 - margin / 2;
             nodes[0].y = this.center.y;
 
-            nodes[1].x = this.center.x + r0 + margin / 2;
+            nodes[1].x = this.center.x + distanceBetweenNodeCentersWithoutMargin / 2 + margin / 2;
+            // nodes[1].x = this.center.x + r0 + margin / 2;
             nodes[1].y = this.center.y;
 
             parentNode.innerRadius = distanceBetweenNodeCenters / 2;
@@ -150,13 +152,23 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
         if (this.adaptEnclosingCircle) {
             const expandedPoints = nodes.map(n => {
                 // Here we expand the points away from the center to find the minimum enclosing circle for the children
-                const center = parentNode.center;
-                const direction = new Vector(center, n.center).normalize();
-                const expandedPoint = n.center.translate(direction.scale(n.radius));
-                return expandedPoint;
+                try {
+                    const center = parentNode.center;
+                    const direction = new Vector(center, n.center).normalize();
+                    const expandedPoint = n.center.translate(direction.scale(n.radius));
+                    return expandedPoint;
+                } catch (e) {
+                    // console.error("Error expanding point", n, e);
+                    return n.center;
+                }
             });
 
             const enclosingCircle = RadialUtils.getMinimumEnclosingCircle(expandedPoints);
+
+            // if (parentNode.children.length == 2) {
+            //     console.warn("Enclosing circle for two nodes", enclosingCircle, nodes.map(n => n.center.clone()), expandedPoints, nodes.map(n => n.radius));
+            //     parentNode.debugShapes.push(enclosingCircle.clone(), ...expandedPoints.map(p => new Point(p.x, p.y)), ...(nodes.map(n => n.circle.clone())), parentNode.innerCircle.clone(), ...(nodes.map(n => n.center.clone())), parentNode.innerCircle.center.clone());
+            // }
 
             // Adapt all children to the enclosing circle
             parentNode.radius = enclosingCircle.r * this.radiusMarginFactor;
@@ -166,6 +178,8 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             parentNode.children.forEach(child => {
                 child.center = child.center.translate(innerTranslation.scale(-1));
             });
+
+
         }
     }
 
