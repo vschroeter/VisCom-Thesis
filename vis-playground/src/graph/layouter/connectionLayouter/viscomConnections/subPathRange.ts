@@ -37,6 +37,7 @@ export class SubPathRange {
     // The valid range in radians
     range: [number, number];
 
+    backsideRad: number;
 
 
     // The subpaths registered in this range
@@ -86,19 +87,24 @@ export class SubPathRange {
         if (type === "outside") {
             this.range = node.layoutNode.getValidOuterRadRange(nodeRangeMarginFactor, false);
             this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidOuterRadRange(1, false)[0]);
+            this.backsideRad = this.getMiddleRadOnBackside();
         } else if (type === "inside") {
             // this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
             this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
             this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidInnerRadRange(1)[0]);
+            this.backsideRad = this.getMiddleRadOnBackside();
         } else if (type === "circleArcForward") {
             // this.range = [-0.3, 0];
             this.range = node.layoutNode.getValidCircularRadRange(0, arcF, "clockwise");
+            this.backsideRad = this.getMiddleRad(node.layoutNode.getValidCircularRadRange(0, arcF, "counterclockwise"));
         } else if (type === "circleArcBackward") {
             // this.range = [0, 0.3];
             this.range = node.layoutNode.getValidCircularRadRange(0, arcF, "counterclockwise");
+            this.backsideRad = this.getMiddleRad(node.layoutNode.getValidCircularRadRange(0, arcF, "clockwise"));
         }
         else {
             this.range = [0, 0];
+            this.backsideRad = 0;
         }
     }
 
@@ -431,7 +437,7 @@ export class SubPathRange {
 
         const startAnchor = new Anchor(this.node.layoutNode.center, new Vector(range[0]));
         const endAnchor = new Anchor(this.node.layoutNode.center, new Vector(range[1]));
-        const backsideAnchor = new Anchor(this.node.layoutNode.center, new Vector(this.getMiddleRadOnBackside()));
+        const backsideAnchor = new Anchor(this.node.layoutNode.center, new Vector(this.backsideRad));
 
         startAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "green", strokeWidth: 4 };
         endAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "red", strokeWidth: 4 };
@@ -457,8 +463,9 @@ export class SubPathRange {
      * Returns the middle rad within the range.
      * @returns The middle rad in the range as a normalized value.
      */
-    getMiddleRad(): number {
-        return RadialUtils.normalizeRad(this.range[0] + RadialUtils.forwardRadBetweenAngles(this.range[0], this.range[1]) / 2);
+    getMiddleRad(range?: [number, number]): number {
+        range = range ?? this.range;
+        return RadialUtils.normalizeRad(range[0] + RadialUtils.forwardRadBetweenAngles(range[0], range[1]) / 2);
     }
 
 
@@ -466,7 +473,7 @@ export class SubPathRange {
     // #region Sub Path Info
     ////////////////////////////////////////////////////////////////////////////
 
-    getSortedSubPathInfo() {
+    getSortedSubPathInfo(doMerging = true): SubPathInformation[] {
 
         if (this.sorted) return this.subPathInformation;
 
@@ -476,7 +483,7 @@ export class SubPathRange {
 
         // This is the center rad on the backside of the range
         // We sort against this rad, to avoid problems where close to border connections are sorted to the wrong side
-        const backRad = this.getMiddleRadOnBackside();
+        const backRad = this.backsideRad;
 
         const pathInformation = this.subPaths.map((subPath, i) => {
 
@@ -495,7 +502,7 @@ export class SubPathRange {
                 throw new Error("Opposite range not found");
             }
 
-            const otherBackRad = oppositeRange.getMiddleRadOnBackside();
+            const otherBackRad = oppositeRange.backsideRad;
 
 
             const radOfOppositePoint = this.getRadOfPoint(oppositeConnectionPoint);
@@ -567,21 +574,6 @@ export class SubPathRange {
                 return b.level - a.level;
             }
 
-
-            // First sort by desired anchor
-            // if (a.desiredAnchor && b.desiredAnchor) {
-            //     const aRad = this.getValidVectorTowardsDirection(a.desiredAnchorPoint!).slope;
-            //     const bRad = this.getValidVectorTowardsDirection(b.desiredAnchorPoint!).slope;
-
-            //     const aForwardRad = RadialUtils.forwardRadBetweenAngles(backRad, aRad);
-            //     const bForwardRad = RadialUtils.forwardRadBetweenAngles(backRad, bRad);
-
-            //     if (Math.abs(aForwardRad - bForwardRad) > EPSILON) {
-            //         return aForwardRad - bForwardRad;
-            //         return bForwardRad - aForwardRad;
-            //     }
-            // }
-
             if (a.desiredForwardRad && b.desiredForwardRad) {
                 if (Math.abs(a.desiredForwardRad - b.desiredForwardRad) > EPSILON) {
                     return a.desiredForwardRad - b.desiredForwardRad;
@@ -604,8 +596,6 @@ export class SubPathRange {
             }
             return a.forwardRadToConnectionPoint - b.forwardRadToConnectionPoint;
         });
-
-
 
 
         // After sorting, we can apply the counter path information
@@ -631,21 +621,173 @@ export class SubPathRange {
         })
 
 
-        // this.sorted = true;
-        this.subPathInformation = pathInformation;
+        const oppositePathInformation = pathInformation.slice();
+
+        oppositePathInformation.sort((a, b) => {
+            // We first sort by by level, with higher levels being at the outside of the range
+            // To determine the side of the sorting, we check wether the forward rad to the connection point is:
+            // - between 0° and 180° --> we sort it as first elements
+            // - between 180° and 360° --> we sort it as last elements
+
+            if (a.level != b.level) {
+
+                const subPathWithLowerLevel = a.level < b.level ? a : b;
+                const subPathWithLowerLevelIsFirst = subPathWithLowerLevel.forwardRadToConnectionPoint < Math.PI;
+
+                if (subPathWithLowerLevelIsFirst) {
+                    return a.level - b.level;
+                } else {
+                    return b.level - a.level;
+                }
+
+
+                // If the levels are different, we sort by level
+                // return a.level - b.level;
+                return b.level - a.level;
+            }
+
+            if (a.desiredCounterForwardRad && b.desiredCounterForwardRad) {
+                if (Math.abs(a.desiredCounterForwardRad - b.desiredCounterForwardRad) > EPSILON) {
+                    return b.desiredCounterForwardRad - a.desiredCounterForwardRad;
+                }
+            }
+
+            if (a.desiredForwardRad && b.desiredForwardRad) {
+                if (Math.abs(a.desiredForwardRad - b.desiredForwardRad) > EPSILON) {
+                    return a.desiredForwardRad - b.desiredForwardRad;
+                }
+            }
+
+            if (Math.abs(a.forwardRadToConnectionPoint - b.forwardRadToConnectionPoint) < EPSILON) {
+
+                if (a.sourceVisNode === this.node && b.sourceVisNode === this.node) {
+                    return a.forwardRadToTargetNode - b.forwardRadToTargetNode;
+                } else {
+                    return a.sourceVisNode === this.node ? -1 : 1;
+                }
+            }
+            return a.forwardRadToConnectionPoint - b.forwardRadToConnectionPoint;
+        });
+        // oppositePathInformation.reverse();
+
+
+
+        // There are cases, where the nodes could not be sorted consistently across both hypernodes
+        // E.g. subpath should be first in both hypernodes
+        // In this case crossings are unavoidable
+        // To get a consistent sorting, we determine, that outgoing paths have a higher priority
+        // So we merge the sorted paths with the opposite sorted paths
+
+        if (this.type == "circleArcBackward") {
+            oppositePathInformation.reverse();
+            pathInformation.reverse();
+        }
+
+        const mergedPathInformation = [];
+
+        const addedIds: Set<string> = new Set();
+
+        let i = 0;
+        let j = 0;
+
+        while (true) {
+
+            let id: string | undefined = undefined;
+            let oId: string | undefined = undefined;
+
+            while (i < pathInformation.length) {
+                id = pathInformation[i].subPath.cId;
+                if (addedIds.has(id)) {
+                    i++;
+                    continue;
+                }
+                break;
+            }
+
+            while (j < oppositePathInformation.length) {
+                oId = oppositePathInformation[j].subPath.cId;
+                if (addedIds.has(oId)) {
+                    j++;
+                    continue;
+                }
+                break;
+            }
+
+            if (i == pathInformation.length) id = undefined;
+            if (j == oppositePathInformation.length) oId = undefined;
+
+            if (id == undefined || oId == undefined) {
+
+                while (i < pathInformation.length) {
+                    if (addedIds.has(pathInformation[i].subPath.cId)) {
+                        i++;
+                        continue;
+                    }
+                    mergedPathInformation.push(pathInformation[i]);
+                    i++;
+                }
+
+                while (j < oppositePathInformation.length) {
+                    if (addedIds.has(oppositePathInformation[j].subPath.cId)) {
+                        j++;
+                        continue;
+                    }
+                    mergedPathInformation.push(oppositePathInformation[j]);
+                    j++;
+                }
+
+                break;
+            }
+
+            if (id == oId) {
+                mergedPathInformation.push(pathInformation[i]);
+                addedIds.add(id!);
+
+                continue;
+            }
+            else {
+
+                // Decide by node score (if equal score, sort by name)
+                const paths = [pathInformation[i], oppositePathInformation[j]];
+                paths.sort((a, b) => {
+                    if (a.subPath.source.score != b.subPath.source.score) {
+                        return b.subPath.source.score - a.subPath.source.score;
+                    }
+                    return a.subPath.source.id.localeCompare(b.subPath.source.id);
+                });
+
+                mergedPathInformation.push(paths[0]);
+                addedIds.add(paths[0].subPath.cId);
+            }
+        }
+
+        if (this.type == "circleArcBackward") {
+            oppositePathInformation.reverse();
+            pathInformation.reverse();
+            mergedPathInformation.reverse();
+        }
+
+
+        // this.subPathInformation = pathInformation;
+        this.subPathInformation = mergedPathInformation;
 
         pathInformation.forEach(info => {
             this.mappedSubPathInformation.set(info.subPath, info);
         });
 
-        // if (this.node.layoutNode.children.length > 8 || this.node.layoutNode.children.length == 4) {
-        //     console.warn("[SORT]", {
-        //         id: this.node.id,
-        //         dir: this.type,
-        //         pathInformation,
-        //         pathIds: pathInformation.map(p => p.subPath.cId),
-        //     })
-        // }
+        if (this.node.layoutNode.children.length == 3 || this.node.layoutNode.children.length == 4) {
+            console.warn("[SORT]", {
+                id: this.node.id,
+                dir: this.type,
+                pathInformation,
+                pathIds: pathInformation.map(p => p.subPath.cId),
+                oppositePathIds: oppositePathInformation.map(p => p.subPath.cId),
+                mergedPathInformation: mergedPathInformation.map(p => p.subPath.cId)
+            })
+        }
+
+
+        this.sorted = true;
 
         return pathInformation;
     }
@@ -933,7 +1075,7 @@ export class SubPathRange {
 
         let debug = false;
         debug = false;
-        // debug = true;
+        debug = true;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
@@ -945,7 +1087,8 @@ export class SubPathRange {
         if (debug) {
 
 
-            this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor]);
+            // this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor]);
+            this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor, this.getValidAnchorsOfRange().backsideAnchor]);
 
             // console.warn("SORTED PATHS", pathInformation);
 
