@@ -6,6 +6,7 @@ import * as d3 from "d3";
 import mitt from "mitt";
 import { EdgeCrossingsCalculator } from "./metricEdgeCrossing";
 import { VisGraph } from "../visGraph/visGraph";
+import { MetricApiResult, MetricsApi } from "./metricsApi";
 
 export type MetricNormalization =
     "none" | "byMinimum" | "byMaximum" | "byAverage" | "byMedian" | "byShorterLayoutSide" | "byLongerLayoutSide"
@@ -30,7 +31,7 @@ export class MetricsCollection {
         MetricCalculator,
         EdgeLengthCalculator,
         NodeDistanceCalculator,
-        // EdgeCrossingsCalculator
+        EdgeCrossingsCalculator
     ];
 
     // Map from setting id to the metrics results of that setting
@@ -78,9 +79,25 @@ export class MetricsCollection {
      * @param graph The graph to calculate the metrics. If undefined, the metrics are initialized with pending state
      */
     async calculateMetrics(settingId: number, graph: VisGraph) {
-        return;
 
-        // Calculate all absolute metrics for the given graph of the given setting
+        // const laidOutData = graph.getLaidOutApiData();
+        // console.log("Calculating metrics for setting", settingId);
+
+        // // Update the metrics of the visualization with the results
+        // const metricsResults = this.getMetricsResults(settingId);
+
+
+        // MetricsApi.fetchMetrics(laidOutData).then(results => {
+        //     console.log("API results", results);
+
+        //     // This update also asynchronously calculates the metrics (at least the ones, that are not already calculated and take a longer time)
+        //     // This update also updates the single metric results asynchronously
+        //     metricsResults.update_from_api(results);
+        // });
+
+        // return;
+
+        // // Calculate all absolute metrics for the given graph of the given setting
         const metricCalculators = MetricsCollection.metricsToCalculate.map(metric => new metric(graph));
 
         // Update the metrics of the visualization with the results
@@ -220,6 +237,17 @@ export class MetricsResults {
         })
 
         // Emit an update event
+        this.emitter.emit("newMetrics");
+    }
+
+    update_from_api(results: MetricApiResult[]) {
+        results.forEach(result => {
+            const key = result.key;
+            const metricResult = this.getMetricResult(result)
+            metricResult.updateByValue(result.value);
+
+            console.log("Updated metric", key, result.value);
+        });
         this.emitter.emit("newMetrics");
     }
 
@@ -368,6 +396,9 @@ export class MetricResult {
         return this.calculator?.getMetric(this.metricKey) ?? 0
     }
 
+    // The value of the metric
+    // value: number = 0;
+
     // The color of the metric. Based on the normalized value relative to other metrics
     get color(): string {
         return this.colorScale(this.normalizedValue);
@@ -479,6 +510,14 @@ export class MetricResult {
             // Update the single metric results
             this.singleMetricResults.update();
         });
+    }
+
+    updateByValue(value: number) {
+        this.calculator = undefined;
+        // this.value = value;
+        this.pending = false;
+        this.emitter.emit("valueUpdated", true);
+        this.singleMetricResults.update();
     }
 
 

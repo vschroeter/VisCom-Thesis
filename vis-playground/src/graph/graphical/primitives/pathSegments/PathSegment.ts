@@ -75,11 +75,11 @@ export abstract class PathSegment {
 export class DefaultPathSegment extends PathSegment {
 
     get startAnchor(): Anchor | undefined {
-        return this.connection.source.getAnchor(this.connection.target.center);
+        return this.connection.source.getAnchor(this.connection.target.center).move(this.connection.source.outerRadius - this.connection.source.radius);
     }
 
     get endAnchor(): Anchor | undefined {
-        return this.connection.target.getAnchor(this.connection.source.center).cloneReversed();
+        return this.connection.target.getAnchor(this.connection.source.center).move(this.connection.target.outerRadius - this.connection.target.radius).cloneReversed();;
     }
 
     constructor(layoutConnection: LayoutConnection) {

@@ -12,6 +12,7 @@ import { BasePositioner } from "./layouterComponents/positioner";
 import { UserInteractions } from "../visualizations/interactions";
 import { BaseConnectionLayouter, BaseNodeConnectionLayouter } from "./layouterComponents/connectionLayouter";
 import { Renderer } from "./renderer/renderer";
+import { LaidOutConnection, LaidOutDataApi, LaidOutNode } from "../metrics/metricsApi";
 
 export type LayoutNodeOrId = LayoutNode | string;
 
@@ -549,6 +550,31 @@ export class VisGraph {
         this.createGraphicalElements();
         this.updateGraphicalLayout();
         this.updateGraphicalStyle();
+    }
+
+    getLaidOutApiData(): LaidOutDataApi {
+
+        const nodes: LaidOutNode[] = this.allGraphicalNodes.map(node => {
+            return {
+                id: node.id,
+                x: node.x,
+                y: node.y,
+                score: node.score,
+                radius: node.radius
+            }
+        });
+
+        const links: LaidOutConnection[] = this.allGraphicalConnections.map(connection => {
+            return {
+                source: connection.source.id,
+                target: connection.target.id,
+                weight: connection.weight,
+                path: connection.getSvgPath()
+            }
+
+        });
+
+        return { nodes, links };
     }
 
     ////////////////////////////////////////////////////////////////////////////

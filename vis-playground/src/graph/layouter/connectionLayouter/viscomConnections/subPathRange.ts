@@ -82,7 +82,8 @@ export class SubPathRange {
         this.outerMargin = 0;
 
         // const arcF = 0.1;
-        const arcF = -0.3;
+        const arcF1 = 0.2;
+        const arcF2 = -0.4;
 
         if (type === "outside") {
             this.range = node.layoutNode.getValidOuterRadRange(nodeRangeMarginFactor, false);
@@ -95,12 +96,12 @@ export class SubPathRange {
             this.backsideRad = this.getMiddleRadOnBackside();
         } else if (type === "circleArcForward") {
             // this.range = [-0.3, 0];
-            this.range = node.layoutNode.getValidCircularRadRange(0, arcF, "clockwise");
-            this.backsideRad = this.getMiddleRad(node.layoutNode.getValidCircularRadRange(0, arcF, "counterclockwise"));
+            this.range = node.layoutNode.getValidCircularRadRange(arcF1, arcF2, "clockwise");
+            this.backsideRad = this.getMiddleRad(node.layoutNode.getValidCircularRadRange(arcF1, arcF2, "counterclockwise"));
         } else if (type === "circleArcBackward") {
             // this.range = [0, 0.3];
-            this.range = node.layoutNode.getValidCircularRadRange(0, arcF, "counterclockwise");
-            this.backsideRad = this.getMiddleRad(node.layoutNode.getValidCircularRadRange(0, arcF, "clockwise"));
+            this.range = node.layoutNode.getValidCircularRadRange(arcF1, arcF2, "counterclockwise");
+            this.backsideRad = this.getMiddleRad(node.layoutNode.getValidCircularRadRange(arcF1, arcF2, "clockwise"));
         }
         else {
             this.range = [0, 0];
@@ -1075,7 +1076,7 @@ export class SubPathRange {
 
         let debug = false;
         debug = false;
-        debug = true;
+        // debug = true;
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
