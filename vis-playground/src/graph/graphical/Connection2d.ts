@@ -273,11 +273,15 @@ export class Connection2d extends SvgRenderable {
         const size = Math.min(baseSize, length / 2 * 0.6)
         this.arrow.size = size
 
+        const svgPath = this.getSvgPath();
+
+        if (svgPath == "") return;
+
         // Combine this for better .pdf export
         if (this.layoutConnection.commonSettings?.combinePathAndArrow.getValue() ?? true) {
-            this.elPath?.attr('d', this.getSvgPath() + " " + this.getArrowPath())
+            this.elPath?.attr('d', svgPath + " " + this.getArrowPath())
         } else {
-            this.elPath?.attr('d', this.getSvgPath())
+            this.elPath?.attr('d', svgPath)
             this.elArrow?.attr('d', this.getArrowPath())
         }
 

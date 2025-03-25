@@ -670,6 +670,10 @@ export class SubPath extends CombinedPathSegment {
 
     layout() {
 
+        if (this.isHyperEdge) {
+            console.error("Layouting hyper edge", this);
+        }
+
         if (this.layoutCompleted) return;
         this.layoutCompleted = true;
 
