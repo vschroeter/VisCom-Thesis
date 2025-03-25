@@ -136,7 +136,7 @@ export class SubPath extends CombinedPathSegment {
         }
 
         started = false;
-        for (let i = completeNodePath.length - 1; i > 0; i--) {
+        for (let i = completeNodePath.length - 1; i >= 0; i--) {
             const node = completeNodePath[i];
             const layoutNode = node.layoutNode;
 
@@ -329,14 +329,57 @@ export class SubPath extends CombinedPathSegment {
                 // return new Anchor(otherLayoutNode.center, new Vector(otherLayoutNode.center, sourceNode.center)).move(otherLayoutNode.outerCircle.r);
             }
             else {
-                // 2. case: this visNode is a hypernode b
+                // 2. case: this visNode is a hypernode
                 // In this case we do the following:
                 // The hyper node has inside a next non-hyper node which is the next in the nodePath.
                 // We take this node as basis for the desired anchor.
-                // To determine the anchor, we extend a line from the center of the hyper node to the center of the next non-hyper node
-                // and move it to the outer circle of the hyper node.
                 const nextNonHyperNode = this.getNextNonHyperNodeBetween(visNode, this.layouter.getVisNode(sourceLayoutNode));
 
+                let debug = false;
+                debug = false;
+                // if (sourceLayoutNode.id == "system_information") debug = true;
+                // if (sourceLayoutNode.id == "drive_manager") debug = true;
+
+                if (debug) {
+                    console.error({
+                        visNode: visNode,
+                        sourceLayoutNode: sourceLayoutNode,
+                        nextNonHyperNode: nextNonHyperNode,
+                        otherLayoutNode: otherLayoutNode,
+                    });
+                }
+
+                // return new Anchor(visNode.center, new Vector(visNode.center, nextNonHyperNode?.center ?? sourceLayoutNode.center)).move(visNode.outerCircle.r);
+
+
+                if (nextNonHyperNode) {
+                    // If the direct connection to the other node is inside the nextNonHyperNode outside range, we take this anchor
+                    const nextNonHyperVisNode = this.layouter.getVisNode(nextNonHyperNode)!;
+
+                    const line = new Segment(nextNonHyperNode.center, otherLayoutNode.center);
+
+                    if (debug) {
+                        visNode.layoutNode.debugShapes.push(line);
+                        // console.error({
+                        //     intersections: intersections,
+                        // });
+                    }
+
+                    if (nextNonHyperVisNode.outerRange.pointIsInside(otherLayoutNode.center)) {
+                        // Calculate the intersection with the line from nextNonHyperNode to the center of the other node with the outer circle of the vis node
+                        const intersections = visNode.outerCircle.intersect(line);
+
+                        if (intersections.length > 0) {
+                            return new Anchor(intersections[0], new Vector(visNode.center, intersections[0]));
+                        }
+                    }
+                }
+
+                // return new Anchor(visNode.center, new Vector(visNode.center, otherLayoutNode.center)).move(visNode.outerCircle.r);
+
+
+                // If it is not inside the outer range, we extend a line from the center of the hyper node to the center of the next non-hyper node
+                // and move it to the outer circle of the hyper node.
                 return new Anchor(visNode.center, new Vector(visNode.center, nextNonHyperNode?.center ?? sourceLayoutNode.center)).move(visNode.outerCircle.r);
             }
 

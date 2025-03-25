@@ -1,4 +1,4 @@
-import { Circle, Point, Shape, Vector } from "2d-geometry";
+import { Circle, Point, Segment, Shape, Vector } from "2d-geometry";
 import { CommunicationChannel, CommunicationGraph, CommunicationLink, CommunicationNode, CommunicationTopic } from "../commGraph";
 import { CommonSettings } from "../layouter/settings/commonSettings";
 
@@ -740,7 +740,7 @@ export class LayoutNode {
 
     }
 
-    getValidInnerRadRange(factor = 1): [number, number] {
+    getValidInnerRadRange(factor = 1, isHyperNode = false): [number, number] {
 
         const parent = this.parent;
         const nextNode = this.getNextNodeInSorting();
@@ -751,11 +751,21 @@ export class LayoutNode {
 
         let range = [0, 0];
 
+
+
         const nextTangents = RadialUtils.getTangentsFromPointToCircle(this.center, nextNode.outerCircle);
         const prevTangents = RadialUtils.getTangentsFromPointToCircle(this.center, previousNode.outerCircle);
 
         let nextTangent = RadialUtils.getClosestShapeToPoint(nextTangents, parent.center, (tangent) => tangent.end);
         let prevTangent = RadialUtils.getClosestShapeToPoint(prevTangents, parent.center, (tangent) => tangent.end);
+
+
+        // When this node is a hyper node, we take the lines to the next and prev centers
+        if (isHyperNode) {
+            nextTangent = new Segment(this.center, nextNode.center);
+            prevTangent = new Segment(this.center, previousNode.center);
+        }
+
 
         if (nextNode == previousNode) {
             nextTangent = nextTangents[0];

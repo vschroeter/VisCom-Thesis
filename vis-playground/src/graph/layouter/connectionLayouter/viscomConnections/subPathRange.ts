@@ -91,8 +91,8 @@ export class SubPathRange {
             this.backsideRad = this.getMiddleRadOnBackside();
         } else if (type === "inside") {
             // this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
-            this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
-            this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidInnerRadRange(1)[0]);
+            this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor, this.node.layoutNode.isHyperNode);
+            this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidInnerRadRange(1, this.node.layoutNode.isHyperNode)[0]);
             this.backsideRad = this.getMiddleRadOnBackside();
         } else if (type === "circleArcForward") {
             // this.range = [-0.3, 0];
@@ -575,6 +575,16 @@ export class SubPathRange {
                 return b.level - a.level;
             }
 
+            // // First sort by direction
+            // const aIsOutgoing = a.sourceVisNode == this.node;
+            // const bIsOutgoing = b.sourceVisNode == this.node;
+
+            // if (aIsOutgoing && !bIsOutgoing) {
+            //     return -1;
+            // } else if (!aIsOutgoing && bIsOutgoing) {
+            //     return 1;
+            // }
+
             if (a.desiredForwardRad && b.desiredForwardRad) {
                 if (Math.abs(a.desiredForwardRad - b.desiredForwardRad) > EPSILON) {
                     return a.desiredForwardRad - b.desiredForwardRad;
@@ -691,6 +701,13 @@ export class SubPathRange {
         let i = 0;
         let j = 0;
 
+        // console.error("[MERGING]", {
+        //     id: this.node.id,
+        //     dir: this.type,
+        //     pathInformation: pathInformation.map(p => p.subPath.cId),
+        //     oppositePathInformation: oppositePathInformation.map(p => p.subPath.cId)
+        // });
+
         while (true) {
 
             let id: string | undefined = undefined;
@@ -742,6 +759,7 @@ export class SubPathRange {
 
             if (id == oId) {
                 mergedPathInformation.push(pathInformation[i]);
+                console.log("Adding", pathInformation[i].subPath.cId);
                 addedIds.add(id!);
 
                 continue;
@@ -754,10 +772,16 @@ export class SubPathRange {
                     if (a.subPath.source.score != b.subPath.source.score) {
                         return b.subPath.source.score - a.subPath.source.score;
                     }
-                    return a.subPath.source.id.localeCompare(b.subPath.source.id);
+                    return a.subPath.cId.localeCompare(b.subPath.cId);
                 });
 
                 mergedPathInformation.push(paths[0]);
+                // console.log("Adding", paths[0].subPath.cId, {
+                //     a: pathInformation[i].subPath.cId,
+                //     b: oppositePathInformation[j].subPath.cId,
+                //     aScore: pathInformation[i].subPath.source.score,
+                //     bScore: oppositePathInformation[j].subPath.source.score
+                // });
                 addedIds.add(paths[0].subPath.cId);
             }
         }
@@ -776,16 +800,16 @@ export class SubPathRange {
             this.mappedSubPathInformation.set(info.subPath, info);
         });
 
-        if (this.node.layoutNode.children.length == 3 || this.node.layoutNode.children.length == 4) {
-            console.warn("[SORT]", {
-                id: this.node.id,
-                dir: this.type,
-                pathInformation,
-                pathIds: pathInformation.map(p => p.subPath.cId),
-                oppositePathIds: oppositePathInformation.map(p => p.subPath.cId),
-                mergedPathInformation: mergedPathInformation.map(p => p.subPath.cId)
-            })
-        }
+        // if (this.node.layoutNode.children.length == 3 || this.node.layoutNode.children.length == 4) {
+        //     console.warn("[SORT]", {
+        //         id: this.node.id,
+        //         dir: this.type,
+        //         pathInformation,
+        //         pathIds: pathInformation.map(p => p.subPath.cId),
+        //         oppositePathIds: oppositePathInformation.map(p => p.subPath.cId),
+        //         mergedPathInformation: mergedPathInformation.map(p => p.subPath.cId)
+        //     })
+        // }
 
 
         this.sorted = true;
@@ -1088,8 +1112,8 @@ export class SubPathRange {
         if (debug) {
 
 
-            // this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor]);
-            this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor, this.getValidAnchorsOfRange().backsideAnchor]);
+            this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor]);
+            // this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor, this.getValidAnchorsOfRange().backsideAnchor]);
 
             // console.warn("SORTED PATHS", pathInformation);
 
@@ -1116,8 +1140,16 @@ export class SubPathRange {
 
                 const desiredAnchor = path.getDesiredNodeAnchor(this.node);
                 if (desiredAnchor) {
-                    desiredAnchor._data = { length: 3, stroke: "blue" };
+                    desiredAnchor._data = { length: 5, stroke: "blue" };
                     path.connection.debugShapes.push(desiredAnchor);
+
+                    // const segment1 = new Segment(desiredAnchor.anchorPoint, this.node.layoutNode.center);
+                    // const segment2 = new Segment(desiredAnchor.anchorPoint, path.sourceVisNode.layoutNode.center);
+                    // const segment3 = new Segment(desiredAnchor.anchorPoint, path.targetVisNode.layoutNode.center);
+                    // path.connection.debugShapes.push(segment1);
+                    // path.connection.debugShapes.push(segment2);
+                    // path.connection.debugShapes.push(segment3);
+
                 }
                 const desiredAnchorPoint = path.getDesiredNodeAnchor(this.node)?.anchorPoint;
 

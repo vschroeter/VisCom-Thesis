@@ -116,8 +116,8 @@ export class SmoothPathNodeSplineSegment extends PathSegment {
 
         const nodeAnchorControlPoint = nodeAnchorIntersections[0];
 
-        this.connection.debugShapes.push(pathAnchorControlPoint);
-        this.connection.debugShapes.push(nodeAnchorControlPoint);
+        // this.connection.debugShapes.push(pathAnchorControlPoint);
+        // this.connection.debugShapes.push(nodeAnchorControlPoint);
 
         const startControlPoint = startAnchor == pathAnchor ? pathAnchorControlPoint : nodeAnchorControlPoint;
         const endControlPoint = endAnchor == pathAnchor ? pathAnchorControlPoint : nodeAnchorControlPoint;
