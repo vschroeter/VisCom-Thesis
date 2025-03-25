@@ -274,8 +274,12 @@ export class Connection2d extends SvgRenderable {
         this.arrow.size = size
 
         // Combine this for better .pdf export
-        this.elPath?.attr('d', this.getSvgPath() + " " + this.getArrowPath())
-        // this.elArrow?.attr('d', this.getArrowPath())
+        if (this.layoutConnection.commonSettings?.combinePathAndArrow.getValue() ?? true) {
+            this.elPath?.attr('d', this.getSvgPath() + " " + this.getArrowPath())
+        } else {
+            this.elPath?.attr('d', this.getSvgPath())
+            this.elArrow?.attr('d', this.getArrowPath())
+        }
 
         this.updateBoundingBox();
     }

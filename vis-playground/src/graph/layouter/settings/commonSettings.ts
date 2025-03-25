@@ -57,6 +57,15 @@ export class CommonSettings extends Setting {
         defaultValue: 5,
     })
 
+    combinePathAndArrow = new Param<boolean>({
+        type: "boolean",
+        key: "combinePathAndArrow",
+        label: "Combine Path And Arrow",
+        description: "Combine path and arrow",
+        optional: false,
+        defaultValue: true,
+    })
+
 
     showLinkScore = new Param<boolean>({
         type: "boolean",
