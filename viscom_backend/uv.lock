@@ -204,6 +204,29 @@ wheels = [
 ]
 
 [[package]]
+name = "svgpathtools"
+version = "1.6.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+    { name = "svgwrite" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ac/cc/4eefc59e5fef22fef58cc3a38c56930432fbfa79e6865e8382c5ed1ccc9a/svgpathtools-1.6.1.tar.gz", hash = "sha256:7054e6de1953e295bf565d535d585695453b09f8db4a2f7c4853348732097a3e", size = 2133040 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9a/33/2777b992cff0b4240bbebe96433a37a6382e046d3471fcd14e40e1905ab7/svgpathtools-1.6.1-py2.py3-none-any.whl", hash = "sha256:39967f9a817b8a12cc6dd1646fc162d522fca6c3fd5f8c94913c15ee4cb3a906", size = 67442 },
+]
+
+[[package]]
+name = "svgwrite"
+version = "1.4.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/c1/263d4e93b543390d86d8eb4fc23d9ce8a8d6efd146f9427364109004fa9b/svgwrite-1.4.3.zip", hash = "sha256:a8fbdfd4443302a6619a7f76bc937fc683daf2628d9b737c891ec08b8ce524c3", size = 189516 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/84/15/640e399579024a6875918839454025bb1d5f850bb70d96a11eabb644d11c/svgwrite-1.4.3-py3-none-any.whl", hash = "sha256:bb6b2b5450f1edbfa597d924f9ac2dd099e625562e492021d7dd614f65f8a22d", size = 67122 },
+]
+
+[[package]]
 name = "viscom-backend"
 version = "0.1.0"
 source = { editable = "." }
@@ -213,6 +236,7 @@ dependencies = [
     { name = "networkx" },
     { name = "numpy" },
     { name = "scipy" },
+    { name = "svgpathtools" },
 ]
 
 [package.metadata]
@@ -222,6 +246,7 @@ requires-dist = [
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "numpy", specifier = ">=2.2.0" },
     { name = "scipy", specifier = ">=1.15.2" },
+    { name = "svgpathtools", specifier = ">=1.6.1" },
 ]
 
 [[package]]

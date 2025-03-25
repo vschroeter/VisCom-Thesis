@@ -3,6 +3,7 @@ from __future__ import annotations
 import networkx as nx
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from typing import Dict, List, Any, Tuple, Optional, Callable
 
 from viscom_backend.commgraph.converter import convert_multigraph_to_normal_graph, convert_to_weighted_graph
 from viscom_backend.communities.community_detection_methods import community_methods_config
@@ -10,20 +11,21 @@ from viscom_backend.data.reader import RosMetaSysGraphGenerator
 from viscom_backend.generator.generator_methods import generator_methods_config
 from viscom_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
 from viscom_backend.noderank.node_rank_methods import node_rank_methods_config
+from viscom_backend.metrics.metrics_calculator import calculate_metrics, convert_dict_to_laid_out_data, MetricResult, AVAILABLE_METRICS
 
 app = Flask(__name__)
 CORS(app)
 
-MAX_NODES = 1000
+MAX_NODES: int = 1000
 
 import inspect
 
-def has_param(func, param_name: str):
+def has_param(func: Callable, param_name: str) -> bool:
     sig = inspect.signature(func)
     return param_name in sig.parameters
 
 
-def convert_param(param_config, param_value):
+def convert_param(param_config: Dict[str, Any], param_value: Any) -> Any:
     if param_config["type"] == "int":
         return int(param_value)
     elif param_config["type"] == "float":
@@ -227,6 +229,65 @@ def analyze_noderank(method):
         print(node, value)
 
     return jsonify(result)
+
+
+@app.route("/metrics/calculate", methods=["POST"])
+def calculate_metrics_endpoint():
+    """Calculate all metrics for a graph layout."""
+    try:
+        data_dict: Dict[str, Any] = request.get_json()
+        if not data_dict or "nodes" not in data_dict or "links" not in data_dict:
+            return jsonify({"error": "Invalid data format"}), 400
+
+        # Convert dictionary to proper data class
+        laid_out_data = convert_dict_to_laid_out_data(data_dict)
+
+        # Calculate all metrics
+        metrics_results: List[MetricResult] = calculate_metrics(laid_out_data)
+        return jsonify([metric.__dict__ for metric in metrics_results])
+    except Exception as e:
+        return jsonify({"error": f"Error calculating metrics: {str(e)}"}), 500
+
+
+@app.route("/metrics/calculate/<method>", methods=["POST"])
+def calculate_specific_metric_endpoint(method: str):
+    """Calculate a specific metric for a graph layout."""
+    try:
+        data_dict: Dict[str, Any] = request.get_json()
+        if not data_dict or "nodes" not in data_dict or "links" not in data_dict:
+            return jsonify({"error": "Invalid data format"}), 400
+
+        # Check if the requested metric exists
+        if method not in AVAILABLE_METRICS:
+            return jsonify({"error": f"Unknown metric method: {method}"}), 400
+
+        # Convert dictionary to proper data class
+        laid_out_data = convert_dict_to_laid_out_data(data_dict)
+
+        # Calculate the specific metric
+        metrics_results: List[MetricResult] = calculate_metrics(laid_out_data, method=method)
+
+        # Return the first (and only) result
+        if metrics_results:
+            return jsonify(metrics_results[0].__dict__)
+        else:
+            return jsonify({"error": "No metric result was generated"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error calculating metric {method}: {str(e)}"}), 500
+
+
+@app.route("/metrics/methods", methods=["GET"])
+def get_available_metrics():
+    """Get a list of all available metrics."""
+    metric_info = {}
+
+    for method_name, calculator_class in AVAILABLE_METRICS.items():
+        metric_info[method_name] = {
+            "name": method_name,
+            "description": calculator_class.__doc__
+        }
+
+    return jsonify(metric_info)
 
 
 if __name__ == "__main__":

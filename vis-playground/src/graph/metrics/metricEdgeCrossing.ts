@@ -4,6 +4,7 @@ import { MetricCalculator } from "./base";
 import { MetricDefinition } from "./collection";
 
 import intersect, { Intersection } from 'path-intersection';
+import { MetricsApi } from "./metricsApi";
 
 export class EdgeCrossingsCalculator extends MetricCalculator {
     static override displayedMetrics: MetricDefinition[] = [
@@ -24,7 +25,11 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
     }
 
     override async calculate() {
-        await this.calculateEdgeCrossings();
+        await MetricsApi.fetchMetrics(this.graph, "edgeCrossings").then((results) => {
+            console.log("Edge crossings", results);
+            this.totalEdgeCrossings = results.value;
+        });
+        // await this.calculateEdgeCrossings();
     }
 
     async calculateEdgeCrossings() {
@@ -55,7 +60,7 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
         if (!link1 || !links2) {
             return [];
         }
-        
+
         const path1 = link1.getSvgPath();
         const path2 = links2.getSvgPath();
 

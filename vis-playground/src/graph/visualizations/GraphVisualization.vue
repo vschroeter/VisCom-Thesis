@@ -410,7 +410,7 @@ onMounted(() => {
         layouter?.on('end', null);
         layouter?.renderer?.clear();
         if (layouter?.calculateMetrics) {
-            metricsCollection.initMetrics(props.settingId, true);
+            // metricsCollection.initMetrics(props.settingId, true);
             metricsCollection.clearMetrics(props.settingId);
         }
         if (commGraph.value.nodes.length === 0) {
@@ -499,6 +499,10 @@ async function download() {
 
 async function downloadPDF() {
     const svg = refSVG.value;
+
+    // Print the svg as text on the console
+    // console.log(svg?.outerHTML);
+
     const svgGroup = refGRoot.value;
     rawBbox.value = refGRoot.value?.getBBox() ?? null;
 

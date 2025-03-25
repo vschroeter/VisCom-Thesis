@@ -109,5 +109,5 @@ export function visGraphToNodeLinkData(visGraph: VisGraph) {
 
     });
     return { nodes, links };
-
 }
+
