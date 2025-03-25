@@ -116,7 +116,7 @@ export class SubPath extends CombinedPathSegment {
 
         const completeNodePath = this.visConnection.nodePath;
         let started = false;
-        for (let i = 0; i < completeNodePath.length - 1; i++) {
+        for (let i = 0; i < completeNodePath.length; i++) {
             const node = completeNodePath[i];
             const layoutNode = node.layoutNode;
 
@@ -278,6 +278,17 @@ export class SubPath extends CombinedPathSegment {
 
         const otherVisNode = this.getOppositeNodeThan(visNode);
 
+        const sourceLayoutNode = this.getLayoutNodeInDirectionOf(visNode);
+        const otherLayoutNode = this.getLayoutNodeInDirectionOf(otherVisNode);
+
+        let debug = false;
+        debug = false;
+        // if (sourceLayoutNode?.id.includes("tts_guard") && otherLayoutNode?.id == "dialog_session_manager") debug = true;
+        // if (sourceLayoutNode?.id.includes("tts_guard")) debug = true;
+        // if (this.source.id.includes("tts_guard")) debug = true;
+
+
+
         // console.log("[DESIRED]", `${sourceNode.id}->${otherNode?.id}`, sourceNode.layoutNode.layerFromTop, otherNode?.layoutNode.layerFromTop, this.level);
 
         // If level difference is more than 1, the connection should not have a desired circle arc an anchor
@@ -291,11 +302,20 @@ export class SubPath extends CombinedPathSegment {
 
             // There are different cases for node to node connections and their desired anchors
 
-            const sourceLayoutNode = this.getLayoutNodeInDirectionOf(visNode);
-            const otherLayoutNode = this.getLayoutNodeInDirectionOf(otherVisNode);
-
             if (!sourceLayoutNode || !otherLayoutNode) {
                 return undefined;
+            }
+
+            const nextNonHyperNode = this.getNextNonHyperNodeBetween(visNode, this.layouter.getVisNode(otherLayoutNode!));
+
+            if (debug) {
+                console.error({
+                    visNode: visNode.id,
+                    sourceLayoutNode: sourceLayoutNode,
+                    nextNonHyperNode: nextNonHyperNode,
+                    otherLayoutNode: otherLayoutNode,
+                    type: this.connectionType
+                });
             }
 
             // 1. case: this visNode is also the end of the connection
@@ -335,21 +355,23 @@ export class SubPath extends CombinedPathSegment {
                 // We take this node as basis for the desired anchor.
                 const nextNonHyperNode = this.getNextNonHyperNodeBetween(visNode, this.layouter.getVisNode(sourceLayoutNode));
 
-                let debug = false;
-                debug = false;
                 // if (sourceLayoutNode.id == "system_information") debug = true;
                 // if (sourceLayoutNode.id == "drive_manager") debug = true;
+                // if (sourceLayoutNode.id.includes("tts_guard") && otherLayoutNode.id == "dialog_session_manager") debug = true;
 
-                if (debug) {
-                    console.error({
-                        visNode: visNode,
-                        sourceLayoutNode: sourceLayoutNode,
-                        nextNonHyperNode: nextNonHyperNode,
-                        otherLayoutNode: otherLayoutNode,
-                    });
-                }
 
                 // return new Anchor(visNode.center, new Vector(visNode.center, nextNonHyperNode?.center ?? sourceLayoutNode.center)).move(visNode.outerCircle.r);
+
+                if (debug) {
+                    console.log({
+                        isHyperNode: true,
+                        nextNonHyperNode: nextNonHyperNode?.id,
+                        nPath: this.nodePath.map(n => n.id),
+                        nVisPath: this.visConnection.nodePath.map(n => n.id),
+                        sVis: visNode.id,
+                        eVis: this.layouter.getVisNode(sourceLayoutNode)?.id,
+                    })
+                }
 
 
                 if (nextNonHyperNode) {
@@ -392,6 +414,13 @@ export class SubPath extends CombinedPathSegment {
             // 2.: The node is an intermediate node on the node path (e.g. a virtual node). In this case, there is a path before which we take as basis for our anchor
 
             const endLayoutNode = this.getLayoutNodeInDirectionOf(visNode);
+
+            if (debug) {
+                console.error({
+                    visNode: visNode.id,
+                    endLayoutNode: endLayoutNode?.id,
+                });
+            }
 
             if (endLayoutNode == visNode.layoutNode) {
 
