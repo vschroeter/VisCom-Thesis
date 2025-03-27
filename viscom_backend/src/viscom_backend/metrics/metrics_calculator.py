@@ -62,6 +62,16 @@ class MetricResult:
         self.type: Literal["lower-better", "higher-better"] = type
         self.error: Optional[str] = error
 
+    def __str__(self) -> str:
+        """Return a user-friendly string representation of the metric result."""
+        if self.error:
+            return f"Metric '{self.key}': Error - {self.error}"
+        return f"Metric '{self.key}': {self.value:.4f} ({self.type})"
+
+    def __repr__(self) -> str:
+        """Return a detailed string representation for debugging."""
+        return f"MetricResult(key='{self.key}', value={self.value}, type='{self.type}', error={repr(self.error)})"
+
 
 class MetricCalculator(ABC):
     """Base class for calculating metrics on graph layouts."""
@@ -158,7 +168,10 @@ class PathLengthRatioMetricCalculator(MetricCalculator):
             direct_distance: float = math.sqrt(
                 (target_node.x - source_node.x)**2 +
                 (target_node.y - source_node.y)**2
-            )
+            ) - source_node.radius - target_node.radius
+
+            # print("\tDirect distance:", direct_distance)
+            # print("\tPath length:", link.path.length(), link.path)
 
             # Calculate path length
             try:
@@ -182,7 +195,17 @@ class PathLengthRatioMetricCalculator(MetricCalculator):
 
         # Calculate the waste ratio: (path_length - direct_distance) / direct_distance
         # This measures how much longer paths are compared to direct lines
-        waste_ratio: float = (total_path_length - total_direct_distance) / total_direct_distance
+        # waste_ratio: float = (total_path_length - total_direct_distance) / total_direct_distance
+        waste_ratio: float = total_path_length /  total_direct_distance
+        waste_ratio = max(waste_ratio, 1.0)
+
+
+        print("#################################")
+        print(f"Total path length: {total_path_length}")
+        print(f"Total direct distance: {total_direct_distance}")
+        print(f"Valid path count: {valid_path_count}")
+        print(f"Path efficiency ratio: {waste_ratio}")
+        print("#################################")
 
         return MetricResult(
             key="path_efficiency_ratio",
@@ -199,55 +222,55 @@ AVAILABLE_METRICS: Dict[str, Type[MetricCalculator]] = {
 }
 
 
-def calculate_metrics(data: LaidOutData, method: Optional[str] = None) -> List[MetricResult]:
+def calculate_metrics(data: LaidOutData, method: str) -> MetricResult:
     """
-    Calculate metrics for the given graph layout data.
+    Calculate a specific metric for the given graph layout data.
 
     Args:
         data: The layout data to analyze
-        method: If provided, calculate only the specific metric; otherwise calculate all
+        method: The specific metric method to calculate
 
     Returns:
-        List of metric results
+        A single metric result
+    """
+    # Check if the requested method exists
+    if method not in AVAILABLE_METRICS:
+        return MetricResult(
+            key=method,
+            value=-1,
+            type="lower-better",
+            error=f"Unknown metric method: {method}"
+        )
+
+    try:
+        calculator_class = AVAILABLE_METRICS[method]
+        calculator = calculator_class(data)
+        return calculator.calculate()
+    except Exception as e:
+        print(f"Error calculating {method} metric: {e}")
+        return MetricResult(
+            key=method,
+            value=-1,
+            type="lower-better",
+            error=str(e)
+        )
+
+
+def calculate_all_metrics(data: LaidOutData) -> List[MetricResult]:
+    """
+    Calculate all available metrics for the given graph layout data.
+
+    Args:
+        data: The layout data to analyze
+
+    Returns:
+        List of all metric results
     """
     results: List[MetricResult] = []
 
-    if method is not None:
-        # Calculate only the requested metric
-        if method not in AVAILABLE_METRICS:
-            return [MetricResult(
-                key=method,
-                value=-1,
-                type="lower-better",
-                error=f"Unknown metric method: {method}"
-            )]
-
-        try:
-            calculator_class = AVAILABLE_METRICS[method]
-            calculator = calculator_class(data)
-            results.append(calculator.calculate())
-        except Exception as e:
-            print(f"Error calculating {method} metric: {e}")
-            results.append(MetricResult(
-                key=method,
-                value=-1,
-                type="lower-better",
-                error=str(e)
-            ))
-    else:
-        # Calculate all available metrics
-        for method_name, calculator_class in AVAILABLE_METRICS.items():
-            try:
-                calculator = calculator_class(data)
-                results.append(calculator.calculate())
-            except Exception as e:
-                print(f"Error calculating {method_name} metric: {e}")
-                results.append(MetricResult(
-                    key=method_name,
-                    value=-1,
-                    type="lower-better",
-                    error=str(e)
-                ))
+    # Calculate each available metric
+    for method_name in AVAILABLE_METRICS.keys():
+        results.append(calculate_metrics(data, method_name))
 
     return results
 

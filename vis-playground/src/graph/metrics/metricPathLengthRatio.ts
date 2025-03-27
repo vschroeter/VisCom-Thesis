@@ -1,0 +1,37 @@
+import { VisGraph } from "../visGraph/visGraph";
+import { MetricCalculator } from "./base";
+import { MetricDefinition } from "./collection";
+import { MetricsApi } from "./metricsApi";
+
+export class PathLengthRatioMetricCalculator extends MetricCalculator {
+    static override displayedMetrics: MetricDefinition[] = [
+        {
+            key: "pathEfficiencyRatio",
+            optimum: "lowerIsBetter",
+            label: "Path Efficiency Ratio",
+            abbreviation: "PER",
+            description: "The ratio between actual path lengths and direct distances. A ratio of 1 means that all paths are direct. Higher values indicate less efficient paths.",
+            normalizing: "none"
+        },
+    ];
+
+    /** The path efficiency ratio in the graph */
+    pathEfficiencyRatio: number = 0;
+
+    constructor(graph: VisGraph) {
+        super(graph);
+        console.log("Initializing path length ratio calculator");
+    }
+
+    override async calculate() {
+        try {
+            const results = await MetricsApi.fetchMetricsWithPolling(this.graph, "pathEfficiency");
+            console.log("Path efficiency ratio:", results);
+            this.pathEfficiencyRatio = results.value;
+        } catch (error) {
+            console.error("Error fetching path efficiency metric:", error);
+            // Set a default value in case of error
+            this.pathEfficiencyRatio = 0;
+        }
+    }
+}

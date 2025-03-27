@@ -4,6 +4,9 @@ import networkx as nx
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from typing import Dict, List, Any, Tuple, Optional, Callable
+import atexit
+import multiprocessing
+import threading
 
 from viscom_backend.commgraph.converter import convert_multigraph_to_normal_graph, convert_to_weighted_graph
 from viscom_backend.communities.community_detection_methods import community_methods_config
@@ -11,12 +14,34 @@ from viscom_backend.data.reader import RosMetaSysGraphGenerator
 from viscom_backend.generator.generator_methods import generator_methods_config
 from viscom_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
 from viscom_backend.noderank.node_rank_methods import node_rank_methods_config
-from viscom_backend.metrics.metrics_calculator import calculate_metrics, convert_dict_to_laid_out_data, MetricResult, AVAILABLE_METRICS
+from viscom_backend.metrics.metrics_calculator import AVAILABLE_METRICS
 
+# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
 MAX_NODES: int = 1000
+
+# Lazy import and initialize metrics processor to avoid multiprocessing issues
+_metrics_processor = None
+_metrics_processor_lock = threading.Lock()
+
+def get_metrics_processor():
+    """Thread-safe lazy initialization of the metrics processor."""
+    global _metrics_processor
+    if _metrics_processor is None:
+        with _metrics_processor_lock:
+            if _metrics_processor is None:
+                from viscom_backend.metrics.metrics_processor import get_metrics_processor
+                _metrics_processor = get_metrics_processor()
+    return _metrics_processor
+
+# Register shutdown function
+@atexit.register
+def shutdown_metrics_processor():
+    """Shutdown the metrics processor when the application exits."""
+    if _metrics_processor is not None:
+        _metrics_processor.shutdown()
 
 import inspect
 
@@ -233,25 +258,39 @@ def analyze_noderank(method):
 
 @app.route("/metrics/calculate", methods=["POST"])
 def calculate_metrics_endpoint():
-    """Calculate all metrics for a graph layout."""
+    """Submit a job to calculate all metrics for a graph layout."""
     try:
         data_dict: Dict[str, Any] = request.get_json()
         if not data_dict or "nodes" not in data_dict or "links" not in data_dict:
             return jsonify({"error": "Invalid data format"}), 400
 
-        # Convert dictionary to proper data class
-        laid_out_data = convert_dict_to_laid_out_data(data_dict)
+        # Get execution mode (synchronous or asynchronous)
+        async_mode = request.args.get("async", "true").lower() in ["true", "1", "yes"]
 
-        # Calculate all metrics
-        metrics_results: List[MetricResult] = calculate_metrics(laid_out_data)
-        return jsonify([metric.__dict__ for metric in metrics_results])
+        if async_mode:
+            # Submit the job for asynchronous processing
+            metrics_processor = get_metrics_processor()
+            job_id = metrics_processor.submit_job(data_dict)
+
+            return jsonify({
+                "job_id": job_id,
+                "status": "pending",
+                "message": "Metrics calculation job submitted"
+            })
+        else:
+            # For backward compatibility, process synchronously
+            from viscom_backend.metrics.metrics_calculator import convert_dict_to_laid_out_data, calculate_all_metrics
+            laid_out_data = convert_dict_to_laid_out_data(data_dict)
+            metrics_results = calculate_all_metrics(laid_out_data)
+            return jsonify([metric.__dict__ for metric in metrics_results])
+
     except Exception as e:
         return jsonify({"error": f"Error calculating metrics: {str(e)}"}), 500
 
 
 @app.route("/metrics/calculate/<method>", methods=["POST"])
 def calculate_specific_metric_endpoint(method: str):
-    """Calculate a specific metric for a graph layout."""
+    """Submit a job to calculate a specific metric for a graph layout."""
     try:
         data_dict: Dict[str, Any] = request.get_json()
         if not data_dict or "nodes" not in data_dict or "links" not in data_dict:
@@ -261,19 +300,44 @@ def calculate_specific_metric_endpoint(method: str):
         if method not in AVAILABLE_METRICS:
             return jsonify({"error": f"Unknown metric method: {method}"}), 400
 
-        # Convert dictionary to proper data class
-        laid_out_data = convert_dict_to_laid_out_data(data_dict)
+        # Get execution mode (synchronous or asynchronous)
+        async_mode = request.args.get("async", "true").lower() in ["true", "1", "yes"]
 
-        # Calculate the specific metric
-        metrics_results: List[MetricResult] = calculate_metrics(laid_out_data, method=method)
+        if async_mode:
+            # Submit the job for asynchronous processing
+            metrics_processor = get_metrics_processor()
+            job_id = metrics_processor.submit_job(data_dict, method=method)
 
-        # Return the first (and only) result
-        if metrics_results:
-            return jsonify(metrics_results[0].__dict__)
+            return jsonify({
+                "job_id": job_id,
+                "method": method,
+                "status": "pending",
+                "message": f"Metrics calculation job for {method} submitted"
+            })
         else:
-            return jsonify({"error": "No metric result was generated"}), 500
+            # For backward compatibility, process synchronously
+            from viscom_backend.metrics.metrics_calculator import convert_dict_to_laid_out_data, calculate_metrics
+            laid_out_data = convert_dict_to_laid_out_data(data_dict)
+            metric_result = calculate_metrics(laid_out_data, method)
+            return jsonify(metric_result.__dict__)
+
     except Exception as e:
         return jsonify({"error": f"Error calculating metric {method}: {str(e)}"}), 500
+
+
+@app.route("/metrics/jobs/<job_id>", methods=["GET"])
+def get_job_status(job_id: str):
+    """Get the status of a metrics calculation job."""
+    try:
+        metrics_processor = get_metrics_processor()
+        job_status = metrics_processor.get_job_status(job_id)
+
+        if not job_status:
+            return jsonify({"error": f"Job {job_id} not found"}), 404
+
+        return jsonify(job_status)
+    except Exception as e:
+        return jsonify({"error": f"Error retrieving job status: {str(e)}"}), 500
 
 
 @app.route("/metrics/methods", methods=["GET"])
@@ -291,4 +355,6 @@ def get_available_metrics():
 
 
 if __name__ == "__main__":
+    # This is needed for multiprocessing to work properly on Windows
+    multiprocessing.freeze_support()
     app.run(debug=True)

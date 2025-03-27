@@ -25,10 +25,14 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
     }
 
     override async calculate() {
-        await MetricsApi.fetchMetrics(this.graph, "edgeCrossings").then((results) => {
-            console.log("Edge crossings", results);
+        try {
+            const results = await MetricsApi.fetchMetricsWithPolling(this.graph, "edgeCrossings");
+            console.log("Edge crossings:", results);
             this.totalEdgeCrossings = results.value;
-        });
+        } catch (error) {
+            console.error("Error fetching edge crossings metric:", error);
+            this.totalEdgeCrossings = 0;
+        }
         // await this.calculateEdgeCrossings();
     }
 

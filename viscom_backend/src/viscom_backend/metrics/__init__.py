@@ -1,6 +1,9 @@
 from __future__ import division, print_function
 from svgpathtools import Path, Line, QuadraticBezier, CubicBezier, Arc, parse_path
 
+# Metrics package initialization
+
+# Importing here can cause circular imports, so keep this minimal
 
 if __name__ == "__main__":
     l1 = Line(200+300j, 250+350j)

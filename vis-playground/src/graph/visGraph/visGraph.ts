@@ -561,6 +561,8 @@ export class VisGraph {
                 y: node.y,
                 score: node.score,
                 radius: node.radius
+                // radius: node.layoutNode.outerRadius
+                // radius: node.layoutNode.outerRadius
             }
         });
 
