@@ -113,6 +113,10 @@ export class LayoutConnection {
         return this._weight;
     }
 
+    get distance(): number {
+        return 1 / this.weight ** 2;
+    }
+
     // The object defining the path of the connection
     pathSegment?: PathSegment = undefined;
 

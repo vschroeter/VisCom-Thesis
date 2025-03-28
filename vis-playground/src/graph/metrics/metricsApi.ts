@@ -13,6 +13,7 @@ export type LaidOutConnection = {
     source: string;
     target: string;
     weight: number;
+    distance: number;
     path: string;
 }
 
@@ -79,22 +80,26 @@ export class MetricsApi {
                 'Content-Type': 'application/json'
             }
         })
-        .then(response => response.json())
-        .then(data => {
-            if (useAsync) {
-                // In async mode, return the job status
-                return data as MetricJobStatus;
-            } else {
-                // In sync mode, convert and return the metric result directly
-                return {
-                    key: data.key,
-                    value: data.value,
-                    optimum: data.type === "lower-better" ? "lowerIsBetter" : "higherIsBetter",
-                    label: data.key.replace(/_/g, ' '),
-                    description: data.error || undefined
-                } as MetricApiResult;
-            }
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (useAsync) {
+                    // In async mode, return the job status
+                    return data as MetricJobStatus;
+                } else {
+                    // In sync mode, convert and return the metric result directly
+                    return {
+                        key: data.key,
+                        value: data.value,
+                        optimum: data.type === "lower-better" ? "lowerIsBetter" : "higherIsBetter",
+                        label: data.key.replace(/_/g, ' '),
+                        description: data.error || undefined
+                    } as MetricApiResult;
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting metrics calculation job:', error);
+                throw error;
+            });
     }
 
     /**

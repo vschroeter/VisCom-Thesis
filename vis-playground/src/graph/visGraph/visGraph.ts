@@ -571,6 +571,7 @@ export class VisGraph {
                 source: connection.source.id,
                 target: connection.target.id,
                 weight: connection.weight,
+                distance: connection.distance,
                 path: connection.getSvgPath()
             }
 

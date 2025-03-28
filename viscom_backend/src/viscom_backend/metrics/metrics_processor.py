@@ -1,24 +1,18 @@
-import multiprocessing
-import uuid
-import time
-import threading
-from typing import Dict, List, Any, Optional, Union
-import traceback
 import logging
-import signal
+import multiprocessing
 import os
+import signal
 import sys
+import threading
+import time
+import traceback
+import uuid
+from typing import Any, Dict, List, Optional
 
-from .metrics_calculator import (
-    calculate_metrics, calculate_all_metrics, convert_dict_to_laid_out_data,
-    MetricResult, LaidOutData, AVAILABLE_METRICS
-)
+from .metrics_calculator import calculate_all_metrics, calculate_metrics, convert_dict_to_laid_out_data
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Job status constants
@@ -55,38 +49,32 @@ class JobInfo:
             "created_at": self.created_at,
             "started_at": self.started_at,
             "completed_at": self.completed_at,
-            "execution_time": (self.completed_at - self.started_at) if self.completed_at and self.started_at else None
+            "execution_time": (self.completed_at - self.started_at) if self.completed_at and self.started_at else None,
         }
 
 
-def _calculate_metrics_process(
-    data_dict: Dict[str, Any],
-    method: Optional[str],
-    result_dict: Dict[str, Any],
-    job_id: str,
-    pid_dict: Dict[str, int]
-) -> None:
+def _calculate_metrics_process(data_dict: Dict[str, Any], method: Optional[str], result_dict: Dict[str, Any], job_id: str, pid_dict: Dict[str, int]) -> None:
     """Worker function to calculate metrics in a separate process."""
     try:
         job_result_dict = result_dict[job_id]
 
         # Record PID for potential termination
-        pid_dict['pid'] = os.getpid()
+        pid_dict["pid"] = os.getpid()
 
         logger.info(f"Process {os.getpid()} started for method {method}")
 
         # Set up signal handler for graceful termination
         def handler(signum, frame):
             logger.info(f"Process {os.getpid()} received signal {signum}, shutting down")
-            job_result_dict['status'] = JOB_STATUS_FAILED
-            job_result_dict['error'] = "Job was terminated"
+            job_result_dict["status"] = JOB_STATUS_FAILED
+            job_result_dict["error"] = "Job was terminated"
             sys.exit(1)
 
         signal.signal(signal.SIGTERM, handler)
 
         # Mark as processing
-        job_result_dict['status'] = JOB_STATUS_PROCESSING
-        job_result_dict['started_at'] = time.time()
+        job_result_dict["status"] = JOB_STATUS_PROCESSING
+        job_result_dict["started_at"] = time.time()
 
         # Convert data and calculate metrics
         laid_out_data = convert_dict_to_laid_out_data(data_dict)
@@ -103,20 +91,12 @@ def _calculate_metrics_process(
 
         # Store results - Convert MetricResult objects to dictionaries
         # and make sure to explicitly update the shared dictionary
-        metric_dicts = [
-            {
-                "key": metric.key,
-                "value": metric.value,
-                "type": metric.type,
-                "error": metric.error
-            }
-            for metric in metrics_results
-        ]
+        metric_dicts = [{"key": metric.key, "value": metric.value, "type": metric.type, "error": metric.error} for metric in metrics_results]
 
         # Must update the shared dictionary explicitly
-        job_result_dict['results'] = metric_dicts
-        job_result_dict['status'] = JOB_STATUS_COMPLETED
-        job_result_dict['completed_at'] = time.time()
+        job_result_dict["results"] = metric_dicts
+        job_result_dict["status"] = JOB_STATUS_COMPLETED
+        job_result_dict["completed_at"] = time.time()
 
         result_dict[job_id] = job_result_dict
         # Make sure changes are flushed before exiting
@@ -127,14 +107,14 @@ def _calculate_metrics_process(
         logger.error(traceback.format_exc())
 
         # Must update the shared dictionary explicitly
-        job_result_dict['status'] = JOB_STATUS_FAILED
-        job_result_dict['error'] = f"{str(e)}\n{traceback.format_exc()}"
-        job_result_dict['completed_at'] = time.time()
-
+        job_result_dict["status"] = JOB_STATUS_FAILED
+        job_result_dict["error"] = f"{str(e)}\n{traceback.format_exc()}"
+        job_result_dict["completed_at"] = time.time()
 
     result_dict[job_id] = job_result_dict
     # Sleep briefly to ensure updates are synchronized
     time.sleep(0.1)
+
 
 class MetricsProcessor:
     """Manager for processing metrics calculations in separate processes."""
@@ -144,7 +124,7 @@ class MetricsProcessor:
     _instance = None
 
     @classmethod
-    def get_instance(cls) -> 'MetricsProcessor':
+    def get_instance(cls) -> "MetricsProcessor":
         """Thread-safe singleton getter."""
         if cls._instance is None:
             with cls._instance_lock:
@@ -161,10 +141,10 @@ class MetricsProcessor:
 
         # Set the start method for multiprocessing
         try:
-            if sys.platform.startswith('win'):
-                multiprocessing.set_start_method('spawn', force=True)
+            if sys.platform.startswith("win"):
+                multiprocessing.set_start_method("spawn", force=True)
             else:
-                multiprocessing.set_start_method('fork', force=True)
+                multiprocessing.set_start_method("fork", force=True)
         except RuntimeError:
             # Method already set, ignore
             pass
@@ -197,19 +177,10 @@ class MetricsProcessor:
         self.jobs[job_id] = job_info
 
         # Set up shared result dictionary
-        self.results[job_id] = {
-            'status': JOB_STATUS_PENDING,
-            'results': [],
-            'error': None,
-            'started_at': None,
-            'completed_at': None
-        }
+        self.results[job_id] = {"status": JOB_STATUS_PENDING, "results": [], "error": None, "started_at": None, "completed_at": None}
 
         # Start process
-        process = multiprocessing.Process(
-            target=_calculate_metrics_process,
-            args=(data_dict, method, self.results, job_id, self.pids)
-        )
+        process = multiprocessing.Process(target=_calculate_metrics_process, args=(data_dict, method, self.results, job_id, self.pids))
         process.daemon = True  # Allow the process to be terminated when the main process exits
         process.start()
 
@@ -249,14 +220,14 @@ class MetricsProcessor:
             logger.debug(f"Job {job_id} shared dict state: status={result_dict.get('status')}, has_results={len(result_dict.get('results', []))}")
 
             # Update job info from result dictionary
-            job_info.status = result_dict.get('status', job_info.status)
-            job_info.error = result_dict.get('error', job_info.error)
-            job_info.started_at = result_dict.get('started_at', job_info.started_at)
-            job_info.completed_at = result_dict.get('completed_at', job_info.completed_at)
+            job_info.status = result_dict.get("status", job_info.status)
+            job_info.error = result_dict.get("error", job_info.error)
+            job_info.started_at = result_dict.get("started_at", job_info.started_at)
+            job_info.completed_at = result_dict.get("completed_at", job_info.completed_at)
 
             # Update results if available
-            if 'results' in result_dict and result_dict['results']:
-                job_info.results = result_dict['results']
+            if "results" in result_dict and result_dict["results"]:
+                job_info.results = result_dict["results"]
 
         # Check if process is still running
         process_alive = False
@@ -277,9 +248,7 @@ class MetricsProcessor:
         logger.debug(f"Job {job_id} process_alive={process_alive}, final status={job_info.status}")
 
         # Handle timeout
-        if (job_info.status == JOB_STATUS_PROCESSING and
-            job_info.started_at and
-            time.time() - job_info.started_at > PROCESS_TIMEOUT):
+        if job_info.status == JOB_STATUS_PROCESSING and job_info.started_at and time.time() - job_info.started_at > PROCESS_TIMEOUT:
             # Terminate the process if it's still running
             if job_id in self.processes and self.processes[job_id].is_alive():
                 try:
@@ -305,8 +274,7 @@ class MetricsProcessor:
 
         for job_id, job_info in self.jobs.items():
             # Remove old completed or failed jobs
-            if (job_info.status in (JOB_STATUS_COMPLETED, JOB_STATUS_FAILED) and
-                current_time - job_info.created_at > self.job_cleanup_threshold_sec):
+            if job_info.status in (JOB_STATUS_COMPLETED, JOB_STATUS_FAILED) and current_time - job_info.created_at > self.job_cleanup_threshold_sec:
                 jobs_to_remove.append(job_id)
 
         for job_id in jobs_to_remove:

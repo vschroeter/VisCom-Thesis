@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-import networkx as nx
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from typing import Dict, List, Any, Tuple, Optional, Callable
 import atexit
 import multiprocessing
 import threading
+from typing import Any, Callable, Dict
+
+import networkx as nx
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 from viscom_backend.commgraph.converter import convert_multigraph_to_normal_graph, convert_to_weighted_graph
 from viscom_backend.communities.community_detection_methods import community_methods_config
 from viscom_backend.data.reader import RosMetaSysGraphGenerator
 from viscom_backend.generator.generator_methods import generator_methods_config
+from viscom_backend.metrics.metrics_calculator import MetricCalculator
 from viscom_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
 from viscom_backend.noderank.node_rank_methods import node_rank_methods_config
-from viscom_backend.metrics.metrics_calculator import AVAILABLE_METRICS
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -26,6 +27,7 @@ MAX_NODES: int = 1000
 _metrics_processor = None
 _metrics_processor_lock = threading.Lock()
 
+
 def get_metrics_processor():
     """Thread-safe lazy initialization of the metrics processor."""
     global _metrics_processor
@@ -33,8 +35,10 @@ def get_metrics_processor():
         with _metrics_processor_lock:
             if _metrics_processor is None:
                 from viscom_backend.metrics.metrics_processor import get_metrics_processor
+
                 _metrics_processor = get_metrics_processor()
     return _metrics_processor
+
 
 # Register shutdown function
 @atexit.register
@@ -43,7 +47,9 @@ def shutdown_metrics_processor():
     if _metrics_processor is not None:
         _metrics_processor.shutdown()
 
+
 import inspect
+
 
 def has_param(func: Callable, param_name: str) -> bool:
     sig = inspect.signature(func)
@@ -110,8 +116,6 @@ def generate_graph(generator):
     nx.set_node_attributes(graph, centrality, "commgraph_centrality")
 
     data = nx.node_link_data(graph, edges="links")
-
-
 
     return jsonify(data)
 
@@ -213,8 +217,6 @@ def analyze_noderank(method):
 
         params[param["key"]] = param_value
 
-
-
     data = request.get_json()
     graph = nx.node_link_graph(data, directed=True, multigraph=True)
     graph = convert_to_weighted_graph(graph)
@@ -272,14 +274,11 @@ def calculate_metrics_endpoint():
             metrics_processor = get_metrics_processor()
             job_id = metrics_processor.submit_job(data_dict)
 
-            return jsonify({
-                "job_id": job_id,
-                "status": "pending",
-                "message": "Metrics calculation job submitted"
-            })
+            return jsonify({"job_id": job_id, "status": "pending", "message": "Metrics calculation job submitted"})
         else:
             # For backward compatibility, process synchronously
-            from viscom_backend.metrics.metrics_calculator import convert_dict_to_laid_out_data, calculate_all_metrics
+            from viscom_backend.metrics.metrics_calculator import calculate_all_metrics, convert_dict_to_laid_out_data
+
             laid_out_data = convert_dict_to_laid_out_data(data_dict)
             metrics_results = calculate_all_metrics(laid_out_data)
             return jsonify([metric.__dict__ for metric in metrics_results])
@@ -297,7 +296,12 @@ def calculate_specific_metric_endpoint(method: str):
             return jsonify({"error": "Invalid data format"}), 400
 
         # Check if the requested metric exists
-        if method not in AVAILABLE_METRICS:
+        if method not in MetricCalculator.AVAILABLE_METRICS:
+            print(f"Unknown metric method: {method} (available: {MetricCalculator.AVAILABLE_METRICS.keys()})")
+
+            metrics_processor = get_metrics_processor()
+
+            print(f"... (available: {MetricCalculator.AVAILABLE_METRICS.keys()})")
             return jsonify({"error": f"Unknown metric method: {method}"}), 400
 
         # Get execution mode (synchronous or asynchronous)
@@ -308,15 +312,11 @@ def calculate_specific_metric_endpoint(method: str):
             metrics_processor = get_metrics_processor()
             job_id = metrics_processor.submit_job(data_dict, method=method)
 
-            return jsonify({
-                "job_id": job_id,
-                "method": method,
-                "status": "pending",
-                "message": f"Metrics calculation job for {method} submitted"
-            })
+            return jsonify({"job_id": job_id, "method": method, "status": "pending", "message": f"Metrics calculation job for {method} submitted"})
         else:
             # For backward compatibility, process synchronously
-            from viscom_backend.metrics.metrics_calculator import convert_dict_to_laid_out_data, calculate_metrics
+            from viscom_backend.metrics.metrics_calculator import calculate_metrics, convert_dict_to_laid_out_data
+
             laid_out_data = convert_dict_to_laid_out_data(data_dict)
             metric_result = calculate_metrics(laid_out_data, method)
             return jsonify(metric_result.__dict__)
@@ -345,11 +345,8 @@ def get_available_metrics():
     """Get a list of all available metrics."""
     metric_info = {}
 
-    for method_name, calculator_class in AVAILABLE_METRICS.items():
-        metric_info[method_name] = {
-            "name": method_name,
-            "description": calculator_class.__doc__
-        }
+    for method_name, calculator_class in MetricCalculator.AVAILABLE_METRICS.items():
+        metric_info[method_name] = {"name": method_name, "description": calculator_class.__doc__}
 
     return jsonify(metric_info)
 

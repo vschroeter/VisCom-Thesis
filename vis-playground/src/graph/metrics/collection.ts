@@ -1,7 +1,7 @@
 import { useDebounceFn } from "@vueuse/core";
 import { MetricCalculator } from "./base";
 import { EdgeLengthCalculator, NodeDistanceCalculator } from "./metricDistances";
-import { PathLengthRatioMetricCalculator } from "./metricPathLengthRatio";
+import { NormalizedPathLengthRatioMetricCalculator, PathLengthRatioMetricCalculator } from "./metricPathLengthRatio";
 
 import * as d3 from "d3";
 import mitt from "mitt";
@@ -33,7 +33,8 @@ export class MetricsCollection {
         EdgeLengthCalculator,
         NodeDistanceCalculator,
         EdgeCrossingsCalculator,
-        PathLengthRatioMetricCalculator
+        PathLengthRatioMetricCalculator,
+        NormalizedPathLengthRatioMetricCalculator
     ];
 
     // Map from setting id to the metrics results of that setting

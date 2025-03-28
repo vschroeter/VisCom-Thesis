@@ -1,8 +1,11 @@
-from typing import Dict, List, Any, Tuple, Union, Literal, TypedDict, Optional, Type
-from svgpathtools import Path, Line, CubicBezier, Arc, parse_path
-import numpy as np
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-import math
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type
+
+from svgpathtools import Path, parse_path
+
+# Import the metric calculators
 
 
 class LaidOutNode:
@@ -76,6 +79,22 @@ class MetricResult:
 class MetricCalculator(ABC):
     """Base class for calculating metrics on graph layouts."""
 
+    API_METHOD_NAME = ""
+
+    # Dictionary of all available metric calculators, mapping API names to calculator classes
+    AVAILABLE_METRICS: Dict[str, Type[MetricCalculator]] = dict()
+    # = {
+    #     "edgeCrossings": EdgeCrossingMetricCalculator,
+    #     "pathEfficiency": PathLengthRatioMetricCalculator,
+    #     # Add more metric calculators here as they are implemented
+    # }
+
+    def __init_subclass__(cls, **kwargs):
+        """Register subclasses in the available metrics dictionary."""
+        super().__init_subclass__(**kwargs)
+        # Register the subclass in the available metrics dictionary
+        MetricCalculator.AVAILABLE_METRICS[cls.API_METHOD_NAME] = cls
+
     def __init__(self, data: LaidOutData):
         self.nodes: List[LaidOutNode] = data.nodes
         self.links: List[LaidOutConnection] = data.links
@@ -95,133 +114,6 @@ class MetricCalculator(ABC):
         pass
 
 
-class EdgeCrossingMetricCalculator(MetricCalculator):
-    """Calculator for measuring edge crossing count in layouts."""
-
-    def calculate(self) -> MetricResult:
-        """Calculate the number of edge crossings in the graph layout."""
-        crossing_count: int = 0
-
-        # Filter out links with empty paths
-        valid_links = [link for link in self.links if not link.is_empty and not link.path_error and link.path is not None]
-
-        # Check each pair of paths for intersections
-        path_count: int = len(valid_links)
-        print(f"Checking {path_count} paths for crossings...")
-        for i in range(path_count):
-            path1: Path = valid_links[i].path
-            source1: str = valid_links[i].source
-            target1: str = valid_links[i].target
-
-            for j in range(i + 1, path_count):
-                path2: Path = valid_links[j].path
-                source2: str = valid_links[j].source
-                target2: str = valid_links[j].target
-
-                if i == j:
-                    continue
-
-                try:
-                    # Find intersections between the paths
-                    intersections: List[complex] = path1.intersect(path2)
-                    crossing_count += min(3, len(intersections))
-                    if len(intersections) > 0:
-                        print(f"\t Found {len(intersections)} intersections between paths {i} and {j}")
-                        if len(intersections) > 10:
-                            print(f"\t\tPath 1: {path1}")
-                            print(f"\t\tPath 2: {path2}")
-                except Exception as e:
-                    print(f"Error calculating intersection: {str(e)}")
-                    print(f"\tPath 1: {path1}")
-                    print(f"\tPath 2: {path2}")
-
-        return MetricResult(
-            key="edge_crossing_count",
-            value=crossing_count,
-            type="lower-better"  # Fewer crossings is better for readability
-        )
-
-
-class PathLengthRatioMetricCalculator(MetricCalculator):
-    """Calculator for measuring the ratio between actual path lengths and direct distances."""
-
-    def calculate(self) -> MetricResult:
-        """Calculate the ratio between path lengths and direct node distances."""
-        total_path_length: float = 0
-        total_direct_distance: float = 0
-        valid_path_count: int = 0
-
-        # Process only valid paths
-        for link in self.links:
-            # Skip empty or error paths
-            if link.is_empty or link.path_error or link.path is None:
-                continue
-
-            # Get node positions
-            source_node = next((node for node in self.nodes if node.id == link.source), None)
-            target_node = next((node for node in self.nodes if node.id == link.target), None)
-
-            if not source_node or not target_node:
-                continue
-
-            # Calculate direct distance
-            direct_distance: float = math.sqrt(
-                (target_node.x - source_node.x)**2 +
-                (target_node.y - source_node.y)**2
-            ) - source_node.radius - target_node.radius
-
-            # print("\tDirect distance:", direct_distance)
-            # print("\tPath length:", link.path.length(), link.path)
-
-            # Calculate path length
-            try:
-                path_length: float = link.path.length()
-
-                # Add to totals
-                total_direct_distance += direct_distance
-                total_path_length += path_length
-                valid_path_count += 1
-            except Exception as e:
-                print(f"Error calculating path length: {e}")
-
-        # Avoid division by zero
-        if total_direct_distance == 0 or valid_path_count == 0:
-            return MetricResult(
-                key="path_efficiency_ratio",
-                value=0,
-                type="lower-better",
-                error="No valid paths found or zero direct distance"
-            )
-
-        # Calculate the waste ratio: (path_length - direct_distance) / direct_distance
-        # This measures how much longer paths are compared to direct lines
-        # waste_ratio: float = (total_path_length - total_direct_distance) / total_direct_distance
-        waste_ratio: float = total_path_length /  total_direct_distance
-        waste_ratio = max(waste_ratio, 1.0)
-
-
-        print("#################################")
-        print(f"Total path length: {total_path_length}")
-        print(f"Total direct distance: {total_direct_distance}")
-        print(f"Valid path count: {valid_path_count}")
-        print(f"Path efficiency ratio: {waste_ratio}")
-        print("#################################")
-
-        return MetricResult(
-            key="path_efficiency_ratio",
-            value=waste_ratio,
-            type="lower-better"  # Lower ratio means paths are closer to optimal straight lines
-        )
-
-
-# Dictionary of all available metric calculators, mapping API names to calculator classes
-AVAILABLE_METRICS: Dict[str, Type[MetricCalculator]] = {
-    "edgeCrossings": EdgeCrossingMetricCalculator,
-    "pathEfficiency": PathLengthRatioMetricCalculator,
-    # Add more metric calculators here as they are implemented
-}
-
-
 def calculate_metrics(data: LaidOutData, method: str) -> MetricResult:
     """
     Calculate a specific metric for the given graph layout data.
@@ -234,26 +126,16 @@ def calculate_metrics(data: LaidOutData, method: str) -> MetricResult:
         A single metric result
     """
     # Check if the requested method exists
-    if method not in AVAILABLE_METRICS:
-        return MetricResult(
-            key=method,
-            value=-1,
-            type="lower-better",
-            error=f"Unknown metric method: {method}"
-        )
+    if method not in MetricCalculator.AVAILABLE_METRICS:
+        return MetricResult(key=method, value=-1, type="lower-better", error=f"Unknown metric method: {method}")
 
     try:
-        calculator_class = AVAILABLE_METRICS[method]
+        calculator_class = MetricCalculator.AVAILABLE_METRICS[method]
         calculator = calculator_class(data)
         return calculator.calculate()
     except Exception as e:
         print(f"Error calculating {method} metric: {e}")
-        return MetricResult(
-            key=method,
-            value=-1,
-            type="lower-better",
-            error=str(e)
-        )
+        return MetricResult(key=method, value=-1, type="lower-better", error=str(e))
 
 
 def calculate_all_metrics(data: LaidOutData) -> List[MetricResult]:
@@ -269,7 +151,7 @@ def calculate_all_metrics(data: LaidOutData) -> List[MetricResult]:
     results: List[MetricResult] = []
 
     # Calculate each available metric
-    for method_name in AVAILABLE_METRICS.keys():
+    for method_name in MetricCalculator.AVAILABLE_METRICS:
         results.append(calculate_metrics(data, method_name))
 
     return results
@@ -278,22 +160,11 @@ def calculate_all_metrics(data: LaidOutData) -> List[MetricResult]:
 def convert_dict_to_laid_out_data(data_dict: Dict[str, Any]) -> LaidOutData:
     """Convert a dictionary to a LaidOutData object."""
     nodes: List[LaidOutNode] = [
-        LaidOutNode(
-            id=node["id"],
-            x=float(node["x"]),
-            y=float(node["y"]),
-            score=float(node["score"]),
-            radius=float(node["radius"])
-        ) for node in data_dict["nodes"]
+        LaidOutNode(id=node["id"], x=float(node["x"]), y=float(node["y"]), score=float(node["score"]), radius=float(node["radius"])) for node in data_dict["nodes"]
     ]
 
     links: List[LaidOutConnection] = [
-        LaidOutConnection(
-            source=link["source"],
-            target=link["target"],
-            weight=float(link["weight"]),
-            path=link["path"]
-        ) for link in data_dict["links"]
+        LaidOutConnection(source=link["source"], target=link["target"], weight=float(link["weight"]), path=link["path"]) for link in data_dict["links"]
     ]
 
     return LaidOutData(nodes=nodes, links=links)

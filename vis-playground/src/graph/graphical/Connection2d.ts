@@ -168,6 +168,10 @@ export class Connection2d extends SvgRenderable {
         return this.layoutConnection.weight ?? 1
     }
 
+    get distance() {
+        return this.layoutConnection.distance ?? 1
+    }
+
     get startPoint(): Point {
         return this.pathSegment.start;
     }
