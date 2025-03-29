@@ -58,6 +58,26 @@ export class VisConnection extends CombinedPathSegment {
             // i is always the start node
             const sNode = visNodePath[i];
 
+            let path2path: SubPath | undefined = undefined;
+
+            // If there is a virutal node, add a path2path subpath
+            if (sNode.isVirtual) {
+
+                if (!previousSubPath) {
+                    console.error("Path2path without previous subpath", sNode, visNodePath);
+                } else {
+                    path2path = new SubPath({
+                        visConnection,
+                        startNode: sNode,
+                        endNode: sNode,
+                        nodePath: [sNode],
+                        previousSubPath
+                    });
+                    subPaths.push(path2path); // Add to paths
+                }
+                // previousSubPath = path;
+            }
+
             // the end node t is the next node, that either:
             // t has the same parent as s --> then it is a same-level connection
             // OR
@@ -105,7 +125,11 @@ export class VisConnection extends CombinedPathSegment {
 
             i = j - 1;
             // i = j;
+            if (path2path) {
+                path2path.nextSubPath = previousSubPath;
+            }
         }
+
 
         return subPaths;
     }

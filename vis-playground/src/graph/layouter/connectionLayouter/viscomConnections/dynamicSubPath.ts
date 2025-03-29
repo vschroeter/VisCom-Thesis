@@ -296,8 +296,8 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
             // new SmoothSplineSegment(this.connection, this.pathAnchor, anchor.cloneReversed(), undefined, isFinalPath) :
         // new SmoothSplineSegment(this.connection, anchor, this.pathAnchor, undefined, false);
 
-            new SmoothPathNodeSplineSegment(this.connection, this.pathAnchor, anchor.cloneReversed(), this.nodeToConnect!.circle, undefined, isFinalPath) :
-            new SmoothPathNodeSplineSegment(this.connection, anchor, this.pathAnchor, this.nodeToConnect!.circle, undefined, false, isStartPath);
+            new SmoothPathNodeSplineSegment(this.connection, this.pathAnchor, anchor.cloneReversed(), this.nodeToConnect!.circle, 0.4, isFinalPath) :
+            new SmoothPathNodeSplineSegment(this.connection, anchor, this.pathAnchor, this.nodeToConnect!.circle, 0.4, false, isStartPath);
         return segment;
     }
 }

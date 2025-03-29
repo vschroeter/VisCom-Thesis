@@ -8,6 +8,7 @@ import { CubicBezierCurve } from "./BezierCurve";
 import { PathSegment } from "./PathSegment";
 import { Circle, Line, Point, Segment } from "2d-geometry";
 import { ShapeUtil } from "src/graph/layouter/utils/shapeUtil";
+import { SmoothSplineSegment } from "./SmoothSpline";
 
 export class SmoothPathNodeSplineSegment extends PathSegment {
     override startAnchor?: Anchor | undefined;
@@ -100,22 +101,36 @@ export class SmoothPathNodeSplineSegment extends PathSegment {
         const h = new Line(pathAnchorControlPoint, p);
 
         const _s = new Segment(pathAnchorControlPoint, p);
-        // this.connection.debugShapes.push(_s);
-        // this.connection.debugShapes.push(l);
-        // this.connection.debugShapes.push(_c);
-        // this.connection.debugShapes.push(nodeAnchor);
-        // this.connection.debugShapes.push(pathAnchor);
+
 
         // The intersection of the helper line with the node anchor direction line is the node control point
         const nodeAnchorLine = new Line(nodeAnchor.anchorPoint, nodeAnchor.direction.rotate90CW());
         const nodeAnchorIntersections = h.intersect(nodeAnchorLine);
 
+        let fallback = false;
         if (nodeAnchorIntersections.length === 0) {
-            throw new Error("No intersection found between node anchor line and helper line");
+            // throw new Error("No intersection found between node anchor line and helper line");
+            fallback = true;
         }
 
         const nodeAnchorControlPoint = nodeAnchorIntersections[0];
 
+
+        // Check, if the circle _c contains the node anchor control point
+        // Otherwise, we return a normal smooth spline
+        if (!_c.contains(nodeAnchorControlPoint)) {
+            fallback = true;
+        }
+
+        if (fallback) {
+            return new SmoothSplineSegment(this.connection, this.startAnchor, this.endAnchor, this.controlPointDistanceFactor, this.extendArrow, this.extendStart).getSvgPath();
+        }
+
+        // this.connection.debugShapes.push(_s);
+        // this.connection.debugShapes.push(l);
+        // this.connection.debugShapes.push(_c);
+        // this.connection.debugShapes.push(nodeAnchor);
+        // this.connection.debugShapes.push(pathAnchor);
         // this.connection.debugShapes.push(pathAnchorControlPoint);
         // this.connection.debugShapes.push(nodeAnchorControlPoint);
 

@@ -451,7 +451,9 @@ export class SubPath extends CombinedPathSegment {
 
                 if (pathAnchor) {
                     // Simplest case: Just extend the anchor to the other side of the node
-                    return new Anchor(visNode.center, new Vector(pathAnchor.anchorPoint, visNode.center)).move(visNode.outerCircle.r);
+                    const a = new Anchor(visNode.center, new Vector(pathAnchor.anchorPoint, visNode.center)).move(visNode.outerCircle.r);
+                    // this.connection.debugShapes.push(a);
+                    return a;
                 }
 
             }
@@ -491,7 +493,9 @@ export class SubPath extends CombinedPathSegment {
 
                 if (pathAnchor) {
                     // Simplest case: Just extend the anchor to the other side of the node
-                    return new Anchor(visNode.center, new Vector(pathAnchor.anchorPoint, visNode.center)).move(visNode.outerCircle.r);
+                    const a = new Anchor(visNode.center, new Vector(pathAnchor.anchorPoint, visNode.center)).move(visNode.outerCircle.r);
+                    // this.connection.debugShapes.push(a);
+                    return a;
                 }
 
             }
@@ -606,8 +610,12 @@ export class SubPath extends CombinedPathSegment {
         if (this.hasSameParent()) {
 
             // TODO: Add path to path connections on virtual nodes
-            this.connectionType = "nodeToNode";
 
+            if (this.sourceVisNode == this.targetVisNode && this.sourceVisNode.layoutNode.isVirtual) {
+                this.connectionType = "pathToPath";
+            } else {
+                this.connectionType = "nodeToNode";
+            }
         } else {
             if (this.sourceVisNode.layoutNode.isHyperNode) {
                 this.connectionType = "pathToNode";
@@ -619,7 +627,7 @@ export class SubPath extends CombinedPathSegment {
             }
         }
 
-        const useHyperEdges = false;
+        const useHyperEdges = true;
 
         // Connections between nodes on the same level are cached
         if (this.levelType == "sameLevel" && this.connectionType == "nodeToNode") {
@@ -649,6 +657,11 @@ export class SubPath extends CombinedPathSegment {
         const target = this.target;
 
         if (this.hasSameParent()) {
+
+            if (this.connectionType == "pathToPath") {
+                this.sourceVisNode.path2pathSubPaths.push(this);
+                return;
+            }
 
             if (this.isCircleArcForward()) {
                 // Do not add to continuum
@@ -723,6 +736,11 @@ export class SubPath extends CombinedPathSegment {
             // Handle layout for circular arcs
             if (this.isCircleArc()) {
                 this.layoutCircleArc();
+                return;
+            }
+
+            if (this.connectionType == "pathToPath") {
+                this.layoutPathToPathConnection();
                 return;
             }
 
@@ -871,6 +889,26 @@ export class SubPath extends CombinedPathSegment {
         // console.warn("Layout INSIDE", this.sourceVisNode.id, this.targetVisNode.id, this);
         const sourceAnchor = this.sourceVisNode.innerRange.getAnchorForPath(this, "out");
         const targetAnchor = this.targetVisNode.innerRange.getAnchorForPath(this, "in");
+
+        this.segments = [new SmoothSplineSegment(this.connection, sourceAnchor, targetAnchor)];
+    }
+
+    layoutPathToPathConnection() {
+        console.warn("Layout PATH2PATH", this.cId, this);
+
+        const previousPath = this.previousSubPath;
+        const sourceAnchor = previousPath?.endAnchor;
+
+        const nextPath = this.nextSubPath;
+        const targetAnchor = nextPath?.startAnchor;
+
+        if (!sourceAnchor || !targetAnchor) {
+            console.error("No source or target anchor for path to path connection", this);
+            return;
+        }
+
+        this.connection.debugShapes.push(sourceAnchor);
+        this.connection.debugShapes.push(targetAnchor);
 
         this.segments = [new SmoothSplineSegment(this.connection, sourceAnchor, targetAnchor)];
     }

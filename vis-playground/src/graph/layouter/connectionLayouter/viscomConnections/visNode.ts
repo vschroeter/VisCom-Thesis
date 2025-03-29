@@ -50,6 +50,7 @@ export class VisNode {
     circularRangeForward: SubPathRange;
     circularRangeBackward: SubPathRange;
 
+    path2pathSubPaths: SubPath[] = [];
 
     circularSubPaths: SubPath[] = [];
 

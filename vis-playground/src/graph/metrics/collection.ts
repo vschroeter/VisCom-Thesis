@@ -85,6 +85,8 @@ export class MetricsCollection {
      */
     async calculateMetrics(settingId: number, graph: VisGraph) {
 
+        if (!graph.commonSettings?.calculateMetrics.getValue()) return;
+
         // const laidOutData = graph.getLaidOutApiData();
         // console.log("Calculating metrics for setting", settingId);
 

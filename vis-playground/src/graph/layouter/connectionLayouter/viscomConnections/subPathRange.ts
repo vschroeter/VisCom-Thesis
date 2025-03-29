@@ -117,6 +117,7 @@ export class SubPathRange {
 
 
     registerSubPath(subPath: SubPath, oppositeRange: SubPathRange) {
+        this.oppositeRanges.set(subPath, oppositeRange);
 
         // If the subpath has a group, only add the range representative
         if (subPath.group) {
@@ -136,7 +137,6 @@ export class SubPathRange {
         this.subPaths.push(subPath);
         this.registeredSubPaths.add(subPath);
 
-        this.oppositeRanges.set(subPath, oppositeRange);
 
         this.calculated = false;
         this.sorted = false;
@@ -500,6 +500,13 @@ export class SubPathRange {
             const oppositeRange = this.oppositeRanges.get(subPath);
 
             if (!oppositeRange) {
+
+                console.warn({
+                    t: this,
+                    subPath,
+                    oppositeRanges: this.oppositeRanges,
+                })
+
                 throw new Error("Opposite range not found");
             }
 
@@ -1100,7 +1107,11 @@ export class SubPathRange {
 
         let debug = false;
         debug = false;
+        // if (this.type == "outside") {
+        //     debug = true;
+        // }
         // debug = true;
+
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;

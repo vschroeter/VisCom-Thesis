@@ -3,6 +3,15 @@ import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, ParamChoice
 
 export class CommonSettings extends Setting {
 
+    calculateMetrics = new Param<boolean>({
+        type: "boolean",
+        key: "calculateMetrics",
+        label: "Calculate Metrics",
+        description: "Calculate metrics during layout",
+        optional: false,
+        defaultValue: true,
+    })
+
     tileSize = new Param<number>({
         type: "number",
         key: "tileSize",
