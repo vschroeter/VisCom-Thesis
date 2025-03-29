@@ -1,8 +1,7 @@
 from __future__ import division, print_function
 
 from .edge_crossing_metric import EdgeCrossingMetricCalculator as EdgeCrossingMetricCalculator
-
-# from svgpathtools import Path, Line, QuadraticBezier, CubicBezier, Arc, parse_path
+from .graph_metric_calculator import GraphMetricCalculator as GraphMetricCalculator
 from .metrics_calculator import (
     MetricCalculator as MetricCalculator,
 )
@@ -12,6 +11,7 @@ from .path_length_ratio_metric import (
 from .path_length_ratio_metric import (
     NormalizedPathLengthRatioMetricCalculator as NormalizedPathLengthRatioMetricCalculator,
 )
+from .stress_calculator import StressMetricCalculator as StressMetricCalculator
 
 if __name__ == "__main__":
     l1 = Line(200 + 300j, 250 + 350j)

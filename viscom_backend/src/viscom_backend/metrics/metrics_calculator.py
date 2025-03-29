@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import math
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Literal, Optional, Tuple, Type
+from typing import Any, Dict, List, Literal, Optional, Type
 
 from svgpathtools import Path, parse_path
 
@@ -19,13 +20,34 @@ class LaidOutNode:
         self.radius: float = radius
 
 
+class NodeCircle:
+    """Representation of a node as a circle with position and radius."""
+
+    def __init__(self, x: float, y: float, r: float):
+        self.x: float = x
+        self.y: float = y
+        self.r: float = r
+
+    @staticmethod
+    def euclidean_distance(node1: NodeCircle, node2: NodeCircle) -> float:
+        """Calculate the Euclidean distance between two nodes."""
+        return math.sqrt((node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2)
+
+    @property
+    def position(self) -> complex:
+        """Return position as a complex number for compatibility."""
+        return complex(self.x, self.y)
+
+
 class LaidOutConnection:
     """Representation of a connection between nodes in the layout."""
 
-    def __init__(self, source: str, target: str, weight: float, path: str):
+    def __init__(self, source: str, target: str, weight: float, distance: float, path: str):
         self.source: str = source
         self.target: str = target
         self.weight: float = weight
+        self.distance: float = distance
+
         # Parse SVG path string directly in the constructor
         try:
             # Skip empty paths
@@ -99,14 +121,10 @@ class MetricCalculator(ABC):
         self.nodes: List[LaidOutNode] = data.nodes
         self.links: List[LaidOutConnection] = data.links
 
-        # Convert nodes to circle representations
-        self.node_circles: Dict[str, Tuple[complex, float]] = {}
+        # Convert nodes to NodeCircle representations
+        self.node_circles: Dict[str, NodeCircle] = {}
         for node in self.nodes:
-            center: complex = complex(node.x, node.y)
-            radius: float = node.radius
-            self.node_circles[node.id] = (center, radius)
-
-        # No longer attempt to fix invalid paths - just use valid ones
+            self.node_circles[node.id] = NodeCircle(node.x, node.y, node.radius)
 
     @abstractmethod
     def calculate(self) -> MetricResult:
@@ -164,7 +182,8 @@ def convert_dict_to_laid_out_data(data_dict: Dict[str, Any]) -> LaidOutData:
     ]
 
     links: List[LaidOutConnection] = [
-        LaidOutConnection(source=link["source"], target=link["target"], weight=float(link["weight"]), path=link["path"]) for link in data_dict["links"]
+        LaidOutConnection(source=link["source"], target=link["target"], weight=float(link["weight"]), distance=float(link["distance"]), path=link["path"])
+        for link in data_dict["links"]
     ]
 
     return LaidOutData(nodes=nodes, links=links)

@@ -125,7 +125,7 @@ export class MetricsApi {
      * @param interval Polling interval in milliseconds (default: 1000)
      * @returns Promise that resolves with the job status when complete
      */
-    static async pollJobUntilDone(jobId: string, timeoutMs: number = 30000, interval: number = 1000): Promise<MetricJobStatus> {
+    static async pollJobUntilDone(jobId: string, timeoutMs: number = 120000, interval: number = 1000): Promise<MetricJobStatus> {
         const startTime = Date.now();
 
         // Define polling function that returns a promise

@@ -8,6 +8,7 @@ import mitt from "mitt";
 import { EdgeCrossingsCalculator } from "./metricEdgeCrossing";
 import { VisGraph } from "../visGraph/visGraph";
 import { MetricApiResult, MetricsApi } from "./metricsApi";
+import { StressMetricCalculator } from "./metricStress";
 
 export type MetricNormalization =
     "none" | "byMinimum" | "byMaximum" | "byAverage" | "byMedian" | "byShorterLayoutSide" | "byLongerLayoutSide"
@@ -34,7 +35,8 @@ export class MetricsCollection {
         NodeDistanceCalculator,
         EdgeCrossingsCalculator,
         PathLengthRatioMetricCalculator,
-        NormalizedPathLengthRatioMetricCalculator
+        NormalizedPathLengthRatioMetricCalculator,
+        StressMetricCalculator
     ];
 
     // Map from setting id to the metrics results of that setting

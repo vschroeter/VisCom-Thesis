@@ -1,7 +1,3 @@
-Quantitative Metriken:
-- Edge length Umweg --> d.h. relativ zur direkten Kante
-
-
 
 Tabelle für Figure 6 & 7 mit Rohdaten der Scores
 Figures in Table umwandeln, mit Headers etc.
