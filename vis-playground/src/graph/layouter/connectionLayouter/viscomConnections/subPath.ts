@@ -842,7 +842,14 @@ export class SubPath extends CombinedPathSegment {
 
             const smallerNode = target.radius < source.radius ? target : source;
             const newRadius = newCenter.distanceTo(smallerNode.center)[0];
-            segmentCircle = new Circle(newCenter, newRadius);
+
+            const radiusFactor = parent.innerRadius / radius;
+            const scaledRadius = newRadius / radiusFactor;
+
+            // segmentCircle = new Circle(newCenter, newRadius);
+            segmentCircle = new Circle(newCenter, scaledRadius);
+
+
             // this.startNode.debugShapes.push(segmentCircle);
             // this.startNode.debugShapes.push(parent.innerCircle);
             // this.startNode.debugShapes.push(arcSourceCircle);
