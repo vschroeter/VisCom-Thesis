@@ -252,7 +252,7 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
     }
 
     override isValidForNode(node: VisNode): boolean {
-        return false;
+        // return false;
         // return true;
         // TODO: this can still be improved
         // Maybe by line sampling or something like that
@@ -273,8 +273,8 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
         const segment = new Segment(this.pathAnchor.anchorPoint, this.anchorForNode.anchorPoint);
 
         // const intersections = node.layoutNode.innerCircle.intersect(segment);
-        // const circle = node.layoutNode.innerCircle.clone();
-        const circle = node.layoutNode.innerEnclosingCircle.clone();
+        const circle = node.layoutNode.innerCircle.clone();
+        // const circle = node.layoutNode.innerEnclosingCircle.clone();
         const intersections = circle.intersect(segment);
         if (intersections.length > 0) {
 
@@ -338,10 +338,10 @@ export class CircleSegmentConnectionMethod extends DynamicConnectionMethod {
         this.anchorForNode = this.nodeToConnect.outerRange.getValidAnchorTowardsDirectionForPath(this.dynamicSubPath.subPath, this.pathAnchor.anchorPoint);
         const desiredAnchor = this.dynamicSubPath.subPath.getDesiredNodeAnchor(this.nodeToConnect!);
 
-        if (desiredAnchor) this.anchorForNode = desiredAnchor;
-        else {
-            console.error("No desired anchor found", this.nodeToConnect, this.dynamicSubPath.subPath);
-        }
+        // if (desiredAnchor) this.anchorForNode = desiredAnchor;
+        // else {
+        //     console.error("No desired anchor found", this.nodeToConnect, this.dynamicSubPath.subPath);
+        // }
 
         this.connection.debugShapes.push(this.anchorForNode);
 

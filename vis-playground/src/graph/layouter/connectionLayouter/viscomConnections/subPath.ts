@@ -274,7 +274,15 @@ export class SubPath extends CombinedPathSegment {
      * @param ignoreLevelDifference If true, level difference is ignored. Otherwise, there is no anchor if the level difference is more than 1
      * @returns The desired anchor or undefined if not possible
      */
-    getDesiredNodeAnchor(visNode: VisNode, ignoreLevelDifference = false): Anchor | undefined {
+    getDesiredNodeAnchor(visNode: VisNode, props?: {
+        ignoreLevelDifference?: boolean,
+        directConnectionAtHypernode?: boolean,
+    }
+    ): Anchor | undefined {
+
+        const ignoreLevelDifference = props?.ignoreLevelDifference ?? false;
+        const directConnectionAtHypernode = props?.directConnectionAtHypernode ?? true;
+
 
         const otherVisNode = this.getOppositeNodeThan(visNode);
 
@@ -306,13 +314,13 @@ export class SubPath extends CombinedPathSegment {
                 return undefined;
             }
 
-            const nextNonHyperNode = this.getNextNonHyperNodeBetween(visNode, this.layouter.getVisNode(otherLayoutNode!));
+            const nextNonHyperNodeOnOtherSide = this.getNextNonHyperNodeBetween(visNode, this.layouter.getVisNode(otherLayoutNode!));
 
             if (debug) {
                 console.error({
                     visNode: visNode.id,
                     sourceLayoutNode: sourceLayoutNode,
-                    nextNonHyperNode: nextNonHyperNode,
+                    nextNonHyperNode: nextNonHyperNodeOnOtherSide,
                     otherLayoutNode: otherLayoutNode,
                     type: this.connectionType
                 });
@@ -353,7 +361,7 @@ export class SubPath extends CombinedPathSegment {
                 // In this case we do the following:
                 // The hyper node has inside a next non-hyper node which is the next in the nodePath.
                 // We take this node as basis for the desired anchor.
-                const nextNonHyperNode = this.getNextNonHyperNodeBetween(visNode, this.layouter.getVisNode(sourceLayoutNode));
+                const nextNonHyperNodeAtSource = this.getNextNonHyperNodeBetween(visNode, this.layouter.getVisNode(sourceLayoutNode));
 
                 // if (sourceLayoutNode.id == "system_information") debug = true;
                 // if (sourceLayoutNode.id == "drive_manager") debug = true;
@@ -365,7 +373,7 @@ export class SubPath extends CombinedPathSegment {
                 if (debug) {
                     console.log({
                         isHyperNode: true,
-                        nextNonHyperNode: nextNonHyperNode?.id,
+                        nextNonHyperNode: nextNonHyperNodeAtSource?.id,
                         nPath: this.nodePath.map(n => n.id),
                         nVisPath: this.visConnection.nodePath.map(n => n.id),
                         sVis: visNode.id,
@@ -373,26 +381,27 @@ export class SubPath extends CombinedPathSegment {
                     })
                 }
 
+                if (!directConnectionAtHypernode) {
+                    if (nextNonHyperNodeAtSource) {
+                        // If the direct connection to the other node is inside the nextNonHyperNode outside range, we take this anchor
+                        const nextNonHyperVisNode = this.layouter.getVisNode(nextNonHyperNodeAtSource)!;
 
-                if (nextNonHyperNode) {
-                    // If the direct connection to the other node is inside the nextNonHyperNode outside range, we take this anchor
-                    const nextNonHyperVisNode = this.layouter.getVisNode(nextNonHyperNode)!;
+                        const line = new Segment(nextNonHyperNodeAtSource.center, otherLayoutNode.center);
 
-                    const line = new Segment(nextNonHyperNode.center, otherLayoutNode.center);
+                        if (debug) {
+                            visNode.layoutNode.debugShapes.push(line);
+                            // console.error({
+                            //     intersections: intersections,
+                            // });
+                        }
 
-                    if (debug) {
-                        visNode.layoutNode.debugShapes.push(line);
-                        // console.error({
-                        //     intersections: intersections,
-                        // });
-                    }
+                        if (nextNonHyperVisNode.outerRange.pointIsInside(otherLayoutNode.center)) {
+                            // Calculate the intersection with the line from nextNonHyperNode to the center of the other node with the outer circle of the vis node
+                            const intersections = visNode.outerCircle.intersect(line);
 
-                    if (nextNonHyperVisNode.outerRange.pointIsInside(otherLayoutNode.center)) {
-                        // Calculate the intersection with the line from nextNonHyperNode to the center of the other node with the outer circle of the vis node
-                        const intersections = visNode.outerCircle.intersect(line);
-
-                        if (intersections.length > 0) {
-                            return new Anchor(intersections[0], new Vector(visNode.center, intersections[0]));
+                            if (intersections.length > 0) {
+                                return new Anchor(intersections[0], new Vector(visNode.center, intersections[0]));
+                            }
                         }
                     }
                 }
@@ -402,7 +411,7 @@ export class SubPath extends CombinedPathSegment {
 
                 // If it is not inside the outer range, we extend a line from the center of the hyper node to the center of the next non-hyper node
                 // and move it to the outer circle of the hyper node.
-                return new Anchor(visNode.center, new Vector(visNode.center, nextNonHyperNode?.center ?? sourceLayoutNode.center)).move(visNode.outerCircle.r);
+                return new Anchor(visNode.center, new Vector(visNode.center, nextNonHyperNodeAtSource?.center ?? sourceLayoutNode.center)).move(visNode.outerCircle.r);
             }
 
         }
@@ -627,7 +636,7 @@ export class SubPath extends CombinedPathSegment {
             }
         }
 
-        const useHyperEdges = true;
+        const useHyperEdges = false;
 
         // Connections between nodes on the same level are cached
         if (this.levelType == "sameLevel" && this.connectionType == "nodeToNode") {

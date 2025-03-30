@@ -474,7 +474,7 @@ export class SubPathRange {
     // #region Sub Path Info
     ////////////////////////////////////////////////////////////////////////////
 
-    getSortedSubPathInfo(doMerging = true): SubPathInformation[] {
+    getSortedSubPathInfo(): SubPathInformation[] {
 
         if (this.sorted) return this.subPathInformation;
 
@@ -766,7 +766,7 @@ export class SubPathRange {
 
             if (id == oId) {
                 mergedPathInformation.push(pathInformation[i]);
-                console.log("Adding", pathInformation[i].subPath.cId);
+                // console.log("Adding", pathInformation[i].subPath.cId);
                 addedIds.add(id!);
 
                 continue;
@@ -807,16 +807,16 @@ export class SubPathRange {
             this.mappedSubPathInformation.set(info.subPath, info);
         });
 
-        // if (this.node.layoutNode.children.length == 3 || this.node.layoutNode.children.length == 4) {
-        //     console.warn("[SORT]", {
-        //         id: this.node.id,
-        //         dir: this.type,
-        //         pathInformation,
-        //         pathIds: pathInformation.map(p => p.subPath.cId),
-        //         oppositePathIds: oppositePathInformation.map(p => p.subPath.cId),
-        //         mergedPathInformation: mergedPathInformation.map(p => p.subPath.cId)
-        //     })
-        // }
+        if (this.node.layoutNode.children.length == 5 || this.node.layoutNode.children.length == 4) {
+            console.warn("[SORT]", {
+                id: this.node.id,
+                dir: this.type,
+                pathInformation,
+                pathIds: pathInformation.map(p => p.subPath.cId),
+                oppositePathIds: oppositePathInformation.map(p => p.subPath.cId),
+                mergedPathInformation: mergedPathInformation.map(p => p.subPath.cId)
+            })
+        }
 
 
         this.sorted = true;
@@ -1110,7 +1110,7 @@ export class SubPathRange {
         // if (this.type == "outside") {
         //     debug = true;
         // }
-        // debug = true;
+        debug = true;
 
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
