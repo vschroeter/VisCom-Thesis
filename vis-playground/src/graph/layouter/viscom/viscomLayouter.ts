@@ -64,6 +64,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
             this.visGraph.setEdgeVisibility({
                 hyperEdges: this.settings.display.showHyperEdges.getValue() ?? true,
                 edgesIncludedInHyperEdges: this.settings.display.showIncludedInHyperEdges.getValue() ?? true,
+                virtualEdges: this.settings.display.showVirtualPaths.getValue() ?? true,
             })
 
             console.log("Combined communities", this.visGraph, this.commGraph.communities.getAsIdLists());

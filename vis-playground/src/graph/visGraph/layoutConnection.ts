@@ -98,7 +98,10 @@ export class LayoutConnection {
         return this.parent !== undefined;
     }
 
-    isThroughVirtualNodes: boolean = false;
+    // isThroughVirtualNodes: boolean = false;
+    get isThroughVirtualNodes(): boolean {
+        return this.getConnectionPathViaHyperAndVirtualNodes().slice(1, -1).some(node => node.isVirtual);
+    }
 
     /**
      * After combining links, the opposite links are stored here.

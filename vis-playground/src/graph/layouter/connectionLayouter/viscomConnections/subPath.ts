@@ -907,10 +907,10 @@ export class SubPath extends CombinedPathSegment {
             return;
         }
 
-        this.connection.debugShapes.push(sourceAnchor);
-        this.connection.debugShapes.push(targetAnchor);
+        // this.connection.debugShapes.push(sourceAnchor);
+        // this.connection.debugShapes.push(targetAnchor);
 
-        this.segments = [new SmoothSplineSegment(this.connection, sourceAnchor, targetAnchor)];
+        this.segments = [new SmoothSplineSegment(this.connection, sourceAnchor, targetAnchor, 0.4, false, false)];
     }
 
     layoutPathNodeConnection() {

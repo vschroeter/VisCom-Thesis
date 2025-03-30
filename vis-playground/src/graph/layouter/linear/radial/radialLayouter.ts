@@ -155,7 +155,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
                 try {
                     const center = parentNode.center;
                     const direction = new Vector(center, n.center).normalize();
-                    const expandedPoint = n.center.translate(direction.scale(n.radius));
+                    const expandedPoint = n.center.translate(direction.scale(n.outerRadius));
                     return expandedPoint;
                 } catch (e) {
                     // console.error("Error expanding point", n, e);
@@ -172,6 +172,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
 
             // Adapt all children to the enclosing circle
             parentNode.radius = enclosingCircle.r * this.radiusMarginFactor;
+            parentNode.innerEnclosingRadius = enclosingCircle.r;
             const innerTranslation = new Vector(parentNode.center, enclosingCircle.center)//.scale(-1);
             parentNode.innerCenterTranslation = innerTranslation;
 
@@ -197,12 +198,38 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             return !descendantsSet.has(conn.source) || !descendantsSet.has(conn.target);
         });
 
+        console.warn(`Outside connections for ${parentNode.id}:`, outsideConnections.map(c => c.id));
+
 
         // We build a vector based on the direction of the target node
         for (const conn of outsideConnections) {
 
-            const nodeInsideParent = descendantsSet.has(conn.source) ? conn.source : conn.target;
-            const nodeOutsideParent = descendantsSet.has(conn.source) ? conn.target : conn.source;
+            const direction = descendantsSet.has(conn.source) ? "out" : "in";
+
+            let nodeInsideParent = direction == "out" ? conn.source : conn.target;
+            let nodeOutsideParent = direction == "out" ? conn.target : conn.source;
+
+            const nodePath = conn.getConnectionPathViaHyperAndVirtualNodes();
+
+            // Check if there are virtual node
+            // If so, take the virtual nodes instead of the actual nodes
+            if (direction == "out") {
+                if (nodePath[1] && nodePath[1].isVirtual) {
+                    nodeInsideParent = nodePath[1];
+                }
+                if (nodePath[nodePath.length - 2] && nodePath[nodePath.length - 2].isVirtual) {
+                    nodeOutsideParent = nodePath[nodePath.length - 2];
+                }
+            } else {
+                if (nodePath[nodePath.length - 2] && nodePath[nodePath.length - 2].isVirtual) {
+                    nodeInsideParent = nodePath[nodePath.length - 2];
+                }
+                if (nodePath[1] && nodePath[1].isVirtual) {
+                    nodeOutsideParent = nodePath[1];
+                }
+            }
+
+            console.log(nodePath);
 
             const connectionVector = new Vector(nodeInsideParent.center, nodeOutsideParent.center);
             const centerToNodeInside = new Vector(parentNode.center, nodeInsideParent.center);

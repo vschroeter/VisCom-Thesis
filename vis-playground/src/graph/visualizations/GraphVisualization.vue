@@ -30,10 +30,10 @@
 
                         <g ref="refGZoom">
 
-                            <!-- <rect :x="visibleArea?.x" :y="visibleArea?.y" :width="visibleArea?.w"
-                                :height="visibleArea?.h" fill="none" stroke="red" stroke-width="1" />
+                            <!-- <rect :x="(visibleArea?.x ?? 0) + 10" :y="(visibleArea?.y ?? 0) + 10" :width="(visibleArea?.w ?? 0) - 20"
+                                :height="(visibleArea?.h ?? 0) - 20" fill="none" stroke="red" stroke-width="1" /> -->
 
-                            <circle cx="0" cy="0" r="10" fill="red" /> -->
+                            <!--<circle cx="0" cy="0" r="10" fill="red" /> -->
                             <g ref="refGRoot">
                             </g>
 

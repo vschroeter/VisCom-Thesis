@@ -817,12 +817,16 @@ export class VisGraph {
 
     }
 
-    setEdgeVisibility({ hyperEdges = true, edgesIncludedInHyperEdges = true }) {
+    setEdgeVisibility({ hyperEdges = true, edgesIncludedInHyperEdges = true, virtualEdges = false}) {
         this.allLayoutConnections.forEach(connection => {
             if (connection.isHyperConnection) {
                 connection.isRendered = hyperEdges;
             } else if (connection.isPrimaryConnection) {
                 connection.isRendered = edgesIncludedInHyperEdges;
+            }
+
+            if (connection.isThroughVirtualNodes) {
+                connection.isRendered = virtualEdges;
             }
         });
     }

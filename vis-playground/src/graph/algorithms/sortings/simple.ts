@@ -17,20 +17,36 @@ export class IdSorter extends Sorter {
 
 export class DegreeSorter extends Sorter {
     protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
-        return nodes.sort((a, b) => a.degree - b.degree).reverse();
+        // return nodes.sort((a, b) => a.degree - b.degree).reverse();
+        return nodes.sort((a, b) => {
+            if (a.degree === b.degree) {
+                return a.id.localeCompare(b.id);
+            }
+            return a.degree - b.degree;
+        }).reverse();
     }
 }
 
 export class ChildrenCountSorter extends Sorter {
     protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
-        return nodes.sort((a, b) => a.getSuccessors().length - b.getSuccessors().length).reverse();
+        return nodes.sort((a, b) => {
+            if (a.getSuccessors().length === b.getSuccessors().length) {
+                return a.id.localeCompare(b.id);
+            }
+            return a.getSuccessors().length - b.getSuccessors().length;
+        }).reverse();
     }
 }
 
 
 export class NodeScoreSorter extends Sorter {
     protected override sortingImplementation(nodes: LayoutNode[]): LayoutNode[] {
-        return nodes.sort((a, b) => a.scoreIncludingChildren - b.scoreIncludingChildren).reverse();
+        return nodes.sort((a, b) => {
+            if (Math.abs(a.scoreIncludingChildren - b.scoreIncludingChildren) < 0.01) {
+                return b.id.localeCompare(a.id);
+            }
+            return a.scoreIncludingChildren - b.scoreIncludingChildren;
+        }).reverse();
     }
 }
 

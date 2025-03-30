@@ -384,11 +384,27 @@ export class Connection2d extends SvgRenderable {
 
     override updateVisibleArea(visibleArea: BoundingBox): void {
 
+        if (!this.layoutConnection.isRendered)
+            this.updateStyleVisibilityOpacity(0);
+        return;
+
+        // console.log("Update visible area", this.layoutConnection.id, this.layoutConnection.isThroughVirtualNodes);
         if (this.layoutConnection.isThroughVirtualNodes) {
 
             if (!this.boundingBox) {
                 this.updateBoundingBox();
             }
+
+            const shrinkFactor = 1;
+
+            // Shrink the visible area by the shrink factor
+            const visibleAreaAdjusted = {
+                x: visibleArea.x + this.boundingBox!.w * (1 - shrinkFactor) / 2,
+                y: visibleArea.y + this.boundingBox!.h * (1 - shrinkFactor) / 2,
+                w: visibleArea.w * shrinkFactor,
+                h: visibleArea.h * shrinkFactor,
+            }
+            // console.log("Visible area", visibleArea);
 
             const bbox = {
                 x: this.boundingBox!.x,
@@ -398,11 +414,11 @@ export class Connection2d extends SvgRenderable {
             }
 
             // Calculate the visible part of the connection
-            const x0 = Math.max(visibleArea.x, bbox.x);
-            const y0 = Math.max(visibleArea.y, bbox.y);
+            const x0 = Math.max(visibleAreaAdjusted.x, bbox.x);
+            const y0 = Math.max(visibleAreaAdjusted.y, bbox.y);
 
-            const x1 = Math.min(visibleArea.x + visibleArea.w, bbox.x + bbox.w);
-            const y1 = Math.min(visibleArea.y + visibleArea.h, bbox.y + bbox.h);
+            const x1 = Math.min(visibleAreaAdjusted.x + visibleAreaAdjusted.w, bbox.x + bbox.w);
+            const y1 = Math.min(visibleAreaAdjusted.y + visibleAreaAdjusted.h, bbox.y + bbox.h);
 
             const w = x1 - x0;
             const h = y1 - y0;
@@ -417,12 +433,24 @@ export class Connection2d extends SvgRenderable {
                 opacity = (area / (totalArea)) ** 2;
             }
 
+            const area = w * h;
+            const totalArea = bbox.w * bbox.h;
+            opacity = (area / (totalArea)) ** 2;
+
             if (this.layoutConnection.id == "drive_manager->camera") {
                 console.log({
                     bbox,
                     visibleArea,
-                    opacity
+                    opacity,
+                    totalArea,
+                    area,
+                    x0, y0, x1, y1,
                 });
+
+                // this.layoutConnection.debugShapes.push(...[
+                //     new Point(visibleArea.x, visibleArea.y),
+                //     new Point(visibleArea.x + visibleArea.w, visibleArea.y + visibleArea.h),
+                // ]);
             }
             // opacity = 1;
             this.updateStyleVisibilityOpacity(opacity);

@@ -90,6 +90,13 @@ export class DisplaySettings extends Setting {
         defaultValue: true,
         type: "boolean",
     });
+
+    showVirtualPaths = new Param<boolean>({
+        key: "showVirtualPaths",
+        optional: false,
+        defaultValue: true,
+        type: "boolean",
+    });
 }
 
 

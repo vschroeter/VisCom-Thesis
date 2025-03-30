@@ -911,7 +911,7 @@ export class RadialMultiConnectionLayouter extends BaseNodeConnectionLayouter {
                 connection.pathSegment = multiConnection;
 
                 multiConnection.nodePath = connection.getConnectionPathViaHyperAndVirtualNodes();
-                connection.isThroughVirtualNodes = multiConnection.nodePath.slice(1, -1).some(node => node.isVirtual);
+                // connection.isThroughVirtualNodes = multiConnection.nodePath.slice(1, -1).some(node => node.isVirtual);
                 // console.log(multiConnection.nodePath.map(node => node.id));
 
                 multiConnections.push(multiConnection);

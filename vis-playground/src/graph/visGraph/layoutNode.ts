@@ -563,6 +563,8 @@ export class LayoutNode {
     // For connections to this node
     _outerRadius?: number;
 
+    _innerEnclosingRadius?: number = 0;
+
     /**
      * The inner radius of the node.
      * For hypernodes, this is the radius of the inner circle on which  the child nodes are placed.
@@ -574,6 +576,17 @@ export class LayoutNode {
 
     set innerRadius(value: number) {
         this._innerRadius = value;
+    }
+
+    set innerEnclosingRadius(value: number) {
+        this._innerEnclosingRadius = value;
+    }
+
+    get innerEnclosingRadius(): number {
+        if (this._innerEnclosingRadius) {
+            return this._innerEnclosingRadius;
+        }
+        return this.innerRadius;
     }
 
     /**
@@ -614,6 +627,13 @@ export class LayoutNode {
      */
     get innerCircle() {
         return new Circle(this.center.translate(this.innerCenterTranslation.scale(-1)), this.innerRadius);
+    }
+
+    /**
+     * The inner circle of the node enclosing the child nodes.
+     */
+    get innerEnclosingCircle() {
+        return new Circle(this.center.translate(this.innerCenterTranslation.scale(-1)), this.innerEnclosingRadius);
     }
 
     /**

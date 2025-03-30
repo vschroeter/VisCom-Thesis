@@ -252,6 +252,7 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
     }
 
     override isValidForNode(node: VisNode): boolean {
+        return false;
         // return true;
         // TODO: this can still be improved
         // Maybe by line sampling or something like that
@@ -271,14 +272,24 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
         // If it does, the connection is not valid
         const segment = new Segment(this.pathAnchor.anchorPoint, this.anchorForNode.anchorPoint);
 
-        const intersections = node.layoutNode.innerCircle.intersect(segment);
+        // const intersections = node.layoutNode.innerCircle.intersect(segment);
+        // const circle = node.layoutNode.innerCircle.clone();
+        const circle = node.layoutNode.innerEnclosingCircle.clone();
+        const intersections = circle.intersect(segment);
         if (intersections.length > 0) {
+
+            // this.connection.debugShapes.push(segment);
+            // this.connection.debugShapes.push(...intersections);
+            // this.connection.debugShapes.push(circle);
 
             // If these intersections are inside the valid range of the node to connect, the connection is still valid
             const validRange = this.nodeToConnect?.outerRange;
             if (validRange && intersections.every(p => validRange.pointIsInside(p))) {
                 return true;
             }
+
+
+
             return false;
         }
 
@@ -325,6 +336,14 @@ export class CircleSegmentConnectionMethod extends DynamicConnectionMethod {
         // this.closerAnchor = closerAnchor;
 
         this.anchorForNode = this.nodeToConnect.outerRange.getValidAnchorTowardsDirectionForPath(this.dynamicSubPath.subPath, this.pathAnchor.anchorPoint);
+        const desiredAnchor = this.dynamicSubPath.subPath.getDesiredNodeAnchor(this.nodeToConnect!);
+
+        if (desiredAnchor) this.anchorForNode = desiredAnchor;
+        else {
+            console.error("No desired anchor found", this.nodeToConnect, this.dynamicSubPath.subPath);
+        }
+
+        this.connection.debugShapes.push(this.anchorForNode);
 
     }
 
@@ -336,8 +355,14 @@ export class CircleSegmentConnectionMethod extends DynamicConnectionMethod {
 
         // TODO: Distribute this over a node continuum
         const circle = this.nodeAtPathAnchor!.circle.clone();
-        circle.r *= 0.9;
+
+        const range = [0.9, 0.8];
+        const randomR = Math.random() * (range[1] - range[0]) + range[0];
+
+        // circle.r *= 0.9;
+        circle.r *= randomR;
         // const circleSegment = new SmoothCircleSegment(this.connection, pathAnchor, correctlyOrientedAnchor, circle);
+
 
         const circleSegment = this.isPathToNode ?
             new SmoothCircleSegment(this.connection, this.pathAnchor, this.anchorForNode.cloneReversed(), circle) :

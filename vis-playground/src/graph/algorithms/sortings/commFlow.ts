@@ -138,7 +138,12 @@ export class CommFlowSorter extends Sorter {
                 }
             })
             // const sortedChildren = childrensSuccessorCount.sort((a, b) => b.successorCount - a.successorCount).map(item => item.node)
-            const sortedChildren = childrensSuccessors.sort((a, b) => b.successorScore - a.successorScore).map(item => item.node)
+            const sortedChildren = childrensSuccessors.sort((a, b) => {
+                if (Math.abs(a.successorScore - b.successorScore) < 0.01) {
+                    return b.node.id.localeCompare(a.node.id)
+                }
+                return b.successorScore - a.successorScore;
+            }).map(item => item.node)
 
             // Visit each child
             sortedChildren.forEach(child => {

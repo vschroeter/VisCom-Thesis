@@ -16,7 +16,7 @@ export type TopologicalGeneration = {
 export class WeightedTopologicalSorter extends Sorter {
 
     clusterer: Clusterer
-    topoligicalSorter: TopologicalSorter
+    topologicalSorter: TopologicalSorter
 
     /**
      * If true, generations are optimized by putting nodes in the latest possible generation.
@@ -28,7 +28,7 @@ export class WeightedTopologicalSorter extends Sorter {
         super(visGraph, commonSettings);
 
         this.clusterer = new Clusterer(visGraph);
-        this.topoligicalSorter = new TopologicalSorter(visGraph, commonSettings);
+        this.topologicalSorter = new TopologicalSorter(visGraph, commonSettings);
     }
 
     getCycleFreeParentMap(nodes?: LayoutNode[], channels?: CommunicationChannel[]): Map<LayoutNode, Map<LayoutNode, number>> {
@@ -68,6 +68,10 @@ export class WeightedTopologicalSorter extends Sorter {
                 if (Math.abs(a.source.score - b.source.score) < 0.01) {
                     // If the scores are equal, we sort by the id of the fromNode in ascending order.
                     // This way we make sure, that the links from a node with a lower id are visited first.
+
+                    if (Math.abs(a.target.score - b.target.score) < 0.01) {
+                        return a.id.localeCompare(b.id);
+                    }
                     return b.target.score - a.target.score;
                 }
 
@@ -162,26 +166,26 @@ export class WeightedTopologicalSorter extends Sorter {
             // Check the generation 0 nodes for each component,
             // otherwise there could be a deadlock between sibling nodes
             // components.forEach(singleComponent => {
-                const addedNodes = [];
-                // To start we take every node that has no parents and so siblings and set the generation to 0
-                // singleComponent.forEach(node => {
-                //     if ((!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) && (!mapNodeToItsSiblings.has(node) || mapNodeToItsSiblings.get(node)!.size == 0)) {
-                //         generationMap.set(node, 0)
-                //         gen0nodes.add(node)
-                //         nonAssignedNodes.delete(node)
-                //         addedNodes.push(node)
-                //     }
-                // })
-                // If there are no gen0 nodes due to sibling structures, take all nodes, that have no parents
-                if (addedNodes.length == 0) {
-                    component.forEach(node => {
-                        if (!mapNodeToItsParentsCycleFree.has(node) || mapNodeToItsParentsCycleFree.get(node)!.size == 0) {
-                            generationMap.set(node, 0)
-                            gen0nodes.add(node)
-                            nonAssignedNodes.delete(node)
-                        }
-                    })
-                }
+            const addedNodes = [];
+            // To start we take every node that has no parents and so siblings and set the generation to 0
+            // singleComponent.forEach(node => {
+            //     if ((!mapNodeToItsParents.has(node) || mapNodeToItsParents.get(node)!.size == 0) && (!mapNodeToItsSiblings.has(node) || mapNodeToItsSiblings.get(node)!.size == 0)) {
+            //         generationMap.set(node, 0)
+            //         gen0nodes.add(node)
+            //         nonAssignedNodes.delete(node)
+            //         addedNodes.push(node)
+            //     }
+            // })
+            // If there are no gen0 nodes due to sibling structures, take all nodes, that have no parents
+            if (addedNodes.length == 0) {
+                component.forEach(node => {
+                    if (!mapNodeToItsParentsCycleFree.has(node) || mapNodeToItsParentsCycleFree.get(node)!.size == 0) {
+                        generationMap.set(node, 0)
+                        gen0nodes.add(node)
+                        nonAssignedNodes.delete(node)
+                    }
+                })
+            }
             // });
 
             while (nonAssignedNodes.size > 0) {
@@ -227,6 +231,16 @@ export class WeightedTopologicalSorter extends Sorter {
                 }
                 generations.get(genNr)!.nodes.push(node)
             });
+
+            // Sort the nodes in a generation by score and id
+            generations.forEach(gen => {
+                gen.nodes.sort((a, b) => {
+                    if (Math.abs(a.score - b.score) < 0.01) {
+                        return a.id.localeCompare(b.id);
+                    }
+                    return b.score - a.score;
+                })
+            })
 
             const generationList = Array.from(generations.values()).sort((a, b) => a.generation - b.generation)
 
@@ -290,6 +304,19 @@ export class WeightedTopologicalSorter extends Sorter {
                 mergedGenerations.push(gen)
             }
         })
+
+        // Sort the nodes in a generation by score and id
+
+        mergedGenerations.forEach(gen => {
+            gen.nodes.sort((a, b) => {
+                if (Math.abs(a.score - b.score) < 0.01) {
+                    return a.id.localeCompare(b.id);
+                }
+                return b.score - a.score;
+            })
+        })
+
+
 
         return mergedGenerations
     }

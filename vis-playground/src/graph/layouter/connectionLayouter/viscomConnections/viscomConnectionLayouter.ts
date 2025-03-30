@@ -138,6 +138,12 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
         })
 
         sortedNodes.forEach(visNode => {
+
+            // visNode.layoutNode.debugShapes.push(visNode.layoutNode.innerEnclosingCircle);
+            // visNode.layoutNode.debugShapes.push(visNode.layoutNode.innerEnclosingCircle.center);
+            // visNode.layoutNode.debugShapes.push(visNode.layoutNode.innerCircle.center);
+            // visNode.layoutNode.debugShapes.push(visNode.layoutNode.innerCircle);
+
             visNode.path2pathSubPaths.forEach(subPath => {
                 // console.log("[VISCOM] subPath", subPath.cId, subPath.level);
                 subPath.layout();
