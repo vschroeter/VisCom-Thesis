@@ -1110,7 +1110,7 @@ export class SubPathRange {
         // if (this.type == "outside") {
         //     debug = true;
         // }
-        debug = true;
+        // debug = true;
 
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
