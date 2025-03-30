@@ -5,6 +5,7 @@ from .graph_metric_calculator import GraphMetricCalculator as GraphMetricCalcula
 from .metrics_calculator import (
     MetricCalculator as MetricCalculator,
 )
+from .path_continuity_metric import PathContinuityMetricCalculator as PathContinuityMetricCalculator
 from .path_length_ratio_metric import (
     AbsolutePathLengthRatioMetricCalculator as AbsolutePathLengthRatioMetricCalculator,
 )
@@ -12,6 +13,7 @@ from .path_length_ratio_metric import (
     NormalizedPathLengthRatioMetricCalculator as NormalizedPathLengthRatioMetricCalculator,
 )
 from .stress_calculator import StressMetricCalculator as StressMetricCalculator
+from .weighted_path_continuity_metric import WeightedPathContinuityMetricCalculator as WeightedPathContinuityMetricCalculator
 
 if __name__ == "__main__":
     l1 = Line(200 + 300j, 250 + 350j)

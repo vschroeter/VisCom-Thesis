@@ -530,7 +530,8 @@ export class SubPathRange {
             const desiredAnchorPoint = desiredAnchor?.anchorPoint;
 
             const desiredAnchorPointWithoutDirectConnection = desiredAnchorWithoutDirectConnection?.anchorPoint;
-            const desiredForwardRad = desiredAnchorPointWithoutDirectConnection ? RadialUtils.forwardRadBetweenAngles(backRad, this.getRadOfPoint(desiredAnchorPointWithoutDirectConnection)) : undefined;
+            const toleranceRad = 10 * Math.PI / 180;
+            const desiredForwardRad = desiredAnchorPointWithoutDirectConnection ? RadialUtils.forwardRadBetweenAngles(backRad, this.getRadOfPoint(desiredAnchorPointWithoutDirectConnection) - toleranceRad) : undefined;
 
             // const counterNode =  otherLayoutNode ? subPath.getNextNonHyperNodeBetween(this.node, this.node.parentLayouter.getVisNode(otherLayoutNode)) : undefined;
             const desiredCounterAnchorWithoutDirectConnection = oppositeVisNode ? subPath.getDesiredNodeAnchor(oppositeVisNode, {
@@ -546,7 +547,7 @@ export class SubPathRange {
             const desiredCounterAnchorPointWithoutDirectConnection = desiredCounterAnchorWithoutDirectConnection?.anchorPoint;
 
             const desiredCounterForwardRad = desiredCounterAnchorPointWithoutDirectConnection ?
-                RadialUtils.forwardRadBetweenAngles(otherBackRad, oppositeRange.getRadOfPoint(desiredCounterAnchorPointWithoutDirectConnection)) : undefined;
+                RadialUtils.forwardRadBetweenAngles(otherBackRad, oppositeRange.getRadOfPoint(desiredCounterAnchorPointWithoutDirectConnection) - toleranceRad) : undefined;
 
 
 
@@ -1147,8 +1148,8 @@ export class SubPathRange {
         if (debug) {
 
 
-            this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor]);
-            // this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor, this.getValidAnchorsOfRange().backsideAnchor]);
+            // this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor]);
+            this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor, this.getValidAnchorsOfRange().backsideAnchor]);
 
             // console.warn("SORTED PATHS", pathInformation);
 

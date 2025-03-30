@@ -518,7 +518,7 @@ async function downloadPDF() {
     const width = rawBbox.value?.width ?? 0;
     const height = rawBbox.value?.height ?? 0;
 
-    const marginFactor = 1.0;
+    const marginFactor = 0.99;
 
     const adaptedWidth = width / marginFactor;
     const adaptedHeight = height / marginFactor;

@@ -9,6 +9,8 @@ import { EdgeCrossingsCalculator } from "./metricEdgeCrossing";
 import { VisGraph } from "../visGraph/visGraph";
 import { MetricApiResult, MetricsApi } from "./metricsApi";
 import { StressMetricCalculator } from "./metricStress";
+import { PathContinuityMetricCalculator } from "./metricPathContinuity";
+import { WeightedPathContinuityMetricCalculator } from "./metricWeightedPathContinuity";
 
 export type MetricNormalization =
     "none" | "byMinimum" | "byMaximum" | "byAverage" | "byMedian" | "byShorterLayoutSide" | "byLongerLayoutSide"
@@ -30,13 +32,15 @@ export type MetricDefinition = {
 export class MetricsCollection {
 
     static metricsToCalculate: (typeof MetricCalculator)[] = [
-        MetricCalculator,
-        EdgeLengthCalculator,
-        NodeDistanceCalculator,
+        // MetricCalculator,
+        // EdgeLengthCalculator,
+        // NodeDistanceCalculator,
         EdgeCrossingsCalculator,
         PathLengthRatioMetricCalculator,
         NormalizedPathLengthRatioMetricCalculator,
-        StressMetricCalculator
+        StressMetricCalculator,
+        PathContinuityMetricCalculator,
+        WeightedPathContinuityMetricCalculator
     ];
 
     // Map from setting id to the metrics results of that setting
