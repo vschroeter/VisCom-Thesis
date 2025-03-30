@@ -91,8 +91,10 @@ export class SubPathRange {
             this.backsideRad = this.getMiddleRadOnBackside();
         } else if (type === "inside") {
             // this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
-            this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor, this.node.layoutNode.isHyperNode);
-            this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidInnerRadRange(1, this.node.layoutNode.isHyperNode)[0]);
+            this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor, false);
+            // this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor, this.node.layoutNode.isHyperNode);
+            this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidInnerRadRange(1, false)[0]);
+            // this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidInnerRadRange(1, this.node.layoutNode.isHyperNode)[0]);
             this.backsideRad = this.getMiddleRadOnBackside();
         } else if (type === "circleArcForward") {
             // this.range = [-0.3, 0];
@@ -519,14 +521,32 @@ export class SubPathRange {
             const otherLayoutNode = subPath.getLayoutNodeInDirectionOf(subPath.getOppositeNodeThan(this.node));
             const forwardRadToTargetNode = otherLayoutNode ? this.getRadOfPoint(otherLayoutNode.center) : forwardRadToConnectionPoint;
 
-            const desiredAnchor = subPath.getDesiredNodeAnchor(this.node);
+            const desiredAnchorWithoutDirectConnection = subPath.getDesiredNodeAnchor(this.node, {
+                directConnectionAtHypernode: false,
+            });
+            const desiredAnchor = subPath.getDesiredNodeAnchor(this.node, {
+                directConnectionAtHypernode: true,
+            });
             const desiredAnchorPoint = desiredAnchor?.anchorPoint;
-            const desiredForwardRad = desiredAnchorPoint ? RadialUtils.forwardRadBetweenAngles(backRad, this.getRadOfPoint(desiredAnchorPoint)) : undefined;
+
+            const desiredAnchorPointWithoutDirectConnection = desiredAnchorWithoutDirectConnection?.anchorPoint;
+            const desiredForwardRad = desiredAnchorPointWithoutDirectConnection ? RadialUtils.forwardRadBetweenAngles(backRad, this.getRadOfPoint(desiredAnchorPointWithoutDirectConnection)) : undefined;
 
             // const counterNode =  otherLayoutNode ? subPath.getNextNonHyperNodeBetween(this.node, this.node.parentLayouter.getVisNode(otherLayoutNode)) : undefined;
-            const desiredCounterAnchor = oppositeVisNode ? subPath.getDesiredNodeAnchor(oppositeVisNode) : undefined;
+            const desiredCounterAnchorWithoutDirectConnection = oppositeVisNode ? subPath.getDesiredNodeAnchor(oppositeVisNode, {
+                directConnectionAtHypernode: false,
+            }) : undefined;
+            const desiredCounterAnchor = oppositeVisNode ? subPath.getDesiredNodeAnchor(oppositeVisNode, {
+                directConnectionAtHypernode: true,
+            }) : undefined;
+
+
             const desiredCounterAnchorPoint = desiredCounterAnchor?.anchorPoint;
-            const desiredCounterForwardRad = desiredCounterAnchorPoint ? RadialUtils.forwardRadBetweenAngles(otherBackRad, oppositeRange.getRadOfPoint(desiredCounterAnchorPoint)) : undefined;
+
+            const desiredCounterAnchorPointWithoutDirectConnection = desiredCounterAnchorWithoutDirectConnection?.anchorPoint;
+
+            const desiredCounterForwardRad = desiredCounterAnchorPointWithoutDirectConnection ?
+                RadialUtils.forwardRadBetweenAngles(otherBackRad, oppositeRange.getRadOfPoint(desiredCounterAnchorPointWithoutDirectConnection)) : undefined;
 
 
 
@@ -550,6 +570,7 @@ export class SubPathRange {
                 otherLayoutNode: otherLayoutNode,
                 oppositeVisNode: oppositeVisNode,
                 desiredCounterAnchor,
+                desiredCounterAnchorPoint,
                 desiredCounterForwardRad
             };
         });
@@ -1117,6 +1138,9 @@ export class SubPathRange {
         // if (this.node.id == "flint_node" && this.type == "outside") debug = true;
         // if (this.node.id == "equalizer") debug = true;
         // if (this.node.id == "dialog_session_manager") debug = true;
+
+        if (this.node.layoutNode.children.find(c => c.id == "dialog_session_manager")) debug = true;
+
         // if (this.node.id == "/dialog/tts_guard") debug = true;pathCount
         // if (this.node.id.includes("__hypernode_")) debug = true;
         // if (this.node.id.includes("p2")) debug = true;

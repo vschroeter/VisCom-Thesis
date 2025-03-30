@@ -122,16 +122,23 @@ export class SmoothPathNodeSplineSegment extends PathSegment {
         const adaptedEndAnchor = new Anchor(curveEndPoint, endAnchor.direction);
 
 
-        // const _l_i1_i2 = new Segment(i1, i2);
+        let debug = false;
+        debug = false;
+        if (debug) {
 
-        // this.connection.debugShapes.push(_l_i1_i2);
-        // this.connection.debugShapes.push(l_for_nodeAnchor);
-        // this.connection.debugShapes.push(l_AP_CC);
-        // this.connection.debugShapes.push(_c);
-        // this.connection.debugShapes.push(nodeAnchor);
-        // this.connection.debugShapes.push(pathAnchor);
-        // this.connection.debugShapes.push(startControlPoint);
-        // this.connection.debugShapes.push(endControlPoint);
+            const _l_i1_i2 = new Segment(i1, i2);
+
+            this.connection.debugShapes.push(_l_i1_i2);
+            this.connection.debugShapes.push(l_for_nodeAnchor);
+            this.connection.debugShapes.push(l_AP_CC);
+            this.connection.debugShapes.push(_c);
+            this.connection.debugShapes.push(nodeAnchor);
+            this.connection.debugShapes.push(pathAnchor);
+            this.connection.debugShapes.push(startControlPoint);
+            this.connection.debugShapes.push(endControlPoint);
+            this.connection.debugShapes.push(adaptedStartAnchor);
+            this.connection.debugShapes.push(adaptedEndAnchor);
+        }
 
 
         const bezierCurve = new CubicBezierCurve(this.connection, adaptedStartAnchor.anchorPoint, startControlPoint, endControlPoint, adaptedEndAnchor.anchorPoint);

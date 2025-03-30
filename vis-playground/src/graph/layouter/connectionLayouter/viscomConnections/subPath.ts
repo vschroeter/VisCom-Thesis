@@ -381,7 +381,7 @@ export class SubPath extends CombinedPathSegment {
                     })
                 }
 
-                if (!directConnectionAtHypernode) {
+                if (directConnectionAtHypernode) {
                     if (nextNonHyperNodeAtSource) {
                         // If the direct connection to the other node is inside the nextNonHyperNode outside range, we take this anchor
                         const nextNonHyperVisNode = this.layouter.getVisNode(nextNonHyperNodeAtSource)!;
@@ -400,7 +400,8 @@ export class SubPath extends CombinedPathSegment {
                             const intersections = visNode.outerCircle.intersect(line);
 
                             if (intersections.length > 0) {
-                                return new Anchor(intersections[0], new Vector(visNode.center, intersections[0]));
+                                return new Anchor(intersections[0], new Vector(line.slope));
+                                // return new Anchor(intersections[0], new Vector(visNode.center, intersections[0]));
                             }
                         }
                     }
@@ -640,7 +641,12 @@ export class SubPath extends CombinedPathSegment {
 
         // Connections between nodes on the same level are cached
         if (this.levelType == "sameLevel" && this.connectionType == "nodeToNode") {
-            this.cachable = useHyperEdges;
+            // if (this.connection.isDirectVirtualConnection || this.connection.isThroughVirtualNodes) {
+            if (this.sourceVisNode.layoutNode.isVirtual || this.targetVisNode.layoutNode.isVirtual) {
+                this.cachable = true;
+            } else {
+                this.cachable = useHyperEdges;
+            }
         }
 
         // Update cache

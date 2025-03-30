@@ -103,6 +103,10 @@ export class LayoutConnection {
         return this.getConnectionPathViaHyperAndVirtualNodes().slice(1, -1).some(node => node.isVirtual);
     }
 
+    get isDirectVirtualConnection(): boolean {
+        return this.getConnectionPathViaHyperAndVirtualNodes().length == 2 && (this.source.isVirtual || this.target.isVirtual);
+    }
+
     /**
      * After combining links, the opposite links are stored here.
      */
