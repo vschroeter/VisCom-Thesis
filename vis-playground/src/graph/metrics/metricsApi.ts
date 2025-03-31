@@ -155,11 +155,44 @@ export class MetricsApi {
      * Fetches metrics and waits for the result, handling the polling automatically.
      * @param graph The graph to calculate metrics for
      * @param metrics_type The type of metric to calculate
+     * @param retries Maximum number of retry attempts (default: 5)
      * @returns Promise with the metric result
      */
-    static async fetchMetricsWithPolling(graph: VisGraph, metrics_type: string): Promise<MetricApiResult> {
-        // Submit job
-        const jobStatus = await MetricsApi.fetchMetrics(graph, metrics_type, true) as MetricJobStatus;
+    static async fetchMetricsWithPolling(graph: VisGraph, metrics_type: string, retries: number = 5): Promise<MetricApiResult> {
+        let attempt = 0;
+        let jobStatus: MetricJobStatus | undefined;
+
+        // Retry loop for submitting the job
+        while (attempt < retries) {
+            try {
+                const result = await MetricsApi.fetchMetrics(graph, metrics_type, true);
+                jobStatus = result as MetricJobStatus;
+
+                // Check if we got a valid job status with a job ID
+                if (!jobStatus || !jobStatus.job_id) {
+                    throw new Error("Invalid job status or missing job ID");
+                }
+
+                // We have a valid job status, break the retry loop
+                break;
+            } catch (error) {
+                attempt++;
+                console.error(`Error submitting metrics job (attempt ${attempt}/${retries}):`, error);
+
+                if (attempt >= retries) {
+                    throw new Error(`Failed to submit metrics job after ${retries} attempts`);
+                }
+
+                // Delay before retry with exponential backoff
+                const delayMs = 500 * Math.pow(1.5, attempt);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+
+        // If we've exited the retry loop without a valid jobStatus, something went wrong
+        if (!jobStatus || !jobStatus.job_id) {
+            throw new Error("Failed to get valid job status after retries");
+        }
 
         // Poll until done
         const finalStatus = await MetricsApi.pollJobUntilDone(jobStatus.job_id);

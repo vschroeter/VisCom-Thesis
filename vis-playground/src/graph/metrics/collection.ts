@@ -11,6 +11,7 @@ import { MetricApiResult, MetricsApi } from "./metricsApi";
 import { StressMetricCalculator } from "./metricStress";
 import { PathContinuityMetricCalculator } from "./metricPathContinuity";
 import { WeightedPathContinuityMetricCalculator } from "./metricWeightedPathContinuity";
+import { PathAngularPredictionMetricCalculator } from "./metricPathAngularPrediction";
 
 export type MetricNormalization =
     "none" | "byMinimum" | "byMaximum" | "byAverage" | "byMedian" | "byShorterLayoutSide" | "byLongerLayoutSide"
@@ -40,7 +41,8 @@ export class MetricsCollection {
         NormalizedPathLengthRatioMetricCalculator,
         StressMetricCalculator,
         PathContinuityMetricCalculator,
-        WeightedPathContinuityMetricCalculator
+        WeightedPathContinuityMetricCalculator,
+        PathAngularPredictionMetricCalculator
     ];
 
     // Map from setting id to the metrics results of that setting
