@@ -38,7 +38,8 @@ class StressMetricCalculator(GraphMetricCalculator):
         """
         # Use the undirected graph for stress calculation
         # This ensures we have symmetric distances between nodes
-        graph = self.get_undirected_graph()
+        # graph = self.get_undirected_graph()
+        graph = self.get_graph()
 
         # Calculate shortest paths between all nodes
         try:
@@ -105,7 +106,7 @@ class StressMetricCalculator(GraphMetricCalculator):
                         delta_ij = shortest_paths[i][j]
                     else:
                         # Use max distance for disconnected nodes
-                        delta_ij = max_distance
+                        delta_ij = max_distance * 2
 
                     # Calculate squared difference with optimal scaling
                     squared_diff = (delta_ij - alpha * d_ij) ** 2

@@ -25,3 +25,11 @@ https://dl.acm.org/doi/pdf/10.1145/571647.571649
 
 
 Kruskal Stress Measure (KSM):
+
+
+
+
+Node Edge Overlap
+
+
+Software Aufgaben
