@@ -554,7 +554,7 @@ export class VisGraph {
 
     getLaidOutApiData(): LaidOutDataApi {
 
-        const nodes: LaidOutNode[] = this.allGraphicalNodes.map(node => {
+        const nodes: LaidOutNode[] = this.allGraphicalLeafNodes.map(node => {
             return {
                 id: node.id,
                 x: node.x,
@@ -592,6 +592,11 @@ export class VisGraph {
 
     get allGraphicalNodes(): Node2d[] {
         return this.allLayoutNodes.map(node => node.node2d).filter(node => node !== undefined) as Node2d[];
+    }
+
+    get allGraphicalLeafNodes(): Node2d[] {
+        return this.allLayoutNodes.filter(node => node.children.length === 0)
+            .map(node => node.node2d).filter(node => node !== undefined) as Node2d[];
     }
 
     getAllGraphicalConnections(ignoreNonRendered = true): Connection2d[] {

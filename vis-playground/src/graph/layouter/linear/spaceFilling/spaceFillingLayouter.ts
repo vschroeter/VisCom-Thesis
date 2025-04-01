@@ -1,43 +1,74 @@
+import { Node2d } from "src/graph/graphical";
 import { GraphLayouter } from "../../layouter";
+import { LSystem, SpaceFillingCurve } from "./lSystem";
 
 import { SpaceFillingLayouterSettings } from "./spaceFillingSettings";
+import { BasePositioner } from "src/graph/visGraph/layouterComponents/positioner";
+import { LayoutNode } from "src/graph/visGraph/layoutNode";
 
 
+export class SpaceFillingNodePositioner extends BasePositioner {
+
+    order: number;
+    curveType: string;
+    size: number;
+
+    constructor(
+        order: number,
+        curveType: string,
+        size: number,
+    ) {
+
+        super();
+        this.order = order;
+        this.curveType = curveType;
+
+        this.size = size;
+    }
+
+    override positionChildren(parentNode: LayoutNode): void {
+        // if (parentNode != )
+
+        const nodes = parentNode.children;
+
+        const nodeUnitPositions = new Map<LayoutNode, number>();
+
+        // Assign nodes a number in interval [0, 1]
+        nodes.forEach((node, i) => {
+            nodeUnitPositions.set(node, i / (nodes.length));
+        })
+
+        const lSystem = LSystem.get(this.curveType);
+
+        const spaceFillingAlg = new SpaceFillingCurve(lSystem, this.order);
+
+        // Get the positions of the nodes on the curve
+        nodes.forEach(node => {
+            const position = nodeUnitPositions.get(node)!;
+            const point = spaceFillingAlg.getPointAtUnitInterval(position,
+                (x) => x * 10 * (this.size),
+                (y) => y * 10 * (this.size)
+            );
+            node.x = point.x;
+            node.y = point.y;
+        });
+
+    }
+
+}
 export class SpaceFillingCurveLayouter extends GraphLayouter<SpaceFillingLayouterSettings> {
 
     override layout(isUpdate = false) {
         const ctx = this.settings.getContext({ visGraph: this.visGraph });
 
-        // const sorter = this.settings.sorting.getSorter(this.commGraph, this.commonSettings);
-        // const nodes = sorter.getSorting2dNodes(this.graph2d)
+        const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
+        this.visGraph.setSorter(sorter);
 
-        // const order = this.settings.curve.order.getValue(ctx) ?? 2;
-        // const curveType = this.settings.curve.curveType.getValue() ?? "Hilbert";
-        // // const order = 2
-        // // const curveType = "Hilbert";
-        // const lSystem = LSystem.get(curveType);
+        const order = this.settings.curve.order.getValue(ctx) ?? 2;
+        const curveType = this.settings.curve.curveType.getValue() ?? "Hilbert";
+        const size = this.settings.size.size.getValue() ?? 20;
 
-        // const spaceFillingAlg = new SpaceFillingCurve(lSystem, order);
-
-
-        // const nodeUnitPositions = new Map<Node2d, number>();
-
-        // // Assign nodes a number in interval [0, 1]
-        // nodes.forEach((node, i) => {
-        //     nodeUnitPositions.set(node, i / (nodes.length));
-        // })
-
-        // // Get the positions of the nodes on the curve
-        // nodes.forEach(node => {
-        //     const position = nodeUnitPositions.get(node)!;
-        //     const point = spaceFillingAlg.getPointAtUnitInterval(position,
-        //         (x) => x * 10 * (this.settings.size.size.getValue() ?? 20),
-        //         (y) => y * 10 * (this.settings.size.size.getValue() ?? 20)
-        //     );
-        //     node.x = point.x;
-        //     node.y = point.y;
-        // });
-
+        this.visGraph.setPositioner(new SpaceFillingNodePositioner(order, curveType, size));
 
 
 
@@ -73,8 +104,10 @@ export class SpaceFillingCurveLayouter extends GraphLayouter<SpaceFillingLayoute
 
         // })
 
+        this.visGraph.layout();
+
         // console.log("Layouted arc layouter", nodes);
-        this.emitEvent("update");
+        // this.emitEvent("update");
         this.emitEvent("end");
     }
 }
