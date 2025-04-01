@@ -5,6 +5,7 @@ from .graph_metric_calculator import GraphMetricCalculator as GraphMetricCalcula
 from .metrics_calculator import (
     MetricCalculator as MetricCalculator,
 )
+from .node_edge_overlaps_metric import NodeEdgeOverlapsMetricCalculator as NodeEdgeOverlapsMetricCalculator
 from .path_angular_prediction_metric import PathAngularPredictionMetricCalculator as PathAngularPredictionMetricCalculator
 from .path_continuity_metric import PathContinuityMetricCalculator as PathContinuityMetricCalculator
 from .path_length_ratio_metric import (

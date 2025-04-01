@@ -115,7 +115,7 @@ export class SmoothPathNodeSplineSegment extends PathSegment {
         const startControlPointDistance = startControlPoint.distanceTo(startAnchor.anchorPoint)[0];
         const endControlPointDistance = endControlPoint.distanceTo(endAnchor.anchorPoint)[0];
 
-        const curveStartPoint = this.extendStart ? this.getExtendedStartPoint(startControlPointDistance / 2) : startAnchor.anchorPoint;
+        const curveStartPoint = this.extendStart ? this.getExtendedStartPoint(startControlPointDistance / 3) : startAnchor.anchorPoint;
         const adaptedStartAnchor = new Anchor(curveStartPoint, startAnchor.direction);
 
         const curveEndPoint = this.extendArrow ? this.getArrowStartPoint(endControlPointDistance / 2) : endAnchor.anchorPoint;

@@ -12,6 +12,7 @@ import { StressMetricCalculator } from "./metricStress";
 import { PathContinuityMetricCalculator } from "./metricPathContinuity";
 import { WeightedPathContinuityMetricCalculator } from "./metricWeightedPathContinuity";
 import { PathAngularPredictionMetricCalculator } from "./metricPathAngularPrediction";
+import { NodeEdgeOverlapsMetricCalculator } from "./metricNodeEdgeOverlaps";
 
 export type MetricNormalization =
     "none" | "byMinimum" | "byMaximum" | "byAverage" | "byMedian" | "byShorterLayoutSide" | "byLongerLayoutSide"
@@ -42,7 +43,8 @@ export class MetricsCollection {
         StressMetricCalculator,
         PathContinuityMetricCalculator,
         WeightedPathContinuityMetricCalculator,
-        PathAngularPredictionMetricCalculator
+        PathAngularPredictionMetricCalculator,
+        NodeEdgeOverlapsMetricCalculator
     ];
 
     // Map from setting id to the metrics results of that setting
