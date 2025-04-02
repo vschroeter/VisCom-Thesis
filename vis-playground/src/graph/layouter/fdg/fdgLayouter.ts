@@ -10,7 +10,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
     simulation?: d3.Simulation<LayoutNode, LayoutConnection>;
 
-    override layout(isUpdate = false) {
+    override async layout(isUpdate = false) {
         const ctx = this.settings.getContext({ visGraph: this.visGraph });
 
         this.visGraph.setPrecalculator(new BasicSizeCalculator({

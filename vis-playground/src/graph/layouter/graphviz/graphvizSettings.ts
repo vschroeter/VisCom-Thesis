@@ -1,121 +1,87 @@
+import { Setting, Param, GraphLayouterSettings, ParamChoice } from "../settings/settings";
 
-// export class SizeSettings extends Setting {
-//     radius = new Param({
-//         key: "radius",
-//         optional: false,
-//         defaultValue: "10 * n",
-//     });
-
-import { Setting, Param, GraphLayouterSettings } from "../settings/settings";
-
-//     constructor() {
-//         super({
-//             key: "size",
-//             label: "Size",
-//             description: "Size settings for the radial layout.",
-//             optional: false,
-//         });
-//     }
-// }
-
-export class GraphvizLayoutingSettings extends Setting {
-    nodeMarginFactor = new Param<number>({
-        key: "nodeMarginFactor",
-        label: "Margin factor between nodes",
-        description: "The factor to multiply the node radius with to get the margin between the nodes inside a circle.",
+export class GraphvizEngineSettings extends Setting {
+    layoutEngine = new ParamChoice<string>({
+        key: "layoutEngine",
+        label: "Layout Engine",
+        description: "The GraphViz layout engine to use",
         optional: false,
-        defaultValue: 0.7,
-        type: "number",
+        defaultValue: "dot",
+        choices: ["dot", "circo", "fdp", "neato", "twopi", "sfdp", "osage", "patchwork"],
     });
 
-    radiusMarginFactor = new Param<number>({
-        key: "radiusMarginFactor",
-        label: "Margin fac. for outer r of hypernodes",
-        optional: false,
-        defaultValue: 1.2,
-        type: "number",
-    });
-
-    adaptEnclosingCircle = new Param<boolean>({
-        key: "adaptEnclosingCircle",
-        label: "Adapt Enclosing Circle",
-        description: "Adapt the enclosing circle to the size of the nodes.",
+    horizontalLayout = new Param<boolean>({
+        key: "horizontalLayout",
+        label: "Horizontal Layout",
+        description: "Set layout direction from left to right instead of top to bottom",
         optional: false,
         defaultValue: true,
         type: "boolean",
     });
-
-    rotateBasedOnConnections = new Param<boolean>({
-        key: "rotateBasedOnConnections",
-        label: "Rotate children based on connections",
-        description: "Rotate the nodes based on their connections.",
-        optional: false,
-        defaultValue: true,
-        type: "boolean",
-    });
-
-    // gapBetweenStartAndEnd = new Param<number>({
-    //     key: "gapBetweenStartAndEnd",
-    //     label: "Gap between start and end",
-    //     description: "The gap between the start and end node in the radial layout.",
-    //     optional: false,
-    //     defaultValue: 0.1,
-    //     type: "number",
-    // });
 }
 
-
-export class EdgeSettings extends Setting {
-    forwardBackwardThreshold = new Param({
-        key: "forwardBackwardThreshold",
-        label: "Forw.-Back. Edge ° Thresh.",
-        description: "The threshold angle in the radial layout for edges to be handled as backward edges (in degree).",
+export class GraphvizNodeSettings extends Setting {
+    adaptSizeToScore = new Param<boolean>({
+        key: "adaptSizeToScore",
+        label: "Adapt Node Size To Score",
+        description: "Scale node size according to its score/rank",
         optional: false,
-        defaultValue: 270,
+        defaultValue: true,
+        type: "boolean",
     });
 
-    straightForwardLineAtDegreeDelta = new Param({
-        key: "straightForwardLineAtDegreeDelta",
-        label: "Straight Line @ Delta°",
-        description: "The threshold angle in the radial layout for forward edges to be drawn as straight lines (in degree). Lines above this threshold will be drawn as concave curves, lines below this threshold will be drawn as convex curves.",
-        optional: false,
-        defaultValue: 135,
-    });
-
-    backwardLineCurvature = new Param({
-        key: "backwardLineCurvature",
-        label: "Backward Line Curvature°",
-        description: "The curvature of the backward edges (between 0° and 180°).",
-        optional: false,
-        defaultValue: 120,
-    });
-
-    // combineEdges = new Param<boolean>({
-    //     key: "combineEdges",
+    // includeNodeLabels = new Param<boolean>({
+    //     key: "includeNodeLabels",
+    //     label: "Include Node Labels",
+    //     description: "Include node labels in the visualization",
     //     optional: false,
     //     defaultValue: false,
     //     type: "boolean",
-    // })
+    // });
 }
 
+export class GraphvizEdgeSettings extends Setting {
+    allConnections = new Param<boolean>({
+        key: "allConnections",
+        label: "Show All Connections",
+        description: "Show all connections including topic details",
+        optional: false,
+        defaultValue: false,
+        type: "boolean",
+        enabled: false,
+    });
+
+    includeEdgeLabels = new Param<boolean>({
+        key: "includeEdgeLabels",
+        label: "Include Edge Labels",
+        description: "Include edge/connection labels in the visualization",
+        optional: false,
+        defaultValue: false,
+        type: "boolean",
+    });
+}
 
 export class GraphvizLayouterSettings extends GraphLayouterSettings {
-    // spacing = new RadialLayoutingSettings({
-    //     key: "spacing",
-    //     label: "Spacing",
-    //     description: "Spacing settings for the radial layout.",
-    //     optional: false,
-    // });
+    engine = new GraphvizEngineSettings({
+        key: "engine",
+        label: "Engine",
+        description: "GraphViz engine settings",
+        optional: false,
+    });
 
-    // sorting = new LinearSortingSettings();
+    nodes = new GraphvizNodeSettings({
+        key: "nodes",
+        label: "Nodes",
+        description: "Node visualization settings",
+        optional: false,
+    });
 
-
-    // edges = new EdgeSettings({
-    //     key: "edges",
-    //     label: "Edges",
-    //     description: "Settings for the edges.",
-    //     optional: false,
-    // });
+    edges = new GraphvizEdgeSettings({
+        key: "edges",
+        label: "Edges",
+        description: "Edge visualization settings",
+        optional: false,
+    });
 
     constructor(type: string, name?: string) {
         super(type, name);

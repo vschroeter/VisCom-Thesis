@@ -14,6 +14,7 @@ import { DagreLayouter } from "../dagre/dagreLayouter";
 import { ViscomLayouter } from "../viscom/viscomLayouter";
 import { ViscomLayouterSettings } from "../viscom/viscomSettings";
 import { GraphvizLayouter } from "../graphviz/graphvizLayouter";
+import { GraphvizLayouterSettings } from "../graphviz/graphvizSettings";
 
 export const layouterMapping: Record<string, { label: string, layouter: typeof GraphLayouter<any>, settings: typeof GraphLayouterSettings }> = {
     "fdg": {
@@ -44,13 +45,13 @@ export const layouterMapping: Record<string, { label: string, layouter: typeof G
     "graphviz": {
         label: "Graphviz Layouts",
         layouter: GraphvizLayouter,
-        settings: GraphLayouterSettings
+        settings: GraphvizLayouterSettings
     },
-    "dagre": {
-        label: "Dagre Layouts",
-        layouter: DagreLayouter,
-        settings: GraphLayouterSettings
-    }
+    // "dagre": {
+    //     label: "Dagre Layouts",
+    //     layouter: DagreLayouter,
+    //     settings: GraphLayouterSettings
+    // }
 }
 
 export interface SettingParamJson {

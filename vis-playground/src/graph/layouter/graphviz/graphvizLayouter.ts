@@ -14,6 +14,12 @@ import { renderGraphViz, visGraphToDOT } from "src/api/graphVizApi";
 
 export class GraphvizPositioner extends BasePositioner {
     savedSVG: string | undefined;
+    settings: GraphvizLayouterSettings;
+
+    constructor(settings: GraphvizLayouterSettings) {
+        super();
+        this.settings = settings;
+    }
 
     async positionNodesFromSVG(svg: string, parentNode: LayoutNode) {
         console.log("Positioning nodes from SVG", svg);
@@ -51,14 +57,35 @@ export class GraphvizPositioner extends BasePositioner {
         const visGraph = parentNode.visGraph;
         if (parentNode != visGraph.rootNode) return;
 
-        const dotString = visGraphToDOT(visGraph, {
-            allConnections: false,
-            adaptSizeToScore: true,
-        });
+        // Get settings from the GraphvizLayouterSettings
+        const adaptSizeToScore = this.settings.nodes.adaptSizeToScore.getValue();
+        // const includeNodeLabels = this.settings.nodes.includeNodeLabels.getValue();
+        const includeNodeLabels = true;
+        const allConnections = this.settings.edges.allConnections.getValue();
+        const includeEdgeLabels = this.settings.edges.includeEdgeLabels.getValue();
+        const layoutEngine = this.settings.engine.layoutEngine.getValue() as "dot" | "circo" | "fdp" | "neato" | "twopi" | "sfdp" | "osage" | "patchwork";
+        const horizontalLayout = this.settings.engine.horizontalLayout.getValue();
+
+        // Create DOT string with the configured settings
+        let dotString = 'digraph G {\n';
+
+        // Add horizontal layout if enabled
+        if (horizontalLayout) {
+            dotString += '  rankdir=LR;\n';
+        }
+
+        // Continue with normal DOT generation
+        dotString += visGraphToDOT(visGraph, {
+            allConnections,
+            adaptSizeToScore,
+            includeEdgeLabels,
+            includeNodeLabels
+        }).substring(11); // Remove the initial "digraph G {\n" since we already added our own
+
         console.log("Graphviz DOT string:", dotString);
 
         try {
-            this.savedSVG = await renderGraphViz(dotString);
+            this.savedSVG = await renderGraphViz(dotString, layoutEngine);
             await this.positionNodesFromSVG(this.savedSVG, parentNode);
         } catch (error) {
             console.error("Failed to render graph:", error);
@@ -214,9 +241,9 @@ export class GraphvizConnectionLayouter extends BaseNodeConnectionLayouter {
     }
 }
 
-export class GraphvizLayouter<T extends GraphvizLayouterSettings = GraphvizLayouterSettings> extends GraphLayouter<T> {
+export class GraphvizLayouter extends GraphLayouter<GraphvizLayouterSettings> {
     override async layout(isUpdate = false) {
-        const positioner = new GraphvizPositioner();
+        const positioner = new GraphvizPositioner(this.settings);
         this.visGraph.setPositioner(positioner);
 
         const connectionLayouter = new GraphvizConnectionLayouter(positioner);
