@@ -101,15 +101,26 @@ class StressMetricCalculator(GraphMetricCalculator):
                     # Calculate Euclidean distance in the layout
                     d_ij = NodeCircle.euclidean_distance(self.node_circles[i], self.node_circles[j])
 
+                    is_connected = False
+
                     # Get shortest path distance
                     if j in shortest_paths.get(i, {}):
                         delta_ij = shortest_paths[i][j]
+                        is_connected = True
                     else:
                         # Use max distance for disconnected nodes
-                        delta_ij = max_distance * 2
+                        delta_ij = max_distance * 1
 
-                    # Calculate squared difference with optimal scaling
+                    # # Calculate squared difference with optimal scaling
+                    # if not is_connected and d_ij > delta_ij:
+                    #     # If the nodes are disconnected and the distance is greater than the max distance,
+                    #     # we can ignore this pair for stress calculation
+                    #     squared_diff = 0
+                    # else:
+                    #     squared_diff = (delta_ij - alpha * d_ij) ** 2
+
                     squared_diff = (delta_ij - alpha * d_ij) ** 2
+
                     sum_squared_diff += squared_diff
 
                     # print(f"\tCalculating stress for nodes {i} and {j}:")

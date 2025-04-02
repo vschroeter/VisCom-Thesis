@@ -13,6 +13,7 @@ import { SpaceFillingLayouterSettings } from "../linear/spaceFilling/spaceFillin
 import { DagreLayouter } from "../dagre/dagreLayouter";
 import { ViscomLayouter } from "../viscom/viscomLayouter";
 import { ViscomLayouterSettings } from "../viscom/viscomSettings";
+import { GraphvizLayouter } from "../graphviz/graphvizLayouter";
 
 export const layouterMapping: Record<string, { label: string, layouter: typeof GraphLayouter<any>, settings: typeof GraphLayouterSettings }> = {
     "fdg": {
@@ -39,6 +40,11 @@ export const layouterMapping: Record<string, { label: string, layouter: typeof G
         label: "Space Filling Layouts",
         layouter: SpaceFillingCurveLayouter,
         settings: SpaceFillingLayouterSettings
+    },
+    "graphviz": {
+        label: "Graphviz Layouts",
+        layouter: GraphvizLayouter,
+        settings: GraphLayouterSettings
     },
     "dagre": {
         label: "Dagre Layouts",

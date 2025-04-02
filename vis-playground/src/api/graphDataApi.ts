@@ -111,3 +111,34 @@ export function visGraphToNodeLinkData(visGraph: VisGraph) {
     return { nodes, links };
 }
 
+export function commGraphToDOT(commGraph: CommunicationGraph): string {
+    let dot = 'digraph G {\n';
+    commGraph.getAllLinks().forEach((link) => {
+        if (link.channel.type == "PubSub") {
+            dot += `  "${link.fromId}" -> "${link.toId}" [label="${link.topic.id}"];\n`;
+        } else {
+            dot += `  "${link.fromId}" -> "${link.toId}" [label="${link.topic.id}"];\n`;
+        }
+    });
+    dot += '}';
+    return dot;
+}
+
+
+export function visGraphToDOT(visGraph: VisGraph): string {
+    let dot = 'digraph G {\n';
+    dot += "node [shape=circle, width=1.0, height=1.0, fixedsize=true];"
+    visGraph.getAllConnections().forEach((connection) => {
+        dot += `  "${connection.fromId}" -> "${connection.toId}";\n`;
+
+
+        // if (connection.channel.type == "PubSub") {
+        //     dot += `  "${connection.fromId}" -> "${connection.toId}" [label="${connection.topic.id}"];\n`;
+        // } else {
+        //     dot += `  "${connection.fromId}" -> "${connection.toId}" [label="${connection.topic.id}"];\n`;
+        // }
+    });
+    dot += '}';
+    return dot;
+}
+

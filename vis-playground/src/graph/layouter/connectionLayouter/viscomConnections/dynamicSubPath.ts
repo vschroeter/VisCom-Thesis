@@ -356,7 +356,9 @@ export class CircleSegmentConnectionMethod extends DynamicConnectionMethod {
         // TODO: Distribute this over a node continuum
         const circle = this.nodeAtPathAnchor!.circle.clone();
 
-        const range = [0.9, 0.8];
+        // const range = [0.9, 0.8];
+        const range = [0.9, 0.9];
+        // const range = [0.95, 0.75];
         const randomR = Math.random() * (range[1] - range[0]) + range[0];
 
         // circle.r *= 0.9;
