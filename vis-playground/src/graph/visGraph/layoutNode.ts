@@ -809,6 +809,12 @@ export class LayoutNode {
             } else {
                 range = [nextRad, prevRad];
             }
+
+            // Double the range size
+            const diff = RadialUtils.forwardRadBetweenAngles(range[0], range[1]);
+            const mid = range[0] + diff / 2;
+            range = [mid - diff, mid + diff];
+
         }
 
         if (factor != 1) {

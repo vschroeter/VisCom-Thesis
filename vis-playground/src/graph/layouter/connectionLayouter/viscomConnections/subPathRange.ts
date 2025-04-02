@@ -361,6 +361,19 @@ export class SubPathRange {
      */
     getAnchorForPath(path: SubPath, direction: "in" | "out"): Anchor {
         const rad = this.getRadForPath(path);
+
+        const subPathInfo = this.mappedSubPathInformation.get(path);
+        if (subPathInfo && subPathInfo.desiredAnchor) {
+
+            const radOfDesiredAnchor = this.getRadOfPoint(subPathInfo.desiredAnchorPoint!);
+
+            if (Math.abs(rad - radOfDesiredAnchor) < 0.01) {
+
+                if (direction === "in") return subPathInfo.desiredAnchor.cloneReversed();
+                return subPathInfo.desiredAnchor.clone();
+            }
+        }
+
         return this.getAnchorForRad(rad, direction);
     }
 
@@ -1140,7 +1153,7 @@ export class SubPathRange {
         // if (this.node.id == "equalizer") debug = true;
         // if (this.node.id == "dialog_session_manager") debug = true;
 
-        // if (this.node.layoutNode.children.find(c => c.id == "dialog_session_manager")) debug = true;
+        // if (this.node.layoutNode.children.find(c => c.id == "car_simulator")) debug = true;
 
         // if (this.node.id == "/dialog/tts_guard") debug = true;pathCount
         // if (this.node.id.includes("__hypernode_")) debug = true;
@@ -1178,6 +1191,9 @@ export class SubPathRange {
                 if (desiredAnchor) {
                     desiredAnchor._data = { length: 5, stroke: "blue" };
                     path.connection.debugShapes.push(desiredAnchor);
+
+                    const _s = new Segment(desiredAnchor.anchorPoint, startAnchor.anchorPoint);
+                    path.connection.debugShapes.push(_s);
 
                     // const segment1 = new Segment(desiredAnchor.anchorPoint, this.node.layoutNode.center);
                     // const segment2 = new Segment(desiredAnchor.anchorPoint, path.sourceVisNode.layoutNode.center);

@@ -180,7 +180,8 @@ export class SubPath extends CombinedPathSegment {
     }
 
     isCircleArc() {
-        return this.isCircleArcForward() || this.isCircleArcBackward();
+        return this.isCircleArcForward() !== this.isCircleArcBackward();
+        // return (this.isCircleArcForward() || this.isCircleArcBackward());
     }
 
 
@@ -395,7 +396,7 @@ export class SubPath extends CombinedPathSegment {
                             // });
                         }
 
-                        if (nextNonHyperVisNode.outerRange.pointIsInside(otherLayoutNode.center)) {
+                        // if (nextNonHyperVisNode.outerRange.pointIsInside(otherLayoutNode.center)) {
                             // Calculate the intersection with the line from nextNonHyperNode to the center of the other node with the outer circle of the vis node
                             const intersections = visNode.outerCircle.intersect(line);
 
@@ -403,7 +404,7 @@ export class SubPath extends CombinedPathSegment {
                                 return new Anchor(intersections[0], new Vector(line.slope));
                                 // return new Anchor(intersections[0], new Vector(visNode.center, intersections[0]));
                             }
-                        }
+                        // }
                     }
                 }
 
@@ -679,7 +680,11 @@ export class SubPath extends CombinedPathSegment {
                 return;
             }
 
-            if (this.isCircleArcForward()) {
+            if (!this.isCircleArc()) {
+                // type = "sameParent";
+                this.sourceVisNode.innerRange.registerSubPath(this, this.targetVisNode.innerRange);
+                this.targetVisNode.innerRange.registerSubPath(this, this.sourceVisNode.innerRange);
+            } else if (this.isCircleArcForward()) {
                 // Do not add to continuum
                 // type = "circleArcForward";
                 this.sourceVisNode.circularRangeForward.registerSubPath(this, this.targetVisNode.circularRangeBackward);
@@ -689,10 +694,6 @@ export class SubPath extends CombinedPathSegment {
                 // type = "circleArcBackward";
                 this.sourceVisNode.circularRangeBackward.registerSubPath(this, this.targetVisNode.circularRangeForward);
                 this.targetVisNode.circularRangeForward.registerSubPath(this, this.sourceVisNode.circularRangeBackward);
-            } else {
-                // type = "sameParent";
-                this.sourceVisNode.innerRange.registerSubPath(this, this.targetVisNode.innerRange);
-                this.targetVisNode.innerRange.registerSubPath(this, this.sourceVisNode.innerRange);
             }
         } else {
             // if (source.isRealNode) this.sourceVisNode.outerRange.registerSubPath(this);
@@ -909,7 +910,7 @@ export class SubPath extends CombinedPathSegment {
 
 
     layoutInsideParent() {
-        // console.warn("Layout INSIDE", this.sourceVisNode.id, this.targetVisNode.id, this);
+        console.warn("Layout INSIDE", this.sourceVisNode.id, this.targetVisNode.id, this);
         const sourceAnchor = this.sourceVisNode.innerRange.getAnchorForPath(this, "out");
         const targetAnchor = this.targetVisNode.innerRange.getAnchorForPath(this, "in");
 
