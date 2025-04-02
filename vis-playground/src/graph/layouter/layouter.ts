@@ -159,7 +159,7 @@ export class GraphLayouter<T extends GraphLayouterSettings> {
         });
     }
 
-    layout(isUpdate = false): void {
+    async layout(isUpdate = false): Promise<void> {
         throw new Error("Method not implemented.");
     }
 

@@ -1030,11 +1030,11 @@ export class LayoutNode {
         });
     }
 
-    calculatePositionOfChildren(positionerOverride?: BasePositioner) {
+    async calculatePositionOfChildren(positionerOverride?: BasePositioner) {
         if (this.children.length == 0) return;
 
         const _positioner = this.getInstance(positionerOverride ?? this.positioner);
-        _positioner?.positionChildren(this);
+        await _positioner?.positionChildren(this);
     }
 
     refinePositionOfChildren(positionerOverride?: BasePositioner) {

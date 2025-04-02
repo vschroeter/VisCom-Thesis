@@ -13,6 +13,7 @@ from viscom_backend.commgraph.converter import convert_multigraph_to_normal_grap
 from viscom_backend.communities.community_detection_methods import community_methods_config
 from viscom_backend.data.reader import RosMetaSysGraphGenerator
 from viscom_backend.generator.generator_methods import generator_methods_config
+from viscom_backend.graphviz.graphVizApi import register_routes as register_graphviz_routes
 from viscom_backend.metrics.metrics_calculator import MetricCalculator
 from viscom_backend.noderank.commgraph_centrality import calculate_commgraph_centrality
 from viscom_backend.noderank.node_rank_methods import node_rank_methods_config
@@ -20,6 +21,9 @@ from viscom_backend.noderank.node_rank_methods import node_rank_methods_config
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
+
+# Register GraphViz routes
+register_graphviz_routes(app)
 
 MAX_NODES: int = 1000
 

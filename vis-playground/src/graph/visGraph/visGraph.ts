@@ -467,7 +467,7 @@ export class VisGraph {
         })
     }
 
-    layout() {
+    async layout() {
         // We layout the graph bottom-up, beginning with the leaf nodes without children
         // For each layer, we do the following:
         // 1. Calculate the size of the nodes, using the specified precalculators
@@ -494,17 +494,17 @@ export class VisGraph {
         })
 
         // Position the nodes and calculate the size
-        botUpLayers.forEach(layer => {
-            layer.forEach(node => {
+        await Promise.all(botUpLayers.map(async layer => {
+            await Promise.all(layer.map(async node => {
 
                 if (node.children.length > 0) {
                     node.sortChildren();
-                    node.calculatePositionOfChildren();
+                    await node.calculatePositionOfChildren();
                 }
 
-                node.calculateNodeSize();
-            });
-        });
+                await node.calculateNodeSize();
+            }));
+        }));
 
         // Propagate the sizes and positions of the parent nodes
         topDownLayers.forEach(layer => {

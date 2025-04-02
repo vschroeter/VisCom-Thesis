@@ -1,5 +1,3 @@
-import { LinearSortingSettings } from "../../settings/linearSettings";
-import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayouterSettings } from "../../settings/settings";
 
 // export class SizeSettings extends Setting {
 //     radius = new Param({
@@ -7,6 +5,8 @@ import { Setting, ParamWithLinkContext, ParamWithNodeContext, Param, GraphLayout
 //         optional: false,
 //         defaultValue: "10 * n",
 //     });
+
+import { Setting, Param, GraphLayouterSettings } from "../settings/settings";
 
 //     constructor() {
 //         super({

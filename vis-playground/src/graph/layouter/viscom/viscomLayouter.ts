@@ -71,7 +71,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         })
     }
 
-    override layout(isUpdate = false) {
+    override async layout(isUpdate = false) {
         console.log("Layouting", this.visGraph, this.commGraph.communities.getAsIdLists());
         // this.initVisGraph().then(() => {
 
@@ -111,7 +111,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         ])
 
         // console.log("Before layout", this.visGraph);
-        this.visGraph.layout();
+        await this.visGraph.layout();
         console.log("After layout", this.visGraph);
 
         // this.visGraph.allLayoutNodes.forEach(node => {

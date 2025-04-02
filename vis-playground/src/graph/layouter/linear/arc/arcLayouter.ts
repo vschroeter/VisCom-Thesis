@@ -29,7 +29,7 @@ export class LinearPositioner extends BasePositioner {
         this.isVertical = dir == "vertical";
     }
 
-    override positionChildren(parentNode: LayoutNode): void {
+    override async positionChildren(parentNode: LayoutNode): Promise<void> {
         const ctx = this.settings.getContext({ visGraph: this.visGraph });
 
         const children = parentNode.children;
@@ -91,7 +91,7 @@ export class ArcConnector extends BaseNodeConnectionLayouter {
 
 export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
 
-    override layout(isUpdate = false) {
+    override async layout(isUpdate = false) {
         const ctx = this.settings.getContext({ visGraph: this.visGraph });
 
         const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
@@ -106,7 +106,7 @@ export class ArcLayouter extends GraphLayouter<ArcLayouterSettings> {
         this.visGraph.setSorter(sorter);
         this.visGraph.setConnectionLayouter(connector);
 
-        this.visGraph.layout();
+        await this.visGraph.layout();
 
         // console.log("Layouted arc layouter", nodes);
         this.emitEvent("update");

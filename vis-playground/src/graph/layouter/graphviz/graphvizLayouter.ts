@@ -1,4 +1,3 @@
-
 import { Point, PointLike, Vector } from "2d-geometry";
 import { BasePositioner } from "src/graph/visGraph/layouterComponents/positioner";
 import { LayoutNode } from "src/graph/visGraph/layoutNode";
@@ -7,105 +6,229 @@ import { RadialCircularArcConnectionLayouter } from "../connectionLayouter/radia
 import { GraphLayouter } from "../layouter";
 import { RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
 import { GraphvizLayouterSettings } from "./graphvizSettings";
-import { commGraphToDOT, visGraphToDOT } from "src/api/graphDataApi";
+import { BaseConnectionLayouter, BaseNodeConnectionLayouter } from "src/graph/visGraph/layouterComponents/connectionLayouter";
+import { LayoutConnection } from "src/graph/visGraph/layoutConnection";
+import { StringSegment } from "src/graph/graphical/primitives/pathSegments/PathSegment";
+import { Anchor } from "src/graph/graphical";
+import { renderGraphViz, visGraphToDOT } from "src/api/graphVizApi";
 
+export class GraphvizPositioner extends BasePositioner {
+    savedSVG: string | undefined;
 
+    async positionNodesFromSVG(svg: string, parentNode: LayoutNode) {
+        console.log("Positioning nodes from SVG", svg);
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(svg, "image/svg+xml");
 
-// export class RadialPositioner extends BasePositioner {
+        // Extract node positions from SVG
+        const nodeElements = svgDoc.querySelectorAll("g.node");
 
-//     // The radius to place the child nodes
-//     radius: number;
+        nodeElements.forEach(nodeElement => {
+            const titleElement = nodeElement.querySelector("title");
+            if (!titleElement || !titleElement.textContent) return;
 
-//     // The outer radius that the parent node gets
-//     outerRadius: number;
+            const nodeId = titleElement.textContent;
+            const node = parentNode.visGraph.getNode(nodeId);
+            if (!node) return;
 
-//     // The center of the circle
-//     center: Point;
+            // Extract position from ellipse or polygon
+            const ellipse = nodeElement.querySelector("ellipse");
+            if (ellipse) {
+                const cx = parseFloat(ellipse.getAttribute("cx") || "0");
+                const cy = parseFloat(ellipse.getAttribute("cy") || "0");
+                const r = parseFloat(ellipse.getAttribute("rx") || "0");
+                // Note: GraphViz y coordinates are inverted compared to our system
+                node.x = cx;
+                // node.y = -cy; // Invert y-coordinate
+                node.y = cy;
+                node.radius = r;
+                console.log(`Positioned node ${nodeId} at (${node.x}, ${node.y})`);
+            }
+        });
+    }
 
-//     constructor({
-//         radius = 100,
-//         outerRadius,
-//     }: {
-//         radius?: number;
-//         outerRadius?: number;
-//     } = {}) {
-//         super();
-//         this.radius = radius;
-//         this.outerRadius = outerRadius ?? radius;
-//         this.center = new Point(0, 0);
-//     }
+    override async positionChildren(parentNode: LayoutNode): Promise<void> {
+        const visGraph = parentNode.visGraph;
+        if (parentNode != visGraph.rootNode) return;
 
-//     getPositionOnCircleAtAngleRad(rad: number, radius?: number, centerTranslation?: PointLike): Point {
-//         return RadialUtils.positionOnCircleAtRad(rad, radius ?? this.radius, centerTranslation ?? this.center);
-//     }
-
-//     override positionChildren(parentNode: LayoutNode): void {
-//         const nodes = parentNode.children;
-//         const continuumMap = new Map<LayoutNode, number>();
-//         nodes.forEach((node, i) => {
-//             continuumMap.set(node, i / nodes.length);
-//         });
-
-
-//         // Place nodes on a circle with radius
-//         const angleRadMap = new Map<LayoutNode, number>();
-//         // const angleRadStep = 2 * Math.PI / nodes.length;
-//         nodes.forEach((node, i) => {
-//             const placement = continuumMap.get(node)!;
-//             const angle = placement * 2 * Math.PI;
-//             angleRadMap.set(node, angle);
-//             const pos = this.getPositionOnCircleAtAngleRad(angle);
-//             node.x = pos.x;
-//             node.y = pos.y;
-//             // console.log("Set node position", node.id, pos, node.circle);
-//         });
-
-//         parentNode.radius = this.outerRadius;
-//         parentNode.innerRadius = this.radius;
-//     }
-// }
-
-
-// export
-
-
-export class GraphvizLayouter<T extends GraphvizLayouterSettings = GraphvizLayouterSettings> extends GraphLayouter<T> {
-
-    override layout(isUpdate = false) {
-
-        const dotString = visGraphToDOT(this.visGraph);
+        const dotString = visGraphToDOT(visGraph, {
+            allConnections: false,
+            adaptSizeToScore: true,
+        });
         console.log("Graphviz DOT string:", dotString);
 
-        // this.visGraph.setPrecalculator(new BasicSizeCalculator({
-        //     sizeMultiplier: 50,
-        //     adaptRadiusBasedOnScore: this.commonSettings.showNodeScore.getValue() ?? true,
+        try {
+            this.savedSVG = await renderGraphViz(dotString);
+            await this.positionNodesFromSVG(this.savedSVG, parentNode);
+        } catch (error) {
+            console.error("Failed to render graph:", error);
+        }
+    }
+}
 
-        // }));
-        // // this.visGraph.setPositioner(new RadialPositioner({ radius: this.getRadius() }));
-        // this.visGraph.setPositioner(new RadialPositionerDynamicDistribution({
-        //     nodeMarginFactor: this.settings.spacing.nodeMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1,
-        //     radiusMarginFactor: this.settings.spacing.radiusMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
+export class GraphvizConnectionLayouter extends BaseNodeConnectionLayouter {
+    positioner: GraphvizPositioner;
 
-        // }));
+    constructor(positioner: GraphvizPositioner) {
+        super();
+        this.positioner = positioner;
+    }
 
-        // const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
-        // this.visGraph.setSorter(sorter);
+    extractPathFromSVG(svg: string): Map<string, {
+        path: string,
+        source: string,
+        target: string,
+        arrowPolygon?: string
+    }> {
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(svg, "image/svg+xml");
 
-        // const forwardBackwardThreshold = this.settings.edges.forwardBackwardThreshold.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 270;
-        // const straightForwardLineAtDegreeDelta = this.settings.edges.straightForwardLineAtDegreeDelta.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 135;
-        // const backwardLineCurvature = this.settings.edges.backwardLineCurvature.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 120;
+        const edgeMap = new Map<string, {
+            path: string,
+            source: string,
+            target: string,
+            arrowPolygon?: string
+        }>();
 
-        // this.visGraph.setConnectionLayouter(new RadialCircularArcConnectionLayouter({
-        //     forwardBackwardThreshold,
-        //     straightForwardLineAtDegreeDelta,
-        //     backwardLineCurvature
-        // }));
+        // Extract edge paths from SVG
+        const edgeElements = svgDoc.querySelectorAll("g.edge");
 
-        this.visGraph.layout();
+        edgeElements.forEach(edgeElement => {
+            const titleElement = edgeElement.querySelector("title");
+            if (!titleElement || !titleElement.textContent) return;
+
+            // Title format is typically "node1->node2"
+            const titleText = titleElement.textContent;
+            const [source, target] = titleText.split("->");
+
+            if (!source || !target) return;
+
+            const pathElement = edgeElement.querySelector("path");
+            const polygonElement = edgeElement.querySelector("polygon");
+
+            if (!pathElement) return;
+
+            const pathData = pathElement.getAttribute("d") || "";
+            const polygonPoints = polygonElement?.getAttribute("points") || "";
+            const edgeId = `${source}->${target}`;
+
+            edgeMap.set(edgeId, {
+                path: pathData,
+                source: source.trim(),
+                target: target.trim(),
+                arrowPolygon: polygonPoints
+            });
+        });
+
+        return edgeMap;
+    }
+
+    calculateAnchorFromPath(
+        path: string,
+        polygonPoints: string | undefined,
+        node: LayoutNode,
+        isStart: boolean
+    ): Anchor | undefined {
+        if (isStart && polygonPoints) {
+            // Parse the polygon points
+            const points = polygonPoints.trim().split(/\s+/).map(pointStr => {
+                const [x, y] = pointStr.split(',').map(parseFloat);
+                return { x, y };
+            });
+
+            if (points.length >= 3) {
+                // First point is the arrow tip
+                const tip = new Point(points[1].x, points[1].y);
+
+                // Calculate midpoint between second and third points for direction
+                const midpoint = new Point(
+                    (points[0].x + points[2].x) / 2,
+                    (points[0].y + points[2].y) / 2
+                );
+
+                // Direction is from midpoint to tip
+                const direction = new Vector(
+                    tip.x - midpoint.x,
+                    tip.y - midpoint.y
+                );
+
+                // Create and return the anchor
+                return new Anchor(tip, direction).cloneReversed();
+            }
+        }
+
+        // Fallback to default path-based calculation if no polygon or not start anchor
+        if (isStart) {
+            // Parse path and extract the first point and direction
+            const pathCommands = path.trim().split(/[\s,]+/);
+
+            // For start anchor, use the first point and direction
+            if (pathCommands[0] === 'M' && pathCommands.length >= 3) {
+                const x1 = parseFloat(pathCommands[1]);
+                const y1 = parseFloat(pathCommands[2]);
+                const x2 = parseFloat(pathCommands[4] || pathCommands[1]);
+                const y2 = parseFloat(pathCommands[5] || pathCommands[2]);
+
+                const point = new Point(x1, y1);
+                const direction = new Vector(x2 - x1, y2 - y1);
+
+                return new Anchor(point, direction);
+            }
+        }
+
+        // For end anchors or if calculations fail, return undefined as requested
+        return undefined;
+    }
+
+    override layoutConnectionsOfRootNode(root: LayoutNode): void {
+        const svg = this.positioner.savedSVG;
+        if (!svg) return;
+
+        const pathMap = this.extractPathFromSVG(svg);
+
+        root.visGraph.allLayoutConnections.forEach((connection) => {
+            const edgeId = `${connection.fromId}->${connection.toId}`;
+            const edgeData = pathMap.get(edgeId);
+
+            if (edgeData) {
+                const extractedSvgPath = edgeData.path;
+
+                const endAnchor = this.calculateAnchorFromPath(
+                    extractedSvgPath,
+                    edgeData.arrowPolygon,
+                    connection.source,
+                    true
+                )?.cloneReversed();
+
+                // Set end anchor to undefined as requested
+                const startAnchor = undefined;
+
+                connection.pathSegment = new StringSegment(
+                    connection,
+                    extractedSvgPath,
+                    startAnchor,
+                    endAnchor
+                );
+            }
+        });
+    }
+}
+
+export class GraphvizLayouter<T extends GraphvizLayouterSettings = GraphvizLayouterSettings> extends GraphLayouter<T> {
+    override async layout(isUpdate = false) {
+        const positioner = new GraphvizPositioner();
+        this.visGraph.setPositioner(positioner);
+
+        const connectionLayouter = new GraphvizConnectionLayouter(positioner);
+        this.visGraph.setConnectionLayouter(connectionLayouter);
+
+        // Need to await the async operations
+        await this.visGraph.layout();
 
         this.markConnectionsAsUpdateRequired();
-        // this.emitEvent("update");
         this.emitEvent("end");
+
+        console.log("Graphviz layout completed");
 
         return;
     }

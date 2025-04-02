@@ -60,7 +60,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
         return RadialUtils.positionOnCircleAtRad(rad, radius, centerTranslation ?? this.center);
     }
 
-    override positionChildren(parentNode: LayoutNode): void {
+    override async positionChildren(parentNode: LayoutNode): Promise<void> {
         const nodes = parentNode.children;
         if (nodes.length == 0) {
             return;
@@ -296,7 +296,7 @@ export class RadialPositioner extends BasePositioner {
         return RadialUtils.positionOnCircleAtRad(rad, radius ?? this.radius, centerTranslation ?? this.center);
     }
 
-    override positionChildren(parentNode: LayoutNode): void {
+    override async positionChildren(parentNode: LayoutNode): Promise<void> {
         const nodes = parentNode.children;
         const continuumMap = new Map<LayoutNode, number>();
         nodes.forEach((node, i) => {
@@ -342,7 +342,7 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
         return new Point(x, y);
     }
 
-    override layout(isUpdate = false) {
+    override async layout(isUpdate = false) {
         this.visGraph.setPrecalculator(new BasicSizeCalculator({
             sizeMultiplier: 50,
             adaptRadiusBasedOnScore: this.commonSettings.showNodeScore.getValue() ?? true,
@@ -368,7 +368,7 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
             backwardLineCurvature
         }));
 
-        this.visGraph.layout();
+        await this.visGraph.layout();
 
         this.markConnectionsAsUpdateRequired();
         // this.emitEvent("update");

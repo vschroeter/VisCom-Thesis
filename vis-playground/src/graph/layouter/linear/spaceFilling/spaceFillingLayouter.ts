@@ -26,7 +26,7 @@ export class SpaceFillingNodePositioner extends BasePositioner {
         this.size = size;
     }
 
-    override positionChildren(parentNode: LayoutNode): void {
+    override async positionChildren(parentNode: LayoutNode): Promise<void> {
         // if (parentNode != )
 
         const nodes = parentNode.children;
@@ -58,7 +58,7 @@ export class SpaceFillingNodePositioner extends BasePositioner {
 }
 export class SpaceFillingCurveLayouter extends GraphLayouter<SpaceFillingLayouterSettings> {
 
-    override layout(isUpdate = false) {
+    override async layout(isUpdate = false) {
         const ctx = this.settings.getContext({ visGraph: this.visGraph });
 
         const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
@@ -104,7 +104,7 @@ export class SpaceFillingCurveLayouter extends GraphLayouter<SpaceFillingLayoute
 
         // })
 
-        this.visGraph.layout();
+        await this.visGraph.layout();
 
         // console.log("Layouted arc layouter", nodes);
         // this.emitEvent("update");

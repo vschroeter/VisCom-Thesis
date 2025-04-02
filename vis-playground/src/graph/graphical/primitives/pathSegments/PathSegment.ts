@@ -119,3 +119,23 @@ export class CombinedPathSegment extends PathSegment {
         return this.segments.filter(s => s !== undefined).map(s => s.getSvgPath()).join(" ");
     }
 }
+
+export class StringSegment extends PathSegment {
+
+    pathString: string;
+
+    startAnchor: Anchor | undefined;
+    endAnchor: Anchor | undefined;
+
+    constructor(layoutConnection: LayoutConnection, pathString: string, startAnchor?: Anchor, endAnchor?: Anchor) {
+        super(layoutConnection);
+        this.pathString = pathString;
+        this.startAnchor = startAnchor;
+        this.endAnchor = endAnchor;
+    }
+
+    getSvgPath(): string {
+
+        return this.pathString;
+    }
+}
