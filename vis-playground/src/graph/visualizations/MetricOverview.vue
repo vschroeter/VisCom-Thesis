@@ -17,7 +17,7 @@
                     </svg> -->
                 </div>
                 <q-tooltip>
-                    {{ metric.metricKey }}: {{ metric.normalizedValue?.toFixed(2) }} ({{ metric.value.toFixed(2) }}) -
+                    {{ metric.metricKey }}: {{ metric.normalizedValue?.toFixed(4) }} ({{ metric.value.toFixed(4) }}) -
                     {{ metric.relativePlace + 1 }} / {{ metric.places }}
                 </q-tooltip>
             </div>

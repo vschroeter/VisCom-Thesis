@@ -10,7 +10,7 @@ export class WeightedPathContinuityMetricCalculator extends MetricCalculator {
             optimum: "lowerIsBetter",
             label: "Weighted Path Continuity",
             abbreviation: "WPC",
-            description: "Measures how smoothly the paths change direction when following shortest paths in the graph, with more weight given to important connections. Lower values indicate smoother, more continuous paths.",
+            description: "Measures how smoothly paths change direction when following shortest paths in the graph, giving more weight to important connections. Lower values indicate smoother, more continuous paths.",
             normalizing: "none"
         },
     ];

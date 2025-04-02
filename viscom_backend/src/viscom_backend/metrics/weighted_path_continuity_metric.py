@@ -9,7 +9,12 @@ from .metrics_calculator import MetricResult
 
 
 class WeightedPathContinuityMetricCalculator(GraphMetricCalculator):
-    """Calculator for measuring the weighted continuity/smoothness of paths in a graph layout."""
+    """
+    Calculator for measuring the weighted continuity/smoothness of paths in a graph layout.
+
+    This extends the Path Continuity Metric by weighting angular differences based on edge weights,
+    emphasizing the importance of high-weight connections in the layout.
+    """
 
     API_METHOD_NAME = "weightedPathContinuity"
 
@@ -17,18 +22,17 @@ class WeightedPathContinuityMetricCalculator(GraphMetricCalculator):
         """
         Calculate the weighted path continuity metric based on angular differences.
 
-        This metric measures how smoothly the paths change direction when following
-        shortest paths in the graph, with more weight given to higher-weight connections.
-        Lower values indicate smoother, more continuous paths.
+        Formula:
+        WeightedPathContinuity = (sqrt((1/W) * sum([w_i * Δ(θ_{i-1}, θ_i)]²))) / π
 
-        The algorithm:
-        1. Find all shortest paths between all nodes
-        2. For each path with at least 3 nodes:
-           a. Calculate the angles of consecutive segments
-           b. Calculate the angular difference between consecutive segments
-           c. Square these differences and multiply by the weight of the connection
-        3. Calculate the weighted root mean square of all angular differences
-        4. Normalize to [0,1] by dividing by π
+        where:
+        - θ_i is the polar angle of the i-th segment
+        - Δ(θ_{i-1}, θ_i) is the angular difference between consecutive segments
+        - w_i is the weight of the i-th edge
+        - W is the total weight of all edges included in the sum
+
+        Lower values indicate smoother, more continuous paths with an emphasis on
+        high-weight connections.
 
         Returns:
             MetricResult: The weighted path continuity metric result.

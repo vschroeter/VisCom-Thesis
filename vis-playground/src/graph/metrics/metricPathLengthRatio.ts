@@ -7,10 +7,10 @@ export class PathLengthRatioMetricCalculator extends MetricCalculator {
     static override displayedMetrics: MetricDefinition[] = [
         {
             key: "pathEfficiencyRatio",
-            optimum: "lowerIsBetter",
+            optimum: "higherIsBetter",
             label: "Path Efficiency Ratio",
             abbreviation: "PER",
-            description: "The ratio between actual path lengths and direct distances. A ratio of 1 means that all paths are direct. Higher values indicate less efficient paths.",
+            description: "The ratio between actual path lengths and direct distances. A ratio closer to 1 means paths are more direct and efficient.",
             normalizing: "none"
         },
     ];
@@ -41,10 +41,10 @@ export class NormalizedPathLengthRatioMetricCalculator extends MetricCalculator 
     static override displayedMetrics: MetricDefinition[] = [
         {
             key: "pathEfficiencyRatioNormalized",
-            optimum: "lowerIsBetter",
+            optimum: "higherIsBetter",
             label: "Normalized Path Efficiency Ratio",
             abbreviation: "PERN",
-            description: "The normalized ratio between actual path lengths and direct distances. A ratio of 1 means that all paths are direct. Higher values indicate less efficient paths.",
+            description: "The normalized ratio between actual path lengths and direct distances. A value closer to 1 means paths are more direct and efficient.",
             normalizing: "none"
         },
     ];

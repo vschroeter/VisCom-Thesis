@@ -8,11 +8,18 @@ import { MetricsApi } from "./metricsApi";
 
 export class EdgeCrossingsCalculator extends MetricCalculator {
     static override displayedMetrics: MetricDefinition[] = [
-        { key: "totalEdgeCrossings", optimum: "lowerIsBetter", label: "Total Edge Crossings", abbreviation: "EC", description: "The total count of edge crossings in the graph", normalizing: "none" },
+        {
+            key: "edgeCrossings",
+            optimum: "lowerIsBetter",
+            label: "Edge Crossings",
+            abbreviation: "EC",
+            description: "The total count of edge crossings in the graph. Lower values indicate cleaner layouts with fewer visual intersections.",
+            normalizing: "none"
+        },
     ];
 
     /** The total length of all edges in the graph */
-    totalEdgeCrossings: number;
+    edgeCrossings: number;
 
 
 
@@ -21,17 +28,17 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
 
         console.log("Calculating edge crossings");
 
-        this.totalEdgeCrossings = 0;
+        this.edgeCrossings = 0;
     }
 
     override async calculate() {
         try {
             const results = await MetricsApi.fetchMetricsWithPolling(this.graph, "edgeCrossings");
             console.log("Edge crossings:", results);
-            this.totalEdgeCrossings = results.value;
+            this.edgeCrossings = results.value;
         } catch (error) {
             console.error("Error fetching edge crossings metric:", error);
-            this.totalEdgeCrossings = 0;
+            this.edgeCrossings = 0;
         }
         // await this.calculateEdgeCrossings();
     }
@@ -48,7 +55,7 @@ export class EdgeCrossingsCalculator extends MetricCalculator {
                 const link2 = links[j];
                 const intersections = this.getIntersections(link1.connection2d, link2.connection2d);
                 // if (intersections.length > 0) console.log(intersections, link1.startPoint, link2.startPoint, link1.endPoint, link2.endPoint);
-                this.totalEdgeCrossings += intersections.length;
+                this.edgeCrossings += intersections.length;
                 c++;
 
                 if (c > chunkSize) {

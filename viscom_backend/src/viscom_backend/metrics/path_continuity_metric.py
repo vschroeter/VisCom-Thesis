@@ -12,7 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 class PathContinuityMetricCalculator(GraphMetricCalculator):
-    """Calculator for measuring the continuity/smoothness of paths in a graph layout."""
+    """
+    Calculator for measuring the continuity/smoothness of paths in a graph layout.
+
+    Smooth paths with minimal angular changes improve the perception of visual flow
+    and make the layout more aesthetically pleasing and easier to follow.
+    """
 
     API_METHOD_NAME = "pathContinuity"
 
@@ -23,20 +28,16 @@ class PathContinuityMetricCalculator(GraphMetricCalculator):
         This metric measures how smoothly the paths change direction when following
         shortest paths in the graph. Lower values indicate smoother, more continuous paths.
 
-        The algorithm:
-        1. Find all shortest paths between all nodes
-        2. For each path with at least 3 nodes:
-           a. Calculate the angles of consecutive segments
-           b. Calculate the angular difference between consecutive segments
-           c. Square these differences
-        3. Calculate the root mean square of all angular differences
-        4. Normalize to [0,1] by dividing by π
+        Formula:
+        PathContinuity = (sqrt((1/(|E_N|-1)) * sum([Δ(θ_{i-1}, θ_i)]²))) / π
+
+        where:
+        - θ_i is the polar angle of the i-th segment
+        - Δ(θ_{i-1}, θ_i) is the angular difference between consecutive segments
 
         Returns:
             MetricResult: The path continuity metric result.
         """
-        # Use undirected graph for shortest paths calculation
-        # graph = self.get_undirected_graph()
         graph = self.get_graph()
 
         if len(graph.nodes) < 3:
@@ -94,7 +95,6 @@ class PathContinuityMetricCalculator(GraphMetricCalculator):
 
         except Exception as e:
             logger.error(f"Error calculating path continuity: {str(e)}")
-            # print stack trace for debugging
             logger.exception(e)
             return MetricResult(
                 key=self.API_METHOD_NAME,

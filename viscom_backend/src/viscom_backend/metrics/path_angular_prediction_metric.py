@@ -14,6 +14,9 @@ class PathAngularPredictionMetricCalculator(GraphMetricCalculator):
 
     This metric predicts the expected angle of the next segment based on the trend
     of the previous two segments and measures the deviation from this expectation.
+
+    Lower values indicate more consistent angular trends, which contribute to a more
+    intuitive layout that follows human expectations of continuity.
     """
 
     API_METHOD_NAME = "pathAngularPrediction"
@@ -22,16 +25,14 @@ class PathAngularPredictionMetricCalculator(GraphMetricCalculator):
         """
         Calculate the path angular prediction metric based on angular trend deviations.
 
-        This metric measures how well paths follow a consistent angular pattern by:
-        1. Finding all shortest paths between all nodes
-        2. For each path with at least 4 nodes (3 segments):
-           a. Calculate the angles of consecutive segments
-           b. For each triplet of segments:
-              i. Predict the angle of the third segment based on the trend of the first two
-              ii. Calculate the deviation between predicted and actual angle
-              iii. Square these deviations and weight them by the edge weight
-        3. Calculate the weighted root mean square of all angular trend deviations
-        4. Normalize to [0,1] by dividing by π
+        Formula:
+        PathAngularPrediction = (sqrt((1/W) * sum(w_i * (θ_i - θ_pred(θ_{i-2}, θ_{i-1}))²))) / π
+
+        where:
+        - θ_i is the polar angle of the i-th segment
+        - θ_pred() is the predicted angle based on the trend of previous segments
+        - w_i is the weight of the i-th edge
+        - W is the total weight of all edges included in the sum
 
         Returns:
             MetricResult: The path angular prediction metric result.
@@ -97,7 +98,7 @@ class PathAngularPredictionMetricCalculator(GraphMetricCalculator):
                         elif angle_delta < -math.pi:
                             angle_delta += 2 * math.pi
 
-                        # Predict the third angle based on the trend
+                        # Predict the third angle based on the trend (θ_pred)
                         predicted_angle = angle2 + angle_delta
 
                         # Normalize predicted_angle to be between -π and π

@@ -10,7 +10,7 @@ export class StressMetricCalculator extends MetricCalculator {
             optimum: "lowerIsBetter",
             label: "Stress",
             abbreviation: "S",
-            description: "Measures how well the Euclidean distances between nodes in the layout match the shortest path distances in the graph structure. Lower values indicate that the layout better preserves the graph structure.",
+            description: "Measures how well the Euclidean distances between nodes in the layout match the shortest path distances in the graph structure, with scale invariance. Lower values indicate better preservation of graph structure.",
             normalizing: "none"
         },
     ];

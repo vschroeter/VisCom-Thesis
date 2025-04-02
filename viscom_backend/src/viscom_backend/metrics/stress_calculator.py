@@ -7,7 +7,15 @@ from .metrics_calculator import MetricResult, NodeCircle
 
 
 class StressMetricCalculator(GraphMetricCalculator):
-    """Calculator for measuring stress in graph layouts."""
+    """
+    Calculator for measuring stress in graph layouts.
+
+    Stress measures how well the Euclidean distances between nodes in the layout
+    match the shortest path distances in the graph structure, with scale invariance.
+
+    Lower stress values indicate that the layout better preserves the graph structure,
+    providing a more accurate visualization of the relationships between nodes.
+    """
 
     API_METHOD_NAME = "stress"
 
@@ -15,37 +23,27 @@ class StressMetricCalculator(GraphMetricCalculator):
         """
         Calculate the stress of the graph embedding with optimal scaling.
 
-        Stress measures how well the Euclidean distances between nodes in the layout
-        match the shortest path distances in the graph structure.
-
         Formula:
-        S = Σ[i,j] [δ_ij - α·d_ij]² / Σ[i,j] δ_ij²
+        S = (sum((δ_ij - α*d_ij)²)) / (sum(δ_ij²))
 
-        where α is the optimal scaling factor:
-        α = Σ[i,j] [δ_ij·d_ij] / Σ[i,j] d_ij²
-
-        Where:
+        where:
+        - α = (sum(δ_ij * d_ij)) / (sum(d_ij²)) is the optimal scaling factor
         - d_ij is the Euclidean distance between nodes i and j in the 2D layout
         - δ_ij is the graph-theoretical distance (shortest path) between nodes i and j
-        - α is the optimal scaling factor
 
         For disconnected nodes, we use the maximum shortest path distance found in the graph.
-        A smaller value of S indicates that the layout better preserves the graph structure,
-        providing a more accurate visualization of the relationships between nodes.
 
         Returns:
             MetricResult: The stress metric result.
         """
-        # Use the undirected graph for stress calculation
-        # This ensures we have symmetric distances between nodes
-        # graph = self.get_undirected_graph()
+        # Use the graph for stress calculation
         graph = self.get_graph()
 
         # Calculate shortest paths between all nodes
         try:
             shortest_paths = dict(nx.all_pairs_dijkstra_path_length(graph, weight="distance"))
         except Exception as e:
-            return MetricResult(key="stress", value=-1, type="lower-better", error=f"Error computing shortest paths: {str(e)}")
+            return MetricResult(key=self.API_METHOD_NAME, value=1.0, type="lower-better", error=f"Error computing shortest paths: {str(e)}")
 
         # Find the longest shortest path for disconnected components
         max_distance = 0
@@ -82,7 +80,7 @@ class StressMetricCalculator(GraphMetricCalculator):
         # Handle edge cases
         if sum_squared_d == 0 or sum_squared_delta == 0:
             return MetricResult(
-                key="stress",
+                key=self.API_METHOD_NAME,
                 value=1.0,  # Worst stress value
                 type="lower-better",
                 error="Unable to compute stress (no valid distances)",
@@ -101,35 +99,18 @@ class StressMetricCalculator(GraphMetricCalculator):
                     # Calculate Euclidean distance in the layout
                     d_ij = NodeCircle.euclidean_distance(self.node_circles[i], self.node_circles[j])
 
-                    is_connected = False
-
                     # Get shortest path distance
                     if j in shortest_paths.get(i, {}):
                         delta_ij = shortest_paths[i][j]
-                        is_connected = True
                     else:
                         # Use max distance for disconnected nodes
-                        delta_ij = max_distance * 1
+                        delta_ij = max_distance
 
-                    # # Calculate squared difference with optimal scaling
-                    # if not is_connected and d_ij > delta_ij:
-                    #     # If the nodes are disconnected and the distance is greater than the max distance,
-                    #     # we can ignore this pair for stress calculation
-                    #     squared_diff = 0
-                    # else:
-                    #     squared_diff = (delta_ij - alpha * d_ij) ** 2
-
+                    # Calculate squared difference with optimal scaling
                     squared_diff = (delta_ij - alpha * d_ij) ** 2
-
                     sum_squared_diff += squared_diff
 
-                    # print(f"\tCalculating stress for nodes {i} and {j}:")
-                    # print(f"\t\tShortest path between {i} and {j}: {delta_ij}")
-                    # print(f"\t\tEuclidean distance between {i} and {j}: {d_ij}")
-                    # print(f"\t\tScaled Euclidean distance (α·d_ij): {alpha * d_ij}")
-                    # print(f"\t\tSquared difference: {squared_diff}")
-
-        # Calculate final stress
+        # Calculate final stress as normalized squared difference
         stress = sum_squared_diff / sum_squared_delta
 
         print(f"\tOptimal scaling factor α: {alpha}")
@@ -140,7 +121,7 @@ class StressMetricCalculator(GraphMetricCalculator):
         print(f"\tStress: {stress}")
 
         return MetricResult(
-            key="stress",
+            key=self.API_METHOD_NAME,
             value=stress,
             type="lower-better",  # Lower stress is better
         )

@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 
+from .aspect_ratio_metric import AspectRatioMetricCalculator as AspectRatioMetricCalculator
 from .edge_crossing_metric import EdgeCrossingMetricCalculator as EdgeCrossingMetricCalculator
 from .graph_metric_calculator import GraphMetricCalculator as GraphMetricCalculator
 from .metrics_calculator import (

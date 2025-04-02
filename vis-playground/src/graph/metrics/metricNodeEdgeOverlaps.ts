@@ -7,10 +7,10 @@ export class NodeEdgeOverlapsMetricCalculator extends MetricCalculator {
     static override displayedMetrics: MetricDefinition[] = [
         {
             key: "nodeEdgeOverlaps",
-            optimum: "lowerIsBetter",
+            optimum: "higherIsBetter",
             label: "Node-Edge Overlaps",
             abbreviation: "NEO",
-            description: "Measures cases where edges pass through nodes that are not their endpoints. Lower values indicate fewer unwanted overlaps.",
+            description: "Measures how well edges avoid passing through unrelated nodes. Higher values indicate fewer unwanted overlaps relative to the maximum possible.",
             normalizing: "none"
         },
     ];
