@@ -328,7 +328,7 @@ export class Node2d extends SvgRenderable {
         this.elNode?.attr('fill', this.filled ? this.fill : 'none');
         if (!this.layoutNode.isVirtual) {
         } else {
-            this.elNode?.attr('fill-opacity', 0.5);
+            this.elNode?.attr('fill-opacity', 0.1);
             this.elVirtualMarker?.attr('fill', this.fill).attr('fill-opacity', 0.5);
         }
 
@@ -432,7 +432,7 @@ export class Node2d extends SvgRenderable {
         // There is a small gap between the base line and the node
 
         const gap = 0.15;
-        const sizeFactor = 0.3;
+        const sizeFactor = 1.4;
 
         if (this.layoutNode.isVirtual) {
             const parent = this.layoutNode.virtualParent;
@@ -472,7 +472,7 @@ export class Node2d extends SvgRenderable {
                     combined.segments.push(arc, line1);
 
                     this.elVirtualMarker?.attr('d', combined.svgPath + " z");
-                    console.log('Rendered virtual marker', this.elVirtualMarker);
+                    // console.log('Rendered virtual marker', this.elVirtualMarker);
 
                     // this.layoutNode.debugShapes.push(...[tip, basePoint1, basePoint2]);
                 }

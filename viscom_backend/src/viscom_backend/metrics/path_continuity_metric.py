@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
 import math
 
 import networkx as nx
 
 from .graph_metric_calculator import GraphMetricCalculator
 from .metrics_calculator import MetricResult
+
+logger = logging.getLogger(__name__)
 
 
 class PathContinuityMetricCalculator(GraphMetricCalculator):
@@ -62,8 +65,11 @@ class PathContinuityMetricCalculator(GraphMetricCalculator):
                         node2_id = path[i + 1]
 
                         # Get node positions
-                        node1 = self.node_circles[node1_id]
-                        node2 = self.node_circles[node2_id]
+                        node1 = self.node_circles.get(node1_id, None)
+                        node2 = self.node_circles.get(node2_id, None)
+
+                        if node1 is None or node2 is None:
+                            continue  # Skip if nodes are not found
 
                         # Calculate segment direction (angle)
                         dx = node2.x - node1.x
@@ -87,6 +93,9 @@ class PathContinuityMetricCalculator(GraphMetricCalculator):
                         angle_diff_count += 1
 
         except Exception as e:
+            logger.error(f"Error calculating path continuity: {str(e)}")
+            # print stack trace for debugging
+            logger.exception(e)
             return MetricResult(
                 key=self.API_METHOD_NAME,
                 value=1.0,  # Worst possible value

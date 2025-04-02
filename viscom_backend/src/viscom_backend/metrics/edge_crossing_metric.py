@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from svgpathtools import Path
+from svgpathtools.path import Path
 
 from .metrics_calculator import MetricCalculator, MetricResult
 

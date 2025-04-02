@@ -66,8 +66,11 @@ class PathAngularPredictionMetricCalculator(GraphMetricCalculator):
                         node2_id = path[i + 1]
 
                         # Get node positions
-                        node1 = self.node_circles[node1_id]
-                        node2 = self.node_circles[node2_id]
+                        node1 = self.node_circles.get(node1_id, None)
+                        node2 = self.node_circles.get(node2_id, None)
+
+                        if node1 is None or node2 is None:
+                            continue  # Skip if nodes are not found
 
                         # Calculate segment direction (angle)
                         dx = node2.x - node1.x

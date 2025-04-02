@@ -4,7 +4,8 @@ import math
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Literal, Optional, Type
 
-from svgpathtools import Path, parse_path
+from svgpathtools.parser import parse_path
+from svgpathtools.path import Path
 
 # Import the metric calculators
 
@@ -48,6 +49,8 @@ class LaidOutConnection:
         self.weight: float = weight
         self.distance: float = distance
 
+        self.path: Optional[Path] = None
+
         # Parse SVG path string directly in the constructor
         try:
             # Skip empty paths
@@ -56,7 +59,8 @@ class LaidOutConnection:
                 self.path_error: bool = True
                 self.is_empty: bool = True
             else:
-                self.path: Path = parse_path(path)
+                self.path: Optional[Path] = parse_path(path)
+                self.path.approximate_arcs_with_cubics()
                 self.path_error: bool = False
                 self.is_empty: bool = False
         except Exception as e:

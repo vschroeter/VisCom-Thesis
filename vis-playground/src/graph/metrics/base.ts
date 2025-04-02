@@ -46,9 +46,9 @@ export class MetricCalculator {
         return this.layoutHeight / this.layoutWidth;
     }
 
-    /** 
+    /**
      * The aspect ratio of the layout [0 .. 1]
-     * 
+     *
      * If the layout is wider than it is high, the aspect ratio is the width to height ratio.
      * If the layout is higher than it is wide, the aspect ratio is the height to width ratio.
      */
@@ -70,12 +70,15 @@ export class MetricCalculator {
         this.graph = graph;
 
         // Get size of the layout
-        const xNodeExtent = d3.extent(this.graph.allLayoutNodes, d => d.x) as [number, number];
-        const yNodeExtent = d3.extent(this.graph.allLayoutNodes, d => d.y) as [number, number];
+        const xNodeExtent = d3.extent(this.graph.allLeafLayoutNodes, d => d.x) as [number, number];
+        const yNodeExtent = d3.extent(this.graph.allLeafLayoutNodes, d => d.y) as [number, number];
         this.layoutWidth = xNodeExtent[1] - xNodeExtent[0];
         this.layoutHeight = yNodeExtent[1] - yNodeExtent[0];
 
+        // console.warn("Aspect Ratio: ", this.aspectRatio, this.layoutHeight, this.layoutWidth, {
+        //     nodes: this.graph.allLayoutNodes.map(d => ({id: d.id, x: d.x, y: d.y })),
 
+        // });
         // TODO: Fetch also the extents of the connection lines
     }
 }

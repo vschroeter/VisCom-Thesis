@@ -34,9 +34,10 @@ export type MetricDefinition = {
 export class MetricsCollection {
 
     static metricsToCalculate: (typeof MetricCalculator)[] = [
-        // MetricCalculator,
+        MetricCalculator,
         // EdgeLengthCalculator,
         // NodeDistanceCalculator,
+
         EdgeCrossingsCalculator,
         PathLengthRatioMetricCalculator,
         NormalizedPathLengthRatioMetricCalculator,
