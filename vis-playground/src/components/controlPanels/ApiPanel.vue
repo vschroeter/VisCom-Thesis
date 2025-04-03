@@ -225,7 +225,7 @@ function fetchGeneratedGraph(generatorId?: string) {
     return fetch(`${url}?${params.toString()}`)
         .then(response => response.json())
         .then((data) => {
-            // console.log(data)
+            console.log(data)
             const graph = parseGraphData(data)
 
             const commGraph = convertGraphToCommGraph(graph)

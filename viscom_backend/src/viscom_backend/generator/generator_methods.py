@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import networkx as nx
 
-from viscom_backend.commgraph.converter import convert_normal_graph_to_commgraph, convert_to_weighted_graph
+from viscom_backend.commgraph.converter import convert_normal_graph_to_commgraph
 from viscom_backend.data.reader import RosMetaSysGraphGenerator
 from viscom_backend.generator.generator import CommGraphGenerator
 
@@ -13,7 +13,8 @@ def get_nx_to_commgraph_method(nx_method):
     def nx_to_commgraph_method(*args, **kwargs):
         graph = nx_method(*args, **kwargs)
         comm_graph = convert_normal_graph_to_commgraph(graph)
-        return convert_to_weighted_graph(comm_graph)
+        return comm_graph
+        # return convert_to_weighted_graph(comm_graph)
         # return comm_graph
 
     return nx_to_commgraph_method
@@ -81,6 +82,24 @@ generator_methods_config = {
                 "type": "str",
                 "description": "Probability to rewire the connections of a node to another node in the same pipeline",
                 "default": "0.0",
+            },
+            {
+                "key": "reuse_topic_probability",
+                "type": "str",
+                "description": "Probability to reuse an existing topic instead of creating a new one",
+                "default": "0.1",
+            },
+            {
+                "key": "broadcast_probability",
+                "type": "str",
+                "description": "Probability for a node to become a broadcast node",
+                "default": "0.05",
+            },
+            {
+                "key": "broadcast_connection_fraction",
+                "type": "str",
+                "description": "Fraction of nodes that a broadcast node connects to",
+                "default": "0.2",
             },
         ],
         "description": "Generates a random graph using the Erdős-Rényi model.",

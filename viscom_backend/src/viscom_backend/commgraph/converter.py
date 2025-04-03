@@ -13,11 +13,51 @@ def convert_normal_graph_to_commgraph(graph: nx.MultiDiGraph) -> nx.MultiDiGraph
     """This convert method adds topics to the connections of a normal graph."""
 
     new_graph = nx.MultiDiGraph()
+    new_graph.add_nodes_from(graph.nodes(data=True))
 
-    # For each connection, add a pub_topic
+    # print("Converting normal graph to commgraph...")
+    # print("Nodes in the graph:", len(graph.nodes), graph.nodes)
+    # print("Edges in the graph:", len(graph.edges), graph.edges)
+
+    # # Print all nodes and their data
+    # for node in graph.nodes:
+    #     print(f"Node {node}:")
+    #     for key, data in graph.nodes[node].items():
+    #         print("\t", key, data)
+    # print("--------------------------------------------------")
+
+    # # Print all node pairs and their edges (also multiple edges)
+    # # Also print the data of the edges
+    # for node in graph.nodes:
+    #     print(f"Node {node}:")
+    #     for edge in graph.edges(node, data=True):
+    #         print("\t", edge)
+    # print("--------------------------------------------------")
+
+    # For each connection, add a pub_topic if none exists
     for start_node, connections in graph.adjacency():
-        for target_node, data in connections.items():
-            new_graph.add_edge(start_node, target_node, pub_topic=f"{start_node}->{target_node}")
+        for target_node, edge_dict in connections.items():
+            for key, data in edge_dict.items():
+                if "topic" in data:
+                    # Use the existing topic if available
+                    new_graph.add_edge(
+                        start_node,
+                        target_node,
+                        key=key,  # Preserve the edge key
+                        pub_topic=data["topic"],
+                        **{k: v for k, v in data.items() if k != "topic"},
+                    )
+                    # print(f"Adding edge from {start_node} to {target_node} with topic {data['topic']} and key {key}")
+                else:
+                    # Generate a default topic name if none exists
+                    new_graph.add_edge(
+                        start_node,
+                        target_node,
+                        key=key,  # Preserve the edge key
+                        pub_topic=f"{start_node}->{target_node}-{key}",  # Include key in the topic
+                        **data,
+                    )
+                    # print(f"Adding edge from {start_node} to {target_node} with default topic {start_node}->{target_node}-{key}")
 
     return new_graph
 
@@ -108,7 +148,6 @@ def convert_to_weighted_graph(node_graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
     for start_node, connections in node_graph.adjacency():
         for target_node, topic_data in connections.items():
             for topic_map in topic_data.values():
-
                 # If there is weight and distance present, use it
                 if "weight" in topic_map and "distance" in topic_map:
                     distance = topic_map["distance"]
@@ -122,7 +161,6 @@ def convert_to_weighted_graph(node_graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
 
                     # Get the distance in the topic graph
                     distance = topic_graph[start_node][topic_name]["distance"]
-
 
                     # weighted_graph.add_edge(start_node, target_node, distance=distance, weight=math.sqrt(1 / distance), topic=topic)
                     # weighted_graph.add_edge(start_node, target_node, distance=distance, weight=math.sqrt(1 / distance), **{topic_type: topic})
@@ -139,6 +177,7 @@ def convert_to_weighted_graph(node_graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
 
     return weighted_graph
 
+
 def convert_multigraph_to_normal_graph(graph: nx.MultiDiGraph) -> nx.DiGraph:
     """This convert method removes the topics from the connections of a commgraph and creates a normal graph."""
 
@@ -146,9 +185,9 @@ def convert_multigraph_to_normal_graph(graph: nx.MultiDiGraph) -> nx.DiGraph:
 
     H = nx.DiGraph()
     H.add_nodes_from(weighted_graph)
-    for u, v, wt in weighted_graph.edges(data='weight', default=1):
+    for u, v, wt in weighted_graph.edges(data="weight", default=1):
         if H.has_edge(u, v):
-            H[u][v]['weight'] += wt
+            H[u][v]["weight"] += wt
         else:
             H.add_edge(u, v, weight=wt)
 
@@ -157,5 +196,3 @@ def convert_multigraph_to_normal_graph(graph: nx.MultiDiGraph) -> nx.DiGraph:
         H[edge[0]][edge[1]]["distance"] = 1 / (edge[2]["weight"] ** 2)
 
     return H
-
-
