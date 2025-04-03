@@ -8,22 +8,20 @@
                     Communication Graph Evaluator
                 </q-toolbar-title>
 
-                <!-- Add settings download/upload buttons -->
-                <q-btn flat dense icon="download" aria-label="Download Settings" @click="downloadSettings">
-                    <q-tooltip>Download Settings</q-tooltip>
-                </q-btn>
-                <q-btn flat dense icon="upload" aria-label="Upload Settings">
-                    <q-tooltip>Upload Settings</q-tooltip>
-                    <input type="file" accept=".json" ref="settingsFileInput" style="display: none;"
-                        @change="handleSettingsFileUpload" />
-                </q-btn>
-                <q-btn flat dense icon="save_alt" aria-label="Download Dataset" @click="showDatasetDialog = true">
-                    <q-tooltip>Download Dataset</q-tooltip>
-                </q-btn>
-
                 <div>Quasar v{{ $q.version }}</div>
 
                 <q-space />
+
+                <!-- Settings file handling -->
+                <q-file v-model="settingsFile" label="Upload Settings" style="min-width: 150px" dense outlined
+                    accept=".json" @update:model-value="handleSettingsFileUpload">
+                    <template v-slot:append>
+                        <q-btn round flat dense icon="download" @click.stop="openSettingsDownloadModal" color="white">
+                            <q-tooltip>Download Settings</q-tooltip>
+                        </q-btn>
+                    </template>
+                </q-file>
+
                 <q-btn flat dense round icon="settings" aria-label="Settings" @click="toggleRightDrawer" />
 
             </q-toolbar>
@@ -57,15 +55,33 @@
 
                 <q-card-section class="q-pt-none">
                     <q-input dense v-model="datasetName" label="Name" :rules="[val => !!val || 'Name is required']"
-                        class="q-mb-md" />
+                        class="q-mb-md" autofocus @keyup.enter="downloadDataset" />
                     <q-input dense v-model="datasetDescription" label="Description" type="textarea"
-                        :rules="[val => !!val || 'Description is required']" />
+                        :rules="[val => !!val || 'Description is required']" @keyup.enter="downloadDataset" />
                 </q-card-section>
 
                 <q-card-actions align="right">
                     <q-btn flat label="Cancel" color="primary" v-close-popup />
                     <q-btn flat label="Download" color="primary" @click="downloadDataset" :disable="!datasetName"
                         v-close-popup />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
+
+        <!-- Settings download dialog -->
+        <q-dialog v-model="showSettingsDownloadModal" persistent>
+            <q-card style="min-width: 350px">
+                <q-card-section>
+                    <div class="text-h6">Download Settings</div>
+                </q-card-section>
+
+                <q-card-section class="q-pt-none">
+                    <q-input dense v-model="settingsTitle" label="Title" autofocus @keyup.enter="downloadSettings" />
+                </q-card-section>
+
+                <q-card-actions align="right">
+                    <q-btn flat label="Cancel" color="primary" v-close-popup />
+                    <q-btn flat label="Download" color="primary" @click="downloadSettings" v-close-popup />
                 </q-card-actions>
             </q-card>
         </q-dialog>
@@ -92,10 +108,14 @@ const rightDrawerOpen = useStorage("rightDrawerOpen", false);
 const leftDrawerOpen = useStorage("leftDrawerOpen", true);
 const leftDrawerWidth = useStorage("leftDrawerWidth", 400);
 
-const settingsFileInput = ref<HTMLInputElement | null>(null);
+const settingsFile = ref<File | null>(null);
 const showDatasetDialog = ref(false);
 const datasetName = ref('');
 const datasetDescription = ref('');
+
+// Settings download modal
+const showSettingsDownloadModal = ref(false);
+const settingsTitle = ref('');
 
 function toggleLeftDrawer() {
     leftDrawerOpen.value = !leftDrawerOpen.value;
@@ -121,20 +141,26 @@ function resizeLeftDrawer(ev: any) {
     leftDrawerWidth.value = initLeftDrawerWidth + ev.offset.x;
 }
 
-function downloadSettings() {
-    graphStore.downloadSettingsAsJson();
+function openSettingsDownloadModal() {
+    settingsTitle.value = '';
+    showSettingsDownloadModal.value = true;
 }
 
-function handleSettingsFileUpload(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-        const file = input.files[0];
+function downloadSettings() {
+    graphStore.downloadSettingsAsJson(settingsTitle.value);
+    showSettingsDownloadModal.value = false;
+}
+
+function handleSettingsFileUpload(file: File | null) {
+    if (file) {
         graphStore.uploadSettingsFromJson(file)
             .then(() => {
                 Notify.create({
                     message: 'Settings loaded successfully',
                     color: 'positive'
                 });
+                // Reset the file input
+                settingsFile.value = null;
             })
             .catch(error => {
                 console.error('Error loading settings:', error);
@@ -142,12 +168,8 @@ function handleSettingsFileUpload(event: Event) {
                     message: 'Error loading settings file',
                     color: 'negative'
                 });
+                settingsFile.value = null;
             });
-
-        // Reset input to allow selecting the same file again
-        if (input) {
-            input.value = '';
-        }
     }
 }
 

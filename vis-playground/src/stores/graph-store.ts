@@ -26,13 +26,15 @@ export const useGraphStore = defineStore('graph', {
             this.graph = graph
         },
 
-        downloadSettingsAsJson() {
+        downloadSettingsAsJson(title: string = '') {
             const json = this.settingsCollection.getJson()
             const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' })
             const url = URL.createObjectURL(blob)
             const a = document.createElement('a')
             a.href = url
-            a.download = `settings_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
+            const fileName = title ? `settings_${title}_${timestamp}.json` : `settings_${timestamp}.json`
+            a.download = fileName
             document.body.appendChild(a)
             a.click()
             document.body.removeChild(a)
@@ -130,7 +132,19 @@ export const useGraphStore = defineStore('graph', {
             const url = URL.createObjectURL(blob)
             const a = document.createElement('a')
             a.href = url
-            a.download = `${name.replace(/\s+/g, '_')}.json`
+
+            // Format the node count with leading zeros
+            const nodeCountFormatted = nodes.length.toString().padStart(4, '0');
+
+            // Format date and time
+            const now = new Date();
+            const date = now.toISOString().slice(0, 10); // YYYY-MM-DD
+            const time = now.toISOString().slice(11, 19).replace(/:/g, '_'); // HH_MM_SS
+
+            // Create filename with the new format
+            const fileName = `${nodeCountFormatted}nodes_${date}_${time}_${name.replace(/\s+/g, '_')}.json`;
+
+            a.download = fileName
             document.body.appendChild(a)
             a.click()
             document.body.removeChild(a)

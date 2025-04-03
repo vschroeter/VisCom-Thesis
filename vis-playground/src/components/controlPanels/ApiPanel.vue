@@ -3,9 +3,13 @@
         <!-- Everything below should be made out of Quasar Components -->
 
         <!-- Title -->
-        <q-item-label header class="q-mb-md">
-            Graph Generating
-        </q-item-label>
+        <div class="row items-center q-px-md q-mt-md">
+            <div class="text-h6">Graph Generation</div>
+            <q-space />
+            <q-btn flat dense icon="save_alt" aria-label="Download Dataset" @click="showDatasetDialog = true">
+                <q-tooltip>Download Dataset</q-tooltip>
+            </q-btn>
+        </div>
 
         <q-list bordered>
 
@@ -123,6 +127,27 @@
 
         </q-list>
 
+        <!-- Add dataset download dialog -->
+        <q-dialog v-model="showDatasetDialog" persistent>
+            <q-card style="min-width: 350px">
+                <q-card-section>
+                    <div class="text-h6">Download Dataset</div>
+                </q-card-section>
+
+                <q-card-section class="q-pt-none">
+                    <q-input dense v-model="datasetName" label="Name" :rules="[val => !!val || 'Name is required']"
+                        class="q-mb-md" autofocus @keyup.enter="downloadDataset" />
+                    <q-input dense v-model="datasetDescription" label="Description" type="textarea"
+                        :rules="[val => !!val || 'Description is required']" @keyup.enter="downloadDataset" />
+                </q-card-section>
+
+                <q-card-actions align="right">
+                    <q-btn flat label="Cancel" color="primary" v-close-popup />
+                    <q-btn flat label="Download" color="primary" @click="downloadDataset" :disable="!datasetName"
+                        v-close-popup />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </div>
 </template>
 
@@ -134,7 +159,7 @@ import { commGraphToNodeLinkData, parseGraphData } from 'src/api/graphDataApi';
 import { CommunicationGraph } from 'src/graph/commGraph';
 import { convertGraphToCommGraph } from 'src/graph/converter';
 import { useGraphStore } from 'src/stores/graph-store';
-import { computed, onMounted, onUpdated, reactive, ref, watch, type Ref } from 'vue'
+import { computed, onMounted, onUpdated, reactive, ref, type Ref } from 'vue'
 import ParamInput from '../elements/ParamInput.vue';
 import { useApiStore } from 'src/stores/api-store';
 
@@ -385,9 +410,24 @@ function keyToName(key: string) {
     return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
+////////////////////////////////////////////////////////////////////////////
+// Dataset Download
+////////////////////////////////////////////////////////////////////////////
 
+const showDatasetDialog = ref(false);
+const datasetName = ref('');
+const datasetDescription = ref('');
 
+function downloadDataset() {
+    graphStore.downloadDatasetAsJson(datasetName.value, datasetDescription.value);
 
+    // Reset form fields
+    datasetName.value = '';
+    datasetDescription.value = '';
+
+    // Close the dialog
+    showDatasetDialog.value = false;
+}
 
 ////////////////////////////////////////////////////////////////////////////
 // Lifecycle hooks
