@@ -10,6 +10,8 @@ export interface ApiLink {
 
     pub_topic?: string;
     service_name?: string;
+    topic_type?: string;
+    type?: string;
 }
 
 export interface ApiNode {
@@ -29,6 +31,8 @@ export interface ApiGraphData {
     service_name?: string;
     weight?: number;
     distance?: number;
+    topic_type?: string;
+    type?: string;
 }
 
 export function parseGraphData(
@@ -81,9 +85,9 @@ export function commGraphToNodeLinkData(commGraph: CommunicationGraph) {
     commGraph.getAllLinks().forEach((link) => {
         // console.log('link', link);
         if (link.channel.type == "PubSub") {
-            links.push({ source: link.fromId, target: link.toId, pub_topic: link.topic.id });
+            links.push({ source: link.fromId, target: link.toId, pub_topic: link.topic.id, topic_type: link.topic.messageType.name });
         } else {
-            links.push({ source: link.fromId, target: link.toId, service_name: link.topic.id });
+            links.push({ source: link.fromId, target: link.toId, service_name: link.topic.id, topic_type: link.topic.messageType.name });
         }
     });
     return { nodes, links };

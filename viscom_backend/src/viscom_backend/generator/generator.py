@@ -670,13 +670,13 @@ class CommGraphGenerator:
                 topic_type = edge_data.get("type", "std_msgs/msg/Empty")
 
                 if topic_name not in added_publishers:
-                    publishers.append({"name": topic_name, "type": topic_type})
+                    publishers.append({"name": topic_name, "type": topic_type, "topic_type": topic_type})
                     added_publishers.add(topic_name)
             for source, _, edge_data in graph.in_edges(node, data=True):
                 topic_name = edge_data.get("topic", f"/topic_{len(subscribers)}")
                 topic_type = edge_data.get("type", "std_msgs/msg/Empty")
                 if topic_name not in added_subscribers:
-                    subscribers.append({"name": topic_name, "type": topic_type})
+                    subscribers.append({"name": topic_name, "type": topic_type, "topic_type": topic_type})
                     added_subscribers.add(topic_name)
 
             graph.nodes[node]["publishers"] = publishers
