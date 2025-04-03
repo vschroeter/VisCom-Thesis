@@ -28,12 +28,33 @@ export class RadialLayoutingSettings extends Setting {
         type: "number",
     });
 
+    hyperNodeMarginFactor = new Param<number>({
+        key: "hyperNodeMarginFactor",
+        label: "Margin factor between hypernodes",
+        description: "The factor to multiply the node radius with to get the margin between nodes when placing hypernodes.",
+        optional: false,
+        defaultValue: 0.4,
+        type: "number",
+    });
+
+
     radiusMarginFactor = new Param<number>({
         key: "radiusMarginFactor",
         label: "Margin fac. for outer r of hypernodes",
         optional: false,
         defaultValue: 1.2,
         type: "number",
+    });
+
+
+    hyperRadiusMarginFactor = new Param<number>({
+        key: "hyperRadiusMarginFactor",
+        label: "Margin fac. for outer r of hypernodes",
+        description: "The margin factor for the radius of nodes within nested hypernodes.",
+        optional: false,
+        defaultValue: 1.1,
+        type: "number",
+        enabled: false
     });
 
     adaptEnclosingCircle = new Param<boolean>({

@@ -98,6 +98,9 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
                 radiusMarginFactor: this.settings.radial.radiusMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
                 adaptEnclosingCircle: this.settings.radial.adaptEnclosingCircle.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? true,
                 rotateBasedOnConnections: this.settings.radial.rotateBasedOnConnections.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? true,
+                hyperNodeMarginFactor: this.settings.radial.hyperNodeMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 0.4,
+                hyperRadiusMarginFactor: this.settings.radial.hyperRadiusMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
+
             })
         )
 

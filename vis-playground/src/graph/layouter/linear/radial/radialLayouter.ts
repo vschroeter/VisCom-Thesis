@@ -26,6 +26,16 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
     radiusMarginFactor = 1.1
 
     /**
+     * The margin factor between placed nodes when inside a nested hypernode.
+     */
+    hyperNodeMarginFactor = 0.4
+
+    /**
+     * The margin factor for the radius of a parent node when inside a nested hypernode.
+     */
+    hyperRadiusMarginFactor = 1.1
+
+    /**
      * If false, the parent node's radius is based on the maximum radius of the children.
      * If true, the positioner will adapt the parent's radius to the smallest enclosing circle containing all children.
      */
@@ -39,18 +49,23 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
     gapBetweenStartAndEnd = 0;
 
     constructor({
-        nodeMarginFactor = 1, radiusMarginFactor = 1.1, adaptEnclosingCircle = true, rotateBasedOnConnections = false
+        nodeMarginFactor = 1, radiusMarginFactor = 1.1, adaptEnclosingCircle = true,
+        rotateBasedOnConnections = false, hyperNodeMarginFactor = 0.4, hyperRadiusMarginFactor = 1.1
     }: {
         nodeMarginFactor?: number;
         radiusMarginFactor?: number;
         adaptEnclosingCircle?: boolean;
         rotateBasedOnConnections?: boolean;
+        hyperNodeMarginFactor?: number;
+        hyperRadiusMarginFactor?: number;
     } = {}) {
         super();
         this.nodeMarginFactor = nodeMarginFactor;
         this.radiusMarginFactor = radiusMarginFactor;
         this.adaptEnclosingCircle = adaptEnclosingCircle;
         this.rotateBasedOnConnections = rotateBasedOnConnections;
+        this.hyperNodeMarginFactor = hyperNodeMarginFactor;
+        this.hyperRadiusMarginFactor = hyperRadiusMarginFactor;
 
         console.log("Created RadialPositionerDynamicDistribution", this.adaptEnclosingCircle);
     }
@@ -65,16 +80,32 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
         if (nodes.length == 0) {
             return;
         }
+
+        // // Determine if we're inside a nested hypernode structure
+        // // const isNested = parentNode.parent?.isHyperNode ?? false;
+        // const isNested = parentNode.isHyperNode ?? false;
+
+        // // Use appropriate margin factors based on nesting
+        // const effectiveNodeMarginFactor = isNested ? this.hyperNodeMarginFactor : this.nodeMarginFactor;
+        // const effectiveRadiusMarginFactor = isNested ? this.hyperRadiusMarginFactor : this.radiusMarginFactor;
+
         const continuumMap = new Map<LayoutNode, number>();
+
+        const nodeMarginOfNode = (node: LayoutNode) => node.isHyperNode ? this.hyperNodeMarginFactor : this.nodeMarginFactor;
+        // const radiusMarginOfNode = (node: LayoutNode) => node.isHyperNode ? this.hyperRadiusMarginFactor : this.radiusMarginFactor;
+        // const radiusMargin = radiusMarginOfNode(parentNode);
+        const radiusMargin = this.radiusMarginFactor;
+
 
         let currentPosition = 0;
         nodes.forEach((node, i) => {
+            const nodeMarginFactor = nodeMarginOfNode(node);
             const r = node.outerRadius;
-            currentPosition += r * this.nodeMarginFactor
+            currentPosition += r * nodeMarginFactor
             currentPosition += r;
             continuumMap.set(node, currentPosition);
             currentPosition += r;
-            currentPosition += r * this.nodeMarginFactor;
+            currentPosition += r * nodeMarginFactor;
         });
 
         let radius = currentPosition / (2 * Math.PI);
@@ -93,8 +124,9 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             const maxRadius = nodes[0].radius; 0
             nodes[0].x = this.center.x;
             nodes[0].y = this.center.y;
+            const nodeMarginFactor = nodeMarginOfNode(nodes[0]);
             radius = maxRadius;
-            parentNode.radius = radius * this.radiusMarginFactor;
+            parentNode.radius = radius * nodeMarginFactor;
             parentNode.innerRadius = radius;
         }
         // If there are exactly two nodes, place them on opposite sides of the circle
@@ -103,27 +135,26 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             const r0 = nodes[0].radius;
             const r1 = nodes[1].radius;
 
+            const marginFactor = Math.max(nodeMarginOfNode(nodes[0]), nodeMarginOfNode(nodes[1]));
+
             const distanceBetweenNodeCentersWithoutMargin = r0 + r1;
-            const margin = distanceBetweenNodeCentersWithoutMargin * this.nodeMarginFactor;
+            const margin = distanceBetweenNodeCentersWithoutMargin * marginFactor;
             const distanceBetweenNodeCenters = distanceBetweenNodeCentersWithoutMargin + margin;
 
             const totalRadius = distanceBetweenNodeCentersWithoutMargin + margin / 2;
 
             nodes[0].x = this.center.x - distanceBetweenNodeCentersWithoutMargin / 2 - margin / 2;
-            // nodes[0].x = this.center.x - r1 - margin / 2;
             nodes[0].y = this.center.y;
 
             nodes[1].x = this.center.x + distanceBetweenNodeCentersWithoutMargin / 2 + margin / 2;
-            // nodes[1].x = this.center.x + r0 + margin / 2;
             nodes[1].y = this.center.y;
 
             parentNode.innerRadius = distanceBetweenNodeCenters / 2;
-            parentNode.radius = totalRadius * this.radiusMarginFactor;
+            parentNode.radius = totalRadius * radiusMargin;
         }
         else {
             // Place nodes on a circle with radius
             const angleRadMap = new Map<LayoutNode, number>();
-            // const angleRadStep = 2 * Math.PI / nodes.length;
             nodes.forEach((node, i) => {
                 const placement = continuumMap.get(node)!;
                 const angle = startAngleRad + placement * 2 * Math.PI;
@@ -139,14 +170,12 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
                     const currentSlope = new Vector(anchorNode.center, nodeCenter).slope;
                     node.rotateChildrenLocally(angle - currentSlope);
                 }
-
             });
 
             const maxNodeRadius = Math.max(...nodes.map(n => n.radius));
-            parentNode.radius = (radius + maxNodeRadius) * this.radiusMarginFactor;
+            parentNode.radius = (radius + maxNodeRadius) * radiusMargin;
             parentNode.innerRadius = radius;
         }
-
 
         // Find the minimum enclosing circle for the nodes
         if (this.adaptEnclosingCircle) {
@@ -158,48 +187,36 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
                     const expandedPoint = n.center.translate(direction.scale(n.outerRadius));
                     return expandedPoint;
                 } catch (e) {
-                    // console.error("Error expanding point", n, e);
                     return n.center;
                 }
             });
 
             const enclosingCircle = RadialUtils.getMinimumEnclosingCircle(expandedPoints);
 
-            // if (parentNode.children.length == 2) {
-            //     console.warn("Enclosing circle for two nodes", enclosingCircle, nodes.map(n => n.center.clone()), expandedPoints, nodes.map(n => n.radius));
-            //     parentNode.debugShapes.push(enclosingCircle.clone(), ...expandedPoints.map(p => new Point(p.x, p.y)), ...(nodes.map(n => n.circle.clone())), parentNode.innerCircle.clone(), ...(nodes.map(n => n.center.clone())), parentNode.innerCircle.center.clone());
-            // }
-
-            // Adapt all children to the enclosing circle
-            parentNode.radius = enclosingCircle.r * this.radiusMarginFactor;
+            parentNode.radius = enclosingCircle.r * radiusMargin;
             parentNode.innerEnclosingRadius = enclosingCircle.r;
-            const innerTranslation = new Vector(parentNode.center, enclosingCircle.center)//.scale(-1);
+            const innerTranslation = new Vector(parentNode.center, enclosingCircle.center);
             parentNode.innerCenterTranslation = innerTranslation;
 
             parentNode.children.forEach(child => {
                 child.center = child.center.translate(innerTranslation.scale(-1));
             });
-
-
         }
     }
 
     private computeNetOutsideConnectionRotation(parentNode: LayoutNode): number {
         let sumVector = new Vector(0, 0);
 
-
         // Get all descendants of the node
         const descendants = parentNode.descendants;
         const descendantsSet = new Set(descendants);
 
         // Gather all outside connections
-        // For that we check, whether the source/target of the connection is not in the descendants
         const outsideConnections = descendants.flatMap(d => d.outConnections.concat(d.inConnections)).filter(conn => {
             return !descendantsSet.has(conn.source) || !descendantsSet.has(conn.target);
         });
 
         console.warn(`Outside connections for ${parentNode.id}:`, outsideConnections.map(c => c.id));
-
 
         // We build a vector based on the direction of the target node
         for (const conn of outsideConnections) {
@@ -255,15 +272,12 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             return;
         }
 
-
         const center = parentNode.center;
 
         const netRad = this.computeNetOutsideConnectionRotation(parentNode);
 
         // Perform rotation for each child with no anchor node
         parentNode.rotateChildrenLocally(netRad, center);
-        // console.log("[Rotate] children", netRad, parentNode.id, parentNode);
-
     }
 
 }
@@ -303,10 +317,8 @@ export class RadialPositioner extends BasePositioner {
             continuumMap.set(node, i / nodes.length);
         });
 
-
         // Place nodes on a circle with radius
         const angleRadMap = new Map<LayoutNode, number>();
-        // const angleRadStep = 2 * Math.PI / nodes.length;
         nodes.forEach((node, i) => {
             const placement = continuumMap.get(node)!;
             const angle = placement * 2 * Math.PI;
@@ -314,7 +326,6 @@ export class RadialPositioner extends BasePositioner {
             const pos = this.getPositionOnCircleAtAngleRad(angle);
             node.x = pos.x;
             node.y = pos.y;
-            // console.log("Set node position", node.id, pos, node.circle);
         });
 
         parentNode.radius = this.outerRadius;
@@ -348,11 +359,14 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
             adaptRadiusBasedOnScore: this.commonSettings.showNodeScore.getValue() ?? true,
 
         }));
-        // this.visGraph.setPositioner(new RadialPositioner({ radius: this.getRadius() }));
+        const context = this.settings.getContext({ visGraph: this.visGraph });
         this.visGraph.setPositioner(new RadialPositionerDynamicDistribution({
-            nodeMarginFactor: this.settings.spacing.nodeMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1,
-            radiusMarginFactor: this.settings.spacing.radiusMarginFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 1.1,
-
+            nodeMarginFactor: this.settings.spacing.nodeMarginFactor.getValue(context) ?? 1,
+            radiusMarginFactor: this.settings.spacing.radiusMarginFactor.getValue(context) ?? 1.1,
+            hyperNodeMarginFactor: this.settings.spacing.hyperNodeMarginFactor.getValue(context) ?? 0.4,
+            hyperRadiusMarginFactor: this.settings.spacing.hyperRadiusMarginFactor.getValue(context) ?? 1.1,
+            adaptEnclosingCircle: this.settings.spacing.adaptEnclosingCircle.getValue(context) ?? true,
+            rotateBasedOnConnections: this.settings.spacing.rotateBasedOnConnections.getValue(context) ?? false,
         }));
 
         const sorter = this.settings.sorting.getSorter(this.visGraph, this.commonSettings);
@@ -371,7 +385,6 @@ export class RadialLayouter<T extends RadialLayouterSettings = RadialLayouterSet
         await this.visGraph.layout();
 
         this.markConnectionsAsUpdateRequired();
-        // this.emitEvent("update");
         this.emitEvent("end");
 
         return;
