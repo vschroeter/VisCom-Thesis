@@ -13,6 +13,7 @@ import { UserInteractions } from "../visualizations/interactions";
 import { BaseConnectionLayouter, BaseNodeConnectionLayouter } from "./layouterComponents/connectionLayouter";
 import { Renderer } from "./renderer/renderer";
 import { LaidOutConnection, LaidOutDataApi, LaidOutNode } from "../metrics/metricsApi";
+import { Clusterer } from "../algorithms/clustering";
 
 export type LayoutNodeOrId = LayoutNode | string;
 
@@ -856,7 +857,47 @@ export class VisGraph {
         return hyperNode;
     }
 
-    // The given communities are combined into hypernodes
+    combineConnectedComponents() {
+        // Create a clusterer instance to identify connected components
+        const clusterer = new Clusterer(this);
+
+        // Get only top-level nodes (nodes directly under the root) for connected component analysis
+        // This is important when called after combineCommunities, as we want to group hypernodes
+        const topLevelNodes = this.rootNode.children;
+
+        // Get connected components from these top-level nodes
+        const connectedComponents = clusterer.getConnectedComponents(topLevelNodes);
+
+        // If there's only one connected component, no need to combine
+        if (connectedComponents.length <= 1) {
+            console.log("Only one connected component found, no grouping needed");
+            return;
+        }
+
+        console.log(`Found ${connectedComponents.length} separate connected components`);
+
+        // Create a hypernode for each connected component
+        connectedComponents.forEach((component, index) => {
+            // Only create a hypernode if there are multiple nodes in the component
+            if (component.length > 1) {
+                const hyperNode = new LayoutNode(this, `__connected_component_${index}`);
+                this.addNode(hyperNode, this.rootNode);
+
+                // Move all nodes in this component to the new hypernode
+                this.moveNodesToParent(component, hyperNode);
+
+                // Set some styling for the hypernode
+                hyperNode.filled = false;
+                hyperNode.stroke = "darkgray";
+                hyperNode.strokeWidth = 2;
+                hyperNode.showLabel = false;
+            }
+        });
+
+        // Update hyperconnections
+        this.updateHyperConnections();
+    }
+
     combineCommunities(communityNodeIds: (LayoutNode | string)[][], parentNode: LayoutNode = this.rootNode) {
 
         // Knoten aufsplitten, die zu mehreren Communities gehören

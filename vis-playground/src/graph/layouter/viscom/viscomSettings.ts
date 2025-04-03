@@ -21,6 +21,16 @@ export class SizeSettings extends Setting {
 }
 
 export class AlgorithmSettings extends Setting {
+
+    combineConnectedComponents = new Param<boolean>({
+        key: "combineConnectedComponents",
+        label: "Combine Connected Components",
+        description: "Combine connected components.",
+        optional: false,
+        defaultValue: true,
+        type: "boolean",
+    });
+
     combiningSteps = new Param<number>({
         key: "combiningSteps",
         label: "Combining Steps",

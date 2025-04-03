@@ -1,4 +1,3 @@
-
 import { ViscomLayouterSettings } from "./viscomSettings";
 import { GraphLayouter } from "../layouter";
 import { RadialPositionerDynamicDistribution } from "../linear/radial/radialLayouter";
@@ -46,12 +45,18 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
 
         return this.settings.community.fetchCommunities(this.visGraph).then(communities => {
             console.log("Fetched communities", communities);
+
+            // First combine communities
             this.visGraph.combineCommunities(communities);
+
+            // Then group by connected components
+            if (this.settings.algorithm.combineConnectedComponents.getValue() ?? false) {
+                this.visGraph.combineConnectedComponents();
+            }
 
             if (this.settings.community.addVirtualNodes.getValue() ?? false) {
                 this.visGraph.addVirtualCommunityNodes();
             }
-
 
         }).then(() => {
             // this.visGraph.combineCommunities(this.commGraph.communities.getAsIdLists());
