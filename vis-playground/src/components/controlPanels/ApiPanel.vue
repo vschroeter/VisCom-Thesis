@@ -395,6 +395,12 @@ function fetchNodeRanking(generatorId?: string, graph?: CommunicationGraph) {
         .then((data) => {
             console.log(data)
 
+            // Print data as csv
+            const keys = Array.from(Object.keys(data))
+            const values = Array.from(Object.values(data))
+            console.log(keys.join(','))
+            console.log(values.join(','))
+
             const rankList: [string, number][] = Object.entries(data)
 
             graph?.setNodeScoringByList(rankList)
