@@ -62,7 +62,8 @@ class EdgeCrossingMetricCalculator(GraphMetricCalculator):
                     intersections: List[complex] = path1.intersect(path2)
                     crossing_count += len(intersections)
                     if len(intersections) > 0:
-                        print(f"\t Found {len(intersections)} intersections between paths {i} and {j}")
+                        # print(f"\t Found {len(intersections)} intersections between paths {i} and {j}")
+                        pass
                 except Exception as e:
                     print(f"Error calculating intersection: {str(e)}")
 

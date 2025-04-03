@@ -51,9 +51,9 @@ class PathAngularPredictionMetricCalculator(GraphMetricCalculator):
         try:
             for source in graph.nodes():
                 # Use NetworkX's single_source_shortest_path to get all paths from this source
-                paths = nx.single_source_shortest_path(graph, source)
+                paths = nx.single_source_dijkstra(graph, source, weight="distance")
 
-                for target, path in paths.items():
+                for target, path in paths[1].items():
                     # Skip paths that are too short to have three consecutive segments
                     if len(path) < 4:
                         continue
@@ -131,6 +131,17 @@ class PathAngularPredictionMetricCalculator(GraphMetricCalculator):
 
         # Handle the case where there are no valid path segments
         if total_weight == 0:
+            # print("###################################################")
+            # print("No valid path segments found for prediction.")
+            # for node in graph.nodes:
+            #     print(f"\t{node}: {graph.nodes[node]}")
+
+            # # Print edges with data
+            # for edge in graph.edges:
+            #     print(f"\t{edge}: {graph.get_edge_data(*edge)}")
+
+            # print("###################################################")
+
             return MetricResult(key=self.API_METHOD_NAME, value=0.0, type="lower-better", error="No valid weighted path segments found for prediction")
 
         # Calculate weighted root mean square of angular deviations

@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import math
-from multiprocessing import Event
 from typing import Literal
 
 import networkx as nx
 
 from viscom_backend.commgraph.converter import convert_node_connections_graph_to_topic_graph
-
 
 
 def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reachability", "closeness", "significance", "degree", "harmonic"], normalize=True) -> dict[str, float]:
@@ -25,7 +23,7 @@ def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reacha
     # topic_graph = graph
 
     centrality = dict.fromkeys(graph, 0.0)
-    topic_degrees: dict[str, int] = dict.fromkeys(graph, 0)#
+    topic_degrees: dict[str, int] = dict.fromkeys(graph, 0)  #
     graph_degrees: dict[str, int] = dict.fromkeys(graph, 0)
 
     do_sqrt = True
@@ -122,8 +120,6 @@ def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reacha
 
                     # From the end_node, go the path back to the start_node and add the values to the intermediate nodes
                     score_node(end_node)
-
-
 
                 # print("\t", start_node, end_node, shortest_paths[1][end_node])
             x = 5
@@ -233,7 +229,9 @@ class ResolvedCluster:
             distance = shortest_paths[target_node]
             self.child_node_to_distance_map[target_node] = distance
 
-        shortest_paths_length = nx.single_source_shortest_path_length(self.cluster_graph, self.node)
+        # shortest_paths_length = nx.single_source_shortest_path_length(self.cluster_graph, self.node)
+        shortest_paths_length = nx.single_source_dijkstra_path_length(self.cluster_graph, self.node, weight="distance")
+
         self.max_path_distance = max(shortest_paths_length.values())
 
     def remove_node(self, node: str):
@@ -242,6 +240,7 @@ class ResolvedCluster:
 
         if self.cluster_graph.has_node(node):
             self.cluster_graph.remove_node(node)
+
 
 def get_commgraph_node_clusters(graph: nx.MultiDiGraph):
     topic_graph = convert_node_connections_graph_to_topic_graph(graph)
@@ -383,7 +382,6 @@ def get_commgraph_node_clusters(graph: nx.MultiDiGraph):
             resolved_clusters.remove(cluster)
             added_nodes = cluster.child_node_to_distance_map.keys()
         else:
-
             # If the cluster has a greater path distance than the max path distance, we try to separate it
             if cluster.max_path_distance > max_path_distance:
                 nodes_in_cluster = set(cluster.child_node_to_distance_map.keys())
@@ -433,7 +431,6 @@ def get_commgraph_node_clusters(graph: nx.MultiDiGraph):
                 resolved_clusters.remove(cluster)
             added_nodes = cluster.child_node_to_distance_map.keys()
 
-
         # Remove the clusters that have nodes of the current cluster as parent
         clusters_to_remove: list[ResolvedCluster] = [c for c in resolved_clusters if c.node in added_nodes]
         for c in clusters_to_remove:
@@ -446,8 +443,5 @@ def get_commgraph_node_clusters(graph: nx.MultiDiGraph):
                 c.update_distances()
 
         x = 5
-
-
-
 
     x = 5

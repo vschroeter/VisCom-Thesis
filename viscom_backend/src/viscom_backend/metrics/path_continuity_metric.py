@@ -51,9 +51,10 @@ class PathContinuityMetricCalculator(GraphMetricCalculator):
         try:
             for source in graph.nodes():
                 # Use NetworkX's single_source_shortest_path to get all paths from this source
-                paths = nx.single_source_shortest_path(graph, source)
+                # paths = nx.single_source_shortest_path(graph, source)
+                paths = nx.single_source_dijkstra(graph, source, weight="distance")
 
-                for target, path in paths.items():
+                for target, path in paths[1].items():
                     # Skip paths that are too short to have angular changes
                     if len(path) < 3:
                         continue
