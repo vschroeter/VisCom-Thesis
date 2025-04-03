@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 
 import { CommunicationGraph } from 'src/graph/commGraph'
-import { MetricsCollection } from 'src/graph/metrics/collection'
+import { MetricsCollection, MetricResult } from 'src/graph/metrics/collection'
 import { GraphLayouterSettings } from 'src/graph/layouter/settings/settings'
 import { SettingsCollection } from 'src/graph/layouter/settings/settingsCollection'
 import { UserInteractions } from 'src/graph/visualizations/interactions'
@@ -149,6 +149,152 @@ export const useGraphStore = defineStore('graph', {
             a.click()
             document.body.removeChild(a)
             URL.revokeObjectURL(url)
+        },
+
+        /**
+         * Check if all metrics have been calculated for all visualizations
+         * @returns true if all metrics have been calculated, false otherwise
+         */
+        areAllMetricsCalculated(): boolean {
+            // Get all current setting IDs
+            const settingsIds = Array.from(this.settingsCollection.mapIdToSettings.keys());
+
+            // If there are no settings, return false
+            if (settingsIds.length === 0) return false;
+
+            // Check if any of the metrics results are pending
+            return !settingsIds.some(id => {
+                const metricsResults = this.metricsCollection.getMetricsResults(id);
+                return metricsResults.pending;
+            });
+        },
+
+        /**
+         * Download all metric results as JSON
+         * @param title Title of the metrics file
+         * @param description Description of the metrics file
+         */
+        downloadMetricsAsJson(title: string = '', description: string = '') {
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+
+            // Get all current setting IDs
+            const settingsIds = Array.from(this.settingsCollection.mapIdToSettings.keys());
+
+            // Get metrics for each setting
+            const metricsData: Record<string, any> = {};
+            const csvData: Record<string, Record<string, number | null>> = {};
+
+            // Dataset info
+            const datasetInfo = {
+                title: title || 'Metrics Results',
+                description: description || 'Metrics results for multiple visualizations',
+                timestamp: timestamp,
+                nodeCount: this.graph.nodes.length,
+                connectionCount: this.graph.getAllLinks().length,
+                visualizationCount: settingsIds.length
+            };
+
+            // Collect metrics for each setting
+            settingsIds.forEach(settingId => {
+                const settings = this.settingsCollection.getSettings(settingId);
+                if (!settings) return;
+
+                const settingName = settings.name || `Setting ${settingId}`;
+                const settingType = settings.type;
+                const metricsResults = this.metricsCollection.getMetricsResults(settingId);
+
+                const metricResults: Record<string, any> = {};
+                metricsResults.results.forEach(result => {
+                    metricResults[result.metricKey] = {
+                        value: result.value,
+                        normalizedValue: result.normalizedValue,
+                        definition: {
+                            key: result.definition.key,
+                            label: result.definition.label,
+                            // description: result.definition.description,
+                            optimum: result.definition.optimum,
+                            unit: result.definition.unit,
+                            abbreviation: result.definition.abbreviation
+                        },
+                        pending: result.pending,
+                        error: result.error || undefined
+                    };
+
+                    // Add to CSV data
+                    if (!csvData[result.metricKey]) {
+                        csvData[result.metricKey] = {};
+                    }
+                    csvData[result.metricKey][settingName] = result.pending ? null : result.normalizedValue;
+                });
+
+                metricsData[settingId.toString()] = {
+                    id: settingId,
+                    name: settingName,
+                    type: settingType,
+                    metrics: metricResults
+                };
+            });
+
+            // Generate CSV string
+            const csvString = this.generateMetricsCsv(csvData);
+
+            // Construct final JSON
+            const finalJson = {
+                dataset: datasetInfo,
+                visualizations: metricsData,
+                csvSummary: csvString
+            };
+
+            // Download as file
+            const blob = new Blob([JSON.stringify(finalJson, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            // Create filename
+            const fileName = title
+                ? `metrics_${title.replace(/\s+/g, '_')}_${timestamp}.json`
+                : `metrics_${timestamp}.json`;
+
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        },
+
+        /**
+         * Generate CSV string from metrics data
+         * @param metricsData Object containing metrics data
+         * @returns CSV string representation of metrics data
+         */
+        generateMetricsCsv(metricsData: Record<string, Record<string, number | null>>): string {
+            // Get all metric keys and visualization names
+            const metricKeys = Object.keys(metricsData);
+            if (metricKeys.length === 0) return '';
+
+            const allVisNames = new Set<string>();
+            metricKeys.forEach(key => {
+                Object.keys(metricsData[key]).forEach(visName => {
+                    allVisNames.add(visName);
+                });
+            });
+            const visNames = Array.from(allVisNames);
+
+            // Create header row
+            let csv = 'Metric,' + visNames.join(',') + '\n';
+
+            // Add data rows
+            metricKeys.forEach(metricKey => {
+                csv += metricKey + ',';
+                const rowData = visNames.map(visName => {
+                    const value = metricsData[metricKey][visName];
+                    return value === null ? 'N/A' : value.toFixed(4);
+                });
+                csv += rowData.join(',') + '\n';
+            });
+
+            return csv;
         }
     },
 })

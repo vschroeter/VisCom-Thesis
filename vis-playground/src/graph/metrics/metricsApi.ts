@@ -180,7 +180,13 @@ export class MetricsApi {
                 console.error(`Error submitting metrics job (attempt ${attempt}/${retries}):`, error);
 
                 if (attempt >= retries) {
-                    throw new Error(`Failed to submit metrics job after ${retries} attempts`);
+                    return {
+                        key: metrics_type,
+                        value: Number.NaN,
+                        optimum: "lowerIsBetter",
+                        label: metrics_type.replace(/_/g, ' '),
+                        description: `Failed to submit job: ${error instanceof Error ? error.message : 'Unknown error'}`
+                    };
                 }
 
                 // Delay before retry with exponential backoff
@@ -191,28 +197,66 @@ export class MetricsApi {
 
         // If we've exited the retry loop without a valid jobStatus, something went wrong
         if (!jobStatus || !jobStatus.job_id) {
-            throw new Error("Failed to get valid job status after retries");
-        }
-
-        // Poll until done
-        const finalStatus = await MetricsApi.pollJobUntilDone(jobStatus.job_id);
-
-        if (finalStatus.status === 'failed') {
-            throw new Error(`Metrics calculation failed: ${finalStatus.error}`);
-        }
-
-        if (finalStatus.results && finalStatus.results.length > 0) {
-            const result = finalStatus.results[0];
             return {
-                key: result.key,
-                value: result.value,
-                optimum: result.type === "lower-better" ? "lowerIsBetter" : "higherIsBetter",
-                label: result.key.replace(/_/g, ' '),
-                description: undefined
+                key: metrics_type,
+                value: Number.NaN,
+                optimum: "lowerIsBetter",
+                label: metrics_type.replace(/_/g, ' '),
+                description: "Failed to get valid job status after retries"
             };
         }
 
-        throw new Error('No metrics results available');
+        try {
+            // Poll until done
+            const finalStatus = await MetricsApi.pollJobUntilDone(jobStatus.job_id);
+
+            if (finalStatus.status === 'failed') {
+                return {
+                    key: metrics_type,
+                    value: Number.NaN,
+                    optimum: "lowerIsBetter",
+                    label: metrics_type.replace(/_/g, ' '),
+                    description: finalStatus.error || "Metric calculation failed"
+                };
+            }
+
+            if (finalStatus.results && finalStatus.results.length > 0) {
+                const result = finalStatus.results[0];
+                if (result.error) {
+                    return {
+                        key: result.key,
+                        value: Number.NaN,
+                        optimum: result.type === "lower-better" ? "lowerIsBetter" : "higherIsBetter",
+                        label: result.key.replace(/_/g, ' '),
+                        description: result.error
+                    };
+                }
+
+                return {
+                    key: result.key,
+                    value: result.value,
+                    optimum: result.type === "lower-better" ? "lowerIsBetter" : "higherIsBetter",
+                    label: result.key.replace(/_/g, ' '),
+                    description: undefined
+                };
+            }
+
+            return {
+                key: metrics_type,
+                value: Number.NaN,
+                optimum: "lowerIsBetter",
+                label: metrics_type.replace(/_/g, ' '),
+                description: 'No metrics results available'
+            };
+        } catch (error) {
+            return {
+                key: metrics_type,
+                value: Number.NaN,
+                optimum: "lowerIsBetter",
+                label: metrics_type.replace(/_/g, ' '),
+                description: `Error polling job: ${error instanceof Error ? error.message : 'Unknown error'}`
+            };
+        }
     }
 
     /**

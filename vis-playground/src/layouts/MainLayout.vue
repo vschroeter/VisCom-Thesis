@@ -12,6 +12,12 @@
 
                 <q-space />
 
+                <!-- Metrics download button -->
+                <q-btn flat dense round icon="analytics" aria-label="Download Metrics"
+                       @click="openMetricsDownloadModal" :disable="!areAllMetricsCalculated">
+                    <q-tooltip>Download Metrics Results</q-tooltip>
+                </q-btn>
+
                 <!-- Settings file handling -->
                 <q-file v-model="settingsFile" label="Upload Settings" style="min-width: 150px" dense outlined
                     accept=".json" @update:model-value="handleSettingsFileUpload">
@@ -85,11 +91,31 @@
                 </q-card-actions>
             </q-card>
         </q-dialog>
+
+        <!-- Metrics download dialog -->
+        <q-dialog v-model="showMetricsDownloadModal" persistent>
+            <q-card style="min-width: 350px">
+                <q-card-section>
+                    <div class="text-h6">Download Metrics Results</div>
+                </q-card-section>
+
+                <q-card-section class="q-pt-none">
+                    <q-input dense v-model="metricsTitle" label="Title" autofocus @keyup.enter="downloadMetrics" />
+                    <q-input dense v-model="metricsDescription" label="Description" type="textarea" class="q-mt-md"
+                           @keyup.enter="downloadMetrics" />
+                </q-card-section>
+
+                <q-card-actions align="right">
+                    <q-btn flat label="Cancel" color="primary" v-close-popup />
+                    <q-btn flat label="Download" color="primary" @click="downloadMetrics" v-close-popup />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </q-layout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import EssentialLink, { EssentialLinkProps } from 'components/EssentialLink.vue';
 import ApiPanel from 'src/components/controlPanels/ApiPanel.vue';
 import SettingPanel from 'src/components/controlPanels/SettingPanel.vue';
@@ -116,6 +142,16 @@ const datasetDescription = ref('');
 // Settings download modal
 const showSettingsDownloadModal = ref(false);
 const settingsTitle = ref('');
+
+// Metrics download modal
+const showMetricsDownloadModal = ref(false);
+const metricsTitle = ref('');
+const metricsDescription = ref('');
+
+// Check if all metrics have been calculated
+const areAllMetricsCalculated = computed(() => {
+    return graphStore.areAllMetricsCalculated();
+});
 
 function toggleLeftDrawer() {
     leftDrawerOpen.value = !leftDrawerOpen.value;
@@ -179,6 +215,17 @@ function downloadDataset() {
     // Reset form fields
     datasetName.value = '';
     datasetDescription.value = '';
+}
+
+function openMetricsDownloadModal() {
+    metricsTitle.value = '';
+    metricsDescription.value = '';
+    showMetricsDownloadModal.value = true;
+}
+
+function downloadMetrics() {
+    graphStore.downloadMetricsAsJson(metricsTitle.value, metricsDescription.value);
+    showMetricsDownloadModal.value = false;
 }
 </script>
 

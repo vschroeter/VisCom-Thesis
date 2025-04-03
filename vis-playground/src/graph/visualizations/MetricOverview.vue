@@ -8,17 +8,32 @@
                 <div v-if="true" style="display: flex"
                     :style="{ width: `${sizePerMetric}px`, height: '10px', background: getBackground(metric), marginRight: `${xMargin}px`, border: `1px solid ${isSelected ? 'white' : 'black'}` }">
 
-                    <FittingSvgText :text="metric.shortResult" :height="10" :width="sizePerMetric" :color="metric.textColor" v-if="!metric.pending" />
+                    <FittingSvgText
+                        :text="metric.shortResult"
+                        :height="10"
+                        :width="sizePerMetric"
+                        :color="metric.textColor"
+                        v-if="!metric.pending && !metric.error" />
 
-                    <!-- <svg :width="sizePerMetric" :height="10" style="position: relative; top: 0; left: 0;">
-                        <text x="0" y="0" fill="black" alignment-baseline="hanging" text-anchor="right">
-                            {{ metric.shortResult }}
-                        </text>
-                    </svg> -->
+                    <FittingSvgText
+                        text="ERR"
+                        :height="10"
+                        :width="sizePerMetric"
+                        color="white"
+                        v-if="!metric.pending && metric.error" />
                 </div>
                 <q-tooltip>
-                    {{ metric.metricKey }}: {{ metric.normalizedValue?.toFixed(4) }} ({{ metric.value.toFixed(4) }}) -
-                    {{ metric.relativePlace + 1 }} / {{ metric.places }}
+                    <div>
+                        <div>{{ metric.definition.label || metric.metricKey }}</div>
+                        <div v-if="!metric.error">
+                            Value: {{ !isNaN(metric.value) ? metric.value.toFixed(4) : 'N/A' }}<br>
+                            Normalized: {{ !isNaN(metric.normalizedValue) ? metric.normalizedValue.toFixed(4) : 'N/A' }}<br>
+                            Rank: {{ metric.relativePlace + 1 }} / {{ metric.places }}
+                        </div>
+                        <div v-else class="text-negative">
+                            Error: {{ metric.error }}
+                        </div>
+                    </div>
                 </q-tooltip>
             </div>
 
@@ -94,8 +109,11 @@ const isSelected = computed(() => {
 function getBackground(metric: MetricResult) {
 
     if (metric.pending) {
-        // return 'gray'
         return 'repeating-linear-gradient(45deg, gray, gray 1px, white 2px, white 3px)';
+    }
+
+    if (metric.error) {
+        return 'repeating-linear-gradient(45deg, #f44336, #f44336 2px, #b71c1c 2px, #b71c1c 4px)';
     }
 
     const c = metric.color;

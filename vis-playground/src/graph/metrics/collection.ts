@@ -260,9 +260,9 @@ export class MetricsResults {
         results.forEach(result => {
             const key = result.key;
             const metricResult = this.getMetricResult(result)
-            metricResult.updateByValue(result.value);
+            metricResult.updateByValue(result.value, result.description);
 
-            console.log("Updated metric", key, result.value);
+            console.log("Updated metric", key, result.value, result.description ? `(Error: ${result.description})` : '');
         });
         this.emitter.emit("newMetrics");
     }
@@ -404,16 +404,17 @@ export class MetricResult {
     // If the metric is still pending its calculation
     pending: boolean = true;
 
+    // Error message if calculation failed
+    error?: string;
+
     // Color scale for the metric
     protected colorScale = d3.scaleSequential(d3.interpolateRdYlGn);
 
     // The value of the metric
     get value(): number {
-        return this.calculator?.getMetric(this.metricKey) ?? 0
+        if (this.error) return Number.NaN;
+        return this.calculator?.getMetric(this.metricKey) ?? Number.NaN;
     }
-
-    // The value of the metric
-    // value: number = 0;
 
     // The color of the metric. Based on the normalized value relative to other metrics
     get color(): string {
@@ -435,10 +436,6 @@ export class MetricResult {
             return "black";
         }
         return "white";
-        // if (color.r * 0.299 + color.g * 0.587 + color.b * 0.114 > 186) {
-        //     return "black";
-        // }
-        // return "white"
     }
 
     // Reference to the single metric results of this metric
@@ -499,7 +496,6 @@ export class MetricResult {
 
     constructor(settingId: number, metricDefinition: MetricDefinition, singleMetricResults: SingleMetricResults) {
         this.settingId = settingId;
-        // this.calculator = calculator;
         this.definition = metricDefinition;
 
         this.metricKey = metricDefinition.key;
@@ -515,23 +511,29 @@ export class MetricResult {
     update(calculator: MetricCalculator) {
         this.calculator = calculator;
         this.pending = true;
-
-        // console.log("Calculating metric", this.metricKey, this.settingId);
+        this.error = undefined;
 
         calculator.calculate().then(() => {
             this.pending = false;
-            // console.log("FIN Calculated metric", this.metricKey, this.settingId, this.value);
             this.emitter.emit("valueUpdated", true);
 
             // Update the single metric results
             this.singleMetricResults.update();
+        }).catch(err => {
+            this.pending = false;
+            this.error = err.message || "Error calculating metric";
+            console.error("Error calculating metric", this.metricKey, this.settingId, err);
+            this.emitter.emit("valueUpdated", true);
+
+            // Update the single metric results even on error
+            this.singleMetricResults.update();
         });
     }
 
-    updateByValue(value: number) {
+    updateByValue(value: number, error?: string) {
         this.calculator = undefined;
-        // this.value = value;
         this.pending = false;
+        this.error = error;
         this.emitter.emit("valueUpdated", true);
         this.singleMetricResults.update();
     }
@@ -562,11 +564,9 @@ export class MetricResult {
         } else if (this.definition.optimum === "lowerIsBetter") {
             domain = [max, min];
         }
-        // console.log(this.definition.key, domain);
         colorScale.domain(domain);
 
         this.emitter.emit("relativeValueUpdated", true);
-        // console.log("Updated relative value of metric", this.settingId, this.metricKey, this.normalizedValue, this.relativePlace, sortedResults.length);
     }
 
 }
