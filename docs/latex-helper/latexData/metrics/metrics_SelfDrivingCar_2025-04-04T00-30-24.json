@@ -1,0 +1,1144 @@
+{
+  "dataset": {
+    "title": "SelfDrivingCar",
+    "description": "Metrics results for multiple visualizations",
+    "timestamp": "2025-04-04T00-30-24",
+    "nodeCount": 7,
+    "connectionCount": 16,
+    "visualizationCount": 13
+  },
+  "visualizations": {
+    "0": {
+      "id": 0,
+      "name": "fdg_FDG",
+      "type": "fdg",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9526599279832456,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.2517110314754737,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.38769699798449264,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.41887990132759284,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.23288471071874417,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "1": {
+      "id": 1,
+      "name": "radial_RadialDefault",
+      "type": "radial",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9086391404005296,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.03571428571428571,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 0.9538408964122428,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9406539573402984,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.33687721175096874,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.39212833826155613,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.3776012233858344,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.07424625111610769,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "2": {
+      "id": 2,
+      "name": "radial_RadialWithBackward",
+      "type": "radial",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9086391404005296,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.03571428571428571,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 0.9538408964122429,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9406539573402984,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3368772117509687,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.3921283382615561,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.3776012233858344,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.07424625111610769,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "3": {
+      "id": 3,
+      "name": "viscom_Communities",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.2874040617264031,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.03571428571428571,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 0.8656440047003986,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.8658626800028432,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.4065979123261031,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.6183223602717595,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.7170988773344147,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.4545325589107345,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "4": {
+      "id": 4,
+      "name": "viscom_Virtual",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.3373986347966472,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.012987012987012988,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9925596791803322,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.20251113084988964,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.4771784902134278,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.47062892686225444,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.17325113114781548,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "5": {
+      "id": 5,
+      "name": "viscom_Default",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9086391404005296,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.07142857142857142,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9997058641928261,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.33687721175096874,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.3921283382615561,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.3776012233858344,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.07424625111610769,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "6": {
+      "id": 6,
+      "name": "viscom_CommunitiesWoRotation",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.29251134663221146,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.14285714285714285,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 0.7470761231598327,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.8155592152634384,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.35096534430975,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.5923478708367506,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.5153429961169758,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.5336293069281445,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "7": {
+      "id": 7,
+      "name": "arc_ArcDefault",
+      "type": "arc",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.32142857142857145,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 0.521792026714303,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.4418449465989236,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3040449688292451,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.5057805388588732,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.408729851990262,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.40992132380077856,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "8": {
+      "id": 8,
+      "name": "spaceFilling_Hilbert2",
+      "type": "spaceFilling",
+      "metrics": {
+        "aspectRatio": {
+          "value": 1,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.07142857142857142,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.2546442313122007,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.5589225417019231,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.5041752573152395,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.8019077066412771,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "9": {
+      "id": 9,
+      "name": "spaceFilling_Hilbert3",
+      "type": "spaceFilling",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.91304347826087,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.07142857142857142,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.21093848710171803,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.5080232502146314,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.43911883251907097,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.7100909969231505,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 0.9818181818181818,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "10": {
+      "id": 10,
+      "name": "spaceFilling_Peano2",
+      "type": "spaceFilling",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.8979591836734694,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.25,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.31383989264632856,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.6020938579201558,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.6177265708182574,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.4309782538604525,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "11": {
+      "id": 11,
+      "name": "graphviz_GraphvizDot",
+      "type": "graphviz",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.4111046624105243,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.03571428571428571,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9818745469034137,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.45233919462784605,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.5505923456696415,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.6579061129396516,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.5193500990050411,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    },
+    "12": {
+      "id": 12,
+      "name": "graphviz_GraphvizCirco",
+      "type": "graphviz",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9749368626322689,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.10714285714285714,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.30435901800638615,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.619262010009051,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.6531203188839201,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.45737273505083686,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        }
+      }
+    }
+  },
+  "csvSummary": "Metric,fdg_FDG,radial_RadialDefault,radial_RadialWithBackward,viscom_Communities,viscom_Virtual,viscom_Default,viscom_CommunitiesWoRotation,arc_ArcDefault,spaceFilling_Hilbert2,spaceFilling_Hilbert3,spaceFilling_Peano2,graphviz_GraphvizDot,graphviz_GraphvizCirco\naspectRatio,0.9527,0.9086,0.9086,0.2874,0.3374,0.9086,0.2925,0.0000,1.0000,0.9130,0.8980,0.4111,0.9749\nedgeCrossings,0.0000,0.0357,0.0357,0.0357,0.0130,0.0714,0.1429,0.3214,0.0714,0.0714,0.2500,0.0357,0.1071\npathEfficiencyRatio,1.0000,0.9538,0.9538,0.8656,1.0000,1.0000,0.7471,0.5218,1.0000,1.0000,1.0000,1.0000,1.0000\npathEfficiencyRatioNormalized,1.0000,0.9407,0.9407,0.8659,0.9926,0.9997,0.8156,0.4418,1.0000,1.0000,1.0000,0.9819,1.0000\nstress,0.2517,0.3369,0.3369,0.4066,0.2025,0.3369,0.3510,0.3040,0.2546,0.2109,0.3138,0.4523,0.3044\npathContinuity,0.3877,0.3921,0.3921,0.6183,0.4772,0.3921,0.5923,0.5058,0.5589,0.5080,0.6021,0.5506,0.6193\nweightedPathContinuity,0.4189,0.3776,0.3776,0.7171,0.4706,0.3776,0.5153,0.4087,0.5042,0.4391,0.6177,0.6579,0.6531\npathAngularPrediction,0.2329,0.0742,0.0742,0.4545,0.1733,0.0742,0.5336,0.4099,0.8019,0.7101,0.4310,0.5194,0.4574\nnodeEdgeOverlaps,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,0.9818,1.0000,1.0000,1.0000\n"
+}
