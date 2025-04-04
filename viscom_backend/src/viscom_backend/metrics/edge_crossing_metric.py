@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List
-
 from svgpathtools.path import Path
 
 from .graph_metric_calculator import GraphMetricCalculator
@@ -37,7 +35,7 @@ class EdgeCrossingMetricCalculator(GraphMetricCalculator):
             MetricResult: The normalized edge crossing metric result.
         """
         # Filter out links with empty paths
-        valid_links = [link for link in self.links if not link.is_empty and not link.path_error and link.path is not None]
+        valid_links = self.valid_links
 
         # Count actual edge crossings
         crossing_count: int = 0
@@ -59,8 +57,40 @@ class EdgeCrossingMetricCalculator(GraphMetricCalculator):
 
                 try:
                     # Find intersections between the paths
-                    intersections: List[complex] = path1.intersect(path2)
-                    crossing_count += len(intersections)
+                    # Returns a tuple of (t1, t2) where t1 and t2 are the
+                    # parameters at which the paths intersect
+                    """
+                    Returns:
+                        (list[tuple[float, Curve, float]]): list of intersections, each
+                            in the format ((T1, seg1, t1), (T2, seg2, t2)), where
+                            self.point(T1) == seg1.point(t1) == seg2.point(t2) == other_curve.point(T2)
+                    """
+                    tol = 0.01
+                    intersections: list = path1.intersect(path2, tol=tol)
+
+                    def endpoint_distance(p: int):
+                        if abs(p - 1) < abs(p):
+                            return abs(p - 1)
+                        else:
+                            return abs(p)
+
+                    # Filter out intersections that are too close to the endpoints
+                    # filtered_intersections = [(i1, i2) for i1, i2 in intersections if (endpoint_distance(i1[0]) > tol and endpoint_distance(i2[0]) > tol)]
+                    filtered_intersections = []
+                    last_t1 = 0
+                    for i1, i2 in intersections:
+                        t1 = i1[0]
+                        t2 = i2[0]
+                        # Check if the intersection is close to the endpoints
+                        if endpoint_distance(t1) > tol and endpoint_distance(t2) > tol:
+                            if abs(t1 - last_t1) > tol:
+                                filtered_intersections.append((i1, i2))
+
+                            last_t1 = t1
+
+                    # crossing_count += len(intersections)
+                    crossing_count += len(filtered_intersections)
+                    # crossing_count += 1
                     if len(intersections) > 0:
                         # print(f"\t Found {len(intersections)} intersections between paths {i} and {j}")
                         pass
@@ -86,13 +116,18 @@ class EdgeCrossingMetricCalculator(GraphMetricCalculator):
         # Avoid division by zero
         if c_max <= 0:
             return MetricResult(
-                key=self.API_METHOD_NAME, value=0.0 if crossing_count == 0 else 1.0, type="lower-better", error="Cannot normalize: maximum possible crossings is zero or negative"
+                key=self.API_METHOD_NAME,
+                value=0.0 if crossing_count == 0 else 1.0,
+                type="lower-better",
+                error=f"Cannot normalize: maximum possible crossings is zero or negative (c_max={c_max}) with {crossing_count} crossings (c_all={c_all}, c_impossible={c_impossible})",
             )
 
-        # Calculate normalized crossing metric
-        normalized_crossings = crossing_count / c_max
+        # Calculate normalized crossing metric, capped at 1.0
+        normalized_crossings = min(crossing_count / c_max, 1.0)
 
         print(f"\tActual crossings: {crossing_count}")
+        print(f"\tDegrees: {node_degrees}")
+        print(f"\tEdge count: {edge_count}")
         print(f"\tMaximum possible crossings: {c_max}")
         print(f"\tNormalized crossing metric: {normalized_crossings}")
 

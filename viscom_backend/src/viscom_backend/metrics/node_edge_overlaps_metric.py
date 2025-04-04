@@ -39,7 +39,7 @@ class NodeEdgeOverlapsMetricCalculator(GraphMetricCalculator):
         overlap_count = 0
 
         # Filter out links with empty paths
-        valid_links = [link for link in self.links if not link.is_empty and not link.path_error and link.path is not None]
+        valid_links = self.valid_links
 
         # Get counts for normalization
         edge_count = len(valid_links)

@@ -25,7 +25,7 @@ class GraphMetricCalculator(MetricCalculator):
             G.add_node(node.id, pos=(node_circle.x, node_circle.y))
 
         # Add edges with weights
-        for link in self.links:
+        for link in self.valid_links:
             G.add_edge(link.source, link.target, weight=link.weight, distance=link.distance)
 
         return G

@@ -125,6 +125,8 @@ class MetricCalculator(ABC):
         self.nodes: List[LaidOutNode] = data.nodes
         self.links: List[LaidOutConnection] = data.links
 
+        self.valid_links = [link for link in self.links if not link.is_empty and not link.path_error and link.path is not None]
+
         # Convert nodes to NodeCircle representations
         self.node_circles: Dict[str, NodeCircle] = {}
         for node in self.nodes:

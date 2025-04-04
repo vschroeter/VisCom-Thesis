@@ -32,7 +32,7 @@ class AbsolutePathLengthRatioMetricCalculator(MetricCalculator):
         valid_path_count: int = 0
 
         # Process only valid paths
-        for link in self.links:
+        for link in self.valid_links:
             # Skip empty or error paths
             if link.is_empty or link.path_error or link.path is None:
                 continue
@@ -102,7 +102,7 @@ class NormalizedPathLengthRatioMetricCalculator(MetricCalculator):
         valid_path_count: int = 0
 
         # Process only valid paths
-        for link in self.links:
+        for link in self.valid_links:
             # Skip empty or error paths
             if link.is_empty or link.path_error or link.path is None:
                 continue
