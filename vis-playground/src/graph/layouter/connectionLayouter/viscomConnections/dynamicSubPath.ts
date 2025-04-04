@@ -253,7 +253,7 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
 
     override isValidForNode(node: VisNode): boolean {
         // return false;
-        // return true;
+        return true;
         // TODO: this can still be improved
         // Maybe by line sampling or something like that
 

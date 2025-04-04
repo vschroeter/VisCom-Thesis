@@ -243,7 +243,7 @@ export class Setting {
 
 export type ParamType = "number" | "int" | "float" | "string" | "color" | "boolean" | "choice";
 export type NumberRange = { min?: number, max?: number };
-export class Param<T = number> { // 
+export class Param<T = number> { //
 
     /** Key to identify the parameter */
     key: string;
@@ -420,6 +420,7 @@ export class ParamWithNodeContext extends Param {
         "- co: Number of outgoing links",
         "- ci: Number of incoming links",
         "- cl: Number of links",
+        "- r: Radius of the node",
     ]
 
     override tooltip: string[] = ParamWithNodeContext.tooltip;
@@ -432,6 +433,7 @@ export class ParamWithNodeContext extends Param {
             co: 1,
             ci: 1,
             cl: 1,
+            r: 1,
         };
 
         if (node) {
@@ -443,6 +445,8 @@ export class ParamWithNodeContext extends Param {
             const ci = node.inDegree ?? 0;
             const cl = co + ci;
 
+            const r = node.radius ?? 1;
+
             context = {
                 cs,
                 cp,
@@ -450,6 +454,7 @@ export class ParamWithNodeContext extends Param {
                 co,
                 ci,
                 cl,
+                r
             };
         }
         // Merge the context with the node context

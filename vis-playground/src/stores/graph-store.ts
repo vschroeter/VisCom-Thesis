@@ -199,15 +199,16 @@ export const useGraphStore = defineStore('graph', {
                 const settings = this.settingsCollection.getSettings(settingId);
                 if (!settings) return;
 
-                const settingName = settings.name || `Setting ${settingId}`;
                 const settingType = settings.type;
+                const settingTitle = settings.name || `Setting ${settingId}`;
+                const settingName = settingType + '_' + settingTitle.replace(/\s+/g, '_');
                 const metricsResults = this.metricsCollection.getMetricsResults(settingId);
 
                 const metricResults: Record<string, any> = {};
                 metricsResults.results.forEach(result => {
                     metricResults[result.metricKey] = {
                         value: result.value,
-                        normalizedValue: result.normalizedValue,
+                        // normalizedValue: result.normalizedValue,
                         definition: {
                             key: result.definition.key,
                             label: result.definition.label,
@@ -216,7 +217,7 @@ export const useGraphStore = defineStore('graph', {
                             unit: result.definition.unit,
                             abbreviation: result.definition.abbreviation
                         },
-                        pending: result.pending,
+                        // pending: result.pending,
                         error: result.error || undefined
                     };
 

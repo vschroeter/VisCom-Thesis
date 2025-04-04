@@ -261,11 +261,11 @@ export class Node2d extends SvgRenderable {
         if (this.label) {
 
             // const _r = this.layoutNode.radius * 0.9;
-            const smallestR = this.layoutNode.visGraph.smallestExistingNodeSize * 2;
-            let r = smallestR + Math.sqrt((this.layoutNode.radius * 2 - smallestR) * 1);
-            r = r;
-            // r *= 2;
-            const heightWhenInNode = Math.min(this.label?.getHeightForWidth(r) ?? 0, r  );
+            const smallestR = this.layoutNode.visGraph.smallestExistingNodeSize * 1;
+            let r = smallestR + Math.sqrt(Math.max(0, (this.layoutNode.radius * 2 - smallestR)) * 1);
+            // r = r;
+            r *= this.layoutNode.visGraph.commonSettings?.labelSizeMultiplier.getValue() ?? 1;
+            const heightWhenInNode = Math.min(this.label?.getHeightForWidth(r) ?? 0, r);
             const widthWhenOutsideNode = this.label?.getWidthForHeight(r) ?? -1;
             if (heightWhenInNode / visibleArea.h > 0.02 || widthWhenOutsideNode > visibleArea.w * 0.66) {
 
@@ -329,7 +329,7 @@ export class Node2d extends SvgRenderable {
         if (!this.layoutNode.isVirtual) {
         } else {
             this.elNode?.attr('fill-opacity', 0.1);
-            this.elVirtualMarker?.attr('fill', this.fill).attr('fill-opacity', 0.5);
+            this.elVirtualMarker?.attr('fill', this.fill).attr('fill-opacity', 0.1);
         }
 
 
@@ -367,11 +367,13 @@ export class Node2d extends SvgRenderable {
 
 
             this.elNode?.attr('stroke', this.fill ?? "white")
-                .attr('stroke-width', this.strokeStyle.strokeWidth)
+                // .attr('stroke-width', this.strokeStyle.strokeWidth * 8)
+                .attr('stroke-width', this.strokeStyle.strokeWidth * this.radius / 5)
                 .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
 
             this.elVirtualMarker?.attr('stroke', this.fill ?? "white")
-                .attr('stroke-width', this.strokeStyle.strokeWidth / 2)
+                .attr('stroke-linejoin', 'round')
+                .attr('stroke-width', this.strokeStyle.strokeWidth * this.radius / 10)
                 .attr('stroke-opacity', this.strokeStyle.strokeOpacity ?? 1);
 
         }
@@ -405,9 +407,16 @@ export class Node2d extends SvgRenderable {
 
     renderPositionAndSize() {
         // console.log('[NODE] renderPositionAndSize', this.x, this.y, this.radius);
-        this.elNode?.attr('cx', this.x)
-            .attr('cy', this.y)
-            .attr('r', this.radius);
+        if (this.layoutNode.isVirtual) {
+            this.elNode?.attr('cx', this.x)
+                .attr('cy', this.y)
+                .attr('r', this.radius - this.strokeStyle.strokeWidth * this.radius / 5);
+
+        } else {
+            this.elNode?.attr('cx', this.x)
+                .attr('cy', this.y)
+                .attr('r', this.radius);
+        }
     }
     updatePositionAndSize(x?: number, y?: number, radius?: number) {
         const updated = this.checkValueAndAddUpdateCallback([
@@ -432,7 +441,7 @@ export class Node2d extends SvgRenderable {
         // There is a small gap between the base line and the node
 
         const gap = 0.15;
-        const sizeFactor = 1.4;
+        const sizeFactor = 1;
 
         if (this.layoutNode.isVirtual) {
             const parent = this.layoutNode.virtualParent;

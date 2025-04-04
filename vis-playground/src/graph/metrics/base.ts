@@ -72,8 +72,11 @@ export class MetricCalculator {
         // Get size of the layout
         const xNodeExtent = d3.extent(this.graph.allLeafLayoutNodes, d => d.x) as [number, number];
         const yNodeExtent = d3.extent(this.graph.allLeafLayoutNodes, d => d.y) as [number, number];
-        this.layoutWidth = xNodeExtent[1] - xNodeExtent[0];
-        this.layoutHeight = yNodeExtent[1] - yNodeExtent[0];
+
+        const maxNodeSize = d3.max(this.graph.allLeafLayoutNodes, d => d.radius) || 0;
+
+        this.layoutWidth = xNodeExtent[1] - xNodeExtent[0] + 2 * maxNodeSize;
+        this.layoutHeight = yNodeExtent[1] - yNodeExtent[0] + 2 * maxNodeSize;
 
         // console.warn("Aspect Ratio: ", this.aspectRatio, this.layoutHeight, this.layoutWidth, {
         //     nodes: this.graph.allLayoutNodes.map(d => ({id: d.id, x: d.x, y: d.y })),

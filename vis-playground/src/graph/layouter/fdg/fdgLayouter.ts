@@ -10,6 +10,15 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
 
     simulation?: d3.Simulation<LayoutNode, LayoutConnection>;
 
+    override initVisGraph(): Promise<void> {
+        this.resetVisGraph();
+
+        // Empty promise
+        return new Promise(resolve => {
+            resolve();
+        });
+    }
+
     override async layout(isUpdate = false) {
         const ctx = this.settings.getContext({ visGraph: this.visGraph });
 
@@ -24,7 +33,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
             this.simulation.stop();
         }
 
-        const simulation = d3.forceSimulation(this.visGraph.allLayoutNodes).alpha(1) //.alphaTarget(0.3);
+        const simulation = d3.forceSimulation(this.visGraph.allLeafLayoutNodes).alpha(1) //.alphaTarget(0.3);
         simulation.stop();
         this.simulation = simulation;
 

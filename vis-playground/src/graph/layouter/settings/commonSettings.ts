@@ -57,6 +57,15 @@ export class CommonSettings extends Setting {
         defaultValue: 1,
     })
 
+    labelSizeMultiplier = new Param<number>({
+        type: "number",
+        key: "labelSizeMultiplier",
+        label: "Label Size Multiplier",
+        description: "The multiplier for the label size",
+        optional: false,
+        defaultValue: 1,
+    })
+
     arrowSize = new Param<number>({
         type: "number",
         key: "arrowSize",

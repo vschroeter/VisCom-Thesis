@@ -4,7 +4,7 @@ export class ForceManyBodySetting extends Setting {
     strength = new ParamWithNodeContext({
         key: "strength",
         optional: false,
-        defaultValue: -20,
+        defaultValue: -100,
     });
 
     constructor() {
@@ -49,7 +49,7 @@ export class ForceLinkSetting extends Setting {
         key: "strength",
         optional: true,
         active: true,
-        defaultValue: 1,
+        defaultValue: "Math.max(0.1, Math.min(1, w))",
     });
 
     constructor() {
@@ -68,14 +68,14 @@ export class ForceCollideSetting extends Setting {
         key: "radius",
         optional: true,
         active: true,
-        defaultValue: 5,
+        defaultValue: "r",
     });
 
     strength = new Param({
         key: "strength",
         optional: true,
         active: true,
-        defaultValue: 0.5,
+        defaultValue: 1,
     });
 
     constructor() {

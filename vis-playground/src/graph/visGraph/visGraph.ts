@@ -545,7 +545,8 @@ export class VisGraph {
         }
 
         // Update the smallest node size of the graph
-        this.smallestExistingNodeSize = d3.min(this.allLayoutNodes.map(node => node.radius)) ?? 0;
+        const smallestExistingNodeSize = d3.min(this.allLayoutNodes.map(node => node.radius)) ?? 0;
+        this.smallestExistingNodeSize = d3.min(this.allLayoutNodes.filter(node => !node.isVirtual).map(node => node.radius)) ?? smallestExistingNodeSize;
 
         // Ensure, that all graphical elements are created
         this.createGraphicalElements();
