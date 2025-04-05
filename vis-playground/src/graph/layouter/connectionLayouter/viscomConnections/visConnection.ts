@@ -53,6 +53,7 @@ export class VisConnection extends CombinedPathSegment {
 
         let previousSubPath: SubPath | undefined = undefined;
 
+        const useHierarchicalSubPaths = visConnection.layouter.useHierarchicalSubPaths;
 
         for (let i = 0; i < visNodePath.length - 1; i++) {
             // i is always the start node
@@ -60,7 +61,7 @@ export class VisConnection extends CombinedPathSegment {
 
             let path2path: SubPath | undefined = undefined;
 
-            // If there is a virutal node, add a path2path subpath
+            // If there is a virtual node, add a path2path subpath
             if (sNode.isVirtual) {
 
                 if (!previousSubPath) {
@@ -85,13 +86,27 @@ export class VisConnection extends CombinedPathSegment {
             let j = i + 1;
             let tNode = visNodePath[j];
 
-            while (tNode.parent != sNode.parent) {
-                const nextNode = visNodePath[j + 1];
-                if (!nextNode || nextNode.parent == tNode.parent) {
-                    break;
+            if (useHierarchicalSubPaths) {
+                while (tNode.parent != sNode.parent) {
+                    const nextNode = visNodePath[j + 1];
+                    if (!nextNode || nextNode.parent == tNode.parent) {
+                        break;
+                    }
+                    tNode = nextNode;
+                    j++;
                 }
-                tNode = nextNode;
-                j++;
+            }
+            // If we do not use hierarchical subpaths, we just take the next non-hypernode node
+            else {
+                while (!sNode.isHyperNode && tNode.isHyperNode) {
+                    j++;
+                    tNode = visNodePath[j];
+
+                    if (!tNode) {
+                        console.error("No next node found", sNode, visNodePath);
+                        break;
+                    }
+                }
             }
 
 

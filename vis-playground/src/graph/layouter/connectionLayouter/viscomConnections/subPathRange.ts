@@ -493,6 +493,8 @@ export class SubPathRange {
 
         if (this.sorted) return this.subPathInformation;
 
+        const useHierarchicalSubPaths = this.node.parentLayouter.useHierarchicalSubPaths;
+
         const EPSILON = 0.01;
         // Sort the paths by their opposite node position
         // For the same position, first take outgoing, then incoming connections
@@ -538,7 +540,7 @@ export class SubPathRange {
                 directConnectionAtHypernode: false,
             });
             const desiredAnchor = subPath.getDesiredNodeAnchor(this.node, {
-                directConnectionAtHypernode: true,
+                directConnectionAtHypernode: useHierarchicalSubPaths,
             });
             const desiredAnchorPoint = desiredAnchor?.anchorPoint;
 
@@ -551,7 +553,7 @@ export class SubPathRange {
                 directConnectionAtHypernode: false,
             }) : undefined;
             const desiredCounterAnchor = oppositeVisNode ? subPath.getDesiredNodeAnchor(oppositeVisNode, {
-                directConnectionAtHypernode: true,
+                directConnectionAtHypernode: useHierarchicalSubPaths,
             }) : undefined;
 
 
@@ -651,29 +653,6 @@ export class SubPathRange {
         });
 
 
-        // After sorting, we can apply the counter path information
-        pathInformation.forEach((info, i, arr) => {
-            const subPath = info.subPath;
-            const nextSubPath = i + 1 < arr.length ? arr[i + 1].subPath : undefined;
-            const previousSubPath = i > 0 ? arr[i - 1].subPath : undefined;
-
-            let hasCounterPath = false;
-            let hasCounterPathBefore = false;
-            let hasCounterPathAfter = false;
-            if (nextSubPath && subPath.isCounterPathOf(nextSubPath)) {
-                hasCounterPath = true;
-                hasCounterPathAfter = true;
-            } else if (previousSubPath && subPath.isCounterPathOf(previousSubPath)) {
-                hasCounterPath = true;
-                hasCounterPathBefore = true;
-            }
-
-            info.hasCounterPath = hasCounterPath;
-            info.hasCounterPathBefore = hasCounterPathBefore;
-            info.hasCounterPathAfter = hasCounterPathAfter;
-        })
-
-
         const oppositePathInformation = pathInformation.slice();
 
         oppositePathInformation.sort((a, b) => {
@@ -738,111 +717,146 @@ export class SubPathRange {
 
         const mergedPathInformation = [];
 
-        const addedIds: Set<string> = new Set();
+        if (!this.node.parentLayouter.useHierarchicalSubPaths) {
+            mergedPathInformation.push(...pathInformation);
+        }
 
-        let i = 0;
-        let j = 0;
+        if (mergedPathInformation.length == 0) {
 
-        // console.error("[MERGING]", {
-        //     id: this.node.id,
-        //     dir: this.type,
-        //     pathInformation: pathInformation.map(p => p.subPath.cId),
-        //     oppositePathInformation: oppositePathInformation.map(p => p.subPath.cId)
-        // });
 
-        while (true) {
+            const addedIds: Set<string> = new Set();
 
-            let id: string | undefined = undefined;
-            let oId: string | undefined = undefined;
+            let i = 0;
+            let j = 0;
 
-            while (i < pathInformation.length) {
-                id = pathInformation[i].subPath.cId;
-                if (addedIds.has(id)) {
-                    i++;
-                    continue;
-                }
-                break;
-            }
+            // console.error("[MERGING]", {
+            //     id: this.node.id,
+            //     dir: this.type,
+            //     pathInformation: pathInformation.map(p => p.subPath.cId),
+            //     oppositePathInformation: oppositePathInformation.map(p => p.subPath.cId)
+            // });
 
-            while (j < oppositePathInformation.length) {
-                oId = oppositePathInformation[j].subPath.cId;
-                if (addedIds.has(oId)) {
-                    j++;
-                    continue;
-                }
-                break;
-            }
+            while (true) {
 
-            if (i == pathInformation.length) id = undefined;
-            if (j == oppositePathInformation.length) oId = undefined;
-
-            if (id == undefined || oId == undefined) {
+                let id: string | undefined = undefined;
+                let oId: string | undefined = undefined;
 
                 while (i < pathInformation.length) {
-                    if (addedIds.has(pathInformation[i].subPath.cId)) {
+                    id = pathInformation[i].subPath.cId;
+                    if (addedIds.has(id)) {
                         i++;
                         continue;
                     }
-                    mergedPathInformation.push(pathInformation[i]);
-                    i++;
+                    break;
                 }
 
                 while (j < oppositePathInformation.length) {
-                    if (addedIds.has(oppositePathInformation[j].subPath.cId)) {
+                    oId = oppositePathInformation[j].subPath.cId;
+                    if (addedIds.has(oId)) {
                         j++;
                         continue;
                     }
-                    mergedPathInformation.push(oppositePathInformation[j]);
-                    j++;
+                    break;
                 }
 
-                break;
-            }
+                if (i == pathInformation.length) id = undefined;
+                if (j == oppositePathInformation.length) oId = undefined;
 
-            if (id == oId) {
-                mergedPathInformation.push(pathInformation[i]);
-                // console.log("Adding", pathInformation[i].subPath.cId);
-                addedIds.add(id!);
+                if (id == undefined || oId == undefined) {
 
-                continue;
-            }
-            else {
-
-                // Decide by node score (if equal score, sort by name)
-                const paths = [pathInformation[i], oppositePathInformation[j]];
-                paths.sort((a, b) => {
-                    if (a.subPath.source.score != b.subPath.source.score) {
-                        return b.subPath.source.score - a.subPath.source.score;
+                    while (i < pathInformation.length) {
+                        if (addedIds.has(pathInformation[i].subPath.cId)) {
+                            i++;
+                            continue;
+                        }
+                        mergedPathInformation.push(pathInformation[i]);
+                        i++;
                     }
-                    return a.subPath.cId.localeCompare(b.subPath.cId);
-                });
 
-                mergedPathInformation.push(paths[0]);
-                // console.log("Adding", paths[0].subPath.cId, {
-                //     a: pathInformation[i].subPath.cId,
-                //     b: oppositePathInformation[j].subPath.cId,
-                //     aScore: pathInformation[i].subPath.source.score,
-                //     bScore: oppositePathInformation[j].subPath.source.score
-                // });
-                addedIds.add(paths[0].subPath.cId);
+                    while (j < oppositePathInformation.length) {
+                        if (addedIds.has(oppositePathInformation[j].subPath.cId)) {
+                            j++;
+                            continue;
+                        }
+                        mergedPathInformation.push(oppositePathInformation[j]);
+                        j++;
+                    }
+
+                    break;
+                }
+
+                if (id == oId) {
+                    mergedPathInformation.push(pathInformation[i]);
+                    // console.log("Adding", pathInformation[i].subPath.cId);
+                    addedIds.add(id!);
+
+                    continue;
+                }
+                else {
+
+                    // Decide by node score (if equal score, sort by name)
+                    const paths = [pathInformation[i], oppositePathInformation[j]];
+                    paths.sort((a, b) => {
+                        if (a.subPath.source.score != b.subPath.source.score) {
+                            return b.subPath.source.score - a.subPath.source.score;
+                        }
+                        return a.subPath.cId.localeCompare(b.subPath.cId);
+                    });
+
+                    mergedPathInformation.push(paths[0]);
+                    // console.log("Adding", paths[0].subPath.cId, {
+                    //     a: pathInformation[i].subPath.cId,
+                    //     b: oppositePathInformation[j].subPath.cId,
+                    //     aScore: pathInformation[i].subPath.source.score,
+                    //     bScore: oppositePathInformation[j].subPath.source.score
+                    // });
+                    addedIds.add(paths[0].subPath.cId);
+                }
+            }
+
+            if (this.type == "circleArcBackward") {
+                oppositePathInformation.reverse();
+                pathInformation.reverse();
+                mergedPathInformation.reverse();
             }
         }
-
-        if (this.type == "circleArcBackward") {
-            oppositePathInformation.reverse();
-            pathInformation.reverse();
-            mergedPathInformation.reverse();
-        }
-
 
         // this.subPathInformation = pathInformation;
         this.subPathInformation = mergedPathInformation;
+
+        if (this.node.id == "sensor3") {
+            const x = 5;
+        }
+
+        // After sorting, we can apply the counter path information
+        pathInformation.forEach((info, i, arr) => {
+            const subPath = info.subPath;
+            const nextSubPath = i + 1 < arr.length ? arr[i + 1].subPath : undefined;
+            const previousSubPath = i > 0 ? arr[i - 1].subPath : undefined;
+
+            let hasCounterPath = false;
+            let hasCounterPathBefore = false;
+            let hasCounterPathAfter = false;
+            if (nextSubPath && subPath.isCounterPathOf(nextSubPath)) {
+                hasCounterPath = true;
+                hasCounterPathAfter = true;
+            } else if (previousSubPath && subPath.isCounterPathOf(previousSubPath)) {
+                hasCounterPath = true;
+                hasCounterPathBefore = true;
+            }
+
+            info.hasCounterPath = hasCounterPath;
+            info.hasCounterPathBefore = hasCounterPathBefore;
+            info.hasCounterPathAfter = hasCounterPathAfter;
+        })
+
 
         pathInformation.forEach(info => {
             this.mappedSubPathInformation.set(info.subPath, info);
         });
 
-        if (this.node.layoutNode.children.length == 5 || this.node.layoutNode.children.length == 4) {
+        if ((this.node.id == "car_simulator" && this.type == "outside") || (this.node.id == "waypoint_updater" && this.type == "outside")) {
+            // if (this.node.layoutNode.children.length == 5 || this.node.layoutNode.children.length == 4) {
             console.warn("[SORT]", {
                 id: this.node.id,
                 dir: this.type,
@@ -1075,7 +1089,7 @@ export class SubPathRange {
                 const counterPadding = rangeDelta - rangeSize / 2 - rangeSize;
 
 
-                // if (this.node.id == "p1") {
+                // if (this.node.id == "sensor3") {
                 //     console.warn("RANGE", {
                 //         range,
                 //         rangeSize,

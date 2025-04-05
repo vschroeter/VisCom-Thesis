@@ -216,7 +216,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
             return !descendantsSet.has(conn.source) || !descendantsSet.has(conn.target);
         });
 
-        console.warn(`Outside connections for ${parentNode.id}:`, outsideConnections.map(c => c.id));
+        // console.warn(`Outside connections for ${parentNode.id}:`, outsideConnections.map(c => c.id));
 
         // We build a vector based on the direction of the target node
         for (const conn of outsideConnections) {
@@ -246,7 +246,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
                 }
             }
 
-            console.log(nodePath);
+            // console.log(nodePath);
 
             const connectionVector = new Vector(nodeInsideParent.center, nodeOutsideParent.center);
             const centerToNodeInside = new Vector(parentNode.center, nodeInsideParent.center);
