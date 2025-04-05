@@ -1,11 +1,12 @@
 {
     "version": "1.0.0",
-    "name": "0122nodes_2024-08-06_11-15-18_singulate",
+    "name": "0061nodes_2024-08-06_11-15-18_singulate",
     "description": "A parcel singulation robot",
     "created_at": "2024-08-06T11:15:18.297093",
-    "node_count": 122,
+    "node_count": 61,
     "author": "cellumation GmbH",
     "cc_by_sa_consent": true,
+    "is_synthetic": false,
     "nodes": [
         {
             "name": "GazeboDepthCamPlugin136540701882752",

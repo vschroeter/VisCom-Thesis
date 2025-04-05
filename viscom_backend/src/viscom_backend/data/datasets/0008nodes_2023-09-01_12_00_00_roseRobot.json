@@ -6,6 +6,7 @@
     "nodeCount": 8,
     "author": "vschroeter",
     "cc_by_sa_consent": true,
+    "is_synthetic": false,
     "nodes": [
         {
             "name": "msg_bridge_json",

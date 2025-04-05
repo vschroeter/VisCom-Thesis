@@ -6,6 +6,7 @@
     "nodeCount": 6,
     "author": "vschroeter",
     "cc_by_sa_consent": true,
+    "is_synthetic": false,
     "nodes": [
         {
             "name": "microphone",

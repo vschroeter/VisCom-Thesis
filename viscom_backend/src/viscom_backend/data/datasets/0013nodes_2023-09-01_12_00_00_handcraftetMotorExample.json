@@ -6,6 +6,7 @@
     "nodeCount": 13,
     "author": "vschroeter",
     "cc_by_sa_consent": true,
+    "is_synthetic": false,
     "nodes": [
         {
             "name": "ultra_sonic_sensor",

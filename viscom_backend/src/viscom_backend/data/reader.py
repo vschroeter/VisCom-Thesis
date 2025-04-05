@@ -36,17 +36,28 @@ class RosMetaSysGraphGenerator:
                 # return convert_to_weighted_graph(graph)
                 return graph
 
+            is_synthetic = True
+
+            # "is_synthetic": false,
+            # "nodes": [
+            # Parse the json file to check, if it has the "is_synthetic" key
+
+            with open(os.path.join(os.path.dirname(__file__), "datasets", dataset)) as file:
+                data = json.load(file)
+                is_synthetic = data.get("is_synthetic", True)
+
             generator_methods_config[dataset] = {
                 "params": [
-                    {
-                        "key": "return_topic_graph",
-                        "type": "boolean",
-                        "default": False,
-                        "description": "Return a topic graph instead of a node graph.",
-                    }
+                    # {
+                    #     "key": "return_topic_graph",
+                    #     "type": "boolean",
+                    #     "default": False,
+                    #     "description": "Return a topic graph instead of a node graph.",
+                    # }
                 ],
                 "description": "A communication graph generated from a ROS meta system description.",
                 "is_saved_dataset": True,
+                "is_synthetic": is_synthetic,
                 # "method": create_lambda(),
                 "method": callback,
             }
