@@ -5,7 +5,7 @@ import { VisGraph } from "../visGraph/visGraph";
 export class MetricCalculator {
 
     static displayedMetrics: MetricDefinition[] = [
-        { key: "aspectRatio", optimum: "higherIsBetter", label: "Aspect Ratio", description: "The ratio of shorter side to longer side of the layout" },
+        // { key: "aspectRatio", optimum: "higherIsBetter", label: "Aspect Ratio", description: "The ratio of shorter side to longer side of the layout" },
     ];
 
     getMetricDefinitions(): MetricDefinition[] {
@@ -52,7 +52,7 @@ export class MetricCalculator {
      * If the layout is wider than it is high, the aspect ratio is the width to height ratio.
      * If the layout is higher than it is wide, the aspect ratio is the height to width ratio.
      */
-    get aspectRatio(): number {
+    get aspectRatioByNodes(): number {
         if (this.layoutWidth > this.layoutHeight) {
             return this.heightToWidthRatio;
         }

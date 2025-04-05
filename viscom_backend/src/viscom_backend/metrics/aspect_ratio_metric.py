@@ -28,10 +28,19 @@ class AspectRatioMetricCalculator(MetricCalculator):
             return MetricResult(key=self.API_METHOD_NAME, value=0.0, type="higher-better", error="No nodes found")
 
         # Find the bounding box of the layout
-        min_x = min(node.x for node in self.nodes)
-        max_x = max(node.x for node in self.nodes)
-        min_y = min(node.y for node in self.nodes)
-        max_y = max(node.y for node in self.nodes)
+        min_x = min((node.x - node.radius) for node in self.nodes)
+        max_x = max((node.x + node.radius) for node in self.nodes)
+        min_y = min((node.y - node.radius) for node in self.nodes)
+        max_y = max((node.y + node.radius) for node in self.nodes)
+
+        # Find the bounding box of the connections
+        for link in self.valid_links:
+            if link.path is not None:
+                bbox = link.path.bbox()
+                min_x = min(min_x, bbox[0])
+                max_x = max(max_x, bbox[1])
+                min_y = min(min_y, bbox[2])
+                max_y = max(max_y, bbox[3])
 
         # Calculate width and height
         width = max_x - min_x

@@ -13,6 +13,7 @@ import { PathContinuityMetricCalculator } from "./metricPathContinuity";
 import { WeightedPathContinuityMetricCalculator } from "./metricWeightedPathContinuity";
 import { PathAngularPredictionMetricCalculator } from "./metricPathAngularPrediction";
 import { NodeEdgeOverlapsMetricCalculator } from "./metricNodeEdgeOverlaps";
+import { AspectRatioMetricCalculator } from "./metricAspectRatio";
 
 export type MetricNormalization =
     "none" | "byMinimum" | "byMaximum" | "byAverage" | "byMedian" | "byShorterLayoutSide" | "byLongerLayoutSide"
@@ -34,10 +35,10 @@ export type MetricDefinition = {
 export class MetricsCollection {
 
     static metricsToCalculate: (typeof MetricCalculator)[] = [
-        MetricCalculator,
+        // MetricCalculator,
         // EdgeLengthCalculator,
         // NodeDistanceCalculator,
-
+        AspectRatioMetricCalculator,
         EdgeCrossingsCalculator,
         PathLengthRatioMetricCalculator,
         NormalizedPathLengthRatioMetricCalculator,
