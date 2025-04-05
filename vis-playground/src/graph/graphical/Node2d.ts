@@ -265,23 +265,38 @@ export class Node2d extends SvgRenderable {
             let r = smallestR + Math.sqrt(Math.max(0, (this.layoutNode.radius * 2 - smallestR)) * 1);
             // r = r;
             r *= this.layoutNode.visGraph.commonSettings?.labelSizeMultiplier.getValue() ?? 1;
+
             const heightWhenInNode = Math.min(this.label?.getHeightForWidth(r) ?? 0, r);
             const widthWhenOutsideNode = this.label?.getWidthForHeight(r) ?? -1;
-            if (heightWhenInNode / visibleArea.h > 0.02 || widthWhenOutsideNode > visibleArea.w * 0.66) {
+
+            const labelSide: "left" | "right" | "center" =
+                (this.layoutNode.parent ? (this.layoutNode.parent.x < this.center.x ? "left" : "right") : "center");
+
+            const anchorPosX = labelSide === "left" ?
+                this.center.x + this.layoutNode.radius * 1.1 :
+                labelSide === "right" ?
+                    this.center.x - this.layoutNode.radius * 1.1 :
+                    this.center.x;
+
+            const anchorPosY = this.center.y;
+
+            const labelWouldBeOutsideVisibleArea = (labelSide == "left" && widthWhenOutsideNode + anchorPosX > visibleArea.x + visibleArea.w) ||
+                (labelSide == "right" && anchorPosX - widthWhenOutsideNode < visibleArea.x)
+
+            if (labelWouldBeOutsideVisibleArea || heightWhenInNode / visibleArea.h > 0.02 || widthWhenOutsideNode > visibleArea.w * 0.66) {
 
                 this.label?.setHeight(heightWhenInNode).setAlignment("center").setAnchorPos(this.center.x, this.center.y);
             } else {
                 const textHeight = r;
 
-                if (this.layoutNode.parent) {
-                    if (this.center.x > this.layoutNode.parent.x) {
-                        this.label?.setAlignment("center-left").setAnchorPos(this.center.x + this.layoutNode.radius * 1.1, this.center.y);
-                    } else {
-                        this.label?.setAlignment("center-right").setAnchorPos(this.center.x - this.layoutNode.radius * 1.1, this.center.y);
-                    }
+                if (labelSide === "left") {
+                    this.label?.setAlignment("center-left").setAnchorPos(this.center.x + this.layoutNode.radius * 1.1, this.center.y);
+                } else if (labelSide === "right") {
+                    this.label?.setAlignment("center-right").setAnchorPos(this.center.x - this.layoutNode.radius * 1.1, this.center.y);
                 } else {
                     this.label?.setAlignment("center").setAnchorPos(this.center.x, this.center.y);
                 }
+
                 this.label?.setHeight(textHeight)
             }
 

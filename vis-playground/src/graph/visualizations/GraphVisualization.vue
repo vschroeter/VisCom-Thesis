@@ -1,7 +1,7 @@
 <template>
     <div @click="onClickDiv">
         <!-- :class="(isSelected ? 'bg-primary text-white' : '') + ('full-modal': isZoomed)"> -->
-        <q-card :class="{ 'bg-primary': isSelected, 'text-white': isSelected, 'full-modal': isZoomed, 'card': true }">
+        <q-card :class="{ 'bg-secondary': isSelected, 'text-white': isSelected, 'full-modal': isZoomed, 'card': true }">
             <q-card-section class="row items-start q-py-xs items-center">
                 <div :class="'col q-mr-sm '"
                     :style="`inline-size: ${size - iconButtonDivWidth - 30}px; overflow-wrap: break-word;`">
