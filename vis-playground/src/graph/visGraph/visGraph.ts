@@ -807,8 +807,8 @@ export class VisGraph {
         })
 
         this.allGraphicalNodes.forEach(node => {
-            const hideNodeNames = this.commonSettings?.hideNodeNames.getValue() ?? false;
-            if (!hideNodeNames) {
+            const showNodeNames = this.commonSettings?.displayNodeLabels.getValue() ?? false;
+            if (showNodeNames) {
 
 
                 if (node.id.startsWith("p")) {

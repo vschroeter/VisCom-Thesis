@@ -36,7 +36,7 @@ export class AlgorithmSettings extends Setting {
         label: "Combining Steps",
         description: "The count of steps to combine strongly coupled nodes.",
         optional: false,
-        defaultValue: 1,
+        defaultValue: 0,
         type: "number",
     });
 

@@ -13,16 +13,6 @@
 
                 </div>
             </q-expansion-item>
-            <!-- <q-input filled v-model="commonSettings.nodeColor.textValue" :rules="['anyColor']" hint="Color of the nodes"
-                label="Color of the nodes">
-                <template v-slot:append>
-                    <q-icon name="colorize" class="cursor-pointer">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                            <q-color v-model="commonSettings.nodeColor.textValue" :palette="palette" />
-                        </q-popup-proxy>
-                    </q-icon>
-                </template>
-</q-input> -->
         </div>
 
 
@@ -50,7 +40,7 @@
                             <!-- For each item in params map in value add a combined form containing:
                              - the key as name
                              - a checkbox if it is optional
-                             - a text input with the value 
+                             - a text input with the value
                         -->
                             <div class="col">
                                 <q-table dense hide-pagination :pagination="{ rowsPerPage: 0 }"

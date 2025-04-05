@@ -185,8 +185,7 @@ export class MetricsApi {
         return this.enqueueRequest(async () => {
             const generatorApiUrl = useApiStore().generatorApiUrl;
             const url = `${generatorApiUrl}/metrics/jobs/${jobId}`;
-
-            console.log('Checking job status', url);
+            // console.log('Checking job status', url);
 
             return fetch(url)
                 .then(response => response.json())
@@ -285,7 +284,7 @@ export class MetricsApi {
         try {
             // Poll until done
             const finalStatus = await MetricsApi.pollJobUntilDone(jobStatus.job_id);
-            console.warn("[API] Final job status:", finalStatus, metrics_type);
+            // console.warn("[API] Final job status:", finalStatus, metrics_type);
 
 
             if (finalStatus.status === 'failed') {

@@ -17,20 +17,25 @@ import { GraphvizLayouter } from "../graphviz/graphvizLayouter";
 import { GraphvizLayouterSettings } from "../graphviz/graphvizSettings";
 
 export const layouterMapping: Record<string, { label: string, layouter: typeof GraphLayouter<any>, settings: typeof GraphLayouterSettings }> = {
-    "fdg": {
-        label: "Force Directed Graphs",
-        layouter: FdgLayouter,
-        settings: FdgLayouterSettings,
+    "viscom": {
+        label: "VisCom Layouts",
+        layouter: ViscomLayouter,
+        settings: ViscomLayouterSettings
     },
     "radial": {
         label: "Radial Layouts",
         layouter: RadialLayouter,
         settings: RadialLayouterSettings,
     },
-    "viscom": {
-        label: "VisCom Layouts",
-        layouter: ViscomLayouter,
-        settings: ViscomLayouterSettings
+    "fdg": {
+        label: "Force Directed Graphs",
+        layouter: FdgLayouter,
+        settings: FdgLayouterSettings,
+    },
+    "graphviz": {
+        label: "Graphviz Layouts",
+        layouter: GraphvizLayouter,
+        settings: GraphvizLayouterSettings
     },
     "arc": {
         label: "Arc Layouts",
@@ -42,11 +47,7 @@ export const layouterMapping: Record<string, { label: string, layouter: typeof G
         layouter: SpaceFillingCurveLayouter,
         settings: SpaceFillingLayouterSettings
     },
-    "graphviz": {
-        label: "Graphviz Layouts",
-        layouter: GraphvizLayouter,
-        settings: GraphvizLayouterSettings
-    },
+
     // "dagre": {
     //     label: "Dagre Layouts",
     //     layouter: DagreLayouter,
