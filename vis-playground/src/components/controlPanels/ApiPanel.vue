@@ -22,6 +22,16 @@
 
                         <q-input v-model="generatorApiUrl" label="Generator API URL" class="q-mb-md" />
 
+                        <q-input
+                            v-model.number="maxParallelApiCalls"
+                            type="number"
+                            label="Max Parallel API Calls"
+                            min="1"
+                            max="64"
+                            class="q-mb-md"
+                            hint="Maximum number of parallel API requests for metrics"
+                        />
+
                     </q-card-section>
                 </q-card>
             </q-expansion-item>
@@ -212,6 +222,14 @@ const generatorApiUrl = computed({
     set: (value) => {
         console.log("Setting generatorApiUrl to", value)
         apiStore.generatorApiUrl = value
+    }
+})
+
+const maxParallelApiCalls = computed({
+    get: () => apiStore.maxParallelApiCalls,
+    set: (value) => {
+        console.log("Setting maxParallelApiCalls to", value)
+        apiStore.maxParallelApiCalls = value
     }
 })
 

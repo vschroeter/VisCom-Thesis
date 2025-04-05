@@ -53,6 +53,78 @@ export type MetricJobStatus = {
 }
 
 export class MetricsApi {
+    // Queue for pending metric requests
+    private static metricRequestQueue: Array<() => Promise<any>> = [];
+
+    // // Currently active requests
+    // private static activeRequests = 0;
+
+    // Queue processing status
+    private static isProcessingQueue = false;
+
+    /**
+     * Add a request to the queue and start processing if not already running
+     * @param requestFn Function that performs the actual API request
+     * @returns Promise that resolves with the request result
+     */
+    private static enqueueRequest<T>(requestFn: () => Promise<T>, insertAtStart = false): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            // Add to queue
+
+            this.metricRequestQueue[insertAtStart ? 'unshift' : 'push'](async () => {
+                try {
+                    const result = await requestFn();
+                    resolve(result);
+                    return result;
+                } catch (error) {
+                    reject(error);
+                    throw error;
+                }
+            });
+
+            // Start processing queue if not already running
+            if (!this.isProcessingQueue) {
+                this.processQueue();
+            }
+        });
+    }
+
+    /**
+     * Process the queue of pending requests respecting the parallel limit
+     */
+    private static async processQueue() {
+        // Mark as processing
+        this.isProcessingQueue = true;
+
+        while (this.metricRequestQueue.length > 0) {
+            const apiStore = useApiStore();
+            const maxParallel = apiStore.maxParallelApiCalls;
+
+            // Wait until we have an available slot
+            if (apiStore.activeApiCalls >= maxParallel) {
+                // console.info(`Max parallel requests (${maxParallel}) reached. Waiting for completion...`);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                continue;
+            }
+
+            // Get next request
+            const request = this.metricRequestQueue.shift();
+            if (!request) continue;
+
+            // Execute the request
+            apiStore.activeApiCalls++;
+
+            // Execute without awaiting to allow parallel processing
+            request()
+                .finally(() => {
+                    apiStore.activeApiCalls--;
+                });
+        }
+
+        // Mark as not processing
+        this.isProcessingQueue = false;
+    }
+
     /**
      * Submits a job to calculate a specific metric for a graph layout.
      * @param graph The graph to calculate metrics for
@@ -61,45 +133,47 @@ export class MetricsApi {
      * @returns Promise with job status or metric result depending on useAsync parameter
      */
     static fetchMetrics(graph: VisGraph, metrics_type: string, useAsync: boolean = true): Promise<MetricJobStatus | MetricApiResult> {
-        const graphData = graph.getLaidOutApiData();
-        const generatorApiUrl = useApiStore().generatorApiUrl;
-        const url = `${generatorApiUrl}/metrics/calculate/${metrics_type}`;
+        return this.enqueueRequest(async () => {
+            const graphData = graph.getLaidOutApiData();
+            const generatorApiUrl = useApiStore().generatorApiUrl;
+            const url = `${generatorApiUrl}/metrics/calculate/${metrics_type}`;
 
-        const params = new URLSearchParams();
-        params.append('async', useAsync ? 'true' : 'false');
+            const params = new URLSearchParams();
+            params.append('async', useAsync ? 'true' : 'false');
 
-        const urlWithParams = `${url}?${params.toString()}`;
+            const urlWithParams = `${url}?${params.toString()}`;
 
-        console.log('Submitting metrics calculation job', urlWithParams);
+            console.log('Submitting metrics calculation job', urlWithParams);
 
-        // Submit job request
-        return fetch(urlWithParams, {
-            method: 'POST',
-            body: JSON.stringify(graphData),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (useAsync) {
-                    // In async mode, return the job status
-                    return data as MetricJobStatus;
-                } else {
-                    // In sync mode, convert and return the metric result directly
-                    return {
-                        key: data.key,
-                        value: data.value,
-                        optimum: data.type === "lower-better" ? "lowerIsBetter" : "higherIsBetter",
-                        label: data.key.replace(/_/g, ' '),
-                        description: data.error || undefined
-                    } as MetricApiResult;
+            // Submit job request
+            return fetch(urlWithParams, {
+                method: 'POST',
+                body: JSON.stringify(graphData),
+                headers: {
+                    'Content-Type': 'application/json'
                 }
             })
-            .catch(error => {
-                console.error('Error submitting metrics calculation job:', error);
-                throw error;
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (useAsync) {
+                        // In async mode, return the job status
+                        return data as MetricJobStatus;
+                    } else {
+                        // In sync mode, convert and return the metric result directly
+                        return {
+                            key: data.key,
+                            value: data.value,
+                            optimum: data.type === "lower-better" ? "lowerIsBetter" : "higherIsBetter",
+                            label: data.key.replace(/_/g, ' '),
+                            description: data.error || undefined
+                        } as MetricApiResult;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting metrics calculation job:', error);
+                    throw error;
+                });
+        });
     }
 
     /**
@@ -108,14 +182,16 @@ export class MetricsApi {
      * @returns Promise with the job status
      */
     static checkJobStatus(jobId: string): Promise<MetricJobStatus> {
-        const generatorApiUrl = useApiStore().generatorApiUrl;
-        const url = `${generatorApiUrl}/metrics/jobs/${jobId}`;
+        return this.enqueueRequest(async () => {
+            const generatorApiUrl = useApiStore().generatorApiUrl;
+            const url = `${generatorApiUrl}/metrics/jobs/${jobId}`;
 
-        console.log('Checking job status', url);
+            console.log('Checking job status', url);
 
-        return fetch(url)
-            .then(response => response.json())
-            .then(data => data as MetricJobStatus);
+            return fetch(url)
+                .then(response => response.json())
+                .then(data => data as MetricJobStatus);
+        }, true);
     }
 
     /**
@@ -209,6 +285,8 @@ export class MetricsApi {
         try {
             // Poll until done
             const finalStatus = await MetricsApi.pollJobUntilDone(jobStatus.job_id);
+            console.warn("[API] Final job status:", finalStatus, metrics_type);
+
 
             if (finalStatus.status === 'failed') {
                 return {
@@ -264,13 +342,15 @@ export class MetricsApi {
      * @returns Promise with available metrics information
      */
     static getAvailableMetrics(): Promise<Record<string, { name: string, description: string }>> {
-        const generatorApiUrl = useApiStore().generatorApiUrl;
-        const url = `${generatorApiUrl}/metrics/methods`;
+        return this.enqueueRequest(async () => {
+            const generatorApiUrl = useApiStore().generatorApiUrl;
+            const url = `${generatorApiUrl}/metrics/methods`;
 
-        console.log('Fetching available metrics', url);
+            console.log('Fetching available metrics', url);
 
-        return fetch(url)
-            .then(response => response.json());
+            return fetch(url)
+                .then(response => response.json());
+        });
     }
 }
 

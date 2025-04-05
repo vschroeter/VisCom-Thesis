@@ -80,10 +80,11 @@
             </q-banner>
         </div> -->
 
-        <q-linear-progress  v-if="hasPendingMetrics" class="metrics-progress-container q-pa-md" size="10px" :value="metricsProgress" color="secondary" animation-speed="300">
+        <q-linear-progress v-if="hasPendingMetrics" class="metrics-progress-container q-pa-md" size="10px"
+            :value="metricsProgress" :buffer="bufferProgress" color="secondary" animation-speed="300">
             <div class="absolute-full flex flex-center">
-                <q-badge color="white" text-color="accent" :label="`Calculated Metrics: ${completedMetricsCount} / ${totalMetricsCount}`"
-                    class="q-mx-xs" />
+                <q-badge color="white" text-color="accent"
+                    :label="`Calculated Metrics: ${completedMetricsCount} / ${totalMetricsCount}`" class="q-mx-xs" />
             </div>
         </q-linear-progress>
 
@@ -98,12 +99,14 @@
 
 <script setup lang="ts">
 import { useGraphStore } from 'src/stores/graph-store';
-import { onMounted, computed, ref } from 'vue';
+import { onMounted, computed, ref, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core'
 import GraphVisualization from 'src/graph/visualizations/GraphVisualization.vue';
 import { layouterMapping } from 'src/graph/layouter/settings/settingsCollection';
+import { useApiStore } from 'src/stores/api-store';
 
 const store = useGraphStore();
+const apiStore = useApiStore();
 const settingsCollection = store.settingsCollection;
 const metricsCollection = store.metricsCollection;
 
@@ -181,10 +184,38 @@ const totalMetricsCount = computed(() => {
     return total;
 });
 
+const currentApiRequests = computed(() => {
+    return apiStore.activeApiCalls;
+});
+
 const metricsProgress = computed(() => {
     if (totalMetricsCount.value === 0) return 0;
     return completedMetricsCount.value / totalMetricsCount.value;
 });
+
+const _currentBufferProgress = computed(() => {
+    if (totalMetricsCount.value === 0) return 0;
+    return (completedMetricsCount.value + currentApiRequests.value) / totalMetricsCount.value;
+});
+
+let bufferUpdate: NodeJS.Timeout | null = null;
+const bufferProgress = ref(0);
+
+watch([_currentBufferProgress], () => {
+
+    if (bufferUpdate) {
+        clearTimeout(bufferUpdate);
+    }
+
+    if (_currentBufferProgress.value > bufferProgress.value) {
+        bufferProgress.value = _currentBufferProgress.value;
+        return;
+    } else {
+        bufferUpdate = setTimeout(() => {
+            bufferProgress.value = _currentBufferProgress.value;
+        }, 100);
+    }
+}, { immediate: true });
 
 function dismissProgressBar() {
     showProgressBar.value = false;
