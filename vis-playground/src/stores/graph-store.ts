@@ -228,11 +228,16 @@ export const useGraphStore = defineStore('graph', {
                     csvData[result.metricKey][settingName] = result.pending ? null : result.normalizedValue;
                 });
 
+                // Get the full settings configuration
+                const settingsJson = settings.getJson();
+
+                // Include the visualization settings in the output
                 metricsData[settingId.toString()] = {
                     id: settingId,
                     name: settingName,
                     type: settingType,
-                    metrics: metricResults
+                    metrics: metricResults,
+                    configuration: settingsJson
                 };
             });
 

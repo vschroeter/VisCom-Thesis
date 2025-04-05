@@ -11,7 +11,7 @@ export class LinearSortingSettings extends Setting {
         key: "sorting",
         label: "Primary Sorting",
         description: "The sorting algorithm to use.",
-        defaultValue: "flowSorting",
+        defaultValue: "commFlowSorting",
         optional: false,
         choices: sortingMethods.map(m => m.key)
     })
