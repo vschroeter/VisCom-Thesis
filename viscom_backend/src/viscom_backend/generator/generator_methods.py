@@ -23,8 +23,8 @@ def get_nx_to_commgraph_method(nx_method):
 def get_generator_output(graph_generator):
     def generator_output(*args, **kwargs):
         graph = graph_generator(*args, **kwargs)
-        return graph
         # return convert_to_weighted_graph(graph)
+        return graph
 
     return generator_output
 

@@ -37,7 +37,13 @@ def convert_normal_graph_to_commgraph(graph: nx.MultiDiGraph) -> nx.MultiDiGraph
     # For each connection, add a pub_topic if none exists
     for start_node, connections in graph.adjacency():
         for target_node, edge_dict in connections.items():
-            for key, data in edge_dict.items():
+            # If the graph is a multigraph, we need to handle multiple edges
+            if graph.is_multigraph():
+                edge_dict_items = list(edge_dict.items())
+            else:
+                edge_dict_items = [(0, edge_dict)]
+
+            for key, data in edge_dict_items:
                 if "topic" in data:
                     # Use the existing topic if available
                     new_graph.add_edge(

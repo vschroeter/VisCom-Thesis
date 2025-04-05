@@ -128,6 +128,9 @@ export class Connection2d extends SvgRenderable {
     elPath?: d3.Selection<SVGPathElement, unknown, null, undefined>
     elArrow?: d3.Selection<SVGPathElement, unknown, null, undefined>
 
+    elBackground?: d3.Selection<SVGPathElement, unknown, null, undefined>;
+
+
     constructor(
         layoutConnection: LayoutConnection,
     ) {
@@ -251,7 +254,7 @@ export class Connection2d extends SvgRenderable {
 
 
     ////////////////////////////////////////////////////////////////////////////
-    // Style update methods
+    // #region Style update methods
     ////////////////////////////////////////////////////////////////////////////
 
     updateBoundingBox() {
@@ -288,6 +291,8 @@ export class Connection2d extends SvgRenderable {
             this.elPath?.attr('d', svgPath)
             this.elArrow?.attr('d', this.getArrowPath())
         }
+
+        this.elBackground?.attr('d', svgPath)
 
         this.updateBoundingBox();
     }
@@ -330,6 +335,12 @@ export class Connection2d extends SvgRenderable {
         this.applyStrokeAttributes(this.elPath);
         this.applyStrokeAttributes(this.elArrow)?.attr('fill', this.stroke ?? "none");
 
+        this.elBackground?.attr('stroke', this.stroke ?? "black")
+            // .attr('stroke-width', this.strokeWidth * 10);
+            .attr('stroke-width', 3 * (this.layoutConnection.commonSettings?.linkWidthMultiplier.getValue() ?? 1));
+
+        // this.layoutConnection.visGraph.
+
         this.renderPath()
     }
 
@@ -341,38 +352,71 @@ export class Connection2d extends SvgRenderable {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Render methods
+    // #region Render methods
     ////////////////////////////////////////////////////////////////////////////
 
     override addSubElements(): void {
+
+        const addMouseEvents = (selection: d3.Selection<any, unknown, null, undefined>) => {
+            selection
+                .on("mouseenter", () => {
+                    const id = this.id;
+                    if (id) {
+                        const visGraph = this.layoutConnection.source.visGraph;
+                        const userInteractions = visGraph?.userInteractions;
+                        if (!userInteractions) {
+                            console.error("No user interactions found for ", visGraph);
+                            return
+                        }
+                        userInteractions.addHoveredConnection(this.layoutConnection, true)
+                    }
+                })
+                .on("mouseleave", () => {
+                    const id = this.id;
+                    if (id) {
+                        const visGraph = this.layoutConnection.source.visGraph;
+                        const userInteractions = visGraph?.userInteractions;
+                        if (!userInteractions) {
+                            console.error("No user interactions found for ", visGraph);
+                            return
+                        }
+                        userInteractions.removeHoveredConnection(this.layoutConnection, true)
+                    }
+                })
+        }
+
         this.elGroup = this.elGroup ?? this.addSubElement('g', 'connection')
-            .on("mouseenter", () => {
+            .call(addMouseEvents)
 
-                const id = this.id;
-                if (id) {
-                    const visGraph = this.layoutConnection.source.visGraph;
-                    const userInteractions = visGraph?.userInteractions;
-                    if (!userInteractions) {
-                        console.error("No user interactions found for ", visGraph);
-                        return
-                    }
-                    userInteractions.addHoveredConnection(this.layoutConnection, true)
-                }
-            })
-            .on("mouseleave", () => {
 
-                const id = this.id;
-                if (id) {
-                    const visGraph = this.layoutConnection.source.visGraph;
-                    const userInteractions = visGraph?.userInteractions;
-                    if (!userInteractions) {
-                        console.error("No user interactions found for ", visGraph);
-                        return
-                    }
-                    userInteractions.removeHoveredConnection(this.layoutConnection, true)
-                }
+        // this.elGroup = this.elGroup ?? this.addSubElement('g', 'connection')
+        //     .on("mouseenter", () => {
 
-            })
+        //         const id = this.id;
+        //         if (id) {
+        //             const visGraph = this.layoutConnection.source.visGraph;
+        //             const userInteractions = visGraph?.userInteractions;
+        //             if (!userInteractions) {
+        //                 console.error("No user interactions found for ", visGraph);
+        //                 return
+        //             }
+        //             userInteractions.addHoveredConnection(this.layoutConnection, true)
+        //         }
+        //     })
+        //     .on("mouseleave", () => {
+
+        //         const id = this.id;
+        //         if (id) {
+        //             const visGraph = this.layoutConnection.source.visGraph;
+        //             const userInteractions = visGraph?.userInteractions;
+        //             if (!userInteractions) {
+        //                 console.error("No user interactions found for ", visGraph);
+        //                 return
+        //             }
+        //             userInteractions.removeHoveredConnection(this.layoutConnection, true)
+        //         }
+
+        //     })
 
         this.elPath = this.elPath ?? this.addSubElement('path', 'link', this.elGroup)
             .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
@@ -380,6 +424,11 @@ export class Connection2d extends SvgRenderable {
         this.elArrow = this.elArrow ?? this.addSubElement('path', 'arrow', this.elGroup)
             // .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "round")
             .attr('fill', 'none').attr("stroke-linecap", "round").attr("stroke-linejoin", "miter").attr("stroke-miterlimit", 1)
+
+        this.elBackground = this.elBackground ??
+            this.addSubElement('path', 'background', undefined, 1)
+                .call(addMouseEvents)
+                .attr('fill', 'none').attr("opacity", 0.0)
     }
 
     override updateVisibleArea(visibleArea: BoundingBox): void {

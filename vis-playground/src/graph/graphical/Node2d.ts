@@ -259,6 +259,7 @@ export class Node2d extends SvgRenderable {
 
     updateLabel(visibleArea: BoundingBox) {
         if (this.label) {
+            this.label?.text(this.layoutNode.label ?? this.layoutNode.id);
 
             // const _r = this.layoutNode.radius * 0.9;
             const smallestR = this.layoutNode.visGraph.smallestExistingNodeSize * 1;
@@ -266,7 +267,7 @@ export class Node2d extends SvgRenderable {
             // r = r;
             r *= this.layoutNode.visGraph.commonSettings?.labelSizeMultiplier.getValue() ?? 1;
 
-            const heightWhenInNode = Math.min(this.label?.getHeightForWidth(r) ?? 0, r);
+            const heightWhenInNode = Math.min(this.label?.getHeightForWidth(this.layoutNode.radius * 2) ?? 0, r);
             const widthWhenOutsideNode = this.label?.getWidthForHeight(r) ?? -1;
 
             const labelSide: "left" | "right" | "center" =
@@ -300,7 +301,6 @@ export class Node2d extends SvgRenderable {
                 this.label?.setHeight(textHeight)
             }
 
-            this.label?.text(this.layoutNode.label ?? this.layoutNode.id);
         }
     }
 

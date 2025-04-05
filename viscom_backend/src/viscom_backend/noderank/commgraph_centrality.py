@@ -133,10 +133,17 @@ def calculate_commgraph_centrality(graph: nx.MultiDiGraph, mode: Literal["reacha
     # betweenness = nx.betweenness_centrality(graph, weight="distance", normalized=True)
     # centrality = {node: value / (betweenness[node] if betweenness[node] > 0 else 1) for node, value in centrality.items()}
 
+    for node in centrality:
+        # print(node, round(centrality[node], 4), round(betweenness[node], 4))
+        print(node, round(centrality[node], 4))
+
     # Normalize the values
     if normalize:
-        max_value = max(centrality.values())
-        centrality = {node: value / max_value for node, value in centrality.items()}
+        values = list(centrality.values())
+        if len(values) > 0:
+            max_value = max(values)
+            if max_value > 0:
+                centrality = {node: value / max_value for node, value in centrality.items()}
 
     for node in centrality:
         # print(node, round(centrality[node], 4), round(betweenness[node], 4))
