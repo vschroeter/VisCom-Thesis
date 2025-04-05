@@ -5,10 +5,10 @@
                 <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
                 <q-toolbar-title>
-                    Communication Graph Evaluator
+                    Communication Graph Visualizations
                 </q-toolbar-title>
 
-                <div>Quasar v{{ $q.version }}</div>
+                <!-- <div>Quasar v{{ $q.version }}</div> -->
 
                 <q-space />
 

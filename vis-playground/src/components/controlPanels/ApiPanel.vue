@@ -3,10 +3,10 @@
         <!-- Everything below should be made out of Quasar Components -->
 
         <!-- Title -->
-        <div class="row items-center q-px-md q-mt-md">
+        <div class="row items-center q-px-md q-my-md">
             <div class="text-h6">Graph Generation</div>
             <q-space />
-            <q-btn flat dense icon="save_alt" aria-label="Download Dataset" @click="showDatasetDialog = true">
+            <q-btn flat dense icon="save_alt" aria-label="Download Dataset" @click="showDatasetDialog = true" :disable="!currentGraph?.nodes.length">
                 <q-tooltip>Download Dataset</q-tooltip>
             </q-btn>
         </div>
@@ -36,8 +36,26 @@
 
 
                         <q-select v-model="selectedGenerator" :options="generators"
-                            :option-label="(generator: Generator) => keyToName(generator.key)" label="Select Generator"
-                            outlined @focus="fetchGenerateMethods" class="q-mb-md" />
+                            :option-label="(generator: Generator) => keyToName(generator.key)"
+                            outlined @focus="fetchGenerateMethods" class="q-mb-md">
+                            <template v-slot:option="scope">
+                                <q-item v-bind="scope.itemProps">
+                                    <q-item-section avatar>
+                                        <q-icon :name="getGeneratorIcon(scope.opt)" />
+                                    </q-item-section>
+                                    <q-item-section>
+                                        <q-item-label>{{ keyToName(scope.opt.key) }}</q-item-label>
+                                        <q-item-label caption>{{ scope.opt.description }}</q-item-label>
+                                    </q-item-section>
+                                </q-item>
+                            </template>
+                            <template v-slot:selected>
+                                <div class="row items-center">
+                                    <q-icon :name="getGeneratorIcon(selectedGenerator)" class="q-mr-xs" />
+                                    {{ selectedGenerator ? keyToName(selectedGenerator.key) : 'Select Generator' }}
+                                </div>
+                            </template>
+                        </q-select>
 
                         <!-- Description of the generator -->
                         <q-item-label class="q-mb-md">
@@ -60,7 +78,7 @@
 
             </q-expansion-item>
 
-            <q-expansion-item v-model="showComunityDetectionSettings" label="Community Detection"
+            <q-expansion-item v-if="false" v-model="showComunityDetectionSettings" label="Community Detection"
                 icon="sym_o_communities" expand-separator>
                 <q-card>
                     <q-card-section>
@@ -210,11 +228,20 @@ const generators = computed(() => {
     }
 
     return Array.from(generateMethods.value?.generators.values()).sort((a, b) => {
-        if (a.isStoredDataset == b.isStoredDataset) {
-            return a.key.localeCompare(b.key)
-        }
+        // First compare by type: generators, then synthetic datasets, then real-world datasets
+        if (a.isGenerator && !b.isGenerator) return -1;
+        if (!a.isGenerator && b.isGenerator) return 1;
 
-        return a.isStoredDataset ? 1 : -1
+        if (a.isSyntheticDataset && b.isRealDataset) return 1;
+        if (a.isRealDataset && b.isSyntheticDataset) return -1;
+
+        const aStartingWithS = a.key.startsWith('s_')
+        const bStartingWithS = b.key.startsWith('s_')
+
+        if (aStartingWithS && !bStartingWithS) return -1
+        if (!aStartingWithS && bStartingWithS) return 1
+
+        return a.key.localeCompare(b.key)
     })
 })
 
@@ -414,6 +441,28 @@ function fetchNodeRanking(generatorId?: string, graph?: CommunicationGraph) {
 
 function keyToName(key: string) {
     return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+/**
+ * Returns appropriate icon for generator type
+ */
+function getGeneratorIcon(generator: Generator | null): string {
+    if (!generator) return 'sym_o_hub';
+
+    if (generator.isStoredDataset) {
+        if (generator.isRealDataset) {
+            return 'dataset';  // Real-world dataset icon
+            return 'public';  // Real-world dataset icon
+        } else if (generator.isSyntheticDataset) {
+            return 'data_object';  // Synthetic dataset icon
+        } else {
+            return 'storage';  // Generic stored dataset
+        }
+    } else if (generator.isGenerator) {
+        return 'auto_awesome';  // Generator icon
+    }
+
+    return 'sym_o_hub';  // Default icon
 }
 
 ////////////////////////////////////////////////////////////////////////////

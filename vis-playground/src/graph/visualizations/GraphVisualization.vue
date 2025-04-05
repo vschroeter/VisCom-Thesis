@@ -8,16 +8,27 @@
                     {{ settings?.name }}
                 </div>
                 <div ref="refDivIconButtons" class="col-auto">
-                    <q-btn size="sm" flat round icon="download" @click="download" />
-                    <q-btn size="sm" flat round icon="zoom_out_map" @click="toggleZoom" />
-                    <q-btn size="sm" icon="refresh" flat round @click="resetSimulation" />
-                    <q-btn v-if="!isZoomed" size="sm" icon="delete" flat round @click="deleteItem" />
+                    <q-btn size="sm" flat round icon="content_copy" @click="duplicateSettings">
+                        <q-tooltip :delay="500">Duplicate</q-tooltip>
+                    </q-btn>
+                    <q-btn size="sm" flat round icon="download" @click="download">
+                        <q-tooltip :delay="500">Download as PDF</q-tooltip>
+                    </q-btn>
+                    <q-btn size="sm" flat round icon="zoom_out_map" @click="toggleZoom">
+                        <q-tooltip :delay="500">Full Screen</q-tooltip>
+                    </q-btn>
+                    <q-btn size="sm" icon="refresh" flat round @click="resetSimulation">
+                        <q-tooltip :delay="500">Reset Visualization</q-tooltip>
+                    </q-btn>
+                    <q-btn v-if="!isZoomed" size="sm" icon="delete" flat round @click="deleteItem">
+                        <q-tooltip :delay="500">Remove Visualization</q-tooltip>
+                    </q-btn>
                 </div>
                 <!-- <div class="text-h6">Graph Visualization</div>
                 <q-btn label="Reset" color="primary" size="x" flat @click="resetSimulation" /> -->
             </q-card-section>
             <q-card-section class="row items-start q-py-xs">
-                <div class="col setting-overview-text" :style="`inline-size: ${size - iconButtonDivWidth - 10}px;`">
+                <div v-if="false" class="col setting-overview-text" :style="`inline-size: ${size - iconButtonDivWidth - 10}px;`">
                     {{ settings?.shortSummary }}
                 </div>
             </q-card-section>
@@ -377,6 +388,36 @@ async function calculateMetrics(graph?: VisGraph | null) {
 function deleteItem() {
     settingsCollection.deleteSetting(props.settingId)
 }
+
+function duplicateSettings() {
+    if (!settings.value) return;
+
+    // First, add a new setting of the same type
+    settingsCollection.addSetting(props.layoutType);
+
+    // Get the id of the newly created setting (should be the last one added)
+    const newSettingsList = settingsCollection.mapLayoutTypeToListOfSettings.get(props.layoutType) || [];
+    if (newSettingsList.length === 0) return;
+
+    const newSetting = newSettingsList[newSettingsList.length - 1];
+
+    // Copy the settings from the current one
+    const currentSettingJson = settings.value.getJson();
+
+    // Add " (copy)" to the name
+    currentSettingJson.name = (currentSettingJson.name ? currentSettingJson.name + " (copy)" : "");
+
+    // Load the settings into the new one
+    newSetting.loadFromJson(currentSettingJson);
+
+    // Optional: select the new setting
+    graphStore.currentSettings = newSetting;
+    graphStore.activeSettingId = newSetting.id;
+
+    // Stop event propagation
+    event?.stopPropagation();
+}
+
 ////////////////////////////////////////////////////////////////////////////
 // Lifecycle hooks
 ////////////////////////////////////////////////////////////////////////////

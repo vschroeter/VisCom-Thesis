@@ -14,6 +14,7 @@ export interface ApiGenerator {
     // params: ApiGeneratorParams;
     params: ApiParam[];
     is_saved_dataset?: boolean;
+    is_synthetic?: boolean;
 }
 
 export interface ApiGeneratorMethods {
@@ -24,7 +25,19 @@ export class Generator {
     key: string;
     description: string;
     isStoredDataset: boolean = false;
+    isSynthetic: boolean = false;
     params: Map<string, Param>;
+
+    get isGenerator(): boolean {
+        return !this.isStoredDataset
+    }
+
+    get isSyntheticDataset(): boolean {
+        return this.isStoredDataset && this.isSynthetic;
+    }
+    get isRealDataset(): boolean {
+        return this.isStoredDataset && !this.isSynthetic;
+    }
 
     constructor(key: string, gen: ApiGenerator) {
         this.key = key;
@@ -33,6 +46,10 @@ export class Generator {
 
         if (gen.is_saved_dataset) {
             this.isStoredDataset = true;
+        }
+
+        if (gen.is_synthetic) {
+            this.isSynthetic = true;
         }
 
         // console.log(gen);
