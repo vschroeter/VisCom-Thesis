@@ -87,13 +87,13 @@ export class SubPathRange {
 
         if (type === "outside") {
             this.range = node.layoutNode.getValidOuterRadRange(nodeRangeMarginFactor, false);
-            this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidOuterRadRange(1, false)[0]);
+            this.outerMargin = RadialUtils.forwardRadBetweenAngles(node.layoutNode.getValidOuterRadRange(1, false)[0], this.range[0]);
             this.backsideRad = this.getMiddleRadOnBackside();
         } else if (type === "inside") {
             // this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
             this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor, false);
             // this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor, this.node.layoutNode.isHyperNode);
-            this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidInnerRadRange(1, false)[0]);
+            this.outerMargin = RadialUtils.forwardRadBetweenAngles(node.layoutNode.getValidInnerRadRange(1, false)[0], this.range[0]);
             // this.outerMargin = Math.abs(this.range[0] - node.layoutNode.getValidInnerRadRange(1, this.node.layoutNode.isHyperNode)[0]);
             this.backsideRad = this.getMiddleRadOnBackside();
         } else if (type === "circleArcForward") {
@@ -166,6 +166,14 @@ export class SubPathRange {
      * If the anchor is inside the range, the range values gets adapted
      */
     trimToAnchor(anchor: Anchor) {
+
+        let debug = false;
+        debug = false;
+
+        // if (this.type == "outside" && this.node.id == "right_motor_controller") {
+        //     debug = true;
+        // }
+
         const anchorRad = this.getRadOfPoint(anchor.anchorPoint);
         if (this.pointIsInside(anchor.anchorPoint, [this.range[0] - this.outerMargin, this.range[1] + this.outerMargin])) {
 
@@ -174,12 +182,8 @@ export class SubPathRange {
 
             const midToAnchor = RadialUtils.forwardRadBetweenAngles(this.getMiddleRad(), anchorRad);
 
-            // console.warn("[TRIM]", {
-            //     anchorRad,
-            //     r: this.range,
-            //     id: this.node.id,
-            //     midToAnchor
-            // });
+            const rangeBefore = this.range.slice();
+
 
             // Decide which side to trim
             if (midToAnchor < Math.PI) {
@@ -190,9 +194,30 @@ export class SubPathRange {
                 // this.range[0] = anchorRad + 0;
             }
 
+
+            if (debug) {
+                console.warn("[TRIM]", {
+                    anchorRad,
+                    margin: this.outerMargin,
+                    id: this.node.id,
+                    rangeBefore,
+                    rangeAfter: this.range,
+                });
+            }
+
+
             this.calculated = false;
             this.sorted = false;
             // console.log(this.range);
+        } else {
+            if (debug) {
+                console.warn("[N TRIM] Anchor not inside range", {
+                    anchorRad,
+                    margin: this.outerMargin,
+                    range: this.range,
+                    id: this.node.id,
+                })
+            }
         }
     }
 
@@ -856,7 +881,7 @@ export class SubPathRange {
         });
 
         if (false && (this.type == "circleArcBackward" || this.type == "circleArcForward")) {
-        // if ((this.node.id == "car_simulator" && this.type == "outside") || (this.node.id == "waypoint_updater" && this.type == "outside")) {
+            // if ((this.node.id == "car_simulator" && this.type == "outside") || (this.node.id == "waypoint_updater" && this.type == "outside")) {
             // if (this.node.layoutNode.children.length == 5 || this.node.layoutNode.children.length == 4) {
             console.warn("[SORT]", {
                 id: this.node.id,
@@ -884,6 +909,8 @@ export class SubPathRange {
         if (!this.sorted) {
             this.getSortedSubPathInfo();
         }
+
+        // console.warn("[CALCULATE]", this.node.id, this.type);
 
         if (this.node.id.startsWith("right_motor_controller_") && this.type == "outside") {
             const x = 5;

@@ -141,8 +141,8 @@ export class LayoutConnection {
     }
 
     get width(): number {
-        const minWeight = 0.05;
-        const maxWeight = 1;
+        const minWeight = 0.1;
+        const maxWeight = 2;
 
         const scale = d3.scaleLinear()
         // const scale = d3.scaleLog()

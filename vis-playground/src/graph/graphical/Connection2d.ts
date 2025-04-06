@@ -487,14 +487,14 @@ export class Connection2d extends SvgRenderable {
             opacity = (area / (totalArea)) ** 2;
 
             if (this.layoutConnection.id == "drive_manager->camera") {
-                console.log({
-                    bbox,
-                    visibleArea,
-                    opacity,
-                    totalArea,
-                    area,
-                    x0, y0, x1, y1,
-                });
+                // console.log({
+                //     bbox,
+                //     visibleArea,
+                //     opacity,
+                //     totalArea,
+                //     area,
+                //     x0, y0, x1, y1,
+                // });
 
                 // this.layoutConnection.debugShapes.push(...[
                 //     new Point(visibleArea.x, visibleArea.y),
