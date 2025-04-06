@@ -592,9 +592,9 @@ export class SubPathRange {
         });
 
 
-        if (this.node.id.startsWith("drive_manager_in") && this.type == "outside" && this.node.layoutNode.parent!.children.length == 5) {
-            const x = 5;
-        }
+        // if (this.node.id.startsWith("display_right")) {
+        //     const x = 5;
+        // }
 
         pathInformation.sort((a, b) => {
             // We first sort by by level, with higher levels being at the outside of the range
@@ -710,11 +710,6 @@ export class SubPathRange {
         // To get a consistent sorting, we determine, that outgoing paths have a higher priority
         // So we merge the sorted paths with the opposite sorted paths
 
-        if (this.type == "circleArcBackward") {
-            oppositePathInformation.reverse();
-            pathInformation.reverse();
-        }
-
         const mergedPathInformation = [];
 
         if (!this.node.parentLayouter.useHierarchicalSubPaths) {
@@ -722,6 +717,11 @@ export class SubPathRange {
         }
 
         if (mergedPathInformation.length == 0) {
+
+            if (this.type == "circleArcBackward") {
+                oppositePathInformation.reverse();
+                pathInformation.reverse();
+            }
 
 
             const addedIds: Set<string> = new Set();
@@ -855,7 +855,8 @@ export class SubPathRange {
             this.mappedSubPathInformation.set(info.subPath, info);
         });
 
-        if ((this.node.id == "car_simulator" && this.type == "outside") || (this.node.id == "waypoint_updater" && this.type == "outside")) {
+        if (false && (this.type == "circleArcBackward" || this.type == "circleArcForward")) {
+        // if ((this.node.id == "car_simulator" && this.type == "outside") || (this.node.id == "waypoint_updater" && this.type == "outside")) {
             // if (this.node.layoutNode.children.length == 5 || this.node.layoutNode.children.length == 4) {
             console.warn("[SORT]", {
                 id: this.node.id,
