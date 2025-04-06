@@ -15,7 +15,7 @@ export class DagreLayouter extends GraphLayouter<GraphLayouterSettings> {
     }
 
 
-    override layout(isUpdate = false) {
+    override async layout(isUpdate = false) {
 
         // this.emitEvent("update");
         this.emitEvent("end");

@@ -13,8 +13,8 @@
                 <q-space />
 
                 <!-- Metrics download button -->
-                <q-btn flat dense round icon="analytics" aria-label="Download Metrics"
-                       @click="openMetricsDownloadModal" :disable="!areAllMetricsCalculated">
+                <q-btn flat dense round icon="analytics" aria-label="Download Metrics" @click="openMetricsDownloadModal"
+                    :disable="!areAllMetricsCalculated">
                     <q-tooltip>Download Metrics Results</q-tooltip>
                 </q-btn>
 
@@ -102,7 +102,7 @@
                 <q-card-section class="q-pt-none">
                     <q-input dense v-model="metricsTitle" label="Title" autofocus @keyup.enter="downloadMetrics" />
                     <q-input dense v-model="metricsDescription" label="Description" type="textarea" class="q-mt-md"
-                           @keyup.enter="downloadMetrics" />
+                        @keyup.enter="downloadMetrics" />
                 </q-card-section>
 
                 <q-card-actions align="right">
@@ -115,13 +115,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import EssentialLink, { EssentialLinkProps } from 'components/EssentialLink.vue';
 import ApiPanel from 'src/components/controlPanels/ApiPanel.vue';
 import SettingPanel from 'src/components/controlPanels/SettingPanel.vue';
 import { useStorage } from '@vueuse/core';
 import { useGraphStore } from 'src/stores/graph-store';
 import { Notify } from 'quasar';
+import { CommonSettings } from 'src/graph/layouter/settings/commonSettings';
 
 defineOptions({
     name: 'MainLayout'
@@ -133,6 +134,8 @@ const rightDrawerOpen = useStorage("rightDrawerOpen", false);
 
 const leftDrawerOpen = useStorage("leftDrawerOpen", true);
 const leftDrawerWidth = useStorage("leftDrawerWidth", 400);
+
+const commonSettings = computed(() => graphStore.settingsCollection.commonSettings as CommonSettings)
 
 const settingsFile = ref<File | null>(null);
 const showDatasetDialog = ref(false);
@@ -152,6 +155,72 @@ const metricsDescription = ref('');
 const areAllMetricsCalculated = computed(() => {
     return graphStore.areAllMetricsCalculated();
 });
+
+// For metrics notification
+const previousMetricsStatus = ref(false);
+
+// Watch for metrics calculation completion
+watch(() => areAllMetricsCalculated.value, (newValue, oldValue) => {
+    // Only proceed if metrics have just been completed (changed from false to true)
+    if (newValue && !previousMetricsStatus.value) {
+        const settings = commonSettings.value;
+
+        // Check if notifications are enabled
+        if (settings.notifyWhenFinished.value) {
+            // Check if window is focused
+            const isWindowFocused = document.hasFocus();
+
+            // Show notification
+            Notify.create({
+                message: 'Metrics calculation completed',
+                color: 'positive',
+                icon: 'analytics',
+                position: 'bottom',
+                timeout: 5000
+            });
+
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+
+            if (Notification && !isWindowFocused) {
+                console.log('Notification permission:', Notification.permission);
+                if (Notification.permission === "granted") {
+                    console.log('Creating notification');
+                    new Notification('Metrics Calculation Complete', {
+                        body: 'All metrics have been calculated successfully.',
+                        icon: '/icons/favicon-128x128.png'
+                    });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification('Metrics Calculation Complete', {
+                                body: 'All metrics have been calculated successfully.',
+                                icon: '/icons/favicon-128x128.png'
+                            });
+                        }
+                    });
+                }
+            } else {
+                console.warn('Browser does not support notifications');
+            }
+
+        }
+    }
+
+    // Update previous status
+    previousMetricsStatus.value = newValue;
+});
+
+// Function to play notification sound
+function playNotificationSound() {
+    try {
+        const audio = new Audio('/notification-sound.mp3');
+        audio.play();
+    } catch (error) {
+        console.error('Failed to play notification sound:', error);
+    }
+}
 
 function toggleLeftDrawer() {
     leftDrawerOpen.value = !leftDrawerOpen.value;

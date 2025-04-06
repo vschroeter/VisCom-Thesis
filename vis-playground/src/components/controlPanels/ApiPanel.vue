@@ -45,9 +45,12 @@
                     <q-card-section>
 
 
+                        <!-- use-input -->
                         <q-select v-model="selectedGenerator" :options="generators"
                             :option-label="(generator: Generator) => keyToName(generator.key)"
-                            outlined @focus="fetchGenerateMethods" class="q-mb-md">
+                            outlined
+                            @focus="fetchGenerateMethods"
+                            class="q-mb-md">
                             <template v-slot:option="scope">
                                 <q-item v-bind="scope.itemProps">
                                     <q-item-section avatar>
@@ -110,7 +113,7 @@
                         <div v-if="selectedCommunityDetection">
                             <div v-for="(param, key) in selectedCommunityDetection?.paramList" :key="param.key"
                                 class="q-mb-md">
-                                <ParamInput v-model="selectedCommunityDetection.parameterRecord[param.key]" outlined />
+                                <ParamInput v-model="selectedCommunityDetection!.parameterRecord[param.key]" outlined />
                             </div>
                         </div>
 
@@ -181,7 +184,7 @@
 
 <script setup lang="ts">
 
-import { useStorage } from '@vueuse/core';
+import { useStorage, useThrottleFn } from '@vueuse/core';
 import { ApiGeneratorMethods, Generator, GeneratorMethods } from 'src/api/generatorApi';
 import { commGraphToNodeLinkData, parseGraphData } from 'src/api/graphDataApi';
 import { CommunicationGraph } from 'src/graph/commGraph';
@@ -268,6 +271,9 @@ const generators = computed(() => {
 //     console.log(newVal)
 // })
 
+const throttledFetchOfGenerators = useThrottleFn(() => {
+    fetchGenerateMethods()
+}, 10000, true)
 
 function fetchGenerateMethods() {
     fetch(`${generatorApiUrl.value}/generate/methods`)

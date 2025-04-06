@@ -22,11 +22,15 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
     override async layout(isUpdate = false) {
         const ctx = this.settings.getContext({ visGraph: this.visGraph });
 
+        const sizeMultiplier = 10;
+
         this.visGraph.setPrecalculator(new BasicSizeCalculator({
-            sizeMultiplier: 10,
+            sizeMultiplier: sizeMultiplier,
             marginFactor: 1.1,
             adaptRadiusBasedOnScore: this.commonSettings.showNodeScore.getValue() ?? true,
         }));
+
+        this.visGraph.layout();
 
         if (this.simulation) {
             // console.log("Stopping simulation");
@@ -76,11 +80,11 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
         }
 
         if (this.settings.forceCollide.active) {
-            // console.log("Adding force collide", this.settings.forceCollide.radius.getValue(), this.settings.forceCollide.strength.getValue());
-            simulation.force("collide", d3.forceCollide<LayoutNode>().radius(
-                d => this.settings.forceCollide.radius.getValue(d, ctx) ?? 5
+            console.log("Adding force collide", this.settings.forceCollide.radius.getValue(), this.settings.forceCollide.strength.getValue());
+            simulation.force("collide", d3.forceCollide<LayoutNode>(
+                d => (this.settings.forceCollide.radius.getValue(d, ctx) ?? 5)
             ).strength(
-                this.settings.forceCollide.strength.getValue(ctx) ?? 0.5
+                Math.min(1, Math.max(0, this.settings.forceCollide.strength.getValue(ctx) ?? 0.5))
             ))
         }
 

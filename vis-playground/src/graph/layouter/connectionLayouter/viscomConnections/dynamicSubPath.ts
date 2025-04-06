@@ -284,7 +284,7 @@ export class SmoothSplineConnectionMethod extends DynamicConnectionMethod {
 
             // If these intersections are inside the valid range of the node to connect, the connection is still valid
             const validRange = this.nodeToConnect?.outerRange;
-            if (validRange && intersections.every(p => validRange.pointIsInside(p))) {
+            if (validRange && intersections.every(p => validRange!.pointIsInside(p))) {
                 return true;
             }
 

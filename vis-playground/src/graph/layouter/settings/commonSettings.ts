@@ -12,6 +12,15 @@ export class CommonSettings extends Setting {
         defaultValue: true,
     })
 
+    notifyWhenFinished = new Param<boolean>({
+        type: "boolean",
+        key: "notifyWhenFinished",
+        label: "Notify When Metrics Finished",
+        description: "Show a notification when metrics calculation is complete",
+        optional: false,
+        defaultValue: true,
+    })
+
     tileSize = new Param<number>({
         type: "number",
         key: "tileSize",
@@ -168,12 +177,6 @@ export class CommonSettings extends Setting {
         optional: false,
         defaultValue: true,
     })
-
-
-
-
-
-
 
 }
 
