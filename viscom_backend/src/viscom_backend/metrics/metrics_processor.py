@@ -155,7 +155,7 @@ class MetricsProcessor:
         self.results: Dict[str, Dict[str, Any]] = self.manager.dict()
         self.pids: Dict[str, int] = self.manager.dict()
         self.processes: Dict[str, multiprocessing.Process] = {}
-        self.job_cleanup_threshold_sec = 60  # Clean up jobs after 60 seconds
+        self.job_cleanup_threshold_sec = 120  # Clean up jobs after 60 seconds
         logger.info(f"Initialized MetricsProcessor with multiprocessing start method: {multiprocessing.get_start_method()}")
 
     def submit_job(self, data_dict: Dict[str, Any], method: Optional[str] = None) -> str:
