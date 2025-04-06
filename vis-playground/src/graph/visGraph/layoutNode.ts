@@ -836,6 +836,17 @@ export class LayoutNode {
      */
     getValidOuterRadRange(factor = 1, includeParentCircle = true): [number, number] {
 
+
+
+        const onlyOneNodeInHyperNode = this.parent?.children.length == 1;
+
+        // If there is only one node in the hypernode, we can assign the full range as outer range
+        if (onlyOneNodeInHyperNode) {
+            const fromCenterSlope = new Vector(this.parent!.parent!.center!, this.center).rotate(0).slope;
+            return [fromCenterSlope + 0.1, fromCenterSlope - 0.1];
+        }
+
+
         const parent = this.parent;
         const nextNode = this.getNextNodeInSorting();
         const previousNode = this.getPreviousNodeInSorting();
@@ -963,12 +974,44 @@ export class LayoutNode {
         // }
 
         if (intersections1.length != 2 || intersections2.length != 2) {
-            this.debugShapes.push(circle1, circle2, this.outerCircle, this.parent.innerCircle, center, parentCenter);
 
+            // Clear the intersection arrays
+            intersections1.splice(0, intersections1.length);
+            intersections2.splice(0, intersections2.length);
 
-            console.error("Invalid intersection points for circular range calculation", intersections1, intersections2, this.parent.innerCenterTranslation);
-            throw new Error("Invalid intersection points for circular range calculation");
-            // return [0, 0];
+            // Calculate new intersections based on the next parent center
+            const nextParent = this.parent?.parent;
+
+            if (nextParent) {
+
+                const center = nextParent.innerCircle.center;
+                const distanceToNode = center.distanceTo(this.center)[0]
+                const _circle = new Circle(center, distanceToNode);
+
+                const _circle1 = _circle.clone();
+                const _circle2 = _circle.clone();
+
+                // this.debugShapes.push(_circle, _circle1, _circle2);
+
+                _circle1.r = _circle.r + minRadius * startRadiusFactor;
+                _circle2.r = _circle.r + minRadius * endRadiusFactor;
+
+                const _intersections1 = this.outerCircle.intersect(_circle1);
+                const _intersections2 = this.outerCircle.intersect(_circle2);
+
+                if (_intersections1.length == 2 && _intersections2.length == 2) {
+                    intersections1.push(..._intersections1);
+                    intersections2.push(..._intersections2);
+                }
+            }
+
+            if (intersections1.length != 2 || intersections2.length != 2) {
+                this.debugShapes.push(circle1, circle2, this.outerCircle, this.parent.innerCircle, center, parentCenter);
+
+                console.error("Invalid intersection points for circular range calculation", intersections1, intersections2, this.parent.innerCenterTranslation);
+                throw new Error("Invalid intersection points for circular range calculation");
+                // return [0, 0];
+            }
         }
 
         const forwardIntersection1 = RadialUtils.forwardRadBetweenAngles(RadialUtils.radOfPoint(intersections1[0], parentCenter), RadialUtils.radOfPoint(intersections1[1], parentCenter)) < Math.PI ? intersections1[1] : intersections1[0];

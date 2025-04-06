@@ -913,6 +913,7 @@ export class VisGraph {
             return communities.filter(community => community.includes(node)).length > 1;
         });
 
+        // console.warn("Communities", communityNodeIds)
         console.log("Nodes having multiple communities", nodesHavingMultipleCommunities);
 
         nodesHavingMultipleCommunities.forEach(node => {
@@ -992,6 +993,9 @@ export class VisGraph {
 
         // Combine the nodes into hypernodes
         communities.forEach((nodes, i, arr) => {
+
+            // if (nodes.length <= 1) return;
+
             const hypernode = this.combineNodesIntoHyperNode(nodes, parentNode);
 
 

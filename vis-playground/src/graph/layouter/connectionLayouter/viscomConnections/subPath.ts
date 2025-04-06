@@ -438,19 +438,32 @@ export class SubPath extends CombinedPathSegment {
                             const otherNodeSlope = new Vector(otherVisNodeParent.center, otherVisNode.center).slope;
 
                             const forwardRadToOtherNode = RadialUtils.forwardRadBetweenAngles(startSlope, otherNodeSlope);
-                            const radDiffFromCenter = forwardRadToOtherNode - Math.PI;
+
+                            // console.warn({
+                            //     id: this.cId,
+                            //     startSlope,
+                            //     otherNodeSlope,
+                            //     forwardRadToOtherNode,
+                            // })
+
+                            let radDiffFromCenter = forwardRadToOtherNode - Math.PI;
+
+                            if (otherVisNodeParent.center.distanceTo(otherVisNode.center)[0] < 0.1) {
+                                radDiffFromCenter = 0;
+                            }
 
                             const circleRadius = otherVisNodeParent.innerCircle.r;
                             const moveDistance = (3 * circleRadius) * radDiffFromCenter / Math.PI;
 
                             const projectedPoint = new Anchor(otherVisNodeParent.center, visNodeToHypernodeCenterVector.clone().rotate90CCW()).move(moveDistance).anchorPoint;
 
-                            // if (visNode.id == "car_simulator") {
+                            // if (visNode.id == "display_left") {
                             //     // if (otherVisNode.id == "drive_controller") {
                             //     // visNode.layoutNode.debugShapes.push(otherVisNodeParent.innerCircle);
 
                             //     visNode.layoutNode.debugShapes.push(new Segment(otherVisNodeParent.center, projectedPoint));
                             //     visNode.layoutNode.debugShapes.push(new Segment(visNode.center, otherVisNodeParent.center));
+                            //     visNode.layoutNode.debugShapes.push(otherVisNodeParent.circle);
                             //     visNode.layoutNode.debugShapes.push(new Segment(visNode.center, projectedPoint));
                             //     visNode.layoutNode.debugShapes.push(new Segment(projectedPoint, otherVisNode.center));
                             //     visNode.layoutNode.debugShapes.push(projectedPoint);
