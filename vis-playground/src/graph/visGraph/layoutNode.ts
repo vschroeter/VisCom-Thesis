@@ -1006,11 +1006,11 @@ export class LayoutNode {
             }
 
             if (intersections1.length != 2 || intersections2.length != 2) {
-                this.debugShapes.push(circle1, circle2, this.outerCircle, this.parent.innerCircle, center, parentCenter);
+                return [0, 0];
+                // this.debugShapes.push(circle1, circle2, this.outerCircle, this.parent.innerCircle, center, parentCenter);
 
-                console.error("Invalid intersection points for circular range calculation", intersections1, intersections2, this.parent.innerCenterTranslation);
-                throw new Error("Invalid intersection points for circular range calculation");
-                // return [0, 0];
+                // console.error("Invalid intersection points for circular range calculation", intersections1, intersections2, this.id);
+                // throw new Error("Invalid intersection points for circular range calculation");
             }
         }
 

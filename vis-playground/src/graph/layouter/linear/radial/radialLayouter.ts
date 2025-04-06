@@ -185,6 +185,7 @@ export class RadialPositionerDynamicDistribution extends BasePositioner {
                     const center = parentNode.center;
                     const direction = new Vector(center, n.center).normalize();
                     const expandedPoint = n.center.translate(direction.scale(n.outerRadius));
+                    // const expandedPoint = n.center.translate(direction.scale(n.radius));
                     return expandedPoint;
                 } catch (e) {
                     return n.center;
