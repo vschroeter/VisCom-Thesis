@@ -77,7 +77,9 @@ export class RadialUtils extends ShapeUtil {
      * @param endRad The maximum radian value.
      * @param targetRad The target radian value.
      */
-    static putRadBetween(targetRad: number, startRad: number, endRad: number, tolerance = 0.001): number {
+    static putRadBetween(targetRad: number, startRad: number, endRad: number,
+        direction: "clockwise" | "counter-clockwise" | "closer" = "closer",
+        tolerance = 0.001): number {
 
         if (Math.abs(startRad - endRad) < tolerance) {
             return startRad;
@@ -105,10 +107,17 @@ export class RadialUtils extends ShapeUtil {
         // If the target rad is outside the range, return the closest value
         if (forwardTargetToStart < forwardTargetToEnd) {
 
-            if (forwardTargetToStart < Math.abs(forwardTargetToEnd - 2 * Math.PI)) {
+            if (direction == "closer") {
+                if (forwardTargetToStart < Math.abs(forwardTargetToEnd - 2 * Math.PI)) {
+                    return startRad;
+                }
+                return endRad;
+            } else if (direction == "clockwise") {
                 return startRad;
+            } else if (direction == "counter-clockwise") {
+                return endRad;
             }
-            return endRad;
+
         }
 
         return targetRad;
@@ -334,7 +343,7 @@ export class RadialUtils extends ShapeUtil {
             const thalesCircle = new Circle(thalesCenter, thalesRadius);
 
             const intersectionPoints = thalesCircle.intersect(circle);
-            
+
             if (intersectionPoints.length < 2) {
                 throw new Error("No intersection points found.");
             }

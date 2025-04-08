@@ -433,9 +433,12 @@ export class SubPath extends CombinedPathSegment {
                     else {
                         const otherVisNodeParent = this.layouter.getVisNode(otherLayoutNode!.parent!);
                         if (otherVisNodeParent) {
-                            const visNodeToHypernodeCenterVector = new Vector(visNode.center, otherVisNodeParent.center);
+
+                            const otherVisNodeParentCenter = otherVisNodeParent.innerCircle.center;
+
+                            const visNodeToHypernodeCenterVector = new Vector(visNode.center, otherVisNodeParentCenter);
                             const startSlope = visNodeToHypernodeCenterVector.slope;
-                            const otherNodeSlope = new Vector(otherVisNodeParent.center, otherVisNode.center).slope;
+                            const otherNodeSlope = new Vector(otherVisNodeParentCenter, otherVisNode.center).slope;
 
                             const forwardRadToOtherNode = RadialUtils.forwardRadBetweenAngles(startSlope, otherNodeSlope);
 
@@ -448,21 +451,21 @@ export class SubPath extends CombinedPathSegment {
 
                             let radDiffFromCenter = forwardRadToOtherNode - Math.PI;
 
-                            if (otherVisNodeParent.center.distanceTo(otherVisNode.center)[0] < 0.1) {
+                            if (otherVisNodeParentCenter.distanceTo(otherVisNode.center)[0] < 0.1) {
                                 radDiffFromCenter = 0;
                             }
 
                             const circleRadius = otherVisNodeParent.innerCircle.r;
                             const moveDistance = (3 * circleRadius) * radDiffFromCenter / Math.PI;
 
-                            const projectedPoint = new Anchor(otherVisNodeParent.center, visNodeToHypernodeCenterVector.clone().rotate90CCW()).move(moveDistance).anchorPoint;
+                            const projectedPoint = new Anchor(otherVisNodeParentCenter, visNodeToHypernodeCenterVector.clone().rotate90CCW()).move(moveDistance).anchorPoint;
 
-                            // if (visNode.id == "display_left") {
+                            // if (visNode.id == "display_manager") {
                             //     // if (otherVisNode.id == "drive_controller") {
                             //     // visNode.layoutNode.debugShapes.push(otherVisNodeParent.innerCircle);
 
-                            //     visNode.layoutNode.debugShapes.push(new Segment(otherVisNodeParent.center, projectedPoint));
-                            //     visNode.layoutNode.debugShapes.push(new Segment(visNode.center, otherVisNodeParent.center));
+                            //     visNode.layoutNode.debugShapes.push(new Segment(otherVisNodeParentCenter, projectedPoint));
+                            //     visNode.layoutNode.debugShapes.push(new Segment(visNode.center, otherVisNodeParentCenter));
                             //     visNode.layoutNode.debugShapes.push(otherVisNodeParent.circle);
                             //     visNode.layoutNode.debugShapes.push(new Segment(visNode.center, projectedPoint));
                             //     visNode.layoutNode.debugShapes.push(new Segment(projectedPoint, otherVisNode.center));
@@ -1016,6 +1019,10 @@ export class SubPath extends CombinedPathSegment {
     layoutDirectOutsideConnection() {
 
         // console.warn("Layout DIRECT", this.sourceVisNode.id, this.targetVisNode.id, this);
+
+        if (this.source.id == "sensor2") {
+            const x = 5;
+        }
 
         const sourceAnchor = this.sourceVisNode.outerRange.getAnchorForPath(this, "out");
         const targetAnchor = this.targetVisNode.outerRange.getAnchorForPath(this, "in");

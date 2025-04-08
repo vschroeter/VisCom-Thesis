@@ -69,8 +69,8 @@ export class AlgorithmSettings extends Setting {
 
     combinePaths = new Param<boolean>({
         key: "combinePaths",
-        label: "Combine Paths",
-        description: "Combine paths.",
+        label: "Combine Counter Paths",
+        description: "Bring counter paths closer together.",
         optional: false,
         defaultValue: true,
         type: "boolean",

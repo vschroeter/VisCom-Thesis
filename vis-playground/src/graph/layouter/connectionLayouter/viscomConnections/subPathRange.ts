@@ -90,7 +90,13 @@ export class SubPathRange {
         if (type === "outside") {
             this.range = node.layoutNode.getValidOuterRadRange(nodeRangeMarginFactor, false);
             this.outerMargin = RadialUtils.forwardRadBetweenAngles(node.layoutNode.getValidOuterRadRange(1, false)[0], this.range[0]);
-            this.backsideRad = this.getMiddleRadOnBackside();
+
+            // Calc the backside rad as the rad for the connection line to the parent center
+            if (this.node.parent) {
+                this.backsideRad = RadialUtils.normalizeRad(new Vector(this.node.center, this.node.parent!.innerCircle.center).slope);
+            } else {
+                this.backsideRad = RadialUtils.normalizeRad(this.getMiddleRadOnBackside());
+            }
         } else if (type === "inside") {
             // this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor);
             this.range = node.layoutNode.getValidInnerRadRange(nodeRangeMarginFactor, false);
@@ -266,9 +272,29 @@ export class SubPathRange {
 
         // If the path has a desired anchor, we put the rad in direction of the anchor
         const desiredRad = this.getRadOfPoint(pathInformation!.desiredAnchorPoint!);
-        return RadialUtils.putRadBetween(desiredRad, range[0], range[1]);
 
-        // return this.assignedRads.get(path)!;
+        // // We check, if the desired rad is inside the range
+        // if (this.radIsInside(desiredRad, range)) {
+        //     return desiredRad;
+        // }
+
+        // // Otherwise, we check which side of the range is closer to the counter anchor
+        // const anchorPoint = pathInformation!.desiredAnchor?.anchorPoint;
+        // const counterPoint = pathInformation!.desiredCounterAnchor?.anchorPoint;
+
+        // if (anchorPoint && counterPoint) {
+        //     const dist0 = RadialUtils.positionOnCircleAtRad(range[0], this.node.layoutNode.radius, this.node.layoutNode.center).distanceTo(counterPoint);
+        //     const dist1 = RadialUtils.positionOnCircleAtRad(range[1], this.node.layoutNode.radius, this.node.layoutNode.center).distanceTo(counterPoint);
+
+        //     if (dist0 > dist1) {
+        //         return range[0];
+        //     } else {
+        //         return range[1];
+        //     }
+        // }
+
+
+        return RadialUtils.putRadBetween(desiredRad, range[0], range[1]);
     }
 
     /**
@@ -572,7 +598,8 @@ export class SubPathRange {
             const desiredAnchorPoint = desiredAnchor?.anchorPoint;
 
             const desiredAnchorPointWithoutDirectConnection = desiredAnchorWithoutDirectConnection?.anchorPoint;
-            const toleranceRad = 10 * Math.PI / 180;
+            // const toleranceRad = 10 * Math.PI / 180;
+            const toleranceRad = 0 * Math.PI / 180;
             const desiredForwardRad = desiredAnchorPointWithoutDirectConnection ? RadialUtils.forwardRadBetweenAngles(backRad, this.getRadOfPoint(desiredAnchorPointWithoutDirectConnection) - toleranceRad) : undefined;
 
             // const counterNode =  otherLayoutNode ? subPath.getNextNonHyperNodeBetween(this.node, this.node.parentLayouter.getVisNode(otherLayoutNode)) : undefined;
@@ -895,7 +922,7 @@ export class SubPathRange {
             this.mappedSubPathInformation.set(info.subPath, info);
         });
 
-        if (false && (this.type == "circleArcBackward" || this.type == "circleArcForward")) {
+        if (false && (this.node.id == "display_manager" && this.type == "outside")) {
             // if ((this.node.id == "car_simulator" && this.type == "outside") || (this.node.id == "waypoint_updater" && this.type == "outside")) {
             // if (this.node.layoutNode.children.length == 5 || this.node.layoutNode.children.length == 4) {
             console.warn("[SORT]", {
@@ -927,9 +954,9 @@ export class SubPathRange {
 
         // console.warn("[CALCULATE]", this.node.id, this.type);
 
-        if (this.node.id.startsWith("right_motor_controller_") && this.type == "outside") {
-            const x = 5;
-        }
+        // if (this.node.id.startsWith("sensor2") && this.type == "outside") {
+        //     const x = 5;
+        // }
 
         this.lastAssignedRad = this.range[0];
         this.assignedRads = new Map();
@@ -1019,16 +1046,16 @@ export class SubPathRange {
             const minRadForMidPoints = RadialUtils.normalizeRad(this.range[0] + minSizeOfRange / 2);
             const maxRadForMidPoints = RadialUtils.normalizeRad(this.range[1] - minSizeOfRange / 2);
 
-            if (this.node.id == "started_nodes_gatherer" && this.type == "inside") {
-                const x = 5;
-            }
+            // if (this.node.id == "sensor3" && this.type == "outside") {
+            //     const x = 5;
+            // }
 
 
             let currentRad = minRadForMidPoints;
             let isUndesiredAtBeginning = true;
             pathInformation.forEach((pathInfo, i) => {
                 const maxRadForThisPath = RadialUtils.normalizeRad(maxRad - (minSizeOfRange * (pathInformation.length - i - 1)) - minSizeOfRange / 2);
-                currentRad = RadialUtils.putRadBetween(currentRad, minRadForMidPoints, maxRadForThisPath);
+                currentRad = RadialUtils.putRadBetween(currentRad, minRadForMidPoints, maxRadForThisPath, "closer");
 
                 if (!pathInfo.desiredAnchor) {
                     if (isUndesiredAtBeginning) {
@@ -1046,7 +1073,16 @@ export class SubPathRange {
 
                     let desiredRad = this.getRadOfPoint(pathInfo.desiredAnchorPoint!);
                     // desiredRad = RadialUtils.putRadBetween(desiredRad, currentRad, this.range[1]);
-                    desiredRad = RadialUtils.putRadBetween(desiredRad, currentRad, maxRadForThisPath);
+
+                    let adaptDirection: "closer" | "clockwise" | "counter-clockwise" = "closer";
+
+                    if (RadialUtils.rad1ComesAfterRad2(desiredRad, this.backsideRad, this.getMiddleRad())) {
+                        adaptDirection = "clockwise";
+                    } else {
+                        adaptDirection = "counter-clockwise";
+                    }
+
+                    desiredRad = RadialUtils.putRadBetween(desiredRad, currentRad, maxRadForThisPath, adaptDirection);
 
                     pathMids.set(pathInfo.subPath, desiredRad);
                     currentRad = desiredRad + minSizeOfRange;
@@ -1068,13 +1104,13 @@ export class SubPathRange {
             // We can now assign the ranges
             pathInformation.forEach((pathInfo, i) => {
 
-                const subPathBefore = i > 0 ? pathInformation[i - 1].subPath : undefined;
+                const subPathBefore = i > 0 ? pathInformation[i - 1].subPath : undefined; 1
                 const subPathAfter = i < pathInformation.length - 1 ? pathInformation[i + 1].subPath : undefined;
                 const subPath = pathInfo.subPath;
 
                 const rad = pathMids.get(subPath)!;
 
-
+                const range = pathToRange.get(subPath)!;
                 let startRad = this.range[0];
                 let endRad = this.range[1];
 
@@ -1114,7 +1150,7 @@ export class SubPathRange {
             let startRad = range[0];
             let endRad = range[1];
 
-            const rangeDelta = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
+            let rangeDelta = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
             // const padding = 0.1 * rangeDelta;
             // const padding = rangePadding * rangeDelta;
             const padding = doRefine ?
@@ -1128,9 +1164,29 @@ export class SubPathRange {
                 endRad -= padding / 2;
             } else {
 
+                if (pathInfo.hasCounterPathAfter) {
+                    const subPathAfter = pathInformation[i + 1].subPath!;
+                    const counterRangeAfter = pathToRange.get(subPathAfter)!;
+
+                    // Adapt the larger range to the smaller range
+                    const counterRangeDelta = RadialUtils.forwardRadBetweenAngles(counterRangeAfter[0], counterRangeAfter[1]);
+
+                    if (rangeDelta < counterRangeDelta) {
+                        const newCounterRange = [counterRangeAfter[0], counterRangeAfter[0] + rangeDelta] as [number, number];
+                        pathToRange.set(subPathAfter, newCounterRange);
+                    } else if (counterRangeDelta < rangeDelta) {
+                        endRad = range[1];
+                        startRad = range[1] - counterRangeDelta;
+
+                        const newRange = [startRad, endRad] as [number, number];
+                        pathToRange.set(subPath, newRange);
+
+                        rangeDelta = RadialUtils.forwardRadBetweenAngles(startRad, endRad);
+                    }
+                }
+
                 const rangeSize = rangeDelta * combinedPathsDistanceFactor;
                 const counterPadding = rangeDelta - rangeSize / 2 - rangeSize;
-
 
                 // if (this.node.id == "sensor3") {
                 //     console.warn("RANGE", {
@@ -1170,7 +1226,6 @@ export class SubPathRange {
         });
 
 
-
         pathToRange.forEach((range, path) => {
 
             // Check if the desired range is inside the valid range
@@ -1205,6 +1260,14 @@ export class SubPathRange {
         //     debug = true;
         // }
         // debug = true;
+
+        // if (this.node.id == "display_manager") debug = true;
+        // if (this.node.id == "display_bottom") debug = true;
+        // if (this.node.id == "motor") debug = true;
+        // if (this.node.id == "sensor2") debug = true;
+        // if (this.node.id == "sensor3") debug = true;
+
+        // if (this.type != "outside") debug = false;
 
         // if (this.node.id == "facialexpressionmanager_node") debug = true;
         // if (this.node.id == "drive_manager") debug = true;
