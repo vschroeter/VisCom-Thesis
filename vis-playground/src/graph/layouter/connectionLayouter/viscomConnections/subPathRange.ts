@@ -12,6 +12,8 @@ export type SubPathInformation = {
     desiredForwardRad?: number;
     desiredCounterAnchor?: Anchor;
     desiredCounterForwardRad?: number;
+    forwardParentRad?: number;
+    oppositeParentRad?: number;
     level: number;
     forwardRadToConnectionPoint: number;
     forwardRadToTargetNode: number;
@@ -589,6 +591,11 @@ export class SubPathRange {
             const desiredCounterForwardRad = desiredCounterAnchorPointWithoutDirectConnection ?
                 RadialUtils.forwardRadBetweenAngles(otherBackRad, oppositeRange.getRadOfPoint(desiredCounterAnchorPointWithoutDirectConnection) - toleranceRad) : undefined;
 
+            const oppositeParent = oppositeVisNode.parentVisNode;
+            const thisParent = this.node.parentVisNode;
+
+            const forwardParentRad = oppositeParent ? RadialUtils.forwardRadBetweenAngles(backRad, new Vector(this.node.center, oppositeParent.center).slope) : undefined;
+            const oppositeParentRad = thisParent ? RadialUtils.forwardRadBetweenAngles(otherBackRad, new Vector(oppositeVisNode.center, thisParent.center).slope) : undefined;
 
 
             return {
@@ -612,7 +619,9 @@ export class SubPathRange {
                 oppositeVisNode: oppositeVisNode,
                 desiredCounterAnchor,
                 desiredCounterAnchorPoint,
-                desiredCounterForwardRad
+                desiredCounterForwardRad,
+                forwardParentRad,
+                oppositeParentRad,
             };
         });
 
@@ -652,6 +661,12 @@ export class SubPathRange {
             //     return -1;
             // } else if (!aIsOutgoing && bIsOutgoing) {
             //     return 1;
+            // }
+
+            // if (a.forwardParentRad && b.forwardParentRad) {
+            //     if (Math.abs(a.forwardParentRad - b.forwardParentRad) > EPSILON) {
+            //         return a.forwardParentRad - b.forwardParentRad;
+            //     }
             // }
 
             if (a.desiredForwardRad && b.desiredForwardRad) {
@@ -1083,7 +1098,7 @@ export class SubPathRange {
 
         let rangePadding = Math.min(Math.max(0, this.node.parentLayouter.rangePaddingFactor), 1);
 
-        let doCombinePaths = this.node.parentLayouter.combinePaths;
+        let doCombinePaths = this.node.parentLayouter.combineCounterPaths;
         const combinedPathsDistanceFactor = Math.max(0, Math.min(1, this.node.parentLayouter.combinedPathsDistanceFactor));
 
         if (isArc) {

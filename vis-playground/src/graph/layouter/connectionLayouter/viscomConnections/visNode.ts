@@ -40,6 +40,10 @@ export class VisNode {
         return this.layoutNode.parent;
     }
 
+    get parentVisNode(): VisNode | undefined {
+        return this.layoutNode.parent ? this.parentLayouter.getVisNode(this.layoutNode.parent) : undefined;
+    }
+
 
     ////////////////////////////////////////////////////////////////////////////
     // #region Ranges

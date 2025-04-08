@@ -84,6 +84,24 @@ export class AlgorithmSettings extends Setting {
         defaultValue: 0.2,
         type: "number",
     });
+
+    useHierarchicalSubPaths = new Param<boolean>({
+        key: "useHierarchicalSubPaths",
+        label: "Use Hierarchical Sub Paths",
+        description: "Use hierarchical sub paths for connection routing.",
+        optional: false,
+        defaultValue: false,
+        type: "boolean",
+    });
+
+    useHyperEdges = new Param<boolean>({
+        key: "useHyperEdges",
+        label: "Use Hyper Edges",
+        description: "Use hyper edges for connection routing. (Only available if hierarchical sub paths are enabled)",
+        optional: false,
+        defaultValue: false,
+        type: "boolean",
+    });
 }
 
 export class DisplaySettings extends Setting {
@@ -108,8 +126,6 @@ export class DisplaySettings extends Setting {
         type: "boolean",
     });
 }
-
-
 
 export class ViscomLayouterSettings extends GraphLayouterSettings {
     radial = new RadialLayoutingSettings({

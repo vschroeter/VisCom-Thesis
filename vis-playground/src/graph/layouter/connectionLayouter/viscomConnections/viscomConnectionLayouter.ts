@@ -22,9 +22,11 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
     minimumRangeSizeFactor: number = 0.4;
     rangePaddingFactor: number = 0.1;
     combinedPathsDistanceFactor: number = 0.2;
-    combinePaths: boolean = true;
+    combineCounterPaths: boolean = true;
 
-    useHierarchicalSubPaths: boolean = false;
+    useHierarchicalSubPaths: boolean = true;
+
+    useHyperEdges: boolean = false;
 
     constructor(options?: {
         optimizeConnectionAnchors?: boolean,
@@ -32,15 +34,22 @@ export class ViscomConnectionLayouter extends BaseNodeConnectionLayouter {
         rangePaddingFactor?: number,
         combinedPathsDistanceFactor?: number,
         combinePaths?: boolean,
-        useHierarchicalSubPaths?: boolean
+        useHierarchicalSubPaths?: boolean,
+        useHyperEdges?: boolean
     }) {
         super();
         this.optimizeConnectionAnchors = options?.optimizeConnectionAnchors ?? true;
         this.minimumRangeSizeFactor = options?.minimumRangeSizeFactor ?? 0.4;
         this.rangePaddingFactor = options?.rangePaddingFactor ?? 0.1;
         this.combinedPathsDistanceFactor = options?.combinedPathsDistanceFactor ?? 0.2;
-        this.combinePaths = options?.combinePaths ?? true;
-        this.useHierarchicalSubPaths = options?.useHierarchicalSubPaths ?? false;
+        this.combineCounterPaths = options?.combinePaths ?? true;
+        this.useHierarchicalSubPaths = options?.useHierarchicalSubPaths ?? true;
+        this.useHyperEdges = options?.useHyperEdges ?? false;
+
+        if (!this.useHierarchicalSubPaths) {
+            this.useHyperEdges = false;
+        }
+
     }
 
     get visNodes(): VisNode[] {

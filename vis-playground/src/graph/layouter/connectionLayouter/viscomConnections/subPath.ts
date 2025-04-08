@@ -703,7 +703,7 @@ export class SubPath extends CombinedPathSegment {
             }
         }
 
-        const useHyperEdges = false;
+        const useHyperEdges = this.layouter.useHyperEdges;
         // const useHyperEdges = true;
 
         // Connections between nodes on the same level are cached

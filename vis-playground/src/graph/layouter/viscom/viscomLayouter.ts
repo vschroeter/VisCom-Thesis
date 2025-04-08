@@ -115,6 +115,8 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
                 rangePaddingFactor: this.settings.algorithm.rangePaddingFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 0.1,
                 combinedPathsDistanceFactor: this.settings.algorithm.combinedPathsDistanceFactor.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? 0.2,
                 combinePaths: this.settings.algorithm.combinePaths.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? true,
+                useHierarchicalSubPaths: this.settings.algorithm.useHierarchicalSubPaths.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? true,
+                useHyperEdges: this.settings.algorithm.useHyperEdges.getValue(this.settings.getContext({ visGraph: this.visGraph })) ?? false,
             }),
         ])
 
