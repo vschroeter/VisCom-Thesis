@@ -306,6 +306,7 @@ export class Connection2d extends SvgRenderable {
 
     renderStyleOpacity() {
         this.elGroup?.attr('opacity', this.opacity * this.visibilityOpacity);
+        // this.elGroup?.attr('opacity', Math.max(0.5, this.opacity * this.visibilityOpacity));
     }
     updateStyleOpacity(opacity: number) {
         this.checkValueAndAddUpdateCallback([
@@ -512,9 +513,12 @@ export class Connection2d extends SvgRenderable {
         return this.elPath !== undefined && this.elArrow !== undefined && this.elGroup !== undefined;
     }
     override removeSubElements(): void {
+        this.elBackground?.remove();
         this.elPath?.remove();
+
         this.elArrow?.remove();
         this.elGroup?.remove();
+
 
         this.elPath = this.elArrow = this.elGroup = undefined;
     }
