@@ -15,6 +15,8 @@ import { PathAngularPredictionMetricCalculator } from "./metricPathAngularPredic
 import { NodeEdgeOverlapsMetricCalculator } from "./metricNodeEdgeOverlaps";
 import { AspectRatioMetricCalculator } from "./metricAspectRatio";
 import { NodeNodeOverlapsMetricCalculator } from "./metricNodeNodeOverlaps";
+import { TotalEdgeCrossingsCalculator } from "./metricTotalEdgeCrossing";
+import { TotalPathLengthCalculator } from "./metricTotalPathLength";
 
 export type MetricNormalization =
     "none" | "byMinimum" | "byMaximum" | "byAverage" | "byMedian" | "byShorterLayoutSide" | "byLongerLayoutSide"
@@ -41,6 +43,7 @@ export class MetricsCollection {
         // NodeDistanceCalculator,
         AspectRatioMetricCalculator,
         EdgeCrossingsCalculator,
+        TotalEdgeCrossingsCalculator,
         PathLengthRatioMetricCalculator,
         NormalizedPathLengthRatioMetricCalculator,
         StressMetricCalculator,
@@ -48,7 +51,8 @@ export class MetricsCollection {
         WeightedPathContinuityMetricCalculator,
         PathAngularPredictionMetricCalculator,
         NodeEdgeOverlapsMetricCalculator,
-        NodeNodeOverlapsMetricCalculator
+        NodeNodeOverlapsMetricCalculator,
+        TotalPathLengthCalculator
     ];
 
     // Map from setting id to the metrics results of that setting

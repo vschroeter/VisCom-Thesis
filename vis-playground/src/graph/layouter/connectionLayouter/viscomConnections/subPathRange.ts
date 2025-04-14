@@ -1245,7 +1245,22 @@ export class SubPathRange {
                 assignedRads.set(path, this.getRadOfPoint(desiredAnchorPoint));
                 return;
             } else {
-                const validAnchor = this.getValidAnchorTowardsDirection(desiredAnchorPoint, range);
+
+                let adaptDirection: "closer" | "clockwise" | "counter-clockwise" = "closer";
+                let desiredRad = this.getRadOfPoint(desiredAnchorPoint);
+
+                if (!this.pointIsInside(desiredAnchorPoint, this.range)) {
+                    if (RadialUtils.rad1ComesAfterRad2(desiredRad, this.backsideRad, this.getMiddleRad())) {
+                        adaptDirection = "clockwise";
+                    } else {
+                        adaptDirection = "counter-clockwise";
+                    }
+                }
+
+                desiredRad = RadialUtils.putRadBetween(desiredRad, range[0], range[1], adaptDirection);
+
+                const validAnchor = this.getAnchorForRad(desiredRad, "out");
+                // const validAnchor = this.getValidAnchorTowardsDirection(desiredAnchorPoint, range);
                 assignedRads.set(path, this.getRadOfPoint(validAnchor.anchorPoint));
             }
         })

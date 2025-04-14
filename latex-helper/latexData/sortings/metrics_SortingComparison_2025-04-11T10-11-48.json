@@ -1,0 +1,3625 @@
+{
+  "dataset": {
+    "title": "SortingComparison",
+    "description": "Metrics results for multiple visualizations",
+    "timestamp": "2025-04-11T10-11-48",
+    "nodeCount": 26,
+    "connectionCount": 452,
+    "visualizationCount": 14
+  },
+  "visualizations": {
+    "0": {
+      "id": 0,
+      "name": "viscom_byId",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.983013458589527,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.26321709786276715,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 234,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 0.9984270848141678,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9980964390774749,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3617752578263022,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.6832353714985732,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.5959655495371422,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.3866377519139812,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 21599.593365886605,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "byId",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "byId"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "1": {
+      "id": 1,
+      "name": "viscom_Random",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9981972699063711,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.2890888638920135,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 257,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9986277180684147,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3449488181331909,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.7278697199618754,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.7603397663791064,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.39499956618485166,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 22817.778793692192,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "Random",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "random"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "2": {
+      "id": 2,
+      "name": "viscom_Topological",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.998404694113732,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.21822272215973004,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 194,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9960957364139448,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.35464093066976854,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.63357783709802,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.6370505366215045,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.36727967832456954,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 19721.96884133759,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "Topological",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "topological"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "3": {
+      "id": 3,
+      "name": "viscom_WeightedTopological",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.985855644307874,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.21034870641169853,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 187,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9984308754195861,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.32797214250407625,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.6019717735940269,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.595781982269855,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.33427877630102787,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 19844.63913334773,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "WeightedTopological",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "weightedTopological"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "4": {
+      "id": 4,
+      "name": "viscom_BreadthFirst",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.988970179053358,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.24859392575928008,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 221,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9991753464241953,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.33875435093055517,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.653632175403613,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.7112856242281751,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.42387297435906124,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 18654.416890914643,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "BreadthFirst",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "breadthFirst"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "5": {
+      "id": 5,
+      "name": "viscom_DepthFirst",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9904344902848976,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.10798650168728909,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 96,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9984345550210706,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.30951559343534113,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.6261051866211281,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.604438438944757,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.38381260267985845,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 16764.85051459707,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "DepthFirst",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "depthFirst"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "6": {
+      "id": 6,
+      "name": "viscom_NodeScore",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9893417037037597,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.27896512935883017,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 248,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9977672037554413,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3620993858619349,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.756622628555298,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.7883014456708143,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.39162003153495906,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 22829.41525037053,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "NodeScore",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "nodeScore"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "7": {
+      "id": 7,
+      "name": "viscom_SourceScoreWeighted",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9868492178796126,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.3295838020247469,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 293,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9991169135155356,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3445511398406443,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.6845928648061094,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.7150647979556363,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.41159194381505887,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 22115.804145549217,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "SourceScoreWeighted",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "8": {
+      "id": 8,
+      "name": "viscom_SourceScoreDiff",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9868492178796126,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.3295838020247469,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 293,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9991169135155356,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3445511398406443,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.6845928648061094,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.7150647979556363,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.41159194381505887,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 22115.804145549217,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "SourceScoreDiff",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "sourceScoreDifference"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "9": {
+      "id": 9,
+      "name": "viscom_ChildCount",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.984182683935025,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.3374578177727784,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 300,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 0.9967508216440104,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.99670009382458,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3618698769515336,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.7011195131930651,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.6574502634385277,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.3227859606603628,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 22903.70158228519,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "ChildCount",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "childrenCount"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "10": {
+      "id": 10,
+      "name": "viscom_Degree",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9923164884845398,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.374578177727784,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 333,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9983336144146424,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3652915944277548,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.7139950065735656,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.687167938430897,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.27292264653702797,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 24370.647049015828,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "Degree",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "degree"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "11": {
+      "id": 11,
+      "name": "viscom_Flow",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.961647746998153,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.10798650168728909,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 96,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 0.9983077181138986,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9976805453413338,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3311468822881644,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.6281488144622701,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.6494223612744093,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.37309050240587627,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 17215.748626690314,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "Flow",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "flowSorting"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "12": {
+      "id": 12,
+      "name": "viscom_WeightedFlow",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9623174753768643,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.08886389201349831,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 79,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9972726203135358,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3376585730036894,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.6383948766470376,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.5886488354645476,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.43878803103759856,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 14165.645169839307,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "WeightedFlow",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "commFlowSorting"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    },
+    "13": {
+      "id": 13,
+      "name": "viscom_WeightedTopologicalUnadapted",
+      "type": "viscom",
+      "metrics": {
+        "aspectRatio": {
+          "value": 0.9793281079934401,
+          "definition": {
+            "key": "aspectRatio",
+            "label": "Aspect Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "AR"
+          }
+        },
+        "edgeCrossings": {
+          "value": 0.21484814398200225,
+          "definition": {
+            "key": "edgeCrossings",
+            "label": "Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "EC"
+          }
+        },
+        "totalEdgeCrossings": {
+          "value": 191,
+          "definition": {
+            "key": "totalEdgeCrossings",
+            "label": "Total Edge Crossings",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TEC"
+          }
+        },
+        "pathEfficiencyRatio": {
+          "value": 1,
+          "definition": {
+            "key": "pathEfficiencyRatio",
+            "label": "Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PER"
+          }
+        },
+        "pathEfficiencyRatioNormalized": {
+          "value": 0.9967637361387881,
+          "definition": {
+            "key": "pathEfficiencyRatioNormalized",
+            "label": "Normalized Path Efficiency Ratio",
+            "optimum": "higherIsBetter",
+            "abbreviation": "PERN"
+          }
+        },
+        "stress": {
+          "value": 0.3252450336450411,
+          "definition": {
+            "key": "stress",
+            "label": "Stress",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "S"
+          }
+        },
+        "pathContinuity": {
+          "value": 0.6038818713376155,
+          "definition": {
+            "key": "pathContinuity",
+            "label": "Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PC"
+          }
+        },
+        "weightedPathContinuity": {
+          "value": 0.5965300992570759,
+          "definition": {
+            "key": "weightedPathContinuity",
+            "label": "Weighted Path Continuity",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "WPC"
+          }
+        },
+        "pathAngularPrediction": {
+          "value": 0.332467710071674,
+          "definition": {
+            "key": "pathAngularPrediction",
+            "label": "Path Angular Prediction",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "PAP"
+          }
+        },
+        "nodeEdgeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeEdgeOverlaps",
+            "label": "Node-Edge Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NEO"
+          }
+        },
+        "nodeNodeOverlaps": {
+          "value": 1,
+          "definition": {
+            "key": "nodeNodeOverlaps",
+            "label": "Node-Node Overlaps",
+            "optimum": "higherIsBetter",
+            "abbreviation": "NNO"
+          }
+        },
+        "totalPathLength": {
+          "value": 19982.603520898494,
+          "definition": {
+            "key": "totalPathLength",
+            "label": "Total Path Length",
+            "optimum": "lowerIsBetter",
+            "abbreviation": "TPL"
+          }
+        }
+      },
+      "configuration": {
+        "name": "WeightedTopologicalUnadapted",
+        "radial": {
+          "key": "radial",
+          "active": true,
+          "nodeMarginFactor": {
+            "key": "nodeMarginFactor",
+            "active": true,
+            "value": 0.7
+          },
+          "hyperNodeMarginFactor": {
+            "key": "hyperNodeMarginFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "radiusMarginFactor": {
+            "key": "radiusMarginFactor",
+            "active": true,
+            "value": 1.2
+          },
+          "hyperRadiusMarginFactor": {
+            "key": "hyperRadiusMarginFactor",
+            "active": true,
+            "value": 1.1
+          },
+          "adaptEnclosingCircle": {
+            "key": "adaptEnclosingCircle",
+            "active": true,
+            "value": true
+          },
+          "rotateBasedOnConnections": {
+            "key": "rotateBasedOnConnections",
+            "active": true,
+            "value": true
+          }
+        },
+        "sorting": {
+          "key": "sorting",
+          "active": true,
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "value": "weightedTopologicalUnadapted"
+          },
+          "startNodeSelection": {
+            "key": "startNodeSelection",
+            "active": true,
+            "value": "sourceScoreWeighted"
+          },
+          "secondarySorting": {
+            "key": "secondarySorting",
+            "active": true,
+            "value": "degree"
+          },
+          "reversed": {
+            "key": "reversed",
+            "active": true,
+            "value": false
+          }
+        },
+        "display": {
+          "key": "display",
+          "active": true,
+          "showHyperEdges": {
+            "key": "showHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showEdgesIncludedInHyperEdges": {
+            "key": "showEdgesIncludedInHyperEdges",
+            "active": true,
+            "value": true
+          },
+          "showVirtualPaths": {
+            "key": "showVirtualPaths",
+            "active": true,
+            "value": true
+          }
+        },
+        "algorithm": {
+          "key": "algorithm",
+          "active": true,
+          "combineConnectedComponents": {
+            "key": "combineConnectedComponents",
+            "active": true,
+            "value": false
+          },
+          "combiningSteps": {
+            "key": "combiningSteps",
+            "active": true,
+            "value": 0
+          },
+          "optimizeConnectionAnchors": {
+            "key": "optimizeConnectionAnchors",
+            "active": true,
+            "value": true
+          },
+          "minimumRangeSizeFactor": {
+            "key": "minimumRangeSizeFactor",
+            "active": true,
+            "value": 0.4
+          },
+          "rangePaddingFactor": {
+            "key": "rangePaddingFactor",
+            "active": true,
+            "value": 0.1
+          },
+          "combinePaths": {
+            "key": "combinePaths",
+            "active": true,
+            "value": true
+          },
+          "combinedPathsDistanceFactor": {
+            "key": "combinedPathsDistanceFactor",
+            "active": true,
+            "value": 0.2
+          },
+          "useHierarchicalSubPaths": {
+            "key": "useHierarchicalSubPaths",
+            "active": true,
+            "value": false
+          },
+          "useHyperEdges": {
+            "key": "useHyperEdges",
+            "active": true,
+            "value": false
+          }
+        },
+        "community": {
+          "key": "community",
+          "active": true,
+          "communityDetectionMethod": {
+            "key": "communityDetectionMethod",
+            "active": true,
+            "value": "None"
+          },
+          "addVirtualNodes": {
+            "key": "addVirtualNodes",
+            "active": true,
+            "value": false
+          }
+        }
+      }
+    }
+  },
+  "csvSummary": "Metric,viscom_byId,viscom_Random,viscom_Topological,viscom_WeightedTopological,viscom_BreadthFirst,viscom_DepthFirst,viscom_NodeScore,viscom_SourceScoreWeighted,viscom_SourceScoreDiff,viscom_ChildCount,viscom_Degree,viscom_Flow,viscom_WeightedFlow,viscom_WeightedTopologicalUnadapted\naspectRatio,0.9830,0.9982,0.9984,0.9859,0.9890,0.9904,0.9893,0.9868,0.9868,0.9842,0.9923,0.9616,0.9623,0.9793\nedgeCrossings,0.2632,0.2891,0.2182,0.2103,0.2486,0.1080,0.2790,0.3296,0.3296,0.3375,0.3746,0.1080,0.0889,0.2148\ntotalEdgeCrossings,234.0000,257.0000,194.0000,187.0000,221.0000,96.0000,248.0000,293.0000,293.0000,300.0000,333.0000,96.0000,79.0000,191.0000\npathEfficiencyRatio,0.9984,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,0.9968,1.0000,0.9983,1.0000,1.0000\npathEfficiencyRatioNormalized,0.9981,0.9986,0.9961,0.9984,0.9992,0.9984,0.9978,0.9991,0.9991,0.9967,0.9983,0.9977,0.9973,0.9968\nstress,0.3618,0.3449,0.3546,0.3280,0.3388,0.3095,0.3621,0.3446,0.3446,0.3619,0.3653,0.3311,0.3377,0.3252\npathContinuity,0.6832,0.7279,0.6336,0.6020,0.6536,0.6261,0.7566,0.6846,0.6846,0.7011,0.7140,0.6281,0.6384,0.6039\nweightedPathContinuity,0.5960,0.7603,0.6371,0.5958,0.7113,0.6044,0.7883,0.7151,0.7151,0.6575,0.6872,0.6494,0.5886,0.5965\npathAngularPrediction,0.3866,0.3950,0.3673,0.3343,0.4239,0.3838,0.3916,0.4116,0.4116,0.3228,0.2729,0.3731,0.4388,0.3325\nnodeEdgeOverlaps,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000\nnodeNodeOverlaps,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000\ntotalPathLength,21599.5934,22817.7788,19721.9688,19844.6391,18654.4169,16764.8505,22829.4153,22115.8041,22115.8041,22903.7016,24370.6470,17215.7486,14165.6452,19982.6035\n"
+}

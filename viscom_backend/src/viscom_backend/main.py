@@ -117,10 +117,13 @@ def generate_graph(generator):
     # centrality = calculate_commgraph_centrality(weighted_graph, mode="significance")
     # centrality = calculate_commgraph_centrality(graph, mode="closeness")
     # centrality = calculate_commgraph_centrality(graph, mode="reachability")
+
+    # print("[GEN] Centrality calculated ####################################")
     nx.set_node_attributes(graph, centrality, "commgraph_centrality")
 
     data = nx.node_link_data(graph, edges="links")
-
+    # print("[GEN] Graph generated ####################################")
+    # print(data)
     return jsonify(data)
 
 

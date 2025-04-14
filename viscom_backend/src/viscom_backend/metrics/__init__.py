@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 from .aspect_ratio_metric import AspectRatioMetricCalculator as AspectRatioMetricCalculator
 from .edge_crossing_metric import EdgeCrossingMetricCalculator as EdgeCrossingMetricCalculator
+from .edge_crossing_metric import TotalEdgeCrossingMetricCalculator as TotalEdgeCrossingMetricCalculator
 from .graph_metric_calculator import GraphMetricCalculator as GraphMetricCalculator
 from .metrics_calculator import (
     MetricCalculator as MetricCalculator,
@@ -17,6 +18,7 @@ from .path_length_ratio_metric import (
     NormalizedPathLengthRatioMetricCalculator as NormalizedPathLengthRatioMetricCalculator,
 )
 from .stress_calculator import StressMetricCalculator as StressMetricCalculator
+from .total_path_length_metric import TotalPathLengthMetricCalculator as TotalPathLengthMetricCalculator
 from .weighted_path_continuity_metric import WeightedPathContinuityMetricCalculator as WeightedPathContinuityMetricCalculator
 
 if __name__ == "__main__":

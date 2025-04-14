@@ -136,3 +136,78 @@ class EdgeCrossingMetricCalculator(GraphMetricCalculator):
             value=normalized_crossings,
             type="lower-better",  # Fewer crossings is better for readability
         )
+
+
+class TotalEdgeCrossingMetricCalculator(GraphMetricCalculator):
+    """
+    Calculator for counting the absolute number of edge crossings in layouts.
+
+    This metric provides the raw count of edge intersections without normalization,
+    which can be useful for comparing different layouts of the same graph.
+    """
+
+    API_METHOD_NAME = "totalEdgeCrossings"
+
+    def calculate(self) -> MetricResult:
+        """
+        Calculate the total number of edge crossings in the graph layout.
+
+        Unlike the normalized edge crossing metric, this returns the raw count
+        without normalization by the maximum possible crossings.
+
+        Returns:
+            MetricResult: The total edge crossing count.
+        """
+        # Filter out links with empty paths
+        valid_links = self.valid_links
+
+        # Count actual edge crossings
+        crossing_count: int = 0
+        path_count: int = len(valid_links)
+
+        for i in range(path_count):
+            path1: Path = valid_links[i].path
+            source1: str = valid_links[i].source
+            target1: str = valid_links[i].target
+
+            for j in range(i + 1, path_count):
+                path2: Path = valid_links[j].path
+                source2: str = valid_links[j].source
+                target2: str = valid_links[j].target
+
+                if i == j:
+                    continue
+
+                try:
+                    # Find intersections between the paths
+                    tol = 0.01
+                    intersections: list = path1.intersect(path2, tol=tol)
+
+                    def endpoint_distance(p: int):
+                        if abs(p - 1) < abs(p):
+                            return abs(p - 1)
+                        else:
+                            return abs(p)
+
+                    # Filter out intersections that are too close to the endpoints
+                    filtered_intersections = []
+                    last_t1 = 0
+                    for i1, i2 in intersections:
+                        t1 = i1[0]
+                        t2 = i2[0]
+                        # Check if the intersection is close to the endpoints
+                        if endpoint_distance(t1) > tol and endpoint_distance(t2) > tol:
+                            if abs(t1 - last_t1) > tol:
+                                filtered_intersections.append((i1, i2))
+
+                            last_t1 = t1
+
+                    crossing_count += len(filtered_intersections)
+                except Exception as e:
+                    print(f"Error calculating intersection: {str(e)}")
+
+        return MetricResult(
+            key=self.API_METHOD_NAME,
+            value=float(crossing_count),
+            type="lower-better",  # Fewer crossings is better for readability
+        )

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import random
+
 import networkx as nx
 
 from viscom_backend.commgraph.converter import convert_normal_graph_to_commgraph
@@ -11,7 +13,27 @@ MAX_NODES = 1000
 
 def get_nx_to_commgraph_method(nx_method):
     def nx_to_commgraph_method(*args, **kwargs):
-        graph = nx_method(*args, **kwargs)
+        graph: nx.Graph = nx_method(*args, **kwargs)
+
+        # Convert to directed graph if not already
+        if not graph.is_directed():
+            # print("Connection count before conversion:", graph.number_of_edges())
+            # print("Converting to directed graph...")
+            dir_graph = graph.to_directed()
+            # print("Connection count after conversion:", graph.number_of_edges())
+
+            # Keep only half of the edges
+            graph = nx.DiGraph()
+            for start_node, connections in dir_graph.adjacency():
+                for target_node, topic_data in connections.items():
+                    if random.random() < 0.5:
+                        graph.add_edge(start_node, target_node, **topic_data)
+
+        # # Print the graph information
+        # print("Graph information:")
+        # print(graph)
+        # print("Nodes in the graph:", len(graph.nodes), graph.nodes)
+
         comm_graph = convert_normal_graph_to_commgraph(graph)
         return comm_graph
         # return convert_to_weighted_graph(comm_graph)
@@ -23,10 +45,21 @@ def get_nx_to_commgraph_method(nx_method):
 def get_generator_output(graph_generator):
     def generator_output(*args, **kwargs):
         graph = graph_generator(*args, **kwargs)
-        # return convert_to_weighted_graph(graph)
+
         return graph
 
     return generator_output
+
+
+def get_lfr_benchmark_graph(*args, **kwargs):
+    graph = nx.LFR_benchmark_graph(*args, **kwargs)
+    # return convert_to_weighted_graph(graph)
+
+    # Remove the community attribute from each of the nodes
+    for node in graph.nodes():
+        del graph.nodes[node]["community"]
+
+    return graph
 
 
 generator_methods_config = {
@@ -104,6 +137,19 @@ generator_methods_config = {
         ],
         "description": "Generates a random graph using the Erdős-Rényi model.",
         "method": get_generator_output(get_nx_to_commgraph_method(CommGraphGenerator().generate)),
+    },
+    "LFR_benchmark": {
+        "params": [
+            {"key": "n", "type": "int", "description": "Number of nodes", "range": [1, MAX_NODES], "default": 100},
+            {"key": "tau1", "type": "float", "description": "Power-law exponent for the degree distribution", "range": [0.0, 10.0], "default": 3.0},
+            {"key": "tau2", "type": "float", "description": "Power-law exponent for the community size distribution", "range": [0.0, 10.0], "default": 1.5},
+            {"key": "mu", "type": "float", "description": "Mixing parameter (between 0 and 1)", "range": [0.0, 1.0], "default": 0.1},
+            {"key": "min_degree", "type": "int", "description": "Minimum degree of nodes", "range": [1, MAX_NODES], "default": 2},
+            {"key": "min_community", "type": "int", "description": "Minimum community size", "range": [1, MAX_NODES], "default": 5},
+            {"key": "max_community", "type": "int", "description": "Maximum community size", "range": [1, MAX_NODES], "default": 50},
+        ],
+        "description": "Generates a LFR benchmark graph.",
+        "method": get_generator_output(get_nx_to_commgraph_method(get_lfr_benchmark_graph)),
     },
     "zacharys_karate_club": {
         "params": [],
