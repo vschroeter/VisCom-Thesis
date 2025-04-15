@@ -508,9 +508,11 @@ export class SubPathRange {
         const endAnchor = new Anchor(this.node.layoutNode.center, new Vector(range[1]));
         const backsideAnchor = new Anchor(this.node.layoutNode.center, new Vector(this.backsideRad));
 
-        startAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "green", strokeWidth: 4 };
-        endAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "red", strokeWidth: 4 };
-        backsideAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "blue", strokeWidth: 4 };
+        const opacity = 1;
+
+        startAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "green", strokeWidth: 4, opacity };
+        endAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "red", strokeWidth: 4, opacity };
+        backsideAnchor._data = { length: this.node.layoutNode.outerRadius, stroke: "blue", strokeWidth: 4, opacity };
 
         return {
             startAnchor, endAnchor, backsideAnchor, all: [startAnchor, endAnchor, backsideAnchor]
@@ -1075,12 +1077,14 @@ export class SubPathRange {
                     // desiredRad = RadialUtils.putRadBetween(desiredRad, currentRad, this.range[1]);
 
                     let adaptDirection: "closer" | "clockwise" | "counter-clockwise" = "closer";
+                    adaptDirection = "closer";
+                    // const adaptDirection: "closer" | "clockwise" | "counter-clockwise" = "closer";
 
-                    if (RadialUtils.rad1ComesAfterRad2(desiredRad, this.backsideRad, this.getMiddleRad())) {
-                        adaptDirection = "clockwise";
-                    } else {
-                        adaptDirection = "counter-clockwise";
-                    }
+                    // if (RadialUtils.rad1ComesAfterRad2(desiredRad, this.backsideRad, this.getMiddleRad())) {
+                    //     adaptDirection = "clockwise";
+                    // } else {
+                    //     adaptDirection = "counter-clockwise";
+                    // }
 
                     desiredRad = RadialUtils.putRadBetween(desiredRad, currentRad, maxRadForThisPath, adaptDirection);
 
@@ -1295,11 +1299,12 @@ export class SubPathRange {
         // if (this.node.id == "/dialog/tts_guard") debug = true;pathCount
         // if (this.node.id.includes("__hypernode_")) debug = true;
         // if (this.node.id.includes("p2")) debug = true;
+        // if (this.node.id.includes("M")) debug = true;
         if (debug) {
 
 
-            // this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor]);
-            this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor, this.getValidAnchorsOfRange().backsideAnchor]);
+            this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor]);
+            // this.node.layoutNode.debugShapes.push(...[this.getValidAnchorsOfRange().startAnchor, this.getValidAnchorsOfRange().endAnchor, this.getValidAnchorsOfRange().backsideAnchor]);
 
             // console.warn("SORTED PATHS", pathInformation);
 
@@ -1318,13 +1323,13 @@ export class SubPathRange {
                 const startAnchor = this.getAnchorForRad(range[0], "out");
                 const endAnchor = this.getAnchorForRad(range[1], "out");
 
-                startAnchor._data = { length: 10, stroke: "green" };
-                endAnchor._data = { length: 10, stroke: "red" };
+                startAnchor._data = { length: 10, stroke: "green", opacity: 1 };
+                endAnchor._data = { length: 10, stroke: "red", opacity: 1 };
 
                 path.connection.debugShapes.push(startAnchor, endAnchor);
 
-
-                const desiredAnchor = path.getDesiredNodeAnchor(this.node);
+                // const desiredAnchor = path.getDesiredNodeAnchor(this.node);
+                const desiredAnchor = this.subPathInformation.find(p => p.subPath == path)?.desiredAnchor;
                 if (desiredAnchor) {
                     desiredAnchor._data = { length: 5, stroke: "blue" };
                     path.connection.debugShapes.push(desiredAnchor);

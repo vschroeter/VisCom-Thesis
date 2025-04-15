@@ -761,7 +761,7 @@ export class VisGraph {
         const wMultiplier = this.commonSettings?.linkWidthMultiplier.getValue() ?? 1;
 
         const stroke = this.commonSettings?.linkColor.getValue()?.toString() ?? "black";
-        const strokeWithoutAlpha = d3.color(stroke)?.copy({ opacity: 1 })?.toString() ?? "black";
+        let strokeWithoutAlpha = d3.color(stroke)?.copy({ opacity: 1 })?.toString() ?? "black";
         const alpha = d3.color(stroke)?.opacity ?? 1;
 
         const showLinkScore = this.commonSettings?.showLinkScore.getValue() ?? true;
@@ -775,6 +775,22 @@ export class VisGraph {
             const weight = connection.weight;
             const connWidth = connection.layoutConnection.width;
             let opacity = Math.min(Math.max(0.01, weight), 1) * alpha;
+
+            if (!(this.commonSettings?.enableLinkOpacity.getValue() ?? true)) {
+
+                // opacity = Math.max(0.6, opacity);
+
+                // If we cannot display opacity, we have to adapt the stroke color by mixing it with white
+                const c: d3.RGBColor = d3.color(stroke)!.rgb();
+
+                const blend = (channel: number) => Math.round(channel * opacity + 255 * (1 - opacity));
+                const r = blend(c.r);
+                const g = blend(c.g);
+                const b = blend(c.b);
+
+                opacity = 1;
+                strokeWithoutAlpha = d3.rgb(r, g, b).toString();
+            }
 
             const startNode = connection.source;
             const endNode = connection.target;
@@ -824,7 +840,7 @@ export class VisGraph {
 
     }
 
-    setEdgeVisibility({ hyperEdges = true, edgesIncludedInHyperEdges = true, virtualEdges = false}) {
+    setEdgeVisibility({ hyperEdges = true, edgesIncludedInHyperEdges = true, virtualEdges = false }) {
         this.allLayoutConnections.forEach(connection => {
             if (connection.isHyperConnection) {
                 connection.isRendered = hyperEdges;

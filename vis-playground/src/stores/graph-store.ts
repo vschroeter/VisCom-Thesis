@@ -191,7 +191,8 @@ export const useGraphStore = defineStore('graph', {
                 timestamp: timestamp,
                 nodeCount: this.graph.nodes.length,
                 connectionCount: this.graph.getAllLinks().length,
-                visualizationCount: settingsIds.length
+                visualizationCount: settingsIds.length,
+                isSynthetic: title.startsWith('S_') || false,
             };
 
             // Collect metrics for each setting

@@ -548,16 +548,18 @@ class GenNodeRewiring(GenBase):
 
 
 class GenBroadcast(GenBase):
-    def __init__(self, probability: float, connection_fraction: float):
+    def __init__(self, probability: float, max_connection_fraction: float):
         super().__init__()
         self.probability = float(probability)
-        self.connection_fraction = float(connection_fraction)
+        self.connection_fraction = float(max_connection_fraction)
 
     def generate_implementation(self, graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
         nodes = list(graph.nodes())
         for node in nodes:
             if self.do_with_probability(self.probability):
+                # target_count = max(1, int(len(nodes) * self.connection_fraction))
                 target_count = max(1, int(len(nodes) * self.connection_fraction))
+                target_count = random.randint(1, target_count)
                 potential_targets = [n for n in nodes if n != node]
                 if not potential_targets:
                     continue
@@ -651,7 +653,7 @@ class CommGraphGenerator:
         print("Generated node rewirings.")
 
         # Generate broadcast nodes
-        broadcast_gen = GenBroadcast(probability=broadcast_probability, connection_fraction=broadcast_connection_fraction)
+        broadcast_gen = GenBroadcast(probability=broadcast_probability, max_connection_fraction=broadcast_connection_fraction)
         broadcast_gen.generate(graph)
         print("Generated broadcast nodes.")
 

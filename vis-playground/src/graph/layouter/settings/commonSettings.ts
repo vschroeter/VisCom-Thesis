@@ -91,7 +91,16 @@ export class CommonSettings extends Setting {
         label: "Link Color",
         description: "The color of the links",
         optional: false,
-        defaultValue: "#000000AA",
+        defaultValue: "#2b303dab",
+    })
+
+    enableLinkOpacity = new Param<boolean>({
+        type: "boolean",
+        key: "enableLinkOpacity",
+        label: "Enable Link Opacity",
+        description: "Enable link opacity based on link score",
+        optional: false,
+        defaultValue: true,
     })
 
     linkWidthMultiplier = new Param<number>({

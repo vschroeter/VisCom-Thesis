@@ -309,6 +309,11 @@ export class Connection2d extends SvgRenderable {
         // this.elGroup?.attr('opacity', Math.max(0.5, this.opacity * this.visibilityOpacity));
     }
     updateStyleOpacity(opacity: number) {
+
+        // if (!this.layoutConnection.commonSettings?.enableLinkOpacity.getValue()) {
+        //     opacity = 1;
+        // }
+
         this.checkValueAndAddUpdateCallback([
             { currentValuePath: 'opacity', newValue: opacity },
         ], this.renderStyleOpacity);

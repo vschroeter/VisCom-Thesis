@@ -163,7 +163,8 @@ export class SubPath extends CombinedPathSegment {
     isCounterPathOf(path?: SubPath, allowLevelChange: boolean = true) {
         if (!path) return false;
         if (this.levelType != "sameLevel" && !allowLevelChange) return false;
-        return this.sourceVisNode === path.targetVisNode && this.targetVisNode === path.sourceVisNode;
+        // return this.sourceVisNode === path.targetVisNode && this.targetVisNode === path.sourceVisNode;
+        return this.source === path.target && this.target === path.source;
     }
 
     //++++ Type Determination ++++//

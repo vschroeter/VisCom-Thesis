@@ -131,7 +131,7 @@ generator_methods_config = {
             {
                 "key": "broadcast_connection_fraction",
                 "type": "str",
-                "description": "Fraction of nodes that a broadcast node connects to",
+                "description": "Max. Fraction of nodes that a broadcast node connects to",
                 "default": "0.2",
             },
         ],

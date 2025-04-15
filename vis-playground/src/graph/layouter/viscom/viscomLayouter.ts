@@ -38,7 +38,7 @@ export class ViscomLayouter extends GraphLayouter<ViscomLayouterSettings> {
         this.resetVisGraph();
 
         console.log({
-            n: this.visGraph.allLayoutNodes.length,
+            n: this.visGraph.allLeafLayoutNodes.length,
             m: this.visGraph.allLayoutConnections.length,
             l: this.visGraph.allLayoutConnections.flatMap(c => c.getLinks()).length
         })

@@ -28,7 +28,8 @@
                 <q-btn label="Reset" color="primary" size="x" flat @click="resetSimulation" /> -->
             </q-card-section>
             <q-card-section class="row items-start q-py-xs">
-                <div v-if="false" class="col setting-overview-text" :style="`inline-size: ${size - iconButtonDivWidth - 10}px;`">
+                <div v-if="false" class="col setting-overview-text"
+                    :style="`inline-size: ${size - iconButtonDivWidth - 10}px;`">
                     {{ settings?.shortSummary }}
                 </div>
             </q-card-section>
@@ -45,8 +46,15 @@
                                 :height="(visibleArea?.h ?? 0) - 20" fill="none" stroke="red" stroke-width="1" /> -->
 
                             <!--<circle cx="0" cy="0" r="10" fill="red" /> -->
-                            <g ref="refGRoot">
+
+                            <g ref="refGExportRoot">
+                                <g ref="refGRoot">
+                                </g>
+
+                                <g ref="refGDebug">
+                                </g>
                             </g>
+
 
                             <!-- <rect :x="rawBbox?.x" :y="rawBbox?.y" :width="rawBbox?.width" :height="rawBbox?.height"
                                 fill="none" stroke="red" stroke-width="1" /> -->
@@ -123,6 +131,8 @@ const metricsCollection = graphStore.metricsCollection;
 
 const refSVG = ref<SVGSVGElement | null>(null)
 const refGRoot = ref<SVGGElement | null>(null)
+const refGDebug = ref<SVGGElement | null>(null)
+const refGExportRoot = ref<SVGGElement | null>(null)
 const refGLinks = ref<SVGGElement | null>(null)
 const refGNodes = ref<SVGGElement | null>(null)
 const refGLabels = ref<SVGGElement | null>(null)
@@ -271,7 +281,7 @@ function layoutUpdated() {
     // TODO: dont do this every time
     renderer.setRoot(d3.select(refGRoot.value));
     renderer.renderAll(visibleArea.value)
-    renderer.renderDebuggingShapes(d3.select(refGRoot.value));
+    renderer.renderDebuggingShapes(d3.select(refGDebug.value));
 
     updateBbox();
 }
@@ -495,8 +505,8 @@ async function downloadPDF() {
     // Print the svg as text on the console
     // console.log(svg?.outerHTML);
 
-    const svgGroup = refGRoot.value;
-    rawBbox.value = refGRoot.value?.getBBox() ?? null;
+    const svgGroup = refGExportRoot.value;
+    rawBbox.value = refGExportRoot.value?.getBBox() ?? null;
 
     if (!svgGroup || !rawBbox.value) {
         console.error("No SVG found");
