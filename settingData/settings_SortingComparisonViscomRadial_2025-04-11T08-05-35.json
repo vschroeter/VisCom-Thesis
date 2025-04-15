@@ -31,7 +31,7 @@
       "key": "linkColor",
       "active": true,
       "value": "#2b303dab"
-    },
+    }, 
     "linkWidthMultiplier": {
       "key": "linkWidthMultiplier",
       "active": true,

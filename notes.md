@@ -1,4 +1,3 @@
-Zotero Year Export
 Bilder auf PDF --> keine Transparenz auf Edges
 
 1.1 --> besser 2. Fundamentals
