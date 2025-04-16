@@ -1,4 +1,3 @@
-Bilder auf PDF --> keine Transparenz auf Edges
 
 1.1 --> besser 2. Fundamentals
 
@@ -39,27 +38,14 @@ Viele Listen zu inline Fließtext bei Formeln
 Fett und Italic bei Start Worten von listen angleichen, wenn nicht durch Description schon gemacht
 
 
-"perfectly" doof --> besser "accuratley" / "preciesely"
-
-"like visible", generell "like" doof --> besser "as shown"
-
-"it is obvious" ganz schlecht --> "we have shown"
 
 
-\footnotesize vor Sorting Table damit kleiner
+
 
 Tabellen mit farbigen Zeilen
 
-Figure 8 mit Annotationen
-
-Tabelle für die Übersicht der syntetischen Dataset Infos
 
 
-Plots:
-Node-Edge und Node-Node in Plots mit Minus dazwischen
-Grid bisscheb dünn
-Overlaps nochmal umbenennen
-"FDG" groß
 
 
 5. Graph Layout Evaluation System
