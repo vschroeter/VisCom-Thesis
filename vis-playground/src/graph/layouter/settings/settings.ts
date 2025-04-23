@@ -306,7 +306,7 @@ export class Param<T = number> { //
         label?: string,
         description?: string,
         type?: ParamType,
-        optional: boolean,
+        optional?: boolean,
         defaultValue: string | number | boolean,
         active?: boolean,
         enabled?: boolean | (() => boolean),

@@ -14,6 +14,20 @@ export class Anchor {
     direction: Vector;
     _data?: { stroke?: string; length?: number, strokeWidth?: number, opacity?: number };
 
+    get x() {
+        return this.anchorPoint.x;
+    }
+    get y() {
+        return this.anchorPoint.y;
+    }
+
+    get dx() {
+        return this.direction.x;
+    }
+
+    get dy() {
+        return this.direction.y;
+    }
 
     constructor(anchorPoint: Point, directionalPoint: Point);
     constructor(anchorPoint: Point, directionalVector: Vector);

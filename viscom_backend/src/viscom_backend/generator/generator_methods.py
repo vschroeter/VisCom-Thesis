@@ -69,7 +69,7 @@ generator_methods_config = {
             {"key": "n", "type": "int", "description": "Number of nodes", "range": [1, MAX_NODES], "default": 10},
         ],
         "description": "Creates a full r-ary tree of n nodes.",
-        "method": get_generator_output(get_nx_to_commgraph_method(nx.full_rary_tree)),
+        "method": get_nx_to_commgraph_method(nx.full_rary_tree),
     },
     "watts_strogatz": {
         "params": [

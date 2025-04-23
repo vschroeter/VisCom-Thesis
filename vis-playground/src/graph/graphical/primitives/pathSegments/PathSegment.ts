@@ -97,6 +97,11 @@ export class CombinedPathSegment extends PathSegment {
 
     segments: PathSegment[] = [];
 
+    constructor(connection: LayoutConnection, segments?: PathSegment[]) {
+        super(connection);
+        this.segments = segments ?? [];
+    }
+
     get startAnchor(): Anchor | undefined {
         if (this.segments.length === 0) {
             return new DefaultPathSegment(this.connection).startAnchor;
