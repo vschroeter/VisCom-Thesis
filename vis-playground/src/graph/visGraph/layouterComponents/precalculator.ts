@@ -28,7 +28,7 @@ export class BasicSizeCalculator {
     virtualNodeMultiplier: number;
 
     constructor({
-        sizeMultiplier = 10,
+        sizeMultiplier = 50,
         minSizeScore = 0.1,
         marginFactor = 1.1,
         adaptRadiusBasedOnScore = true,

@@ -243,6 +243,11 @@ export class GraphvizConnectionLayouter extends BaseNodeConnectionLayouter {
 
 export class GraphvizLayouter extends GraphLayouter<GraphvizLayouterSettings> {
     override async layout(isUpdate = false) {
+
+        this.visGraph.setPrecalculator(new BasicSizeCalculator({
+            sizeMultiplier: 10,
+        }));
+
         const positioner = new GraphvizPositioner(this.settings);
         this.visGraph.setPositioner(positioner);
 

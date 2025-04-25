@@ -107,14 +107,15 @@ export class Connection2d extends SvgRenderable {
 
     opacity: number = 1
     visibilityOpacity: number = 1
-    // stroke?: string
+    _strokeFallback: string = "black"
 
     get stroke(): string | undefined {
-        return this.layoutConnection.pathSegment?.stroke;
+        return this.layoutConnection.pathSegment?.stroke ?? this._strokeFallback;
     }
 
     set stroke(value: string | undefined) {
         if (!this.layoutConnection.pathSegment) {
+            this._strokeFallback = value ?? "black"
             return;
         }
         this.layoutConnection.pathSegment.stroke = value;
@@ -341,7 +342,7 @@ export class Connection2d extends SvgRenderable {
         this.applyStrokeAttributes(this.elPath);
         this.applyStrokeAttributes(this.elArrow)?.attr('fill', this.stroke ?? "none");
 
-        this.elBackground?.attr('stroke', this.stroke ?? "black")
+        this.elBackground?.attr('stroke', this.stroke ?? "white")
             // .attr('stroke-width', this.strokeWidth * 10);
             .attr('stroke-width', 3 * (this.layoutConnection.commonSettings?.linkWidthMultiplier.getValue() ?? 1));
 
@@ -352,7 +353,9 @@ export class Connection2d extends SvgRenderable {
 
     updateStyleStroke(stroke?: string, strokeWidth?: number) {
         this.checkValueAndAddUpdateCallback([
-            { currentValuePath: 'stroke', newValue: stroke },
+            {
+                currentValuePath: 'stroke', newValue: stroke,
+            },
             { currentValuePath: 'strokeWidth', newValue: strokeWidth },
         ], this.renderStyleStroke);
     }

@@ -817,7 +817,7 @@ export class VisGraph {
             // if (connection.layoutConnection.isHyperConnection && connection.layoutConnection.children.length == 1) {
             //     opacity = 0;
             // }
-
+            
             connection.updateStyleOpacity(opacity);
             connection.updateStyleStroke(strokeWithoutAlpha, connWidth);
         })
