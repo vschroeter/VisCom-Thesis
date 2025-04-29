@@ -1,8 +1,8 @@
 version: '3.8'
 services:
-  vis-playground:
+  evaluation-playground:
     build:
-      context: ./vis-playground
+      context: ./evaluation-playground
     ports:
       - "9000:9000"
     environment:
