@@ -1,4 +1,3 @@
-import configparser
 import os
 import subprocess
 import tempfile
@@ -6,20 +5,13 @@ from typing import Optional
 
 from flask import jsonify, request
 
-# Default GraphViz executable path
-DEFAULT_GRAPHVIZ_PATH = r"C:\Users\schoc\Documents\Studium\HPI\Master Thesis\graphviz\Graphviz-12.2.1-win64\bin\dot.exe"
-
-# Configuration file path
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "graphviz_config.cfg")
-
 
 def get_graphviz_path() -> str:
-    """Get the path to the GraphViz executable from config or use default."""
-    if os.path.exists(CONFIG_FILE):
-        config = configparser.ConfigParser()
-        config.read(CONFIG_FILE)
-        return config.get("GraphViz", "executable_path", fallback=DEFAULT_GRAPHVIZ_PATH)
-    return DEFAULT_GRAPHVIZ_PATH
+    """
+    Get the path or name of the GraphViz executable.
+    Uses the GRAPHVIZ_DOT_PATH environment variable if set, otherwise defaults to 'dot'.
+    """
+    return os.environ.get("GRAPHVIZ_DOT_PATH", "dot")
 
 
 def render_dot_to_svg(dot_string: str, layout_engine: str = "dot") -> Optional[str]:
