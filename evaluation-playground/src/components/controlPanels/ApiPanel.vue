@@ -83,12 +83,32 @@
                         </div>
 
                         <!-- Button to generate the graph -->
-
-                        <q-btn :disable="selectedGenerator === null" label="Generate" color="primary"
-                            @click="fetchGeneratedGraph(selectedGenerator?.key)" />
+                        <div class="row items-center">
+                            <q-btn :disable="selectedGenerator === null" label="Generate" color="primary"
+                                @click="fetchGeneratedGraph(selectedGenerator?.key)" />
+                            <q-space />
+                            <!-- File upload for ROS meta system JSON using q-file -->
+                            <q-file
+                                v-model="uploadedRosMetaSysFile"
+                                label="Upload Dataset"
+                                dense
+                                outlined
+                                accept=".json,application/json"
+                                style="max-width: 200px"
+                                @update:model-value="onRosMetaSysFileSelected"
+                                class="q-ml-sm"
+                            >
+                                <template v-slot:append>
+                                    <q-icon name="upload_file" />
+                                </template>
+                                <q-tooltip>Upload a ROS meta system .json file to visualize it directly</q-tooltip>
+                            </q-file>
+                        </div>
+                        <div v-if="uploadedRosMetaSysFileName" class="text-caption text-grey-7 q-mt-xs">
+                            Uploaded: {{ uploadedRosMetaSysFileBase }}
+                        </div>
                     </q-card-section>
                 </q-card>
-
             </q-expansion-item>
 
             <q-expansion-item v-if="false" v-model="showComunityDetectionSettings" label="Community Detection"
@@ -190,7 +210,7 @@ import { commGraphToNodeLinkData, parseGraphData } from 'src/api/graphDataApi';
 import { CommunicationGraph } from 'src/graph/commGraph';
 import { convertGraphToCommGraph } from 'src/graph/converter';
 import { useGraphStore } from 'src/stores/graph-store';
-import { computed, onMounted, onUpdated, reactive, ref, type Ref } from 'vue'
+import { ref, computed, onMounted, onUpdated, reactive, type Ref,  } from 'vue'
 import ParamInput from '../elements/ParamInput.vue';
 import { useApiStore } from 'src/stores/api-store';
 
@@ -305,6 +325,9 @@ function fetchGeneratedGraph(generatorId?: string) {
             const graph = parseGraphData(data)
 
             const commGraph = convertGraphToCommGraph(graph)
+
+            // Clear the info text for uploaded files
+            uploadedRosMetaSysFileName.value = ''
 
             if (commGraph === null) {
                 return
@@ -506,6 +529,132 @@ function downloadDataset() {
 
     // Close the dialog
     showDatasetDialog.value = false;
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Upload ROS Meta System JSON using q-file
+////////////////////////////////////////////////////////////////////////////
+
+const uploadedRosMetaSysFile = ref<File | null>(null);
+const uploadedRosMetaSysFileName = ref<string>('');
+
+// Show the basename (without .json) of the uploaded file
+const uploadedRosMetaSysFileBase = computed(() => {
+    if (!uploadedRosMetaSysFileName.value) return '';
+    const name = uploadedRosMetaSysFileName.value;
+    return name.endsWith('.json') ? name.slice(0, -5) : name;
+});
+
+function onRosMetaSysFileSelected(file: File | null) {
+    if (!file) {
+        uploadedRosMetaSysFileName.value = '';
+        return;
+    }
+    uploadedRosMetaSysFileName.value = file.name;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const json = JSON.parse(e.target?.result as string);
+            const nodeLink = convertRosMetaSysJsonToNodeLink(json);
+            const graph = parseGraphData(nodeLink);
+            const commGraph = convertGraphToCommGraph(graph);
+            if (commGraph) {
+                graphStore.setGraph(commGraph);
+            }
+        } catch (err) {
+            alert("Failed to parse uploaded JSON: " + err);
+        }
+        // Reset file input so the same file can be uploaded again
+        uploadedRosMetaSysFile.value = null;
+    };
+    reader.readAsText(file);
+}
+
+// Conversion logic based on backend reader.py
+function convertRosMetaSysJsonToNodeLink(data: any) {
+    // Prepare node list
+    const nodes: { id: string }[] = [];
+    const links: any[] = [];
+    const publisher_name_to_nodes: Record<string, string[]> = {};
+    const subscriber_name_to_nodes: Record<string, string[]> = {};
+    const service_name_to_nodes: Record<string, string[]> = {};
+    const client_name_to_nodes: Record<string, string[]> = {};
+    const topic_to_type: Record<string, string> = {};
+
+    for (const node_data of data.nodes ?? []) {
+        let node_name = node_data.name;
+        let node_namespace: string = node_data.namespace;
+        if (!node_namespace.endsWith("/")) node_namespace += "/";
+        node_name = node_namespace !== "/" ? `${node_namespace}${node_name}` : node_name;
+        nodes.push({ id: node_name });
+
+        for (const topic of node_data.publishers ?? []) {
+            const topic_name = topic.name;
+            const topic_type = topic.type ?? "std_msgs/msg/Empty";
+            topic_to_type[topic_name] = topic_type;
+            if (!publisher_name_to_nodes[topic_name]) publisher_name_to_nodes[topic_name] = [];
+            publisher_name_to_nodes[topic_name].push(node_name);
+        }
+        for (const topic of node_data.subscribers ?? []) {
+            const topic_name = topic.name;
+            const topic_type = topic.type ?? "std_msgs/msg/Empty";
+            topic_to_type[topic_name] = topic_type;
+            if (!subscriber_name_to_nodes[topic_name]) subscriber_name_to_nodes[topic_name] = [];
+            subscriber_name_to_nodes[topic_name].push(node_name);
+        }
+        for (const topic of node_data.services ?? []) {
+            const topic_name = topic.name;
+            const topic_type = topic.type ?? "std_msgs/msg/Empty";
+            topic_to_type[topic_name] = topic_type;
+            if (!service_name_to_nodes[topic_name]) service_name_to_nodes[topic_name] = [];
+            service_name_to_nodes[topic_name].push(node_name);
+        }
+        for (const topic of node_data.clients ?? []) {
+            const topic_name = topic.name;
+            const topic_type = topic.type ?? "std_msgs/msg/Empty";
+            topic_to_type[topic_name] = topic_type;
+            if (!client_name_to_nodes[topic_name]) client_name_to_nodes[topic_name] = [];
+            client_name_to_nodes[topic_name].push(node_name);
+        }
+    }
+
+    // Add pub/sub edges
+    for (const pub_topic in publisher_name_to_nodes) {
+        const pub_nodes = publisher_name_to_nodes[pub_topic];
+        const sub_nodes = subscriber_name_to_nodes[pub_topic] ?? [];
+        for (const pub_node of pub_nodes) {
+            for (const sub_node of sub_nodes) {
+                links.push({
+                    source: pub_node,
+                    target: sub_node,
+                    pub_topic: pub_topic,
+                    topic_type: topic_to_type[pub_topic] ?? "std_msgs/msg/Empty"
+                });
+            }
+        }
+    }
+    // Add service edges
+    for (const service_name in service_name_to_nodes) {
+        const service_nodes = service_name_to_nodes[service_name];
+        const client_nodes = client_name_to_nodes[service_name] ?? [];
+        for (const service_node of service_nodes) {
+            for (const client_node of client_nodes) {
+                links.push({
+                    source: client_node,
+                    target: service_node,
+                    service_name: service_name,
+                    topic_type: topic_to_type[service_name] ?? "std_msgs/msg/Empty"
+                });
+            }
+        }
+    }
+
+    return {
+        nodes,
+        links,
+        multigraph: true,
+        directed: true
+    };
 }
 
 ////////////////////////////////////////////////////////////////////////////
