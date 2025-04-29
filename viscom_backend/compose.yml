@@ -1,0 +1,30 @@
+services:
+  web:
+    # Build the image from the Dockerfile in the current directory
+    build: .
+
+    # Host the application on port 5000
+    ports:
+      - "5000:5000"
+
+    environment:
+      # Path or name of the GraphViz 'dot' executable. Defaults to 'dot' (must be in PATH).
+      # Override if you have a custom installation, e.g. 'C:\Program Files\Graphviz\bin\dot.exe'
+      GRAPHVIZ_DOT_PATH: "dot"
+
+    develop:
+      # Create a `watch` configuration to update the app
+      # https://docs.docker.com/compose/file-watch/#compose-watch-versus-bind-mounts
+      watch:
+        # Sync the working directory with the `/app` directory in the container
+        - action: sync
+          path: .
+          target: /app
+          # Exclude the project virtual environment — it could be for a
+          # different platform in the container
+          ignore:
+            - .venv/
+
+        # Rebuild the image if dependencies change by checking uv.lock
+        - action: rebuild
+          path: ./uv.lock

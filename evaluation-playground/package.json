@@ -1,0 +1,63 @@
+{
+  "name": "evaluation-playground",
+  "version": "0.0.1",
+  "description": "A Quasar Project",
+  "productName": "Visualizer Playground",
+  "author": "Valentin Schröter <vasc9380@th-wildau.de>",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "lint": "eslint --ext .js,.ts,.vue ./",
+    "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
+    "test": "echo \"No test specified\" && exit 0",
+    "dev": "quasar dev",
+    "build": "quasar build",
+    "gh": "quasar build && gh-pages -d dist/spa"
+  },
+  "dependencies": {
+    "2d-geometry": "^3.0.0",
+    "@quasar/extras": "^1.16.4",
+    "@types/d3": "^7.4.3",
+    "@types/dagre-d3": "^0.6.6",
+    "@types/pdfkit": "^0.13.9",
+    "@types/rtree": "^1.4.30",
+    "@vueuse/core": "^10.11.0",
+    "d3": "^7.9.0",
+    "dagre-d3": "^0.6.4",
+    "jspdf": "^2.5.2",
+    "lodash": "^4.17.21",
+    "mitt": "^3.0.1",
+    "ngraph.graph": "^20.0.1",
+    "path-intersection": "^3.1.0",
+    "pdfkit": "^0.16.0",
+    "pinia": "^2.0.11",
+    "quasar": "^2.16.0",
+    "rtree": "^1.4.2",
+    "svg2pdf": "^1.1.1",
+    "svg2pdf.js": "^2.2.4",
+    "vue": "^3.4.18",
+    "vue-router": "^4.0.12"
+  },
+  "devDependencies": {
+    "@quasar/app-vite": "^2.0.0-beta.12",
+    "@types/lodash": "^4.17.12",
+    "@types/node": "^20.5.9",
+    "@typescript-eslint/eslint-plugin": "^6.6.0",
+    "@typescript-eslint/parser": "^6.6.0",
+    "autoprefixer": "^10.4.2",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "gh-pages": "^6.3.0",
+    "prettier": "^3.0.3",
+    "typescript": "~5.3.0",
+    "vite-plugin-checker": "^0.6.4",
+    "vue-tsc": "^1.8.22"
+  },
+  "engines": {
+    "node": "^24 || ^22 || ^20 || ^18",
+    "npm": ">= 6.13.4",
+    "yarn": ">= 1.21.1"
+  },
+  "packageManager": "pnpm@10.5.2+sha512.da9dc28cd3ff40d0592188235ab25d3202add8a207afbedc682220e4a0029ffbff4562102b9e6e46b4e3f9e8bd53e6d05de48544b0c57d4b0179e22c76d1199b"
+}

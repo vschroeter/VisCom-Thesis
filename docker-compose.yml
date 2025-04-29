@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  evaluation-playground:
+    build:
+      context: ./evaluation-playground
+    ports:
+      - "9000:9000"
+    environment:
+      - NODE_ENV=production
+  viscom_backend:
+    build:
+      context: ./viscom_backend
+    ports:
+      - "5000:5000"

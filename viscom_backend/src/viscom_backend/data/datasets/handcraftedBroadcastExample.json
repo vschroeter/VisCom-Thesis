@@ -1,0 +1,449 @@
+{
+    "version": "1.0.0",
+    "name": "0006nodes_2023-09-01_12_00_00_handcraftedBroadcastExample",
+    "description": "6 example nodes used to show the challenges with broadcast nodes and topics.",
+    "created_at": "2023-09-01T12:00:00.000000",
+    "nodeCount": 6,
+    "author": "vschroeter",
+    "cc_by_sa_consent": true,
+    "nodes": [
+        {
+            "name": "started_nodes_gatherer",
+            "namespace": "/",
+            "localhost_only": false,
+            "comment": "This nodes gathers information of all started nodes, thus each node announces itself to this node.",
+            "publishers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "display_left",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/hardware_interface",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/display_left",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "display_right",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/hardware_interface",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/display_right",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "display_bottom",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/hardware_interface",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/display_bottom",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "motor",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/hardware_interface",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/motor",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "hardware_interface",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "IGNORE/manager",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/hardware_interface",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "display_manager",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/display_left",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/display_right",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/display_bottom",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/manager",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/sensor1",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/sensor2",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/sensor3",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "sensor1",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/sensor1",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/raw_sensor_data_A",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "sensor2",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/sensor2",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/raw_sensor_data_B",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/raw_sensor_data_A",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "sensor3",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/sensor3",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/raw_sensor_data_B",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "raw_sensor_publisher_A",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/raw_sensor_data_A",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "raw_sensor_publisher_B",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/raw_sensor_data_B",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/motor",
+                    "type": "std_msgs/msg/Empty"
+                },
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/node_started",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/params_updated",
+                    "type": "std_msgs/msg/String"
+                },
+                {
+                    "name": "/request_node_status",
+                    "type": "std_msgs/msg/Empty"
+                }
+            ],
+            "services": [],
+            "clients": []
+        }
+
+    ]
+}

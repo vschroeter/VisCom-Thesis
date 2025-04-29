@@ -1,0 +1,144 @@
+{
+    "version": "1.0.0",
+    "name": "0007nodes_pipelinePattern",
+    "description": "7 example nodes connected in a pipeline pattern.",
+    "created_at": "2023-09-01T12:00:00.000000",
+    "nodeCount": 7,
+    "author": "vschroeter",
+    "cc_by_sa_consent": true,
+    "nodes": [
+        {
+            "name": "n1",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/n1_n2",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/n7_n1",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "n2",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/n2_n3",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/n1_n2",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "n3",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/n3_n4",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/n2_n3",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "n4",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/n4_n5",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/n3_n4",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "n5",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/n5_n6",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/n4_n5",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "n6",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/n6_n7",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/n5_n6",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "services": [],
+            "clients": []
+        },
+        {
+            "name": "n7",
+            "namespace": "/",
+            "localhost_only": false,
+            "publishers": [
+                {
+                    "name": "/n7_n1",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "subscribers": [
+                {
+                    "name": "/n6_n7",
+                    "type": "std_msgs/msg/String"
+                }
+            ],
+            "services": [],
+            "clients": []
+        }
+    ]
+}

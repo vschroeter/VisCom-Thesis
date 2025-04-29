@@ -3,5 +3,13 @@
         "activityBar.background": "#033607",
         "titleBar.activeBackground": "#054C0A",
         "titleBar.activeForeground": "#F0FEF1"
-    }
+    },
+    "cSpell.words": [
+        "hypernode",
+        "layouter",
+        "Layouting",
+        "precalculator",
+        "renderable",
+        "rtree"
+    ]
 }

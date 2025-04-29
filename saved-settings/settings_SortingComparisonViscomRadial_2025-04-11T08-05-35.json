@@ -1,0 +1,1967 @@
+{
+  "commonSettings": {
+    "key": "commonSettings",
+    "active": false,
+    "calculateMetrics": {
+      "key": "calculateMetrics",
+      "active": true,
+      "value": true
+    },
+    "notifyWhenFinished": {
+      "key": "notifyWhenFinished",
+      "active": true,
+      "value": true
+    },
+    "tileSize": {
+      "key": "tileSize",
+      "active": true,
+      "value": "300"
+    },
+    "nodeScoreColorScheme": {
+      "key": "nodeScoreColorScheme",
+      "active": true,
+      "value": "yellow-green-blue"
+    },
+    "hideLinksThreshold": {
+      "key": "hideLinksThreshold",
+      "active": true,
+      "value": "0.2"
+    },
+    "linkColor": {
+      "key": "linkColor",
+      "active": true,
+      "value": "#2b303dab"
+    }, 
+    "linkWidthMultiplier": {
+      "key": "linkWidthMultiplier",
+      "active": true,
+      "value": "4"
+    },
+    "showLinkScore": {
+      "key": "showLinkScore",
+      "active": true,
+      "value": true
+    },
+    "arrowSize": {
+      "key": "arrowSize",
+      "active": true,
+      "value": "5"
+    },
+    "combinePathAndArrow": {
+      "key": "combinePathAndArrow",
+      "active": true,
+      "value": false
+    },
+    "displayNodeLabels": {
+      "key": "displayNodeLabels",
+      "active": true,
+      "value": true
+    },
+    "labelSizeMultiplier": {
+      "key": "labelSizeMultiplier",
+      "active": true,
+      "value": 1
+    },
+    "showNodeScore": {
+      "key": "showNodeScore",
+      "active": true,
+      "value": true
+    },
+    "showCommunityColors": {
+      "key": "showCommunityColors",
+      "active": true,
+      "value": false
+    },
+    "showHyperNodeEdges": {
+      "key": "showHyperNodeEdges",
+      "active": true,
+      "value": true
+    }
+  },
+  "settings": [
+    {
+      "type": "viscom",
+      "settingsList": [
+        {
+          "name": "byID",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "byId"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "Random",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "random"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "Topological",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "topological"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "WeightedTopological",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "weightedTopological"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "BreadthFirst",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "breadthFirst"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "DepthFirst",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "depthFirst"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "NodeScore",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "nodeScore"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "SourceScoreWeighted",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "SourceScoreDiff",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "sourceScoreDifference"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "ChildCount",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "childrenCount"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "Degree",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "degree"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "Flow",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "flowSorting"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        },
+        {
+          "name": "WeightedFlow",
+          "radial": {
+            "key": "radial",
+            "active": true,
+            "nodeMarginFactor": {
+              "key": "nodeMarginFactor",
+              "active": true,
+              "value": 0.7
+            },
+            "hyperNodeMarginFactor": {
+              "key": "hyperNodeMarginFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "radiusMarginFactor": {
+              "key": "radiusMarginFactor",
+              "active": true,
+              "value": 1.2
+            },
+            "hyperRadiusMarginFactor": {
+              "key": "hyperRadiusMarginFactor",
+              "active": true,
+              "value": 1.1
+            },
+            "adaptEnclosingCircle": {
+              "key": "adaptEnclosingCircle",
+              "active": true,
+              "value": true
+            },
+            "rotateBasedOnConnections": {
+              "key": "rotateBasedOnConnections",
+              "active": true,
+              "value": true
+            }
+          },
+          "sorting": {
+            "key": "sorting",
+            "active": true,
+            "sorting": {
+              "key": "sorting",
+              "active": true,
+              "value": "commFlowSorting"
+            },
+            "startNodeSelection": {
+              "key": "startNodeSelection",
+              "active": true,
+              "value": "sourceScoreWeighted"
+            },
+            "secondarySorting": {
+              "key": "secondarySorting",
+              "active": true,
+              "value": "degree"
+            },
+            "reversed": {
+              "key": "reversed",
+              "active": true,
+              "value": false
+            }
+          },
+          "display": {
+            "key": "display",
+            "active": true,
+            "showHyperEdges": {
+              "key": "showHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showEdgesIncludedInHyperEdges": {
+              "key": "showEdgesIncludedInHyperEdges",
+              "active": true,
+              "value": true
+            },
+            "showVirtualPaths": {
+              "key": "showVirtualPaths",
+              "active": true,
+              "value": true
+            }
+          },
+          "algorithm": {
+            "key": "algorithm",
+            "active": true,
+            "combineConnectedComponents": {
+              "key": "combineConnectedComponents",
+              "active": true,
+              "value": false
+            },
+            "combiningSteps": {
+              "key": "combiningSteps",
+              "active": true,
+              "value": 0
+            },
+            "optimizeConnectionAnchors": {
+              "key": "optimizeConnectionAnchors",
+              "active": true,
+              "value": true
+            },
+            "minimumRangeSizeFactor": {
+              "key": "minimumRangeSizeFactor",
+              "active": true,
+              "value": 0.4
+            },
+            "rangePaddingFactor": {
+              "key": "rangePaddingFactor",
+              "active": true,
+              "value": 0.1
+            },
+            "combinePaths": {
+              "key": "combinePaths",
+              "active": true,
+              "value": true
+            },
+            "combinedPathsDistanceFactor": {
+              "key": "combinedPathsDistanceFactor",
+              "active": true,
+              "value": 0.2
+            },
+            "useHierarchicalSubPaths": {
+              "key": "useHierarchicalSubPaths",
+              "active": true,
+              "value": false
+            },
+            "useHyperEdges": {
+              "key": "useHyperEdges",
+              "active": true,
+              "value": false
+            }
+          },
+          "community": {
+            "key": "community",
+            "active": true,
+            "communityDetectionMethod": {
+              "key": "communityDetectionMethod",
+              "active": true,
+              "value": "None"
+            },
+            "addVirtualNodes": {
+              "key": "addVirtualNodes",
+              "active": true,
+              "value": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "radial",
+      "settingsList": []
+    },
+    {
+      "type": "fdg",
+      "settingsList": []
+    },
+    {
+      "type": "graphviz",
+      "settingsList": []
+    },
+    {
+      "type": "arc",
+      "settingsList": []
+    },
+    {
+      "type": "spaceFilling",
+      "settingsList": []
+    }
+  ]
+}

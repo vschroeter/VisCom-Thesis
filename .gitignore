@@ -196,3 +196,5 @@ pyrightconfig.json
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode
+docs/~$**
+graphviz/Graphviz-12.2.1-win64/*
