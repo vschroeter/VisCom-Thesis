@@ -27,7 +27,7 @@ export class AlgorithmSettings extends Setting {
         label: "Combine Connected Components",
         description: "Combine connected components.",
         optional: false,
-        defaultValue: true,
+        defaultValue: false,
         type: "boolean",
     });
 
@@ -54,7 +54,7 @@ export class AlgorithmSettings extends Setting {
         label: "Minimum Range Size Factor",
         description: "The minimum range size factor.",
         optional: false,
-        defaultValue: 0.4,
+        defaultValue: 0.5,
         type: "number",
     });
 
@@ -122,7 +122,7 @@ export class DisplaySettings extends Setting {
     showVirtualPaths = new Param<boolean>({
         key: "showVirtualPaths",
         optional: false,
-        defaultValue: true,
+        defaultValue: false,
         type: "boolean",
     });
 }

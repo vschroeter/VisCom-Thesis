@@ -9,7 +9,7 @@ export class CommonSettings extends Setting {
         label: "Calculate Metrics",
         description: "Calculate metrics during layout",
         optional: false,
-        defaultValue: true,
+        defaultValue: false,
     })
 
     notifyWhenFinished = new Param<boolean>({
@@ -18,7 +18,7 @@ export class CommonSettings extends Setting {
         label: "Notify When Metrics Finished",
         description: "Show a notification when metrics calculation is complete",
         optional: false,
-        defaultValue: true,
+        defaultValue: false,
     })
 
     tileSize = new Param<number>({
@@ -55,7 +55,7 @@ export class CommonSettings extends Setting {
         label: "Node Score Color Scheme",
         description: "The color scheme for node scores",
         optional: false,
-        defaultValue: "blue",
+        defaultValue: "yellow-green-blue",
     })
 
     hideLinksThreshold = new Param({
@@ -109,7 +109,7 @@ export class CommonSettings extends Setting {
         label: "Link Width Multiplier",
         description: "The multiplier for the link width",
         optional: false,
-        defaultValue: 1,
+        defaultValue: 2,
     })
 
     showLinkScore = new Param<boolean>({
