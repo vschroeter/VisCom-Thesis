@@ -22,7 +22,7 @@ export class FdgLayouter extends GraphLayouter<FdgLayouterSettings> {
     override async layout(isUpdate = false) {
         const ctx = this.settings.getContext({ visGraph: this.visGraph });
 
-        const sizeMultiplier = 50;
+        const sizeMultiplier = 10;
 
         this.visGraph.setPrecalculator(new BasicSizeCalculator({
             sizeMultiplier: sizeMultiplier,
