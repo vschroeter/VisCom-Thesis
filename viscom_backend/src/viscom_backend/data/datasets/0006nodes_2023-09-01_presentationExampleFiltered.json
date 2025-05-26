@@ -14,10 +14,6 @@
             "localhost_only": false,
             "publishers": [
                 {
-                    "name": "/parameter_events",
-                    "type": "rcl_interfaces/msg/ParameterEvent"
-                },
-                {
                     "name": "/respeaker/audio",
                     "type": "rosass_msgs/msg/AudioBuffer"
                 },
@@ -63,10 +59,6 @@
                 }
             ],
             "subscribers": [
-                {
-                    "name": "/resources/new_resources_available",
-                    "type": "std_msgs/msg/Empty"
-                }
             ],
             "services": [
                 {
@@ -106,19 +98,11 @@
                     "type": "rcl_interfaces/msg/ParameterEvent"
                 },
                 {
-                    "name": "/resources/new_resources_available",
-                    "type": "std_msgs/msg/Empty"
-                },
-                {
                     "name": "/rosout",
                     "type": "rcl_interfaces/msg/Log"
                 }
             ],
             "subscribers": [
-                {
-                    "name": "/resources/new_resources_available",
-                    "type": "std_msgs/msg/Empty"
-                },
                 {
                     "name": "/system/i2c/write16",
                     "type": "hardware_interfaces_msgs/msg/I2Cwrite16"
@@ -180,10 +164,6 @@
                 {
                     "name": "/parameter_events",
                     "type": "rcl_interfaces/msg/ParameterEvent"
-                },
-                {
-                    "name": "/resources/new_resources_available",
-                    "type": "std_msgs/msg/Empty"
                 },
                 {
                     "name": "/rosout",
@@ -303,10 +283,6 @@
                     "type": "rcl_interfaces/msg/ParameterEvent"
                 },
                 {
-                    "name": "/resources/new_resources_available",
-                    "type": "std_msgs/msg/Empty"
-                },
-                {
                     "name": "/rosout",
                     "type": "rcl_interfaces/msg/Log"
                 },
@@ -422,10 +398,6 @@
                 {
                     "name": "/parameter_events",
                     "type": "rcl_interfaces/msg/ParameterEvent"
-                },
-                {
-                    "name": "/resources/new_resources_available",
-                    "type": "std_msgs/msg/Empty"
                 },
                 {
                     "name": "/rosout",
@@ -661,10 +633,6 @@
                     "type": "rcl_interfaces/msg/ParameterEvent"
                 },
                 {
-                    "name": "/resources/new_resources_available",
-                    "type": "std_msgs/msg/Empty"
-                },
-                {
                     "name": "/rosout",
                     "type": "rcl_interfaces/msg/Log"
                 }
@@ -688,10 +656,6 @@
                 },
                 {
                     "name": "/flint/initialized",
-                    "type": "std_msgs/msg/Empty"
-                },
-                {
-                    "name": "/resources/new_resources_available",
                     "type": "std_msgs/msg/Empty"
                 },
                 {
