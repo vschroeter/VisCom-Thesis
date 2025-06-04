@@ -27,8 +27,8 @@ def render_dot_to_svg(dot_string: str, layout_engine: str = "dot") -> Optional[s
     """
     graphviz_path = get_graphviz_path()
 
-    if not os.path.exists(graphviz_path):
-        raise FileNotFoundError(f"GraphViz executable not found at: {graphviz_path}")
+    # if not os.path.exists(graphviz_path):
+    #     raise FileNotFoundError(f"GraphViz executable not found at: {graphviz_path}")
 
     # Create temporary files for input and output
     with tempfile.NamedTemporaryFile(mode="w", suffix=".dot", delete=False) as dot_file:

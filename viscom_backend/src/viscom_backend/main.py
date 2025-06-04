@@ -361,4 +361,5 @@ def get_available_metrics():
 if __name__ == "__main__":
     # This is needed for multiprocessing to work properly on Windows
     multiprocessing.freeze_support()
-    app.run(debug=True, host="0.0.0.0")
+    # app.run(debug=True, host="0.0.0.0")
+    app.run(debug=False, host="0.0.0.0")

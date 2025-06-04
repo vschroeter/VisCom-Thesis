@@ -1,6 +1,11 @@
 # Use a Python image with uv pre-installed
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+# Install system dependencies including graphviz
+RUN apt-get update && apt-get install -y \
+    graphviz \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install the project into `/app`
 WORKDIR /app
 
