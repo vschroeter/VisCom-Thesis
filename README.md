@@ -2,12 +2,14 @@
 
 ## Introduction
 
-This repository contains an evaluation framework for analyzing and visualizing communication graphs.
-It offers;
+This repository contains the code and resources for the Master Thesis "**VisCom: Scalable Visualization of Communication Networks by the Example of Robot Operating System 2 Networks**".
+The project focuses on the visualization, analysis, and evaluation of communication graphs, especially in the context of robotic systems and ROS (Robot Operating System). It provides:
+
 - A web-based evaluation playground for visualizing and comparing graph layouts and metrics.
 - A Python backend for graph processing, metrics calculation, and dataset management.
 - Helper scripts for LaTeX-based reporting and data analysis.
-- Docker-based deployment for setup and reproducibility.
+- Docker-based deployment for easy setup and reproducibility.
+
 
 ## Directory Overview
 
